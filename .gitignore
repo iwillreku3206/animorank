@@ -4,6 +4,10 @@ node_modules
 /.svelte-kit
 /package
 .env
+*.md
+!README.md
+*.backup
+/.claude
 .env.*
 !.env.example
 vite.config.js.timestamp-*
