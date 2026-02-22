@@ -11,8 +11,6 @@
 <Modal {show} {closeModal}>
 	<form method="POST" action="?/createPset">
 		<input type="hidden" name="owner_email" value={email} />
-		<input type="hidden" name="owner_name" value={name} />
-		<input type="hidden" name="owner_picture" value={pictureURL} />
 		<input
 			type="text"
 			placeholder="Problem Set Name"
