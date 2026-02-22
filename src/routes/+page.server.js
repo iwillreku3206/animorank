@@ -67,8 +67,6 @@ export const actions = {
                     title: formData.get('title'),
                     description: formData.get('description'),
                     owner_email: formData.get('owner_email'),
-                    author_name: formData.get('author_name'),
-                    author_profile_url: formData.get('author_picture'),
                     auto_accept: formData.get('auto_accept') === 'on' ? true : false,
                     is_global: formData.get('is_private') === 'on' ? false : true,
                 };  
