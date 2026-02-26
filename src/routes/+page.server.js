@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { auth, OAuth2Client } from 'google-auth-library';
-import { SECRET_CLIENT_ID, SECRET_CLIENT_SECRET } from '$env/static/private';
+import { BASE_URL, SECRET_CLIENT_ID, SECRET_CLIENT_SECRET } from '$env/static/private';
 import { supabase } from "$lib/supabaseClient";
 
 export const load = async ({ locals }) => {
@@ -35,7 +35,7 @@ export const load = async ({ locals }) => {
 
 export const actions = {
     login: async ({ request }) => {
-        const redirectURL = "https://animorank.com/oath";
+        const redirectURL = `${BASE_URL}/oath`;
 
         const oAuth2Client = new OAuth2Client(
             SECRET_CLIENT_ID,
