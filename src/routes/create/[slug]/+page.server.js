@@ -20,7 +20,7 @@ export const actions = {
                     test_function: formData.get('test_function'),
                     starter_code: formData.get('starterCode'),
                     problem_set: slug,
-                    lang: "C",
+                    language: "C",
                 };
 
                 // insert into supabase

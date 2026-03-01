@@ -119,7 +119,7 @@
 
 	const runCode = async () => {
 		let toSubmit = testFunctionRef + '\n' + codeEditorRef;
-		const res = await fetch('/api/compile', { method: 'POST', body: JSON.stringify(toSubmit) });
+		const res = await fetch('/api/compile', { method: 'POST', body: JSON.stringify({code: toSubmit}) });
 		const data = await res.json();
 
 		let now = new Date();

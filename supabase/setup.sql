@@ -48,6 +48,7 @@ CREATE TABLE public."Problem" (
     body text,
     problem_name text NOT NULL,
     starter_code text,
+    text_function text NOT NULL,
     language character varying NOT NULL,
     problem_set bigint NOT NULL,
     CONSTRAINT "Problem_pkey" PRIMARY KEY (id),

@@ -35,7 +35,7 @@
 	//this function sends a post request to the api.
 	const handleSubmit = async () => {
 		let toSubmit = problem.test_function + '\n' + value;
-		const res = await fetch('/api/compile', { method: 'POST', body: JSON.stringify(toSubmit) });
+		const res = await fetch('/api/compile', { method: 'POST', body: JSON.stringify({code: toSubmit}) });
 		const data = await res.json();
 
 		let now = new Date();

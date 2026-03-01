@@ -8,11 +8,13 @@ export const POST = async ({ request }) => {
     if (body.action=='getPSETProblems') {
         const { data, error } = await supabase
             .from('Problem')
-            .select('id, problem_name, lang, visible')
+            .select('id, problem_name, language')
             .eq('problem_set', body.psetId);
 
+	console.log(data)
+
         return json({
-            data: data,
+	    data: data.map(d => ({...d, visible: true})),
             error: error
         });
     }
