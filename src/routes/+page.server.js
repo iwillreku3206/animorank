@@ -5,30 +5,37 @@ import { supabase } from "$lib/supabaseClient";
 
 export const load = async ({ locals }) => {
     if (locals.user.role === 'teacher') {
-    const { data, error } = await supabase
-        .from('Problem_set')
-        .select('*')
-        .eq('owner_email', locals.user.email);
+        const { data, error } = await supabase
+            .from('Problem_set')
+            .select('*')
+            .eq('owner_email', locals.user.email);
 
-    return {
-        psets: data,
-    };
-    } else if (locals.user.role === 'student') {    
-    const { data, error } = await supabase
-        .from('Problem_set')    
-        .select('title, description, Problem (id, problem_name, visible), Teacher (name, profile_url)')
-        .eq('is_global', true)
-        .eq('Problem.visible', true);
-    
-    
-    return {
-        psets: data,
-    };
+        if (error) {
+            console.error(error)
+        }
+
+        return {
+            psets: data || [],
+        };
+    } else if (locals.user.role === 'student') {
+        const { data, error } = await supabase
+            .from('Problem_set')
+            .select('title, description, Problem (id, problem_name, visible), Teacher (name, profile_url)')
+            .eq('is_global', true)
+            .eq('Problem.visible', true);
+
+        if (error) {
+            console.error(error)
+        }
+
+        return {
+            psets: data || [],
+        };
     }
     else {
-    return {
-        psets: [],
-    };
+        return {
+            psets: [],
+        };
     }
 
 }
@@ -60,7 +67,7 @@ export const actions = {
                     data: null,
                     error: 'You are not authorized to create a problem.'
                 };
-            } 
+            }
             else {
                 const formData = await request.formData();
                 const input = {
@@ -69,7 +76,7 @@ export const actions = {
                     owner_email: formData.get('owner_email'),
                     auto_accept: formData.get('auto_accept') === 'on' ? true : false,
                     is_global: formData.get('is_private') === 'on' ? false : true,
-                };  
+                };
 
                 // Check if input is valid
                 if (!input.title || !input.description || !input.owner_email) {
