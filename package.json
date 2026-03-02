@@ -17,9 +17,8 @@
 	"devDependencies": {
 		"@monaco-editor/loader": "^1.4.0",
 		"@playwright/test": "^1.28.1",
-		"@sveltejs/adapter-auto": "^3.0.0",
 		"@sveltejs/adapter-node": "^5.5.4",
-		"@sveltejs/kit": "^2.5.27",
+		"@sveltejs/kit": "^2.53.4",
 		"@sveltejs/vite-plugin-svelte": "^4.0.0",
 		"@tailwindcss/typography": "^0.5.15",
 		"@types/jsonwebtoken": "^9.0.7",
@@ -42,7 +41,6 @@
 	"dependencies": {
 		"@supabase/ssr": "^0.5.1",
 		"@supabase/supabase-js": "^2.45.4",
-		"@sveltejs/adapter-vercel": "^5.7.2",
 		"@tiptap/core": "^2.8.0",
 		"@tiptap/extension-bubble-menu": "^2.8.0",
 		"@tiptap/extension-color": "^2.8.0",
@@ -52,7 +50,7 @@
 		"google-auth-library": "^9.14.1",
 		"jsonwebtoken": "^9.0.2",
 		"marked": "^14.1.2",
-		"quill": "^2.0.3",
+		"quill": "^2.0.2",
 		"svelte-awesome": "^3.3.4",
 		"zod": "^4.3.6"
 	}
