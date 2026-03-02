@@ -18,15 +18,15 @@
  * @returns 
  */
 const formatInput = (input, index, inputTypes) => {
-    if(Array.isArray(input)){
-        if(inputTypes[index] == 'char[]'){
-            input = input.map(x => `'${x}'`)
-        }
-        input = `(${inputTypes[index]}){${input.join(',')}}`
-    } else if (inputTypes[index] == 'char'){
-        input = `'${input}'`
+  if (Array.isArray(input)) {
+    if (inputTypes[index] == 'char[]') {
+      input = input.map(x => `'${x}'`)
     }
-    return input
+    input = `(${inputTypes[index]}){${input.join(',')}}`
+  } else if (inputTypes[index] == 'char') {
+    input = `'${input}'`
+  }
+  return input
 }
 
 /**
@@ -37,16 +37,16 @@ const formatInput = (input, index, inputTypes) => {
  */
 const runTc = (fName, testCase, inputTypes, dtype) => {
 
-    const inputs = testCase.inputs.map((x, i) => formatInput(x, i, inputTypes)).join(',');
-    
-    const formatSpecifier = {
-        'int' : '%d',
-        'float' : '%.5f', 
-        'char' : '%c',    
-    }
+  const inputs = testCase.inputs.map((x, i) => formatInput(x, i, inputTypes)).join(',');
+
+  const formatSpecifier = {
+    'int': '%d',
+    'float': '%.5f',
+    'char': '%c',
+  }
 
 
-    const template = `
+  const template = `
             res = ${fName}(${inputs});
             if (res ${testCase.operator} ${formatInput(testCase.output, 0, [dtype])}){
                 printf("\\nTEST_PASSED: ${formatSpecifier[dtype]} ${testCase.operator} ${testCase.output} ✅\\n", res);            
@@ -55,23 +55,23 @@ const runTc = (fName, testCase, inputTypes, dtype) => {
             }
     `
 
-    return template
+  return template
 }
 
- /**
- * templates a test script (main function) that tests a function with given test cases
- * @param {string} dtype
- * @param {string} fName
- * @param {string[]} inputTypes,
- * @param {TestCase[]} testCases
- */
+/**
+* templates a test script (main function) that tests a function with given test cases
+* @param {string} dtype
+* @param {string} fName
+* @param {string[]} inputTypes,
+* @param {TestCase[]} testCases
+*/
 export const createTestScript = (dtype, fName, inputTypes, testCases) => {
 
-    const inTypesTemplate = inputTypes.join(',')
-    const tcTemplates = testCases.map(x => runTc(fName, x, inputTypes, dtype)).join('') 
+  const inTypesTemplate = inputTypes.join(',')
+  const tcTemplates = testCases.map(x => runTc(fName, x, inputTypes, dtype)).join('')
 
 
-    const template = `
+  const template = `
         #include<stdio.h>
 
         ${dtype} ${fName}(${inTypesTemplate});
@@ -88,7 +88,7 @@ export const createTestScript = (dtype, fName, inputTypes, testCases) => {
 
     `
 
-    return template
+  return template
 }
 
 
@@ -100,15 +100,15 @@ export const createTestScript = (dtype, fName, inputTypes, testCases) => {
  */
 export const generateStarterCode = (dtype, fName, inputTypes) => {
 
-    const parameters = inputTypes.map((x, i) => {
-        if(inputTypes[i].endsWith('[]')){
-            return `${inputTypes[i].slice(0, -2)} ${String.fromCharCode(97+i)}[]`
-        } else {
-            return `${inputTypes[i]} ${String.fromCharCode(97+i)}`
-        }
-    }).join(', ')
+  const parameters = inputTypes.map((x, i) => {
+    if (inputTypes[i].endsWith('[]')) {
+      return `${inputTypes[i].slice(0, -2)} ${String.fromCharCode(97 + i)}[]`
+    } else {
+      return `${inputTypes[i]} ${String.fromCharCode(97 + i)}`
+    }
+  }).join(', ')
 
-    return `
+  return `
 ${dtype} ${fName}(${parameters}){
     //TODO: implement the ${fName} function.
 }

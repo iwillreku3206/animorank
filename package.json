@@ -4,7 +4,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build",
+		"build": "tsc --noEmit && vite build",
 		"preview": "vite preview",
 		"test": "npm run test:integration && npm run test:unit",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -52,6 +52,8 @@
 		"google-auth-library": "^9.14.1",
 		"jsonwebtoken": "^9.0.2",
 		"marked": "^14.1.2",
-		"svelte-awesome": "^3.3.4"
+		"quill": "^2.0.3",
+		"svelte-awesome": "^3.3.4",
+		"zod": "^4.3.6"
 	}
 }

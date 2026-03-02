@@ -1,8 +1,8 @@
-<script>
-	// @ts-nocheck
+<script lang="ts">
 	import CodeEditor from '$lib/components/CodeEditor.svelte';
 	import Editor from '$lib/components/Editor.svelte';
 	import edit from 'svelte-awesome/icons/edit';
+	import type { MouseEventHandler } from 'svelte/elements';
 
 	let innerWidth = $state(0); //gets the width of the page
 	let offset = $state(0); //offset state, determines how much more pixels should be taken by the right panel.
@@ -10,12 +10,14 @@
 	let rightWidth = $derived(innerWidth - leftWidth);
 
 	let title = $state('');
-	let reuiredOutput = $state('');
-	let editorRef;
-	let codeEditorRef;
+	let requiredOutput = $state('');
+	let editorRef: Editor;
+	let codeEditorRef: CodeEditor;
+
+	let starterCode = $state('');
 
 	//start resize, called when the mouse is held down on the resize bar. assigns a listener on mousemove which modifies the offset state.
-	const startResize = (e) => {
+	const startResize: MouseEventHandler<HTMLDivElement> = (e) => {
 		let initial = e.clientX;
 		document.onmousemove = (e) => {
 			offset -= leftWidth - e.clientX;
@@ -34,12 +36,11 @@
 
 	const submit = async () => {
 		const description = editorRef.getContent();
-		const starterCode = codeEditorRef.getValue();
 
 		const formData = new FormData();
 		formData.append('title', title);
 		formData.append('description', description);
-		formData.append('requiredOutput', reuiredOutput);
+		formData.append('requiredOutput', requiredOutput);
 		formData.append('starterCode', starterCode);
 
 		const res = await fetch('?/createProblem', {
@@ -76,7 +77,7 @@
 				<textarea
 					class="textarea textarea-bordered w-full bg-inherit"
 					placeholder="Required Console Output"
-					bind:value={reuiredOutput}
+					bind:value={requiredOutput}
 				></textarea>
 			</div>
 		</div>
@@ -103,6 +104,6 @@
 			</div>
 		</span>
 
-		<CodeEditor bind:this={codeEditorRef} />
+		<CodeEditor bind:this={codeEditorRef} bind:value={starterCode} />
 	</div>
 </div>

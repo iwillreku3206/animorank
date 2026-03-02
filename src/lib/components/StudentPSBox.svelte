@@ -1,13 +1,15 @@
 <script>
-	import dropdown from '$lib/assets/dropdown.svg';
 	import close from '$lib/assets/close.svg';
-	let {title, Problems, pset } = $props();
+	let { title, Problems, pset } = $props();
 
 	let toggle = $state(false);
 </script>
 
 {#if !toggle}
-	<button class="mt-8 min-h-72 w-96 sm:mr-5 p-3 bg-[#1F1F1F] rounded cursor-pointer flex flex-col hover:bg-[#252525] transform transition-transform hover:scale-105" onclick={() => (toggle = !toggle)}>
+	<button
+		class="mt-8 min-h-72 w-96 sm:mr-5 p-3 bg-[#1F1F1F] rounded cursor-pointer flex flex-col hover:bg-[#252525] transform transition-transform hover:scale-105"
+		onclick={() => (toggle = !toggle)}
+	>
 		<div class="flex justify-between pt-2 pb-2">
 			<div class="text-xl">{title}</div>
 			<div class="flex align-center justify-center items-center">
@@ -22,12 +24,18 @@
 		</div>
 	</button>
 {:else}
-	<div class="w-full mt-8 min-h-72 p-3 bg-[#1F1F1F] rounded cursor-pointer flex flex-col flex-wrap order-first">
+	<div
+		class="w-full mt-8 min-h-72 p-3 bg-[#1F1F1F] rounded cursor-pointer flex flex-col flex-wrap order-first"
+	>
 		<div>
 			<div class="w-full flex justify-between">
 				<h2 class="text-2xl mb-4">{pset.title}</h2>
 				<div class="flex flex-row align-center justify-center items-center">
-					<img src={pset.Teacher.profile_url} alt="profile" class="h-8 w-8 object-cover rounded-full mr-2" />
+					<img
+						src={pset.Teacher.profile_url}
+						alt="profile"
+						class="h-8 w-8 object-cover rounded-full mr-2"
+					/>
 					<p class="text-sm mr-2 text-gray-400">{pset.Teacher.name}</p>
 				</div>
 			</div>
@@ -37,22 +45,24 @@
 		</div>
 
 		<!-- Problems -->
-		<div class="flex justify-between w-full flex-wrap">	
-			<div class= 'mt-5 mb-5 w-ful w-full'>
+		<div class="flex justify-between w-full flex-wrap">
+			<div class="mt-5 mb-5 w-ful w-full">
 				<div class="flex align-middle justify-between border-b border-borderColor p-3">
 					<div class="text-xl">Problems</div>
 					<p class="text-gray-400 text-sm">{Problems.length} Problem(s)</p>
 				</div>
 				<div class="flex flex-col w-full">
 					{#each Problems as problem}
-						<a href="/problem/{problem.id}" class="flex justify-between p-2 align-middle text-center cursor-pointer hover:bg-[#252525] transform transition-transform w-full">
+						<a
+							href="/problem/{problem.id}"
+							class="flex justify-between p-2 align-middle text-center cursor-pointer hover:bg-[#252525] transform transition-transform w-full"
+						>
 							<h3 class="mt-auto mb-auto ml-4">{problem.problem_name}</h3>
 						</a>
 					{/each}
 				</div>
 			</div>
 		</div>
-
 
 		<div class="flex justify-end w-full mt-8 sm:mt-20">
 			<button
@@ -65,7 +75,6 @@
 	</div>
 {/if}
 
-
 <!-- // 	{#if toggle}
 // 		<div class="flex flex-col">
 // 		{#each Problems as Problem}
@@ -73,3 +82,4 @@
 // 		{/each}	
 // 		</div>
 // 	{/if} -->
+

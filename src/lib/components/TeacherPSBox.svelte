@@ -52,7 +52,7 @@
 		// fetch problems
 		const response = await fetch('/api/problems', {
 			method: 'POST',
-			body: JSON.stringify({ action: 'updateProblemVisibility', visible: value, id: id, }),
+			body: JSON.stringify({ action: 'updateProblemVisibility', visible: value, id: id }),
 			headers: {
 				'content-type': 'application/json'
 			}
@@ -74,7 +74,6 @@
 			{pset.description}
 		</div>
 		<div class="flex justify-between w-full flex-wrap">
-			
 			<div class={pset.is_global ? 'mt-5 mb-5 w-ful w-full' : 'mt-5 mb-5 w-ful md:w-[600px]'}>
 				<div class="flex align-middle justify-between border-b border-borderColor p-3">
 					<div class="text-xl">Problems</div>
@@ -93,11 +92,18 @@
 							<h3 class="mt-auto mb-auto ml-4">{problem.problem_name}</h3>
 							<div class="flex">
 								<div class="grid place-items-center">
-									<div class="tooltip tooltip-bottom m-0 p-0" data-tip={problem.visible ? 'Visible to students' : 'Hidden to students'}>
+									<div
+										class="tooltip tooltip-bottom m-0 p-0"
+										data-tip={problem.visible ? 'Visible to students' : 'Hidden to students'}
+									>
 										<label class="swap swap-rotate">
-												<input type="checkbox" bind:checked={problem.visible} onclick={() => toggleVisibility(problem.id, !problem.visible)} />
-												<img src={hidden} alt="hidden" class="h-9 cursor-pointer swap-off" />
-												<img src={visible} alt="visible" class="h-9 cursor-pointer swap-on" />
+											<input
+												type="checkbox"
+												bind:checked={problem.visible}
+												onclick={() => toggleVisibility(problem.id, !problem.visible)}
+											/>
+											<img src={hidden} alt="hidden" class="h-9 cursor-pointer swap-off" />
+											<img src={visible} alt="visible" class="h-9 cursor-pointer swap-on" />
 										</label>
 									</div>
 								</div>
@@ -105,9 +111,9 @@
 									<img src={edit} alt="edit" class="h-4 cursor-pointer" />
 								</button> -->
 								{#if !pset.is_global}
-								<button class="btn btn-s ml-2 bg-[#121212] border-0 hover:bg-[#090909]">
-									<img src={statistics} alt="statistics" class="h-5 cursor-pointer" />
-								</button>
+									<button class="btn btn-s ml-2 bg-[#121212] border-0 hover:bg-[#090909]">
+										<img src={statistics} alt="statistics" class="h-5 cursor-pointer" />
+									</button>
 								{/if}
 							</div>
 						</div>
@@ -115,39 +121,39 @@
 				</div>
 			</div>
 			{#if !pset.is_global}
-			<div class="mt-5 mb-5 w-full md:w-[600px]">
-				<div class="flex align-middle justify-between border-b border-borderColor p-3">
-					<div class="text-xl">Students</div>
+				<div class="mt-5 mb-5 w-full md:w-[600px]">
+					<div class="flex align-middle justify-between border-b border-borderColor p-3">
+						<div class="text-xl">Students</div>
+					</div>
+					<div>
+						<h3 class="p-3">Pending</h3>
+						<div class="flex justify-between p-2 align-middle text-center">
+							<h3 class="mt-auto mb-auto ml-4">paulivanenclonar@gmail.com</h3>
+							<button class="btn btn-s bg-[#006239] border-0 hover:bg-[#004327]">
+								<img src={done} alt="edit" class="h-6 cursor-pointer" />
+							</button>
+						</div>
+						<div class="flex justify-between p-2 align-middle text-center">
+							<h3 class="mt-auto mb-auto ml-4">paul_enclonar@dlsu.edu.ph</h3>
+							<button class="btn btn-s bg-[#006239] border-0 hover:bg-[#004327]">
+								<img src={done} alt="edit" class="h-6 cursor-pointer" />
+							</button>
+						</div>
+						<h3 class="p-3">Current</h3>
+						<div class="flex justify-between p-2 align-middle text-center">
+							<h3 class="mt-auto mb-auto ml-4">paulivanenclonar@gmail.com</h3>
+							<button class="btn btn-error btn-s ml-2">
+								<img src={del} alt="delete" class="h-4 cursor-pointer" />
+							</button>
+						</div>
+						<div class="flex justify-between p-2 align-middle text-center">
+							<h3 class="mt-auto mb-auto ml-4">paul_enclonar@dlsu.edu.ph</h3>
+							<button class="btn btn-error btn-s ml-2">
+								<img src={del} alt="delete" class="h-4 cursor-pointer" />
+							</button>
+						</div>
+					</div>
 				</div>
-				<div>
-					<h3 class="p-3">Pending</h3>
-					<div class="flex justify-between p-2 align-middle text-center">
-						<h3 class="mt-auto mb-auto ml-4">paulivanenclonar@gmail.com</h3>
-						<button class="btn btn-s bg-[#006239] border-0 hover:bg-[#004327]">
-							<img src={done} alt="edit" class="h-6 cursor-pointer" />
-						</button>
-					</div>
-					<div class="flex justify-between p-2 align-middle text-center">
-						<h3 class="mt-auto mb-auto ml-4">paul_enclonar@dlsu.edu.ph</h3>
-						<button class="btn btn-s bg-[#006239] border-0 hover:bg-[#004327]">
-							<img src={done} alt="edit" class="h-6 cursor-pointer" />
-						</button>
-					</div>
-					<h3 class="p-3">Current</h3>
-					<div class="flex justify-between p-2 align-middle text-center">
-						<h3 class="mt-auto mb-auto ml-4">paulivanenclonar@gmail.com</h3>
-						<button class="btn btn-error btn-s ml-2">
-							<img src={del} alt="delete" class="h-4 cursor-pointer" />
-						</button>
-					</div>
-					<div class="flex justify-between p-2 align-middle text-center">
-						<h3 class="mt-auto mb-auto ml-4">paul_enclonar@dlsu.edu.ph</h3>
-						<button class="btn btn-error btn-s ml-2">
-							<img src={del} alt="delete" class="h-4 cursor-pointer" />
-						</button>
-					</div>
-				</div>
-			</div>
 			{/if}
 		</div>
 		<div class="flex justify-end w-full mt-8 sm:mt-20">
@@ -176,22 +182,22 @@
 {:else}
 	<div
 		class="mt-8 min-h-72 w-96 sm:mr-5 p-3 bg-[#1F1F1F] rounded cursor-pointer flex flex-col justify-between"
-	>	
+	>
 		<div class="flex justify-between w-full">
-		<h2 class="text-2xl mb-4">{pset.title}</h2>
-		{#if !pset.is_global}
-			<div class="grid place-items-center">
-				<div class="tooltip tooltip-bottom pb-2" data-tip="Private">
-					<img src={lock} alt="lock" class="h-6 cursor-pointer" />
+			<h2 class="text-2xl mb-4">{pset.title}</h2>
+			{#if !pset.is_global}
+				<div class="grid place-items-center">
+					<div class="tooltip tooltip-bottom pb-2" data-tip="Private">
+						<img src={lock} alt="lock" class="h-6 cursor-pointer" />
+					</div>
 				</div>
-			</div>
-		{:else}
-			<div class="grid place-items-center">
-				<div class="tooltip tooltip-bottom pb-2" data-tip="Global">
-					<img src={global} alt="global" class="h-6 cursor-pointer" />
+			{:else}
+				<div class="grid place-items-center">
+					<div class="tooltip tooltip-bottom pb-2" data-tip="Global">
+						<img src={global} alt="global" class="h-6 cursor-pointer" />
+					</div>
 				</div>
-			</div>
-		{/if}
+			{/if}
 		</div>
 		<div class="px-4 pb-10">
 			{pset.description}

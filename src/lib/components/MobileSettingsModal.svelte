@@ -13,7 +13,6 @@
 		openSettings = false;
 		goto('/about');
 	};
-
 </script>
 
 <div class="fixed grid place-items-center w-full h-full z-20">
@@ -32,7 +31,11 @@
 		<h2 class="mb-10">{user.email}</h2>
 		<button class="mb-2 underline cursor-pointer" onclick={logout}>Logout</button>
 		<button onclick={about} class="mb-2 underline cursor-pointer">About</button>
-		<a class="mb-2 underline cursor-pointer" href="https://forms.gle/uDpnjEoYkyjHZsWVA" target="_blank">Feedback</a>
+		<a
+			class="mb-2 underline cursor-pointer"
+			href="https://forms.gle/uDpnjEoYkyjHZsWVA"
+			target="_blank">Feedback</a
+		>
 		<button
 			class="btn mt-4 btn-square btn-ghost"
 			onclick={() => (openSettings = false)}

@@ -11,8 +11,10 @@
 		value = $bindable('#include<stdio.h>\n\nint main(){ \n\n  return 0;\n}'),
 		problem = $bindable(),
 		handleReset = $bindable(),
+		getContent = () => {
+			return editor.getValue();
+		}
 	} = $props();
-
 
 	/**
 	 * @type {import("monaco-editor").editor.IStandaloneCodeEditor}
@@ -21,17 +23,15 @@
 	let monaco;
 	let editorContainer = $state();
 
-
 	let mounted = $state(false);
 	let totalSize = 0.0;
 
 	handleReset = () => {
 		clearHistory(problem.id);
-		if(editor){
+		if (editor) {
 			editor.setValue(problem.starter_code);
 		}
-
-	}
+	};
 
 	onMount(async () => {
 		//restore user history
@@ -60,7 +60,7 @@
 				value: value,
 				language: 'c',
 				automaticLayout: true,
-				theme: 'custom-vs-dark', // Use the custom theme
+				theme: 'custom-vs-dark' // Use the custom theme
 			});
 		else {
 			editor = monaco.editor.create(editorContainer, {
@@ -94,18 +94,16 @@
             totalSize += kiloBytes
             console.log("total size of history (MB): " + (totalSize / 1000))
             */
-		    value = editor.getValue();
+			value = editor.getValue();
 			updateHistory(problem.id, JSON.stringify(change));
 		});
 
 		mounted = true;
 	});
-
 </script>
 
-
 <div class="grow shadow-inner border-t-2 overflow-hidden">
-	<div class="w-full h-full {!mounted && "bg-[#1f1f1f]"}" bind:this={editorContainer}>
+	<div class="w-full h-full {!mounted && 'bg-[#1f1f1f]'}" bind:this={editorContainer}>
 		{#if !mounted}
 			<p class="content-center w-full h-full text-grey-400">loading editor...</p>
 		{/if}

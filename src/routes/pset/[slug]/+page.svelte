@@ -4,7 +4,6 @@
 	import Page from '../../+page.svelte';
 	let { data } = $props();
 
-
 	const subcribe = async () => {
 		const res = await fetch('/api/subscribe', {
 			method: 'POST',
@@ -18,7 +17,6 @@
 			})
 		});
 
-		
 		if (res.ok) {
 			console.log('Subscribed');
 		} else {
@@ -56,6 +54,6 @@
 			</div>
 		</div>
 	</div>
-{:else}	
+{:else}
 	<Page404 />
 {/if}

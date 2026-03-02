@@ -26,30 +26,21 @@
 		<div class="form-control">
 			<label class="label cursor-pointer">
 				<span class="label-text">Private (alpha)</span>
-				
-				<input
-					type="checkbox"
-					class="checkbox"
-					bind:checked={Private}
-					name="is_private"
-				/>
+
+				<input type="checkbox" class="checkbox" bind:checked={Private} name="is_private" />
 			</label>
 			{#if Private}
-			<label class="label cursor-pointer">
-				<span class="label-text">Auto Accept Students</span>
-				<input
-					type="checkbox"
-					class="checkbox"
-					bind:checked={AccessibleWithLink}
-					name="auto_accept"
-				/>
-			</label>
+				<label class="label cursor-pointer">
+					<span class="label-text">Auto Accept Students</span>
+					<input
+						type="checkbox"
+						class="checkbox"
+						bind:checked={AccessibleWithLink}
+						name="auto_accept"
+					/>
+				</label>
 			{:else}
-				<input
-					type="hidden"
-					value={false}
-					name="auto_accept"
-				/>
+				<input type="hidden" value={false} name="auto_accept" />
 			{/if}
 		</div>
 		<div class="flex justify-end mt-5">

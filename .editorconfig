@@ -1,0 +1,8 @@
+root = true
+
+[*]
+end_of_line = lf
+
+[*.{ts,js,svelte}]
+indent_size = 2
+indent_style = space

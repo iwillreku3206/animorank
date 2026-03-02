@@ -4,7 +4,7 @@
 	import menu from '$lib/assets/menu.svg';
 	import MobileLoginModal from '$lib/components/MobileLoginModal.svelte';
 	import MobileSettingsModal from '$lib/components/MobileSettingsModal.svelte';
-    import SignUpModal from '$lib/components/SignUpModal.svelte';
+	import SignUpModal from '$lib/components/SignUpModal.svelte';
 	import TermsModal from '$lib/components/TermsModal.svelte';
 	import ContactModal from '$lib/components/ContactModal.svelte';
 
