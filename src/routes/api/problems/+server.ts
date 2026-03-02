@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 const getPSETProblemsValidator = z.object({
   action: z.literal('getPSETProblems'),
-  psetId: z.string()
+  psetId: z.number()
 });
 
 const updateProblemVisibilityValidator = z.object({
