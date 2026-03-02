@@ -1,3 +1,4 @@
+import { PISTON_BASE_URL } from "$env/static/private"
 
 export const POST = async (/** @type {{ request: { json: () => any; }; }} */ event) => {
 
@@ -11,12 +12,11 @@ export const POST = async (/** @type {{ request: { json: () => any; }; }} */ eve
                 "content": body.code
             }
         ],
-    } 
+    }
 
-    const res = await fetch("https://emkc.org/api/v2/piston/execute", {method: "POST", headers:{ "Content-Type": "application/json"}, body: JSON.stringify(response)})
+    const res = await fetch(`${PISTON_BASE_URL}/api/v2/execute`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(response) })
 
     const print = await res.json()
-    console.log(print)
     /**
      * @type {string[]}
      */
@@ -42,10 +42,10 @@ export const POST = async (/** @type {{ request: { json: () => any; }; }} */ eve
         // remove the test cases from the output
         print.run.output = print.run.output.split('\n')
             .filter((/** @type {string} */ line) =>
-                !line.startsWith('TEST_PASSED') && 
+                !line.startsWith('TEST_PASSED') &&
                 !line.startsWith('TEST_FAILED'))
             .join('\n')
-    
+
     }
 
     print.run.test_failed = test_failed
