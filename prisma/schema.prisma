@@ -1,0 +1,192 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Language {
+  C
+}
+
+model Problem {
+  id               String            @id @default(uuid()) @db.Uuid
+  name             String
+  description      String
+  language         Language
+  visible          Boolean           @default(true)
+  problem_set_id   String            @db.Uuid
+  problem_set      ProblemSet        @relation(fields: [problem_set_id], references: [id], onDelete: Cascade)
+  PracticeSessions PracticeSession[]
+  created_at       DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime          @updatedAt @db.Timestamptz(6)
+}
+
+enum ProblemTestCaseType {
+  FUNCTION
+  PROGRAM
+}
+
+model ProblemTestCase {
+  id              String              @id @default(uuid()) @db.Uuid
+  type            ProblemTestCaseType
+  input           String
+  expected_output String
+  created_at      DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime            @updatedAt @db.Timestamptz(6)
+}
+
+model ProblemSet {
+  id           String         @id @default(uuid()) @db.Uuid
+  description  String?
+  title        String
+  owner_id     String?        @db.Uuid
+  owner        Teacher?       @relation(fields: [owner_id], references: [id], onDelete: SetNull)
+  auto_accept  Boolean        @default(false)
+  is_global    Boolean        @default(false)
+  Problem      Problem[]
+  Subscription Subscription[]
+  created_at   DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime       @updatedAt @db.Timestamptz(6)
+}
+
+model PracticeSession {
+  id         String  @id @default(uuid()) @db.Uuid
+  problem_id String  @db.Uuid
+  problem    Problem @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  student_id String  @db.Uuid
+  student    Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  last_state String?
+  history    String?
+
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @updatedAt @db.Timestamptz(6)
+
+  practiceHistoryEntries PracticeHistoryEntry[]
+}
+
+enum HistoryEntryType {
+  TEXT_INSERT
+  TEXT_DELETE
+  TEXT_COPY
+  TEXT_PASTE
+  TEXT_UNDO
+  TEXT_REDO
+  PAGE_OPENED
+  PAGE_FOCUS
+  RUN_ATTEMPT
+  PING
+  OTHER
+}
+
+model PracticeHistoryEntry {
+  id                  String           @id @default(uuid()) @db.Uuid
+  timestamp           DateTime         @default(now()) @db.Timestamptz(6)
+  type                HistoryEntryType
+  data                Json
+  practice_session_id String           @db.Uuid
+  practice_session    PracticeSession  @relation(fields: [practice_session_id], references: [id], onDelete: Cascade)
+}
+
+model Student {
+  id                String            @id @default(uuid()) @db.Uuid
+  user              User              @relation(fields: [id], references: [id], onDelete: Cascade)
+  practice_sessions PracticeSession[]
+  subscription      Subscription[]
+}
+
+model Subscription {
+  id             String     @id @default(uuid()) @db.Uuid
+  problem_set_id String     @db.Uuid
+  problem_set    ProblemSet @relation(fields: [problem_set_id], references: [id], onDelete: Cascade)
+  student_id     String     @db.Uuid
+  student        Student    @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  status         String?
+  created_at     DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime   @updatedAt @db.Timestamptz(6)
+}
+
+model Teacher {
+  id          String       @id @default(uuid()) @db.Uuid
+  user        User         @relation(fields: [id], references: [id], onDelete: Cascade)
+  problem_set ProblemSet[]
+}
+
+model TeacherList {
+  email String @id
+}
+
+model User {
+  id            String          @id @default(uuid()) @db.Uuid
+  name          String?
+  email         String          @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  // Optional for WebAuthn support
+  Authenticator Authenticator[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student?
+  teacher Teacher?
+}
+
+model Account {
+  userId            String  @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String   @db.Uuid
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// Optional for WebAuthn support
+model Authenticator {
+  credentialID         String  @unique
+  userId               String  @db.Uuid
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
+}
