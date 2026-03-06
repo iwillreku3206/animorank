@@ -167,7 +167,7 @@
 			if (isTestCaseFilled) {
 				const formData = new FormData();
 				formData.append('title', title);
-				formData.append('description', description);
+				formData.append('description', description || '');
 				formData.append('test_function', testScript);
 				formData.append('starterCode', testCaseStarterCode);
 
@@ -188,7 +188,7 @@
 		} else {
 			const formData = new FormData();
 			formData.append('title', title);
-			formData.append('description', description);
+			formData.append('description', description || '');
 			formData.append('test_function', testFunctionRef);
 			formData.append('starterCode', codeEditorRef);
 

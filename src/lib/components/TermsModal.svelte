@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { openTerms } from '$lib/state/terms.svelte';
 
 	const closeModal = () => {

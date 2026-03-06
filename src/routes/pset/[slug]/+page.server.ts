@@ -1,60 +1,31 @@
-import { supabase } from "$lib/supabaseClient";
 import { redirect } from '@sveltejs/kit';
 import { OAuth2Client } from 'google-auth-library';
 import { BASE_URL, SECRET_CLIENT_ID, SECRET_CLIENT_SECRET } from '$env/static/private';
 import type { Actions, PageServerLoad } from "./$types";
+import { prisma } from "$lib/prisma";
+
+import { type ProblemSet } from '../../+page.server'
+export { type ProblemSet }
 
 export const load: PageServerLoad = async ({ params, locals }) => {
+  const session = await locals.auth()
+
+  if (!session || !session.user.id) redirect(302, '/about')
+
   const { slug } = params;
 
-  const { data, error } = await supabase
-    .from('Problem_set')
-    .select('*, Problem (id, problem_name, visible, lang), Teacher (name, profile_url)')
-    .eq('id', slug)
-    .eq('is_global', true)
-    .eq('Problem.visible', true);
-
-  if (data) {
-    if (data.length > 0) {
-      return {
-        pset: data,
-        user: locals.user,
-        problems: data[0].Problem,
-      };
-    }
-    else {
-      return {
-        pset: [],
-        user: locals.user,
-        problems: [],
-      };
-    }
-  } else {
-    return {
-      pset: [],
-      user: locals.user,
-      problems: [],
-    };
-  }
-};
-
-export const actions: Actions = {
-  login: async ({ request }) => {
-    const redirectURL = `${BASE_URL}/oath`;
-
-    const oAuth2Client = new OAuth2Client(
-      SECRET_CLIENT_ID,
-      SECRET_CLIENT_SECRET,
-      redirectURL
-    );
+  const problemSet = await prisma.problemSet.findUnique({ where: { id: slug, is_global: true, problems: { some: { visible: true } } }, include: { problems: true, owner: { include: { user: true } } } })
 
 
-    const authUrl = oAuth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: ['https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid'],
-      prompt: 'consent'
-    });
-
-    return redirect(302, authUrl);
+  return {
+    pset: problemSet ? {
+      id: problemSet.id,
+      title: problemSet?.title,
+      description: problemSet.description || undefined,
+      global: problemSet?.is_global,
+      problems: problemSet?.problems.map(problem => ({ id: problem.id, name: problem.name, visible: problem.visible })),
+      teacher: problemSet.owner ? { id: problemSet.owner.id, name: problemSet.owner.user.name || '' } : undefined
+    } satisfies ProblemSet : undefined,
+    user: session?.user,
   }
 };

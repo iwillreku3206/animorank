@@ -1,14 +1,22 @@
-import { supabase } from '$lib/supabaseClient';
 import { json } from '@sveltejs/kit';
-import type { RequestHandler } from '../$types';
+import type { RequestHandler } from './$types';
 import { z } from 'zod';
+import { prisma } from '$lib/prisma';
 
 const validator = z.object({
-  student_email: z.string().email(),
   problem_set: z.string()
 });
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ locals, request }) => {
+  const session = await locals.auth()
+
+  if (!session || !session.user.id) {
+    return new Response(JSON.stringify({ error: "Not signed in" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" }
+    })
+  }
+
   const body = await request.json();
 
   const { success, data: bodyData, error: zodError } = await validator.safeParseAsync(body);
@@ -20,26 +28,13 @@ export const POST: RequestHandler = async ({ request }) => {
     });
   }
 
-  const { data, error } = await supabase.from('Subscription').upsert(
-    [
-      {
-        student_email: bodyData.student_email,
-        problem_set: bodyData.problem_set,
-        status: 'pending'
-      }
-    ],
-    { onConflict: 'email' }
-  );
+  // TODO: Add verification if the student is "allowed" to subscribe to this problem set
 
-  if (error) {
-    return new Response(JSON.stringify(error), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+  const obj = { problem_set_id: bodyData.problem_set, student_id: session.user.id }
+  await prisma.subscription.upsert({ create: obj, update: {}, where: { problem_set_id_student_id: obj } })
 
-  return new Response(JSON.stringify(data), {
+  return new Response(JSON.stringify({ success: true }), {
     status: 200,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { "Content-Type": "application/json" }
   });
 };

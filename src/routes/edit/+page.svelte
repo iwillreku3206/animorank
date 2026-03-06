@@ -39,7 +39,7 @@
 
 		const formData = new FormData();
 		formData.append('title', title);
-		formData.append('description', description);
+		formData.append('description', description || '');
 		formData.append('requiredOutput', requiredOutput);
 		formData.append('starterCode', starterCode);
 

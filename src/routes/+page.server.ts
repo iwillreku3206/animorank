@@ -1,104 +1,110 @@
-import { redirect } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { auth, OAuth2Client } from 'google-auth-library';
 import { BASE_URL, SECRET_CLIENT_ID, SECRET_CLIENT_SECRET } from '$env/static/private';
-import { supabase } from "$lib/supabaseClient";
 import type { Actions, PageServerLoad } from './$types';
+import { prisma } from '$lib/prisma';
+import type { ProblemSetWhereInput } from '../../generated/prisma/models';
+import z from 'zod';
 
-export const load: PageServerLoad = async ({ locals }) => {
-  if (locals.user.role === 'teacher') {
-    const { data, error } = await supabase
-      .from('Problem_set')
-      .select('*')
-      .eq('owner_email', locals.user.email);
-
-    if (error) {
-      console.error(error)
-    }
-
-    return {
-      psets: data || [],
-    };
-  } else if (locals.user.role === 'student') {
-    const { data, error } = await supabase
-      .from('Problem_set')
-      .select('title, description, Problem (id, problem_name, visible), Teacher (name, profile_url)')
-      .eq('is_global', true)
-      .eq('Problem.visible', true);
-
-    if (error) {
-      console.error(error)
-    }
-
-    return {
-      psets: data || [],
-    };
-  }
-  else {
-    return {
-      psets: [],
-    };
-  }
-
+export interface ProblemSet {
+  id: string;
+  title: string;
+  description?: string;
+  global: boolean;
+  problems: {
+    id: string;
+    name: string;
+    visible: boolean;
+  }[];
+  teacher?: {
+    id: string;
+    name: string;
+  };
 }
 
-export const actions: Actions = {
-  login: async ({ request }) => {
-    const redirectURL = `${BASE_URL}/oath`;
+export const load: PageServerLoad = async ({ locals }) => {
+  const auth = await locals.auth()
 
-    const oAuth2Client = new OAuth2Client(
-      SECRET_CLIENT_ID,
-      SECRET_CLIENT_SECRET,
-      redirectURL
-    );
+  if (!auth) redirect(302, '/about')
 
+  let filter: ProblemSetWhereInput
 
-    const authUrl = oAuth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: ['https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid'],
-      prompt: 'consent'
-    });
+  if (auth.user.type === 'teacher') {
+    if (!auth.user.id) return redirect(302, '/about')
+    filter = { owner_id: auth.user.id }
+  } else if (auth.user.type === 'student') {
+    filter = { is_global: true, problems: { some: { visible: true } } }
+  } else {
+    return redirect(302, '/about')
+  }
 
-    return redirect(302, authUrl);
-  },
+  const problemSets = await prisma.problemSet.findMany({ where: filter, include: { problems: true, owner: { include: { user: true } } } })
 
-  createPset: async ({ request, locals }) => {
-    if (locals.user) {
-      if (locals.user.role !== 'teacher') {
+  const returnedProblemSets: ProblemSet[] = problemSets.map(problemSet => {
+    return {
+      id: problemSet.id,
+      title: problemSet.title,
+      description: problemSet.description || undefined,
+      global: problemSet.is_global,
+      problems: problemSet.problems.map(problem => {
         return {
-          data: null,
-          error: 'You are not authorized to create a problem.'
-        };
-      }
-      else {
-        const formData = await request.formData();
-        const input = {
-          title: formData.get('title'),
-          description: formData.get('description'),
-          owner_email: formData.get('owner_email'),
-          auto_accept: formData.get('auto_accept') === 'on' ? true : false,
-          is_global: formData.get('is_private') === 'on' ? false : true,
-        };
-
-        // Check if input is valid
-        if (!input.title || !input.description || !input.owner_email) {
-          return {
-            error: 'All fields are required'
-          }
-        } else {
-          // Insert into database
-          const { data, error } = await supabase
-            .from('Problem_set')
-            .insert([
-              input
-            ]);
-
-          return {
-            data: data,
-            error: error
-          }
+          id: problem.id,
+          name: problem.name,
+          visible: problem.visible
         }
-      }
-
+      }),
+      teacher: problemSet.owner ? {
+        id: problemSet.owner?.id,
+        name: problemSet.owner?.user.name || '',
+      } : undefined
     }
+  })
+
+  return {
+    psets: returnedProblemSets
+  }
+}
+
+const createPsetValidator = z.object({
+  title: z.string(),
+  description: z.string(),
+  auto_accept: z.stringbool().optional().nullable(),
+  is_global: z.stringbool().optional().nullable()
+})
+
+export const actions: Actions = {
+  createPset: async ({ request, locals }) => {
+    const session = await locals.auth()
+
+    if (!session) return
+    if (session.user.type !== 'teacher') {
+      return fail(400, { error: 'You are not authorized to create a problem.' })
+    }
+
+    const formData = await request.formData();
+    const input = {
+      title: formData.get('title'),
+      description: formData.get('description'),
+      auto_accept: formData.get('auto_accept') || null,
+      is_global: formData.get('is_private') || null,
+    };
+
+    const validatedData = await createPsetValidator.safeParseAsync(input)
+
+    if (!validatedData.success) {
+      return fail(400, { error: validatedData.error.message })
+    }
+
+    const data = await prisma.problemSet.create({
+      data: {
+        title: validatedData.data.title,
+        description: validatedData.data.description,
+        owner_id: session.user.id,
+        is_global: validatedData.data.is_global ? !validatedData.data.is_global : true,
+        auto_accept: validatedData.data.auto_accept || false,
+      }
+    })
+
+    return { data }
   },
 };

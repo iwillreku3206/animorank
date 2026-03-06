@@ -12,44 +12,61 @@ enum Language {
 }
 
 model Problem {
-  id               String            @id @default(uuid()) @db.Uuid
-  name             String
-  description      String
-  language         Language
-  visible          Boolean           @default(true)
-  problem_set_id   String            @db.Uuid
-  problem_set      ProblemSet        @relation(fields: [problem_set_id], references: [id], onDelete: Cascade)
-  PracticeSessions PracticeSession[]
-  created_at       DateTime          @default(now()) @db.Timestamptz(6)
-  updated_at       DateTime          @updatedAt @db.Timestamptz(6)
+  id                String            @id @default(uuid()) @db.Uuid
+  name              String
+  description       String
+  language          Language          @default(C)
+  starter_code      String            @default("")
+  visible           Boolean           @default(true)
+  problem_set_id    String            @db.Uuid
+  problem_set       ProblemSet        @relation(fields: [problem_set_id], references: [id], onDelete: Cascade)
+  practice_sessions PracticeSession[]
+  created_at        DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime          @updatedAt @db.Timestamptz(6)
+  problemTestCases  ProblemTestCase[]
 }
 
 enum ProblemTestCaseType {
-  FUNCTION
-  PROGRAM
+  FUNCTION_OUTPUT
+  PROGRAM_IO
+  CUSTOM
+}
+
+enum ProblemTestCaseOperator {
+  EQUAL
+  NOT_EQUAL
+  LESS_THAN
+  LESS_THAN_EQUAL
+  GREATER_THAN
+  GREATER_THAN_EQUAL
+  WITHIN_RANGE
 }
 
 model ProblemTestCase {
-  id              String              @id @default(uuid()) @db.Uuid
-  type            ProblemTestCaseType
-  input           String
-  expected_output String
-  created_at      DateTime            @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime            @updatedAt @db.Timestamptz(6)
+  id              String                  @id @default(uuid()) @db.Uuid
+  type            ProblemTestCaseType     @default(FUNCTION_OUTPUT)
+  input           String                  @default("")
+  expected_output String                  @default("")
+  operator        ProblemTestCaseOperator @default(EQUAL)
+  test_case_info  Json                    @default("{}") @db.JsonB
+  problem_id      String                  @db.Uuid
+  problem         Problem                 @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  created_at      DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime                @updatedAt @db.Timestamptz(6)
 }
 
 model ProblemSet {
-  id           String         @id @default(uuid()) @db.Uuid
-  description  String?
-  title        String
-  owner_id     String?        @db.Uuid
-  owner        Teacher?       @relation(fields: [owner_id], references: [id], onDelete: SetNull)
-  auto_accept  Boolean        @default(false)
-  is_global    Boolean        @default(false)
-  Problem      Problem[]
-  Subscription Subscription[]
-  created_at   DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime       @updatedAt @db.Timestamptz(6)
+  id            String         @id @default(uuid()) @db.Uuid
+  description   String?
+  title         String
+  owner_id      String?        @db.Uuid
+  owner         Teacher?       @relation(fields: [owner_id], references: [id], onDelete: SetNull)
+  auto_accept   Boolean        @default(false)
+  is_global     Boolean        @default(false)
+  problems      Problem[]
+  subscriptions Subscription[]
+  created_at    DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime       @updatedAt @db.Timestamptz(6)
 }
 
 model PracticeSession {
@@ -77,6 +94,7 @@ enum HistoryEntryType {
   PAGE_OPENED
   PAGE_FOCUS
   RUN_ATTEMPT
+  SUBMIT_ATTEMPT
   PING
   OTHER
 }
@@ -98,7 +116,6 @@ model Student {
 }
 
 model Subscription {
-  id             String     @id @default(uuid()) @db.Uuid
   problem_set_id String     @db.Uuid
   problem_set    ProblemSet @relation(fields: [problem_set_id], references: [id], onDelete: Cascade)
   student_id     String     @db.Uuid
@@ -106,6 +123,8 @@ model Subscription {
   status         String?
   created_at     DateTime   @default(now()) @db.Timestamptz(6)
   updated_at     DateTime   @updatedAt @db.Timestamptz(6)
+
+  @@id([problem_set_id, student_id])
 }
 
 model Teacher {

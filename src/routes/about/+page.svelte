@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { openLogin } from '$lib/state/login.svelte';
 	import { openTerms } from '$lib/state/terms.svelte';
 </script>
@@ -31,7 +31,7 @@
 			class="btn btn-outline mt-5"
 			onclick={() => {
 				openLogin.openSignUp = true;
-			}}>Get started</button
+			}}>Get Started</button
 		>
 	</div>
 	<div class="blob-cont">
@@ -239,4 +239,3 @@
 		}
 	}
 </style>
-

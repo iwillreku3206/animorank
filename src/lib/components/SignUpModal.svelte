@@ -1,5 +1,6 @@
-<script>
+<script lang="ts">
 	import { openLogin } from '$lib/state/login.svelte';
+	import { signIn } from '@auth/sveltekit/client';
 
 	const closeModal = () => {
 		openLogin.openSignUp = false;
@@ -79,7 +80,7 @@
 					</p>
 				</div>
 			</div>
-			<form method="POST" action="?/login" class="space-y-4">
+			<div class="space-y-4">
 				<label class="flex items-center space-x-2">
 					<input
 						type="checkbox"
@@ -101,8 +102,11 @@
 
 				{#if enableSignUp}
 					<button
-						type="submit"
+						type="button"
 						class="bg-[#1E1E1E] btn w-full gap-2 border-[#0A875E] text-[#0A875E] hover:bg-[#006239] hover:text-white transition-all duration-300"
+						onclick={() => {
+							signIn('google');
+						}}
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -116,7 +120,7 @@
 						Continue with Google
 					</button>
 				{:else}
-					<button type="submit" disabled={!enableSignUp} class="btn btn-disabled w-full gap-2">
+					<button disabled={true} class="btn btn-disabled w-full gap-2">
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
 							viewBox="0 0 488 512"
@@ -129,7 +133,7 @@
 						Continue with Google
 					</button>
 				{/if}
-			</form>
+			</div>
 			<p class="text-center text-xs text-gray-400">
 				Already have an account?
 				<button

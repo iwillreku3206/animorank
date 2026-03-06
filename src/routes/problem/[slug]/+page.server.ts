@@ -1,52 +1,15 @@
-import { supabase } from "$lib/supabaseClient";
 import { redirect } from '@sveltejs/kit';
-import { OAuth2Client } from 'google-auth-library';
-import { BASE_URL, SECRET_CLIENT_ID, SECRET_CLIENT_SECRET } from '$env/static/private';
-import type { Actions, PageServerLoad } from "./$types";
-
-export const actions: Actions = {
-  login: async ({ request }) => {
-    const redirectURL = `${BASE_URL}/oath`;
-
-    const oAuth2Client = new OAuth2Client(
-      SECRET_CLIENT_ID,
-      SECRET_CLIENT_SECRET,
-      redirectURL
-    );
-
-
-    const authUrl = oAuth2Client.generateAuthUrl({
-      access_type: 'offline',
-      scope: ['https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile openid'],
-      prompt: 'consent'
-    });
-
-    return redirect(302, authUrl);
-  }
-};
+import type { PageServerLoad } from "./$types";
+import { prisma } from "$lib/prisma";
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-  // Update the load function
-  let user = locals.user;
+  const session = await locals.auth()
 
-  let { data: Problem, error } = await supabase
-    .from('Problem')
-    .select("*, Session(*)")
-    .eq("id", Number(params.slug))
-    .eq("Session.student_email", user.email);
+  if (!session || !session.user.id) redirect(302, '/about')
 
-  // Check if session exists and replace starter code with it
-  if (Problem && Problem.length > 0) {
-    let problem = Problem[0];
-    if ("Session" in problem) {
-      let session = problem.Session[0];
-      if (session?.last_state) {
-        problem.starter_code = session.last_state;
-      }
-    }
-  }
+  const problem = await prisma.problem.findUnique({ where: { id: params.slug, problem_set: { subscriptions: { some: { student_id: session.user.id } } } }, include: { practice_sessions: { where: { student_id: session.user.id } } } })
 
-  return {
-    Problem, error
-  }
+  // TODO: copy in starter code if no practice session
+
+  return { problem }
 }

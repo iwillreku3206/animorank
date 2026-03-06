@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	/** @type {{openLogin: any}} */
 	import { openTerms } from '$lib/state/terms.svelte';
 

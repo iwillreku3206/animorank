@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	let { toggleTestResults = $bindable(false), test_passed = [], test_failed = [] } = $props();
 </script>
 
@@ -37,4 +37,3 @@
 		</div>
 	</div>
 {/if}
-

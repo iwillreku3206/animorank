@@ -1,17 +1,29 @@
 import StudentPsBox from '$lib/components/StudentPSBox.svelte';
-import { supabase } from '$lib/supabaseClient';
-import type { RequestHandler } from '../$types';
+import { fail } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 import { z } from 'zod'
+import { prisma } from '$lib/prisma';
+import { HistoryEntryType } from '../../../../generated/prisma/enums';
+import type { PracticeHistoryEntryCreateManyInput, PracticeSessionCreateManyInput } from '../../../../generated/prisma/models';
 
-const validator = z.object({
-  student_email: z.email(),
-  id: z.int(),
-  history: z.string(),
-  last_state: z.string()
-})
+const validator = z.array(z.object({
+  timestamp: z.date(),
+  type: z.enum(Object.values(HistoryEntryType)),
+  data: z.any(),
+  session_id: z.uuid()
+}))
 
-export const POST: RequestHandler = async (event) => {
-  const body = await event.request.json()
+export const POST: RequestHandler = async ({ locals, request }) => {
+  const session = await locals.auth()
+
+  if (!session) {
+    return new Response(JSON.stringify({ error: "Not signed in" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json" }
+    })
+  }
+
+  const body = await request.json()
 
   const { success, data: bodyData, error: zodError } = await validator.safeParseAsync(body)
 
@@ -22,24 +34,11 @@ export const POST: RequestHandler = async (event) => {
     })
   }
 
-  const { data, error } = await supabase
-    .from('Session')
-    .upsert({
-      student_email: bodyData.student_email,
-      problem_id: bodyData.id,
-      history: bodyData.history,
-      last_state: bodyData.last_state,
-    });
+  await prisma.practiceHistoryEntry.createMany({ data: bodyData.map(event => ({ data: event.data, practice_session_id: event.session_id, type: event.type, timestamp: event.timestamp }) satisfies PracticeHistoryEntryCreateManyInput) })
 
-  if (error) {
-    return new Response(JSON.stringify(error), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
-  } else {
-    return new Response(JSON.stringify(data), {
-      status: 200,
-      headers: { "Content-Type": "application/json" }
-    });
-  }
+
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" }
+  });
 }

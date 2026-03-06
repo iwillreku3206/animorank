@@ -19,8 +19,6 @@ export const actions: Actions = {
         input
       ]);
 
-
-
     return {
       data: 'success',
       error: null

@@ -1,50 +1,56 @@
-import { supabase } from '$lib/supabaseClient';
+import { prisma } from '$lib/prisma';
+import { fail, redirect } from '@sveltejs/kit';
+import { z } from 'zod';
 import type { Actions } from './$types';
+
+const createProblemValidator = z.object({
+  problem_name: z.string().min(1),
+  body: z.string().min(1),
+  test_function: z.string().min(1),
+  starter_code: z.string().min(1),
+  language: z.literal('C')
+});
 
 export const actions: Actions = {
   createProblem: async ({ request, params, locals }) => {
-    if (locals.user) {
-      if (locals.user.role !== 'teacher') {
-        return {
-          data: null,
-          error: 'You are not authorized to create a problem.'
-        };
-      }
-      else {
-        const formData = await request.formData();
+    const session = await locals.auth();
 
-        const { slug } = params;
-        const test_cases = formData.get('test_cases');
-        const input = {
-          problem_name: formData.get('title'),
-          body: formData.get('description'),
-          test_function: formData.get('test_function'),
-          starter_code: formData.get('starterCode'),
-          problem_set: slug,
-          language: "C",
-        };
+    if (!session || !session.user.id) redirect(302, '/about');
 
-        // insert into supabase
-        const { data, error } = await supabase
-          .from('Problem')
-          .insert([
-            input
-          ]);
-
-        if (error) {
-          return {
-            data: null,
-            error: error
-          }
-        }
-        else {
-          return {
-            data: 'success',
-            error: null
-          }
-        }
-      }
+    if (session.user.type !== 'teacher') {
+      return fail(403, { error: 'You are not allowed to edit a problem set' });
     }
 
-  },
+    const formData = await request.formData();
+
+    const { slug } = params;
+
+    // TODO: Handle test cases
+    const test_cases = formData.get('test_cases');
+
+    const input = {
+      problem_name: formData.get('title'),
+      body: formData.get('description'),
+      test_function: formData.get('test_function'),
+      starter_code: formData.get('starterCode'),
+      language: 'C'
+    };
+
+    const { success, data, error } = await createProblemValidator.safeParseAsync(input)
+
+    if (!success) return fail(400, { error })
+
+    const problemSet = await prisma.problemSet.findUnique({ where: { id: slug } });
+
+    if (problemSet?.owner_id != session.user.id) {
+      return fail(403, { error: 'You are not allowed to edit this problem set' });
+    }
+
+    prisma.problem.create({ data: { name: data.problem_name, description: data.body, language: data.language, problem_set_id: params.slug } });
+
+    return {
+      data: 'success',
+      error: null
+    };
+  }
 };

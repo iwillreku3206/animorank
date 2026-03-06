@@ -1,7 +1,8 @@
-<script>
+<script lang="ts">
 	/** @type {{openLogin: any}} */
 	import { openLogin } from '$lib/state/login.svelte';
 	import { openTerms } from '$lib/state/terms.svelte';
+	import { signIn } from '@auth/sveltekit/client';
 
 	const moveToTerms = () => {
 		openLogin.open = false;
@@ -20,7 +21,7 @@
 		>
 			<button
 				class="btn btn-square btn-ghost absolute top-2 right-2"
-				on:click={closeModal}
+				onclick={closeModal}
 				aria-label="Close"
 			>
 				<svg
@@ -42,9 +43,12 @@
 			<p class="text-gray-400 mt-10 mb-4">Please sign in to continue</p>
 
 			<div class="card-body w-full pt-6">
-				<form method="POST" action="?/login">
+				<div>
 					<button
-						type="submit"
+						onclick={() => {
+							signIn('google');
+						}}
+						type="button"
 						class="bg-[#1E1E1E] btn w-full gap-2 border-[#0A875E] text-[#0A875E] hover:bg-[#006239] hover:text-white transition-all duration-300 hover:scale-105"
 					>
 						<svg
@@ -61,20 +65,20 @@
 					<p class="text-center text-xs text-gray-400 mt-4">
 						By continuing, you agree to our
 						<button
-							on:click={moveToTerms}
+							onclick={moveToTerms}
 							class="text-[#0A875E] hover:text-[#006239] hover:underline">Terms of Service</button
 						>
 						and
 						<button
-							on:click={moveToTerms}
+							onclick={moveToTerms}
 							class="text-[#0A875E] hover:text-[#006239] hover:underline">Cookie Policy</button
 						>
 					</p>
-				</form>
+				</div>
 			</div>
 		</div>
 		<button
-			on:click={closeModal}
+			onclick={closeModal}
 			class="bg-black/50 absolute w-full h-full z-9"
 			aria-label="Hidden Close"
 		></button>

@@ -1,43 +1,25 @@
-<script>
-	import dropdown from '../assets/dropdown.svg';
-	import edit from '../assets/edit.svg';
-	import del from '../assets/delete.svg';
-	import close from '../assets/close.svg';
-	import done from '../assets/done.svg';
-	import link from '../assets/link.svg';
-	import statistics from '../assets/statistics.svg';
-	import global from '../assets/global.svg';
-	import hidden from '../assets/hidden.svg';
-	import lock from '../assets/lock.svg';
-	import visible from '../assets/visible.svg';
+<script lang="ts">
+	import dropdown from '$lib/assets/dropdown.svg';
+	import edit from '$lib/assets/edit.svg';
+	import del from '$lib/assets/delete.svg';
+	import close from '$lib/assets/close.svg';
+	import done from '$lib/assets/done.svg';
+	import link from '$lib/assets/link.svg';
+	import statistics from '$lib/assets/statistics.svg';
+	import global from '$lib/assets/global.svg';
+	import hidden from '$lib/assets/hidden.svg';
+	import lock from '$lib/assets/lock.svg';
+	import visible from '$lib/assets/visible.svg';
+	import type { ProblemSet } from './+page.server';
+	import { createProblem } from './api';
+	import { goto } from '$app/navigation';
 
-	let { pset } = $props();
+	let { pset }: { pset: ProblemSet } = $props();
 	let togglebttn = $state(false);
 	let openEdit = $state(false);
 	let loading = $state(false);
 	let linkFeedback = $state(false);
-	/**
-	 * @type {any[]}
-	 */
-	let problems = $state([]);
-
-	const loadPsetProblems = async () => {
-		// fetch problems
-		loading = true;
-		const response = await fetch('/api/problems', {
-			method: 'POST',
-			body: JSON.stringify({ psetId: pset.id, action: 'getPSETProblems' }),
-			headers: {
-				'content-type': 'application/json'
-			}
-		});
-
-		const res = await response.json();
-		res.data.forEach((/** @type {any} */ i) => {
-			problems.push(i);
-		});
-		loading = false;
-	};
+	let disableAddProblem = $state(false);
 
 	const linkFeedbackHandler = () => {
 		navigator.clipboard.writeText('http://localhost:5173/pset/' + pset.id);
@@ -47,18 +29,31 @@
 		}, 2000);
 	};
 
-	// @ts-ignore
-	const toggleVisibility = async (id, value) => {
-		// fetch problems
-		const response = await fetch('/api/problems', {
-			method: 'POST',
-			body: JSON.stringify({ action: 'updateProblemVisibility', visible: value, id: id }),
-			headers: {
-				'content-type': 'application/json'
+	const createProblemHandler = async () => {
+		disableAddProblem = true;
+		try {
+			const id = await createProblem(pset.id);
+			if (id) {
+				goto(`/create2/${id}`);
 			}
-		});
+		} catch (error) {
+			console.error(error);
+		} finally {
+			disableAddProblem = false;
+		}
+	};
 
-		const res = await response.json();
+	const toggleVisibility = async (id, value) => {
+		// TODO: implement
+		// 	// fetch problems
+		// 	const response = await fetch('/api/problems', {
+		// 		method: 'POST',
+		// 		body: JSON.stringify({ action: 'updateProblemVisibility', visible: value, id: id }),
+		// 		headers: {
+		// 			'content-type': 'application/json'
+		// 		}
+		// 	});
+		// 	const res = await response.json();
 	};
 </script>
 
@@ -66,7 +61,7 @@
 	<div class="w-full mt-8 min-h-72 p-3 bg-[#1F1F1F] rounded cursor-pointer flex flex-wrap">
 		<div class="w-full flex justify-between">
 			<h2 class="text-2xl mb-4 w-full">{pset.title}</h2>
-			{#if !pset.is_global}
+			{#if !pset}
 				<img src={lock} alt="lock" class="h-6 cursor-pointer" />
 			{/if}
 		</div>
@@ -74,22 +69,23 @@
 			{pset.description}
 		</div>
 		<div class="flex justify-between w-full flex-wrap">
-			<div class={pset.is_global ? 'mt-5 mb-5 w-ful w-full' : 'mt-5 mb-5 w-ful md:w-[600px]'}>
+			<div class={pset.global ? 'mt-5 mb-5 w-ful w-full' : 'mt-5 mb-5 w-ful md:w-[600px]'}>
 				<div class="flex align-middle justify-between border-b border-borderColor p-3">
 					<div class="text-xl">Problems</div>
 					<div class="flex align-middle">
-						<a
-							href="/create/{pset.id}"
+						<button
+							onclick={createProblemHandler}
 							class="btn btn-xs ml-2 mt-1 bg-[#006239] border-0 hover:bg-[#004327]"
+							disabled={disableAddProblem}
 						>
 							Add Problem
-						</a>
+						</button>
 					</div>
 				</div>
 				<div>
-					{#each problems as problem}
+					{#each pset.problems as problem}
 						<div class="flex justify-between p-2 align-middle text-center">
-							<h3 class="mt-auto mb-auto ml-4">{problem.problem_name}</h3>
+							<h3 class="mt-auto mb-auto ml-4">{problem.name}</h3>
 							<div class="flex">
 								<div class="grid place-items-center">
 									<div
@@ -110,7 +106,7 @@
 								<!-- <button class="btn btn-s ml-2 bg-[#121212] border-0 hover:bg-[#090909]">
 									<img src={edit} alt="edit" class="h-4 cursor-pointer" />
 								</button> -->
-								{#if !pset.is_global}
+								{#if !pset.global}
 									<button class="btn btn-s ml-2 bg-[#121212] border-0 hover:bg-[#090909]">
 										<img src={statistics} alt="statistics" class="h-5 cursor-pointer" />
 									</button>
@@ -120,7 +116,7 @@
 					{/each}
 				</div>
 			</div>
-			{#if !pset.is_global}
+			{#if !pset.global}
 				<div class="mt-5 mb-5 w-full md:w-[600px]">
 					<div class="flex align-middle justify-between border-b border-borderColor p-3">
 						<div class="text-xl">Students</div>
@@ -185,7 +181,7 @@
 	>
 		<div class="flex justify-between w-full">
 			<h2 class="text-2xl mb-4">{pset.title}</h2>
-			{#if !pset.is_global}
+			{#if !pset.global}
 				<div class="grid place-items-center">
 					<div class="tooltip tooltip-bottom pb-2" data-tip="Private">
 						<img src={lock} alt="lock" class="h-6 cursor-pointer" />
@@ -222,7 +218,6 @@
 				class="btn btn-s bg-[#121212] border-0 hover:bg-[#090909]"
 				onclick={() => {
 					openEdit = true;
-					loadPsetProblems();
 				}}
 			>
 				<img src={edit} alt="edit" class="h-6 cursor-pointer" />

@@ -1,12 +1,12 @@
-<script>
+<script lang="ts">
 	/** @type {{openSettings: any, user: any}} */
-	let { openSettings = $bindable(), user } = $props();
+	let { openSettings = $bindable(), user }: { openSettings: boolean; user: User } = $props();
 	import { goto } from '$app/navigation';
+	import type { User } from '@auth/sveltekit';
+	import { signOut } from '@auth/sveltekit/client';
 
 	const logout = async () => {
-		//remove cookies and refresh
-		document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-		window.location.reload();
+		signOut();
 	};
 
 	const about = () => {
@@ -26,7 +26,7 @@
 	</button>
 	<div class="w-96 p-8 flex flex-col justify-center items-center z-30">
 		<div class="grid place-items-center w-48 h-48 bg-gray-100 rounded-full mb-2 overflow-hidden">
-			<img src={user.picture} alt="profile" class="w-full h-full rounded-full" />
+			<img src={user.image} alt="profile" class="w-full h-full rounded-full" />
 		</div>
 		<h2 class="mb-10">{user.email}</h2>
 		<button class="mb-2 underline cursor-pointer" onclick={logout}>Logout</button>

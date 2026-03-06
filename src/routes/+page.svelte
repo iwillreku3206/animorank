@@ -1,13 +1,13 @@
 <script lang="ts">
 	import StudentPSBox from '$lib/components/StudentPSBox.svelte';
-	import TeacherPSBox from '$lib/components/TeacherPSBox.svelte';
 	import CreateNewSet from '$lib/components/CreateNewSet.svelte';
+	import TeacherPSBox from './TeacherPSBox.svelte';
 
 	let showCreatePSetModal = $state(false);
 	let { data } = $props();
 </script>
 
-{#if data.user?.role === 'teacher'}
+{#if data.user?.type === 'teacher'}
 	<div class="w-screen bg-[#121212]">
 		<div class="mt-12 px-3 flex justify-between">
 			<h2 class="font-arial text-2xl">Dashboard</h2>
@@ -25,15 +25,9 @@
 				{/each}
 			{/if}
 		</div>
-		<CreateNewSet
-			closeModal={() => (showCreatePSetModal = false)}
-			show={showCreatePSetModal}
-			email={data.user.email}
-			name={data.user.name}
-			pictureURL={data.user.picture}
-		/>
+		<CreateNewSet closeModal={() => (showCreatePSetModal = false)} show={showCreatePSetModal} />
 	</div>
-{:else if data.user?.role === 'student'}
+{:else if data.user?.type === 'student'}
 	<div class="w-screen bg-[#121212]">
 		<div class="mt-12 px-3 flex justify-between">
 			<h2 class="font-arial text-2xl">Problems</h2>
@@ -41,8 +35,8 @@
 		<div class="flex flex-row flex-wrap justify-start w-8.5/10 mx-auto">
 			{#if data.psets}
 				{#each data.psets as pset}
-					{#if pset.Problem.length > 0}
-						<StudentPSBox title={pset.title} {pset} Problems={pset.Problem} />
+					{#if pset.problems.length > 0}
+						<StudentPSBox title={pset.title} {pset} Problems={pset.problems} />
 					{/if}
 				{/each}
 			{/if}

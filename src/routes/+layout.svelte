@@ -1,5 +1,8 @@
 <script lang="ts">
 	import '../app.css';
+	import 'katex/dist/katex.min.css';
+	import '@gravity-ui/uikit/styles/fonts.css';
+	import '@gravity-ui/uikit/styles/styles.css';
 	import { openLogin } from '$lib/state/login.svelte';
 	import menu from '$lib/assets/menu.svg';
 	import MobileLoginModal from '$lib/components/MobileLoginModal.svelte';
@@ -7,17 +10,18 @@
 	import SignUpModal from '$lib/components/SignUpModal.svelte';
 	import TermsModal from '$lib/components/TermsModal.svelte';
 	import ContactModal from '$lib/components/ContactModal.svelte';
+	import type { LayoutServerData } from './$types';
+	import { browser } from '$app/environment';
 
 	let openSettings = $state(false);
 	interface Props {
-		data: any;
+		data: LayoutServerData;
 		children?: import('svelte').Snippet;
 	}
 
 	let { data, children }: Props = $props();
-	const { user } = data;
 
-	let loggedIn = $derived(user !== null);
+	let loggedIn = $derived(!!data.user);
 </script>
 
 <div class="flex flex-col h-screen bg-[#121212] text-white">
@@ -36,7 +40,7 @@
 				onclick={() => (openSettings = true)}
 			>
 				<img
-					src={user?.picture}
+					src={data.user?.image}
 					alt="profile"
 					class="h-10 w-10 object-cover rounded-full cursor-pointer"
 				/>
@@ -56,8 +60,8 @@
 		<SignUpModal />
 	{/if}
 
-	{#if openSettings && loggedIn}
-		<MobileSettingsModal bind:openSettings {user} />
+	{#if openSettings && loggedIn && data.user}
+		<MobileSettingsModal bind:openSettings user={data.user} />
 	{/if}
 
 	<TermsModal />

@@ -1,16 +1,20 @@
-<script>
+<script lang="ts">
 	import Modal from './Modal.svelte';
 	import done from '$lib/assets/done.svg';
 
-	/** @type {{closeModal: any, show?: boolean, email: string, name: string, pictureURL: string}} */
-	let { closeModal, show = false, email, name, pictureURL } = $props();
+	let {
+		closeModal,
+		show = false
+	}: {
+		closeModal: any;
+		show?: boolean;
+	} = $props();
 	let AccessibleWithLink = $state(false);
 	let Private = $state(false);
 </script>
 
 <Modal {show} {closeModal}>
 	<form method="POST" action="?/createPset">
-		<input type="hidden" name="owner_email" value={email} />
 		<input
 			type="text"
 			placeholder="Problem Set Name"

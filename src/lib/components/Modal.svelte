@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	/** @type {{show?: boolean, closeModal: any, children?: import('svelte').Snippet}} */
 	let { show = false, closeModal, children } = $props();
 </script>

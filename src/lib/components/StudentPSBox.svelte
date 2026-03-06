@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import close from '$lib/assets/close.svg';
 	let { title, Problems, pset } = $props();
 
@@ -82,4 +82,3 @@
 // 		{/each}	
 // 		</div>
 // 	{/if} -->
-
