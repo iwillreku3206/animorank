@@ -49,10 +49,13 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
   switch (currentTestCase.type) {
     case "FunctionOutputTestCase":
       await db.functionOutputTestCase.update({ where: { id: params.id }, data: data as z.output<typeof functionOutputTestCaseValidator> })
+      break
     case "ProgramIOTestCase":
       await db.programIOTestCase.update({ where: { id: params.id }, data: data as z.output<typeof programIOTestCaseValidator> })
+      break
     case "CustomTestCase":
       await db.customTestCase.update({ where: { id: params.id }, data: data as z.output<typeof customTestCaseValidator> })
+      break
   }
 
   return successObject({ status: "Success" })

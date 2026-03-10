@@ -8,7 +8,7 @@ export const CTypeSchema = z.object({
   base: BaseTypeEnum,
   signed: z.boolean().nullable().optional(),
   sizeModifier: SizeModifierEnum.nullable().optional(),
-  isPointer: z.boolean().nullable(),
+  isPointer: z.boolean().default(false).nullable(),
 })
   .superRefine((data, ctx) => {
     // @@validate(base == INT || sizeModifier == null)
@@ -31,5 +31,5 @@ export const CTypeSchema = z.object({
   });
 
 export const CTypeWithValueSchema = CTypeSchema.extend({
-  value: z.string(),
+  value: z.string().default(""),
 });

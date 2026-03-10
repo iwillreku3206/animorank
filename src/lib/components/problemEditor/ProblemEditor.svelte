@@ -25,11 +25,14 @@
 	let lastSavedProblem = $state(problem);
 	let lastSavedTestCases = $state(testCases);
 
-	let ongoingSave = $state(false);
+	let ongoingSave = $derived(!!currentTimeout);
+	let saveLock = $state(false);
 	let changesAfterLock = $state(false);
 	let saveHasError = $state(false);
 
 	function checkChangesAndUpdate() {
+		if (saveLock) return;
+		saveLock = true;
 		ongoingSave = true;
 		// check what changed first
 		const problemUpdated = deepEqual(problem, lastSavedProblem, { strict: true });
@@ -57,10 +60,11 @@
 		const testCasesToSave = structuredClone($state.snapshot(testCases));
 
 		if (!problemUpdated && testCasesUpdated.length == 0) {
-			ongoingSave = false;
+			saveLock = false;
 		}
 
 		// persist to db
+		console.log('saving');
 		const promises: Promise<boolean>[] = [];
 		promises.push(updateProblem($state.snapshot(problemToSave)));
 
@@ -69,8 +73,9 @@
 		});
 
 		Promise.all(promises).then((values) => {
-			saveHasError = values.reduce((p, n) => p || n, false);
-			ongoingSave = false;
+			saveHasError = values.reduce((p, n) => p || !n, false);
+			saveLock = false;
+			currentTimeout = undefined;
 
 			if (changesAfterLock) {
 				changesAfterLock = false;
@@ -84,13 +89,16 @@
 		problemSerialized;
 		testCasesSerialized;
 
-		if (ongoingSave) {
+		if (untrack(() => saveLock)) {
 			changesAfterLock = true;
 			return;
 		}
 
 		clearTimeout(untrack(() => currentTimeout));
-		currentTimeout = setTimeout(checkChangesAndUpdate, 3000);
+		currentTimeout = setTimeout(
+			untrack(() => checkChangesAndUpdate),
+			3000
+		);
 	});
 
 	function addTestCase(type: ProblemTestCaseType) {
@@ -128,7 +136,7 @@
 </script>
 
 <div class="splitpanes-nobg h-full">
-	{JSON.stringify({ ongoingSave, changesAfterLock, saveHasError })}
+	{JSON.stringify({ ongoingSave, saveLock, changesAfterLock, saveHasError })}
 	<Splitpanes class="overflow-auto" style="height: calc(100vh - 4rem)">
 		<Pane class="pl-5 pb-10 pt-5 pr-3 overflow-scroll h-full">
 			<div class="w-9/10 m-auto">
