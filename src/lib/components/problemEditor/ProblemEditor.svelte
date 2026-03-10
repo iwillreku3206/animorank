@@ -3,11 +3,11 @@
 	import Editor from '../Editor.svelte';
 	import { Pane, Splitpanes } from 'svelte-splitpanes';
 	import TestCase from './TestCase.svelte';
-	import { createTestCase, deleteTestCase } from './api';
-	import { DEFAULT_TEST_CASE } from '$lib/constants';
+	import { createTestCase, deleteTestCase, updateProblem, updateTestCase } from './api';
 	import CodeEditor from '../CodeEditor.svelte';
 	import { Popover } from 'bits-ui';
 	import { untrack } from 'svelte';
+	import deepEqual from 'deep-equal';
 
 	let {
 		problem = $bindable(),
@@ -22,30 +22,84 @@
 
 	let currentTimeout = $state<NodeJS.Timeout | undefined>(undefined);
 
+	let lastSavedProblem = $state(problem);
+	let lastSavedTestCases = $state(testCases);
+
+	let ongoingSave = $state(false);
+	let changesAfterLock = $state(false);
+	let saveHasError = $state(false);
+
+	function checkChangesAndUpdate() {
+		ongoingSave = true;
+		// check what changed first
+		const problemUpdated = deepEqual(problem, lastSavedProblem, { strict: true });
+		const problemToSave = structuredClone($state.snapshot(problem));
+		lastSavedProblem = structuredClone($state.snapshot(problem));
+
+		const lastTestCaseMap: Record<string, ProblemTestCase> = {};
+		lastSavedTestCases.forEach((testCase) => (lastTestCaseMap[testCase.id] = testCase));
+
+		const testCaseMap: Record<string, ProblemTestCase> = {};
+		testCases.forEach((testCase) => (testCaseMap[testCase.id] = testCase));
+
+		const testCasesUpdated = [];
+		testCases.forEach((testCase) => {
+			if (!(testCase.id in lastTestCaseMap)) {
+				testCasesUpdated.push(testCase.id);
+			}
+
+			if (!deepEqual(testCase, lastTestCaseMap[testCase.id], { strict: true })) {
+				testCasesUpdated.push(testCase.id);
+			}
+		});
+
+		lastSavedTestCases = structuredClone($state.snapshot(testCases));
+		const testCasesToSave = structuredClone($state.snapshot(testCases));
+
+		if (!problemUpdated && testCasesUpdated.length == 0) {
+			ongoingSave = false;
+		}
+
+		// persist to db
+		const promises: Promise<boolean>[] = [];
+		promises.push(updateProblem($state.snapshot(problemToSave)));
+
+		testCasesToSave.forEach((testCase) => {
+			promises.push(updateTestCase(testCase));
+		});
+
+		Promise.all(promises).then((values) => {
+			saveHasError = values.reduce((p, n) => p || n, false);
+			ongoingSave = false;
+
+			if (changesAfterLock) {
+				changesAfterLock = false;
+				checkChangesAndUpdate();
+			}
+		});
+	}
+
 	$effect(() => {
 		// track these two objects
 		problemSerialized;
 		testCasesSerialized;
-		// TODO: move autosaving a test case to the testcase card component
+
+		if (ongoingSave) {
+			changesAfterLock = true;
+			return;
+		}
+
 		clearTimeout(untrack(() => currentTimeout));
-		currentTimeout = setTimeout(() => {
-			console.log('saving');
-		}, 3000);
+		currentTimeout = setTimeout(checkChangesAndUpdate, 3000);
 	});
 
 	function addTestCase(type: ProblemTestCaseType) {
 		return async () => {
 			disableAddTestCase = true;
 			try {
-				const id = await createTestCase(problem.id, type);
-				if (id) {
-					testCases.push({
-						...DEFAULT_TEST_CASE,
-						id,
-						created_at: new Date(),
-						updated_at: new Date(),
-						problem_id: problem.id
-					});
+				const testCase = await createTestCase(problem.id, type);
+				if (testCase) {
+					testCases.push(testCase);
 					testCases = testCases;
 				}
 			} catch (error) {
@@ -74,7 +128,7 @@
 </script>
 
 <div class="splitpanes-nobg h-full">
-	{JSON.stringify({ currentTimeout })}
+	{JSON.stringify({ ongoingSave, changesAfterLock, saveHasError })}
 	<Splitpanes class="overflow-auto" style="height: calc(100vh - 4rem)">
 		<Pane class="pl-5 pb-10 pt-5 pr-3 overflow-scroll h-full">
 			<div class="w-9/10 m-auto">

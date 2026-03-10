@@ -1,12 +1,4 @@
-import type { Problem, ProblemTestCase } from "../../zenstack/models";
-
-export const DEFAULT_TEST_CASE: Omit<ProblemTestCase, "id" | "problem_id" | "created_at" | "updated_at"> = {
-  input: "",
-  expected_output: "",
-  type: "FUNCTION_OUTPUT",
-  operator: "EQUAL",
-  test_case_info: {}
-}
+import type { Problem } from "../../zenstack/models";
 
 export const DEFAULT_PROBLEM: Omit<Problem, "id" | "problem_set_id" | "created_at" | "updated_at"> = {
   name: 'New Problem',
