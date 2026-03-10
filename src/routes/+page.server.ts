@@ -2,9 +2,9 @@ import { fail, redirect } from '@sveltejs/kit';
 import { auth, OAuth2Client } from 'google-auth-library';
 import { BASE_URL, SECRET_CLIENT_ID, SECRET_CLIENT_SECRET } from '$env/static/private';
 import type { Actions, PageServerLoad } from './$types';
-import { prisma } from '$lib/prisma';
-import type { ProblemSetWhereInput } from '../../generated/prisma/models';
 import z from 'zod';
+import { db } from '$lib/zenstack';
+import { type ProblemSetWhereInput } from '../../zenstack/input'
 
 export interface ProblemSet {
   id: string;
@@ -38,7 +38,7 @@ export const load: PageServerLoad = async ({ locals }) => {
     return redirect(302, '/about')
   }
 
-  const problemSets = await prisma.problemSet.findMany({ where: filter, include: { problems: true, owner: { include: { user: true } } } })
+  const problemSets = await db.problemSet.findMany({ where: filter, include: { problems: true, owner: { include: { user: true } } } })
 
   const returnedProblemSets: ProblemSet[] = problemSets.map(problemSet => {
     return {
@@ -95,7 +95,7 @@ export const actions: Actions = {
       return fail(400, { error: validatedData.error.message })
     }
 
-    const data = await prisma.problemSet.create({
+    const data = await db.problemSet.create({
       data: {
         title: validatedData.data.title,
         description: validatedData.data.description,

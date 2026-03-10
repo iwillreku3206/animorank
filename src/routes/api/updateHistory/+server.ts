@@ -1,10 +1,8 @@
-import StudentPsBox from '$lib/components/StudentPSBox.svelte';
-import { fail } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { z } from 'zod'
-import { prisma } from '$lib/prisma';
-import { HistoryEntryType } from '../../../../generated/prisma/enums';
-import type { PracticeHistoryEntryCreateManyInput, PracticeSessionCreateManyInput } from '../../../../generated/prisma/models';
+import { HistoryEntryType } from '../../../../zenstack/models';
+import type { PracticeHistoryEntryCreateManyArgs } from '../../../../zenstack/input';
+import { db } from '$lib/zenstack';
 
 const validator = z.array(z.object({
   timestamp: z.date(),
@@ -34,8 +32,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     })
   }
 
-  await prisma.practiceHistoryEntry.createMany({ data: bodyData.map(event => ({ data: event.data, practice_session_id: event.session_id, type: event.type, timestamp: event.timestamp }) satisfies PracticeHistoryEntryCreateManyInput) })
-
+  await db.practiceHistoryEntry.createMany({ data: bodyData.map(event => ({ data: event.data, practice_session_id: event.session_id, type: event.type, timestamp: event.timestamp }) satisfies PracticeHistoryEntryCreateManyArgs['data']) })
 
   return new Response(JSON.stringify({ success: true }), {
     status: 200,

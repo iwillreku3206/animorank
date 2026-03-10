@@ -1,7 +1,7 @@
 import { SvelteKitAuth, type DefaultSession } from "@auth/sveltekit"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import Google from '@auth/sveltekit/providers/google'
-import { prisma } from "./prisma"
+import { db } from "./zenstack"
 
 declare module "@auth/sveltekit" {
   interface Session {
@@ -27,10 +27,10 @@ export const { handle } = SvelteKitAuth({
       }
     }
   })],
-  adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(db),
   callbacks: {
     async session({ session, user }) {
-      const dbUser = await prisma.user.findUnique({ where: { id: user.id }, include: { student: true, teacher: true } })
+      const dbUser = await db.user.findUnique({ where: { id: user.id }, include: { student: true, teacher: true } })
 
       if (!dbUser) return session
 
@@ -46,14 +46,13 @@ export const { handle } = SvelteKitAuth({
   events: {
     async signIn({ user }) {
       if (!user.email || !user.id) return
-      const dbUser = await prisma.teacherList.findUnique({ where: { email: user.email } })
+      const dbUser = await db.teacherList.findUnique({ where: { email: user.email } })
 
       const obj = { id: user.id }
       if (dbUser) {
-        console.log('created teacher: ', user.email)
-        await prisma.teacher.upsert({ create: obj, update: {}, where: obj })
+        await db.teacher.upsert({ create: obj, update: {}, where: obj })
       } else {
-        await prisma.student.upsert({ create: obj, update: {}, where: obj })
+        await db.student.upsert({ create: obj, update: {}, where: obj })
       }
     },
   }

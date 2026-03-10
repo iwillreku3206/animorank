@@ -180,7 +180,7 @@
 				</div>
 			</span>
 
-			<CodeEditor bind:value bind:problem bind:handleReset />
+			<!--<CodeEditor bind:value bind:problem bind:handleReset />-->
 
 			<TestCaseDisplay bind:toggleTestResults {test_passed} {test_failed} />
 

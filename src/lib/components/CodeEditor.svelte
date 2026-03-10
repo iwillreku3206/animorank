@@ -46,7 +46,7 @@
 	});
 </script>
 
-<div class="w-full h-full {rest.class}" bind:this={editorContainer}>
+<div class="{rest.class} w-full h-full" bind:this={editorContainer}>
 	{#if !monacoInstance}
 		<p class="content-center w-full h-full text-grey-400">loading editor...</p>
 	{/if}

@@ -221,6 +221,7 @@
 			/>
 		</div>
 
+		<!--
 		<div class="w-9/10 m-auto mt-10">
 			<h2 class="text-2xl mb-3">Edit Problem Description</h2>
 			<div class="m-auto">
@@ -239,6 +240,7 @@
 				</div>
 			</div>
 		{/if}
+-->
 	</div>
 
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -423,7 +425,7 @@
 				{/if}
 			</div>
 		{:else}
-			<CodeEditor bind:value={codeEditorRef} bind:problem={codeEditorProblem} bind:handleReset />
+			<!--<CodeEditor bind:value={codeEditorRef} bind:problem={codeEditorProblem} bind:handleReset />-->
 		{/if}
 
 		<TestCaseDisplay bind:toggleTestResults {test_passed} {test_failed} />

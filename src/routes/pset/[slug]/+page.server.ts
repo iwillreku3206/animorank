@@ -2,9 +2,9 @@ import { redirect } from '@sveltejs/kit';
 import { OAuth2Client } from 'google-auth-library';
 import { BASE_URL, SECRET_CLIENT_ID, SECRET_CLIENT_SECRET } from '$env/static/private';
 import type { Actions, PageServerLoad } from "./$types";
-import { prisma } from "$lib/prisma";
 
 import { type ProblemSet } from '../../+page.server'
+import { db } from '$lib/zenstack';
 export { type ProblemSet }
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -14,7 +14,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
   const { slug } = params;
 
-  const problemSet = await prisma.problemSet.findUnique({ where: { id: slug, is_global: true, problems: { some: { visible: true } } }, include: { problems: true, owner: { include: { user: true } } } })
+  const problemSet = await db.problemSet.findUnique({ where: { id: slug, is_global: true, problems: { some: { visible: true } } }, include: { problems: true, owner: { include: { user: true } } } })
 
 
   return {

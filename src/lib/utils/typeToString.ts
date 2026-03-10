@@ -1,11 +1,12 @@
-import type { CParameterType, CReturnType } from "$lib/types/testCaseInfo";
+import type { CType } from "../../../zenstack/models"
 
 /**
   * Converts a C type object to a C code string
 */
-export const typeToString = (type: CParameterType | CReturnType): string => {
+export const typeToString = (type: CType): string => {
   let output = ""
-  if ((type.base == 'int' || type.base == 'char')) {
+  if (!type) return output
+  if ((type.base == 'INT' || type.base == 'CHAR')) {
     if (type.signed === true) {
       output += 'signed '
     } else if (type.signed === false) {
@@ -13,13 +14,13 @@ export const typeToString = (type: CParameterType | CReturnType): string => {
     }
   }
 
-  if (type.base == 'int') {
-    if (type.sizeModifier) output += `${type.sizeModifier} `
+  if (type.base == 'INT') {
+    if (type.sizeModifier) output += `${type.sizeModifier.replaceAll('_', ' ').toLowerCase()} `
   }
 
-  output += type.base
+  output += type.base.toLowerCase()
 
-  if ((type as CParameterType).pointer) output += '*'
+  if (type.isPointer) output += '*'
 
   return output
 }

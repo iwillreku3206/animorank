@@ -1,9 +1,11 @@
-import type { Problem, ProblemTestCase } from "../../generated/prisma/client";
+import type { Problem, ProblemTestCase } from "../../zenstack/models";
 
 export const DEFAULT_TEST_CASE: Omit<ProblemTestCase, "id" | "problem_id" | "created_at" | "updated_at"> = {
   input: "",
   expected_output: "",
-  type: "FUNCTION_OUTPUT"
+  type: "FUNCTION_OUTPUT",
+  operator: "EQUAL",
+  test_case_info: {}
 }
 
 export const DEFAULT_PROBLEM: Omit<Problem, "id" | "problem_set_id" | "created_at" | "updated_at"> = {
@@ -17,4 +19,5 @@ You can also add math formulas with KaTeX (LaTeX-like format): $F(x)=\\frac12x^2
   `,
   language: "C",
   visible: false,
+  starter_code: ""
 }

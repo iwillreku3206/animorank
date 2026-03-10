@@ -1,8 +1,11 @@
-export async function createTestCase(problem: string): Promise<string | undefined> {
+import type { ProblemTestCaseType } from "../../../../zenstack/models"
+
+export async function createTestCase(problem: string, type: ProblemTestCaseType): Promise<string | undefined> {
   const req = await fetch("/api/test-case", {
     method: 'POST',
     body: JSON.stringify({
-      problem
+      problem,
+      type
     }),
     headers: {
       'content-type': 'application/json'

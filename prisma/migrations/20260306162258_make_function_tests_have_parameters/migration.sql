@@ -1,21 +1,28 @@
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
-
 -- CreateEnum
 CREATE TYPE "Language" AS ENUM ('C');
 
 -- CreateEnum
-CREATE TYPE "ProblemTestCaseType" AS ENUM ('FUNCTION', 'PROGRAM');
+CREATE TYPE "ProblemTestCaseType" AS ENUM ('FunctionOutputTestCase', 'ProgramIOTestCase', 'CustomTestCase');
 
 -- CreateEnum
-CREATE TYPE "HistoryEntryType" AS ENUM ('TEXT_INSERT', 'TEXT_DELETE', 'TEXT_COPY', 'TEXT_PASTE', 'TEXT_UNDO', 'TEXT_REDO', 'PAGE_OPENED', 'PAGE_FOCUS', 'RUN_ATTEMPT', 'PING', 'OTHER');
+CREATE TYPE "ProblemTestCaseOperator" AS ENUM ('EQUAL', 'NOT_EQUAL', 'LESS_THAN', 'LESS_THAN_EQUAL', 'GREATER_THAN', 'GREATER_THAN_EQUAL', 'WITHIN_RANGE', 'LEVENSHTEIN_SIMILARITY');
+
+-- CreateEnum
+CREATE TYPE "BaseType" AS ENUM ('INT', 'CHAR', 'BOOL', 'FLOAT', 'DOUBLE');
+
+-- CreateEnum
+CREATE TYPE "SizeModifier" AS ENUM ('LONG', 'LONG_LONG', 'SHORT');
+
+-- CreateEnum
+CREATE TYPE "HistoryEntryType" AS ENUM ('TEXT_INSERT', 'TEXT_DELETE', 'TEXT_COPY', 'TEXT_PASTE', 'TEXT_UNDO', 'TEXT_REDO', 'PAGE_OPENED', 'PAGE_FOCUS', 'RUN_ATTEMPT', 'SUBMIT_ATTEMPT', 'PING', 'OTHER');
 
 -- CreateTable
 CREATE TABLE "Problem" (
     "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "language" "Language" NOT NULL,
+    "language" "Language" NOT NULL DEFAULT 'C',
+    "starter_code" TEXT NOT NULL DEFAULT '',
     "visible" BOOLEAN NOT NULL DEFAULT true,
     "problem_set_id" UUID NOT NULL,
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -27,13 +34,40 @@ CREATE TABLE "Problem" (
 -- CreateTable
 CREATE TABLE "ProblemTestCase" (
     "id" UUID NOT NULL,
-    "type" "ProblemTestCaseType" NOT NULL,
-    "input" TEXT NOT NULL,
-    "expected_output" TEXT NOT NULL,
+    "type" "ProblemTestCaseType" NOT NULL DEFAULT 'FunctionOutputTestCase',
+    "problem_id" UUID NOT NULL,
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL,
 
     CONSTRAINT "ProblemTestCase_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "FunctionOutputTestCase" (
+    "id" UUID NOT NULL,
+    "parameters" JSONB NOT NULL DEFAULT '[]',
+    "operator" "ProblemTestCaseOperator" NOT NULL DEFAULT 'EQUAL',
+    "expected_output" TEXT NOT NULL DEFAULT '',
+    "function_name" TEXT NOT NULL DEFAULT '',
+
+    CONSTRAINT "FunctionOutputTestCase_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ProgramIOTestCase" (
+    "id" UUID NOT NULL,
+    "input" TEXT NOT NULL DEFAULT '',
+    "output" TEXT NOT NULL DEFAULT '',
+
+    CONSTRAINT "ProgramIOTestCase_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CustomTestCase" (
+    "id" UUID NOT NULL,
+    "test_code" TEXT NOT NULL DEFAULT '',
+
+    CONSTRAINT "CustomTestCase_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -83,14 +117,13 @@ CREATE TABLE "Student" (
 
 -- CreateTable
 CREATE TABLE "Subscription" (
-    "id" UUID NOT NULL,
     "problem_set_id" UUID NOT NULL,
     "student_id" UUID NOT NULL,
     "status" TEXT,
     "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL,
 
-    CONSTRAINT "Subscription_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Subscription_pkey" PRIMARY KEY ("problem_set_id","student_id")
 );
 
 -- CreateTable
@@ -184,6 +217,18 @@ CREATE UNIQUE INDEX "Authenticator_credentialID_key" ON "Authenticator"("credent
 ALTER TABLE "Problem" ADD CONSTRAINT "Problem_problem_set_id_fkey" FOREIGN KEY ("problem_set_id") REFERENCES "ProblemSet"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "ProblemTestCase" ADD CONSTRAINT "ProblemTestCase_problem_id_fkey" FOREIGN KEY ("problem_id") REFERENCES "Problem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "FunctionOutputTestCase" ADD CONSTRAINT "FunctionOutputTestCase_id_fkey" FOREIGN KEY ("id") REFERENCES "ProblemTestCase"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ProgramIOTestCase" ADD CONSTRAINT "ProgramIOTestCase_id_fkey" FOREIGN KEY ("id") REFERENCES "ProblemTestCase"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CustomTestCase" ADD CONSTRAINT "CustomTestCase_id_fkey" FOREIGN KEY ("id") REFERENCES "ProblemTestCase"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "ProblemSet" ADD CONSTRAINT "ProblemSet_owner_id_fkey" FOREIGN KEY ("owner_id") REFERENCES "Teacher"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -215,4 +260,3 @@ ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId"
 
 -- AddForeignKey
 ALTER TABLE "Authenticator" ADD CONSTRAINT "Authenticator_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-

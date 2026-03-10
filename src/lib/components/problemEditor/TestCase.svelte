@@ -1,28 +1,32 @@
 <script lang="ts">
 	import deleteIcon from '$lib/assets/delete.svg';
-	import type { ProblemTestCase } from '../../../../generated/prisma/client';
+	import type {
+		CustomTestCase,
+		FunctionOutputTestCase,
+		ProblemTestCase,
+		ProgramIOTestCase
+	} from '../../../../zenstack/models';
+	import CustomTest from './CustomTest.svelte';
 	import FunctionReturnValueTest from './FunctionReturnValueTest.svelte';
+	import ProgramIOTest from './ProgramIOTest.svelte';
 
 	let {
 		testCase = $bindable(),
+		order,
 		onDelete,
 		deleteDisabled
-	}: { testCase: ProblemTestCase; onDelete?: () => void; deleteDisabled: boolean } = $props();
+	}: {
+		testCase: ProblemTestCase;
+		order: number;
+		onDelete?: () => void;
+		deleteDisabled: boolean;
+	} = $props();
 </script>
 
 <div class="w-full bg-[#212121] rounded-lg p-4">
 	<div class="flex flex-col">
 		<div class="flex flex-row gap-2 items-center">
-			Test Type:
-			<select
-				name="Test Case Type"
-				bind:value={testCase.type}
-				class="select select-bordered select-sm bg-transparent"
-			>
-				<option value="FUNCTION_OUTPUT" selected>Function Return Value</option>
-				<option value="PROGRAM_IO">Program I/O</option>
-				<option value="CUSTOM">Custom Function</option>
-			</select>
+			Test Case #{order}: {testCase.type}
 			<div class="ml-auto">
 				<button title="Delete Test Case" onclick={onDelete} disabled={deleteDisabled}>
 					<img
@@ -33,8 +37,12 @@
 				</button>
 			</div>
 		</div>
-		{#if testCase.type == 'FUNCTION_OUTPUT'}
-			<FunctionReturnValueTest bind:testCase />
+		{#if testCase.type == 'FunctionOutputTestCase'}
+			<FunctionReturnValueTest bind:testCase={testCase as FunctionOutputTestCase} />
+		{:else if testCase.type == 'ProgramIOTestCase'}
+			<ProgramIOTest bind:testCase={testCase as ProgramIOTestCase} />
+		{:else if testCase.type == 'CustomTestCase'}
+			<CustomTest bind:testCase={testCase as CustomTestCase} />
 		{/if}
 	</div>
 </div>

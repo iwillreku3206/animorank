@@ -1,7 +1,7 @@
-import { prisma } from '$lib/prisma';
 import { fail, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import type { Actions } from './$types';
+import { db } from '$lib/zenstack';
 
 const createProblemValidator = z.object({
   problem_name: z.string().min(1),
@@ -40,13 +40,13 @@ export const actions: Actions = {
 
     if (!success) return fail(400, { error })
 
-    const problemSet = await prisma.problemSet.findUnique({ where: { id: slug } });
+    const problemSet = await db.problemSet.findUnique({ where: { id: slug } });
 
     if (problemSet?.owner_id != session.user.id) {
       return fail(403, { error: 'You are not allowed to edit this problem set' });
     }
 
-    prisma.problem.create({ data: { name: data.problem_name, description: data.body, language: data.language, problem_set_id: params.slug } });
+    db.problem.create({ data: { name: data.problem_name, description: data.body, language: data.language, problem_set_id: params.slug } });
 
     return {
       data: 'success',

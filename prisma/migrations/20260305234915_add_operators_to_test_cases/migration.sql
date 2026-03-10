@@ -1,8 +1,0 @@
--- CreateEnum
-CREATE TYPE "ProblemTestCaseOperator" AS ENUM ('EQUAL', 'NOT_EQUAL', 'LESS_THAN', 'LESS_THAN_EQUAL', 'GREATER_THAN', 'GREATER_THAN_EQUAL', 'WITHIN_RANGE');
-
--- AlterTable
-ALTER TABLE "ProblemTestCase" ADD COLUMN     "operator" "ProblemTestCaseOperator" NOT NULL DEFAULT 'EQUAL',
-ALTER COLUMN "type" SET DEFAULT 'FUNCTION_OUTPUT',
-ALTER COLUMN "input" SET DEFAULT '',
-ALTER COLUMN "expected_output" SET DEFAULT '';

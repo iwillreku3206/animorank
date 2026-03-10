@@ -1,7 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { z } from 'zod';
-import { prisma } from '$lib/prisma';
+import { db } from '$lib/zenstack';
 
 const validator = z.object({
   problem_set: z.string()
@@ -31,7 +31,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
   // TODO: Add verification if the student is "allowed" to subscribe to this problem set
 
   const obj = { problem_set_id: bodyData.problem_set, student_id: session.user.id }
-  await prisma.subscription.upsert({ create: obj, update: {}, where: { problem_set_id_student_id: obj } })
+  await db.subscription.upsert({ create: obj, update: {}, where: { problem_set_id_student_id: obj } })
 
   return new Response(JSON.stringify({ success: true }), {
     status: 200,

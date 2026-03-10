@@ -1,10 +1,7 @@
-generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
-}
-
 datasource db {
   provider = "postgresql"
+  url = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 enum Language {
@@ -27,9 +24,9 @@ model Problem {
 }
 
 enum ProblemTestCaseType {
-  FUNCTION_OUTPUT
-  PROGRAM_IO
-  CUSTOM
+  FunctionOutputTestCase
+  ProgramIOTestCase
+  CustomTestCase
 }
 
 enum ProblemTestCaseOperator {
@@ -40,19 +37,62 @@ enum ProblemTestCaseOperator {
   GREATER_THAN
   GREATER_THAN_EQUAL
   WITHIN_RANGE
+  LEVENSHTEIN_SIMILARITY
 }
 
 model ProblemTestCase {
-  id              String                  @id @default(uuid()) @db.Uuid
-  type            ProblemTestCaseType     @default(FUNCTION_OUTPUT)
-  input           String                  @default("")
-  expected_output String                  @default("")
+  id         String              @id @default(uuid()) @db.Uuid
+  type       ProblemTestCaseType @default(FunctionOutputTestCase)
+  problem_id String              @db.Uuid
+  problem    Problem             @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  created_at DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at DateTime            @updatedAt @db.Timestamptz(6)
+
+  @@delegate(type)
+}
+
+enum BaseType {
+  INT
+  CHAR
+  BOOL
+  FLOAT
+  DOUBLE
+}
+
+enum SizeModifier {
+  LONG
+  LONG_LONG
+  SHORT
+}
+
+type CType {
+  base         BaseType
+  signed       Boolean?      @default(true)
+  sizeModifier SizeModifier?
+  isPointer    Boolean?      @default(false)
+
+  @@validate(base == INT || sizeModifier == null, "Size modifier only applies to int")
+  @@validate(base == INT || base == CHAR || signed == null, "Signedness only applies to int or char")
+}
+
+type CTypeWithValue with CType {
+  value String @default("")
+}
+
+model FunctionOutputTestCase extends ProblemTestCase {
+  parameters      CTypeWithValue[]        @json() @default("[]")
+  expected_output CTypeWithValue          @json() @default('{"base": "INT"}')
   operator        ProblemTestCaseOperator @default(EQUAL)
-  test_case_info  Json                    @default("{}") @db.JsonB
-  problem_id      String                  @db.Uuid
-  problem         Problem                 @relation(fields: [problem_id], references: [id], onDelete: Cascade)
-  created_at      DateTime                @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime                @updatedAt @db.Timestamptz(6)
+  function_name   String                  @default("")
+}
+
+model ProgramIOTestCase extends ProblemTestCase {
+  input  String @default("")
+  output String @default("")
+}
+
+model CustomTestCase extends ProblemTestCase {
+  test_code String @default("")
 }
 
 model ProblemSet {
@@ -70,16 +110,16 @@ model ProblemSet {
 }
 
 model PracticeSession {
-  id         String  @id @default(uuid()) @db.Uuid
-  problem_id String  @db.Uuid
-  problem    Problem @relation(fields: [problem_id], references: [id], onDelete: Cascade)
-  student_id String  @db.Uuid
-  student    Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  last_state String?
-  history    String?
+  id                     String                 @id @default(uuid()) @db.Uuid
+  problem_id             String                 @db.Uuid
+  problem                Problem                @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  student_id             String                 @db.Uuid
+  student                Student                @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  last_state             String?
+  history                String?
 
-  created_at DateTime @default(now()) @db.Timestamptz(6)
-  updated_at DateTime @updatedAt @db.Timestamptz(6)
+  created_at             DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime               @updatedAt @db.Timestamptz(6)
 
   practiceHistoryEntries PracticeHistoryEntry[]
 }
@@ -148,15 +188,15 @@ model User {
   // Optional for WebAuthn support
   Authenticator Authenticator[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
-  student Student?
-  teacher Teacher?
+  student       Student?
+  teacher       Teacher?
 }
 
 model Account {
-  userId            String  @db.Uuid
+  userId            String   @db.Uuid
   type              String
   provider          String
   providerAccountId String
@@ -168,10 +208,10 @@ model Account {
   id_token          String?
   session_state     String?
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
 }
@@ -182,8 +222,8 @@ model Session {
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model VerificationToken {
@@ -205,7 +245,7 @@ model Authenticator {
   credentialBackedUp   Boolean
   transports           String?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, credentialID])
 }

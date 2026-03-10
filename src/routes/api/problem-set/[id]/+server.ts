@@ -1,14 +1,14 @@
-import { prisma } from "$lib/prisma";
 import { error, successObject } from "$lib/response";
 import z from "zod";
 import type { RequestHandler } from "./$types";
+import { db } from "$lib/zenstack";
 
 export const GET: RequestHandler = async ({ locals, params }) => {
   const session = await locals.auth()
 
   if (!session || !session.user.id) return error(403, "Unauthorized")
 
-  const problemSet = await prisma.problemSet.findUnique({
+  const problemSet = await db.problemSet.findUnique({
     where: {
       id: params.id,
       ...(session.user.type === 'student' ? { subscriptions: { some: { student_id: session.user.id } } } : { owner_id: session?.user.id })
@@ -53,7 +53,7 @@ export const PUT: RequestHandler = async ({ locals, request, params }) => {
 
   if (!success) return error(400, zodError)
 
-  await prisma.problemSet.update({ where: { id: params.id, owner_id: session.user.id }, data })
+  await db.problemSet.update({ where: { id: params.id, owner_id: session.user.id }, data })
 
   return successObject({ status: "success" })
 }
