@@ -108,6 +108,12 @@ export class SchemaType implements SchemaDef {
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }],
                     default: "FunctionOutputTestCase"
                 },
+                public: {
+                    name: "public",
+                    type: "Boolean",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }],
+                    default: true
+                },
                 problem_id: {
                     name: "problem_id",
                     type: "String",
@@ -163,6 +169,13 @@ export class SchemaType implements SchemaDef {
                     isDiscriminator: true,
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }],
                     default: "FunctionOutputTestCase"
+                },
+                public: {
+                    name: "public",
+                    type: "Boolean",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }],
+                    default: true
                 },
                 problem_id: {
                     name: "problem_id",
@@ -244,6 +257,13 @@ export class SchemaType implements SchemaDef {
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }],
                     default: "FunctionOutputTestCase"
                 },
+                public: {
+                    name: "public",
+                    type: "Boolean",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }],
+                    default: true
+                },
                 problem_id: {
                     name: "problem_id",
                     type: "String",
@@ -310,6 +330,13 @@ export class SchemaType implements SchemaDef {
                     isDiscriminator: true,
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }],
                     default: "FunctionOutputTestCase"
+                },
+                public: {
+                    name: "public",
+                    type: "Boolean",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }],
+                    default: true
                 },
                 problem_id: {
                     name: "problem_id",
@@ -468,15 +495,15 @@ export class SchemaType implements SchemaDef {
                     attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("student_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
                     relation: { opposite: "practice_sessions", fields: ["student_id"], references: ["id"], onDelete: "Cascade" }
                 },
-                last_state: {
-                    name: "last_state",
-                    type: "String",
-                    optional: true
+                done: {
+                    name: "done",
+                    type: "Boolean",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }],
+                    default: false
                 },
-                history: {
-                    name: "history",
-                    type: "String",
-                    optional: true
+                previous_code: {
+                    name: "previous_code",
+                    type: "String"
                 },
                 created_at: {
                     name: "created_at",
@@ -490,8 +517,8 @@ export class SchemaType implements SchemaDef {
                     updatedAt: true,
                     attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }]
                 },
-                practiceHistoryEntries: {
-                    name: "practiceHistoryEntries",
+                practice_history_entries: {
+                    name: "practice_history_entries",
                     type: "PracticeHistoryEntry",
                     array: true,
                     relation: { opposite: "practice_session" }
@@ -538,7 +565,7 @@ export class SchemaType implements SchemaDef {
                     name: "practice_session",
                     type: "PracticeSession",
                     attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("practice_session_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
-                    relation: { opposite: "practiceHistoryEntries", fields: ["practice_session_id"], references: ["id"], onDelete: "Cascade" }
+                    relation: { opposite: "practice_history_entries", fields: ["practice_session_id"], references: ["id"], onDelete: "Cascade" }
                 }
             },
             idFields: ["id"],
@@ -1008,8 +1035,21 @@ export class SchemaType implements SchemaDef {
                     type: "SizeModifier",
                     optional: true
                 },
+                arrayDimensions: {
+                    name: "arrayDimensions",
+                    type: "Int",
+                    optional: true,
+                    array: true
+                },
                 isPointer: {
                     name: "isPointer",
+                    type: "Boolean",
+                    optional: true,
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }],
+                    default: false
+                },
+                isString: {
+                    name: "isString",
                     type: "Boolean",
                     optional: true,
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }],
@@ -1018,7 +1058,9 @@ export class SchemaType implements SchemaDef {
             },
             attributes: [
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("sizeModifier"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Size modifier only applies to int") }] },
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR"))), "||", ExpressionUtils.binary(ExpressionUtils.field("signed"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Signedness only applies to int or char") }] }
+                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR"))), "||", ExpressionUtils.binary(ExpressionUtils.field("signed"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Signedness only applies to int or char") }] },
+                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(true))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] },
+                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] }
             ]
         },
         CTypeWithValue: {
@@ -1040,8 +1082,21 @@ export class SchemaType implements SchemaDef {
                     type: "SizeModifier",
                     optional: true
                 },
+                arrayDimensions: {
+                    name: "arrayDimensions",
+                    type: "Int",
+                    optional: true,
+                    array: true
+                },
                 isPointer: {
                     name: "isPointer",
+                    type: "Boolean",
+                    optional: true,
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }],
+                    default: false
+                },
+                isString: {
+                    name: "isString",
                     type: "Boolean",
                     optional: true,
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }],
@@ -1056,7 +1111,9 @@ export class SchemaType implements SchemaDef {
             },
             attributes: [
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("sizeModifier"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Size modifier only applies to int") }] },
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR"))), "||", ExpressionUtils.binary(ExpressionUtils.field("signed"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Signedness only applies to int or char") }] }
+                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR"))), "||", ExpressionUtils.binary(ExpressionUtils.field("signed"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Signedness only applies to int or char") }] },
+                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(true))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] },
+                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] }
             ]
         }
     } as const;

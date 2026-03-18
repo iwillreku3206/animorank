@@ -28,11 +28,16 @@
 		<div class="flex flex-row gap-2 items-center">
 			Test Case #{order}: {testCase.type}
 			<div class="ml-auto">
-				<button title="Delete Test Case" onclick={onDelete} disabled={deleteDisabled}>
+				<button
+					title="Delete Test Case"
+					class="btn btn-xs btn-ghost"
+					onclick={onDelete}
+					disabled={deleteDisabled}
+				>
 					<img
 						src={deleteIcon}
 						alt="Delete Icon"
-						class={`${!deleteDisabled ? 'red-svg' : 'disabled-svg'} h-6 w-6`}
+						class={`${!deleteDisabled ? 'red-svg' : 'disabled-svg'} h-full w-full`}
 					/>
 				</button>
 			</div>

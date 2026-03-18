@@ -11,7 +11,6 @@
 	import TermsModal from '$lib/components/TermsModal.svelte';
 	import ContactModal from '$lib/components/ContactModal.svelte';
 	import type { LayoutServerData } from './$types';
-	import { browser } from '$app/environment';
 
 	let openSettings = $state(false);
 	interface Props {

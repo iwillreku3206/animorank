@@ -43,6 +43,7 @@ enum ProblemTestCaseOperator {
 model ProblemTestCase {
   id         String              @id @default(uuid()) @db.Uuid
   type       ProblemTestCaseType @default(FunctionOutputTestCase)
+  public     Boolean             @default(true)
   problem_id String              @db.Uuid
   problem    Problem             @relation(fields: [problem_id], references: [id], onDelete: Cascade)
   created_at DateTime            @default(now()) @db.Timestamptz(6)
@@ -66,13 +67,17 @@ enum SizeModifier {
 }
 
 type CType {
-  base         BaseType
-  signed       Boolean?      @default(true)
-  sizeModifier SizeModifier?
-  isPointer    Boolean?      @default(false)
+  base            BaseType
+  signed          Boolean?      @default(true)
+  sizeModifier    SizeModifier?
+  arrayDimensions Int[]?
+  isPointer       Boolean?      @default(false)
+  isString        Boolean?      @default(false)
 
   @@validate(base == INT || sizeModifier == null, "Size modifier only applies to int")
   @@validate(base == INT || base == CHAR || signed == null, "Signedness only applies to int or char")
+  @@validate(base == CHAR || isString == true || isString == false, "isString only applies to char")
+  @@validate(base == CHAR || isString == false || isString == null, "isString only applies to char")
 }
 
 type CTypeWithValue with CType {
@@ -110,18 +115,18 @@ model ProblemSet {
 }
 
 model PracticeSession {
-  id                     String                 @id @default(uuid()) @db.Uuid
-  problem_id             String                 @db.Uuid
-  problem                Problem                @relation(fields: [problem_id], references: [id], onDelete: Cascade)
-  student_id             String                 @db.Uuid
-  student                Student                @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  last_state             String?
-  history                String?
+  id                       String                 @id @default(uuid()) @db.Uuid
+  problem_id               String                 @db.Uuid
+  problem                  Problem                @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  student_id               String                 @db.Uuid
+  student                  Student                @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  done                     Boolean                @default(false)
+  previous_code            String
 
-  created_at             DateTime               @default(now()) @db.Timestamptz(6)
-  updated_at             DateTime               @updatedAt @db.Timestamptz(6)
+  created_at               DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime               @updatedAt @db.Timestamptz(6)
 
-  practiceHistoryEntries PracticeHistoryEntry[]
+  practice_history_entries PracticeHistoryEntry[]
 }
 
 enum HistoryEntryType {

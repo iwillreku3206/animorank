@@ -1,6 +1,6 @@
 <script lang="ts">
-	import StudentPSBox from '$lib/components/StudentPSBox.svelte';
 	import CreateNewSet from '$lib/components/CreateNewSet.svelte';
+	import StudentPSBox from './StudentPSBox.svelte';
 	import TeacherPSBox from './TeacherPSBox.svelte';
 
 	let showCreatePSetModal = $state(false);
@@ -36,7 +36,7 @@
 			{#if data.psets}
 				{#each data.psets as pset}
 					{#if pset.problems.length > 0}
-						<StudentPSBox title={pset.title} {pset} Problems={pset.problems} />
+						<StudentPSBox {pset} />
 					{/if}
 				{/each}
 			{/if}

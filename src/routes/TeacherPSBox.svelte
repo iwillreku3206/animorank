@@ -21,7 +21,8 @@
 	let linkFeedback = $state(false);
 	let disableAddProblem = $state(false);
 
-	const linkFeedbackHandler = () => {
+	const linkFeedbackHandler = (event: MouseEvent) => {
+		event.stopPropagation();
 		navigator.clipboard.writeText('http://localhost:5173/pset/' + pset.id);
 		linkFeedback = true;
 		setTimeout(() => {
@@ -43,22 +44,21 @@
 		}
 	};
 
-	const toggleVisibility = async (id, value) => {
-		// TODO: implement
-		// 	// fetch problems
-		// 	const response = await fetch('/api/problems', {
-		// 		method: 'POST',
-		// 		body: JSON.stringify({ action: 'updateProblemVisibility', visible: value, id: id }),
-		// 		headers: {
-		// 			'content-type': 'application/json'
-		// 		}
-		// 	});
-		// 	const res = await response.json();
+	const toggleVisibility = async (id: string, value: boolean) => {
+		await fetch(`/api/problem/${id}`, {
+			method: 'PUT',
+			body: JSON.stringify({ visible: value }),
+			headers: {
+				'content-type': 'application/json'
+			}
+		});
+
+		pset.problems[pset.problems.findIndex((x) => x.id === id)].visible = value;
 	};
 </script>
 
 {#if openEdit && !loading}
-	<div class="w-full mt-8 min-h-72 p-3 bg-[#1F1F1F] rounded cursor-pointer flex flex-wrap">
+	<div class="w-full mt-8 min-h-72 p-3 bg-[#1F1F1F] rounded flex flex-wrap">
 		<div class="w-full flex justify-between">
 			<h2 class="text-2xl mb-4 w-full">{pset.title}</h2>
 			{#if !pset}
@@ -85,7 +85,7 @@
 				<div>
 					{#each pset.problems as problem}
 						<div class="flex justify-between p-2 align-middle text-center">
-							<h3 class="mt-auto mb-auto ml-4">{problem.name}</h3>
+							<a href="/edit/{problem.id}" class="mt-auto mb-auto ml-4">{problem.name}</a>
 							<div class="flex">
 								<div class="grid place-items-center">
 									<div
@@ -177,6 +177,10 @@
 	</div>
 {:else}
 	<div
+		role="button"
+		tabindex="0"
+		onclick={() => (openEdit = true)}
+		onkeydown={(event) => event.key == 'Enter' && (openEdit = true)}
 		class="mt-8 min-h-72 w-96 sm:mr-5 p-3 bg-[#1F1F1F] rounded cursor-pointer flex flex-col justify-between"
 	>
 		<div class="flex justify-between w-full">
@@ -216,7 +220,8 @@
 
 			<button
 				class="btn btn-s bg-[#121212] border-0 hover:bg-[#090909]"
-				onclick={() => {
+				onclick={(event) => {
+					event.stopPropagation();
 					openEdit = true;
 				}}
 			>

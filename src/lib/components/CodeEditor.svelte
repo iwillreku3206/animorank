@@ -44,10 +44,16 @@
 			return () => monacoInstance?.dispose();
 		});
 	});
+
+	$effect(() => {
+		if (monacoInstance && code !== monacoInstance.getValue()) {
+			monacoInstance.setValue(code);
+		}
+	});
 </script>
 
 <div class="{rest.class} w-full h-full" bind:this={editorContainer}>
 	{#if !monacoInstance}
-		<p class="content-center w-full h-full text-grey-400">loading editor...</p>
+		<p class="content-center w-full h-full text-grey-400">Loading Editor...</p>
 	{/if}
 </div>

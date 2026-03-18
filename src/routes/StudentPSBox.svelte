@@ -1,6 +1,7 @@
 <script lang="ts">
 	import close from '$lib/assets/close.svg';
-	let { title, Problems, pset } = $props();
+	import type { ProblemSet } from './+page.server';
+	let { pset }: { pset: ProblemSet } = $props();
 
 	let toggle = $state(false);
 </script>
@@ -11,16 +12,16 @@
 		onclick={() => (toggle = !toggle)}
 	>
 		<div class="flex justify-between pt-2 pb-2">
-			<div class="text-xl">{title}</div>
+			<div class="text-xl">{pset.title}</div>
 			<div class="flex align-center justify-center items-center">
-				<p class="text-sm mr-2 text-center text-gray-400">By {pset.Teacher.name}</p>
+				<p class="text-sm mr-2 text-center text-gray-400">By {pset.teacher?.name}</p>
 			</div>
 		</div>
 		<div class="mt-3 self-start text-left px-3">
 			<p class="indent-8">{pset.description}</p>
 		</div>
 		<div class="flex flex-row justify-end mt-3 w-full flex-wrap pb-2">
-			<p class="text-gray-400 text-sm">{Problems.length} Problem(s)</p>
+			<p class="text-gray-400 text-sm">{pset.problems.length} Problem(s)</p>
 		</div>
 	</button>
 {:else}
@@ -32,11 +33,11 @@
 				<h2 class="text-2xl mb-4">{pset.title}</h2>
 				<div class="flex flex-row align-center justify-center items-center">
 					<img
-						src={pset.Teacher.profile_url}
+						src={pset.teacher?.profile_url}
 						alt="profile"
 						class="h-8 w-8 object-cover rounded-full mr-2"
 					/>
-					<p class="text-sm mr-2 text-gray-400">{pset.Teacher.name}</p>
+					<p class="text-sm mr-2 text-gray-400">{pset.teacher?.name || 'Unknown User'}</p>
 				</div>
 			</div>
 			<div class="px-3 pb-5 w-full">
@@ -49,15 +50,16 @@
 			<div class="mt-5 mb-5 w-ful w-full">
 				<div class="flex align-middle justify-between border-b border-borderColor p-3">
 					<div class="text-xl">Problems</div>
-					<p class="text-gray-400 text-sm">{Problems.length} Problem(s)</p>
+					<p class="text-gray-400 text-sm">{pset.problems.length} Problem(s)</p>
 				</div>
 				<div class="flex flex-col w-full">
-					{#each Problems as problem}
+					{#each pset.problems as problem}
 						<a
-							href="/problem/{problem.id}"
+							href="/problem2/{problem.id}"
+							data-sveltekit-preload-data="tap"
 							class="flex justify-between p-2 align-middle text-center cursor-pointer hover:bg-[#252525] transform transition-transform w-full"
 						>
-							<h3 class="mt-auto mb-auto ml-4">{problem.problem_name}</h3>
+							<h3 class="mt-auto mb-auto ml-4">{problem.name}</h3>
 						</a>
 					{/each}
 				</div>
