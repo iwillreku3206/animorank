@@ -35,7 +35,7 @@
 		try {
 			const id = await createProblem(pset.id);
 			if (id) {
-				goto(`/create2/${id}`);
+				goto(`/edit/${id}`);
 			}
 		} catch (error) {
 			console.error(error);
