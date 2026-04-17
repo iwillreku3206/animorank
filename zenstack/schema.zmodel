@@ -132,7 +132,6 @@ model PracticeSession {
 enum HistoryEntryType {
   TEXT_INSERT
   TEXT_DELETE
-  TEXT_COPY
   TEXT_PASTE
   TEXT_UNDO
   TEXT_REDO
