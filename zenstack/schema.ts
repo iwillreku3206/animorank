@@ -776,6 +776,12 @@ export class SchemaType implements SchemaDef {
                     updatedAt: true,
                     attributes: [{ name: "@updatedAt" }]
                 },
+                hasAcceptedTOS: {
+                    name: "hasAcceptedTOS",
+                    type: "Boolean",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }],
+                    default: false
+                },
                 student: {
                     name: "student",
                     type: "Student",
@@ -1168,7 +1174,6 @@ export class SchemaType implements SchemaDef {
             values: {
                 TEXT_INSERT: "TEXT_INSERT",
                 TEXT_DELETE: "TEXT_DELETE",
-                TEXT_COPY: "TEXT_COPY",
                 TEXT_PASTE: "TEXT_PASTE",
                 TEXT_UNDO: "TEXT_UNDO",
                 TEXT_REDO: "TEXT_REDO",

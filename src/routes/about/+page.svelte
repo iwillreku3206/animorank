@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { openLogin } from '$lib/state/login.svelte';
 	import { openTerms } from '$lib/state/terms.svelte';
+	import { signIn } from '@auth/sveltekit/client';
 </script>
 
 <svelte:head>
@@ -30,7 +30,7 @@
 		<button
 			class="btn btn-outline mt-5"
 			onclick={() => {
-				openLogin.openSignUp = true;
+				signIn('google');
 			}}>Get Started</button
 		>
 	</div>
@@ -39,13 +39,6 @@
 		<div class="red blob"></div>
 		<div class="green blob"></div>
 	</div>
-	<!-- <div class="w-full p-2 bg-[#040605]">
-        <div class="w-full bg-[#000000] py-2 px-4 overflow-hidden">
-            <div class="text-md font-mono text-gray-400 whitespace-nowrap">
-              <span class="text-purple-400">const</span> <span class="text-blue-400">solution</span> = <span class="text-blue-400">analyze</span>(<span class="text-orange-400">input</span>);<span class="text-blue-400">return</span> solution.<span class="text-blue-400">optimize</span>();<span class="text-gray-500">// DLSU Animorank Platform</span><span class="text-purple-400">const</span> <span class="text-blue-400">rank</span> = <span class="text-purple-400">await</span> <span class="text-blue-400">submitSolution</span>(solveProblem); console.<span class="text-blue-400">log</span>(rank);
-            </div>
-        </div>
-    </div> -->
 	<footer class="bg-black py-8 px-8 w-full z-10">
 		<div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
 			<div>

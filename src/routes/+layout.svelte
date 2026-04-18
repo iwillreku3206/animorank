@@ -11,6 +11,7 @@
 	import TermsModal from '$lib/components/TermsModal.svelte';
 	import ContactModal from '$lib/components/ContactModal.svelte';
 	import type { LayoutServerData } from './$types';
+	import { signIn } from '@auth/sveltekit/client';
 
 	let openSettings = $state(false);
 	interface Props {
@@ -45,19 +46,11 @@
 				/>
 			</button>
 		{:else}
-			<button class="btn btn-outline" onclick={() => (openLogin.open = true)}> Login </button>
+			<button class="btn btn-outline" onclick={() => signIn('google')}>Login</button>
 		{/if}
 	</div>
 
 	{@render children?.()}
-
-	{#if openLogin.open && !loggedIn}
-		<MobileLoginModal />
-	{/if}
-
-	{#if openLogin.openSignUp && !loggedIn}
-		<SignUpModal />
-	{/if}
 
 	{#if openSettings && loggedIn && data.user}
 		<MobileSettingsModal bind:openSettings user={data.user} />
