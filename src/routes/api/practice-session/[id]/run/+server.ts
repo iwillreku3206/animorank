@@ -2,15 +2,8 @@ import z from 'zod';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/zenstack';
 import { error, successObject } from '$lib/response';
-import { testFunctionTestCase } from '$lib/codeExecutor/functionTestCase';
-import { testStdioTestCase } from '$lib/codeExecutor/stdioTestCase';
-import { testCustomTestCase } from '$lib/codeExecutor/customTestCase';
-import type {
-	ProblemTestCase,
-	FunctionOutputTestCase,
-	ProgramIOTestCase,
-	CustomTestCase
-} from '../../../../../../zenstack/models';
+import { TestCase } from '$lib/codeExecutor/testCase';
+import type { ProblemTestCase } from '../../../../../../zenstack/models';
 import type { TestCaseResult } from '$lib/types/codeExecution';
 
 const runValidator = z.object({
@@ -19,16 +12,7 @@ const runValidator = z.object({
 });
 
 async function runTestCase(testCase: ProblemTestCase, code: string): Promise<TestCaseResult> {
-	switch (testCase.type) {
-		case 'FunctionOutputTestCase':
-			return testFunctionTestCase(testCase as FunctionOutputTestCase, code);
-		case 'ProgramIOTestCase':
-			return testStdioTestCase(testCase as ProgramIOTestCase, code);
-		case 'CustomTestCase':
-			return testCustomTestCase(testCase as CustomTestCase, code);
-		default:
-			return { success: false, error_reason: { type: 'unknown_error' as const } };
-	}
+	return TestCase.for(testCase).execute(code);
 }
 
 export const POST: RequestHandler = async ({ locals, params, request }) => {
