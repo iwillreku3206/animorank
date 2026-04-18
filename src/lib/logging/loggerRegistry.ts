@@ -1,7 +1,7 @@
 import { ConsoleLogger } from "$lib/logging/console";
 import { FileLogger } from "$lib/logging/file";
 import type { Logger } from "$lib/logging/logger";
-import { ServiceRegistry } from "./registry";
+import { ServiceRegistry } from "$lib/services/registry";
 
 export class LoggerRegistry extends ServiceRegistry<Logger, [string]> {
   public constructor() {

@@ -1,5 +1,5 @@
 import { Logger } from "$lib/logging/logger";
-import { LoggerRegistry } from "./loggerRegistry";
+import { LoggerRegistry } from "$lib/logging/loggerRegistry";
 import type { ServiceRegistry } from "./registry";
 
 type AbstractConstructor<T = any> = abstract new (...args: any[]) => T;
