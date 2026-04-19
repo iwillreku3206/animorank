@@ -1,3 +1,5 @@
+import { TelemetryRegistry } from "$lib/telemetry/telemetryRegistry";
+import { TelemetryService } from "$lib/telemetry/telemetryService";
 import type { ServiceRegistry } from "./registry";
 
 type AbstractConstructor<T = any> = abstract new (...args: any[]) => T;
@@ -8,6 +10,7 @@ export class ClientServiceProvider {
 
   private constructor() {
     // Import any service registries here
+    this._registries.set(TelemetryService, new TelemetryRegistry())
   }
 
   public static instance(): ClientServiceProvider {

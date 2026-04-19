@@ -2,6 +2,8 @@
 	import { onMount } from 'svelte';
 	import { type monaco } from '$lib/monaco';
 	import { browser } from '$app/environment';
+	import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
+	import { TelemetryService } from '$lib/telemetry/telemetryService';
 
 	// export const setValue = () => {
 	// 	value = editor.getValue();
@@ -37,9 +39,12 @@
 				wordWrap: 'on'
 			});
 
-			monacoInstance.onDidChangeModelContent((e) => {
+			monacoInstance.onDidChangeModelContent(() => {
 				code = monacoInstance?.getValue() || '';
 			});
+
+			const telemetry = ClientServiceProvider.instance().getService(TelemetryService);
+			telemetry.attachMonaco(monacoInstance);
 
 			return () => monacoInstance?.dispose();
 		});

@@ -1172,15 +1172,10 @@ export class SchemaType implements SchemaDef {
         HistoryEntryType: {
             name: "HistoryEntryType",
             values: {
-                TEXT_INSERT: "TEXT_INSERT",
-                TEXT_DELETE: "TEXT_DELETE",
-                TEXT_PASTE: "TEXT_PASTE",
-                TEXT_UNDO: "TEXT_UNDO",
-                TEXT_REDO: "TEXT_REDO",
+                TEXT_MODIFIED: "TEXT_MODIFIED",
                 PAGE_OPENED: "PAGE_OPENED",
                 PAGE_FOCUS: "PAGE_FOCUS",
                 RUN_ATTEMPT: "RUN_ATTEMPT",
-                SUBMIT_ATTEMPT: "SUBMIT_ATTEMPT",
                 PING: "PING",
                 OTHER: "OTHER"
             }

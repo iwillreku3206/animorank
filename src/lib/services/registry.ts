@@ -22,6 +22,16 @@ export abstract class ServiceRegistry<T, C extends any[]> {
     this._register(key, { classObject: value, singleton: true })
   }
 
-  public abstract getInstance(key: string, ...args: C): T;
+  public getInstance(key: string, ...args: C): T {
+    const service = this._registry.get(key)
+
+    if (!service) throw new Error(`Service ${key} not found`);
+
+    if (service.singleton) {
+      return service.classObject.instance()
+    }
+
+    return new service.classObject(...args)
+  }
   public abstract getDefault(...args: C): T;
 }
