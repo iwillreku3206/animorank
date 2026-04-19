@@ -55,7 +55,7 @@
 				<div class="flex flex-col w-full">
 					{#each pset.problems as problem}
 						<a
-							href="/problem2/{problem.id}"
+							href="/problem/{problem.id}"
 							data-sveltekit-preload-data="tap"
 							class="flex justify-between p-2 align-middle text-center cursor-pointer hover:bg-[#252525] transform transition-transform w-full"
 						>

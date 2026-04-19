@@ -39,5 +39,5 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
   console.log('redirecting');
 
-  throw redirect(302, `/problem2/${params.problem_id}/${practiceSessionId}`);
+  throw redirect(302, `/problem/${params.problem_id}/${practiceSessionId}`);
 };

@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     where: { id: params.session_id, student_id: session.user.id }
   });
 
-  if (!practiceSession) throw redirect(302, `/problem2/${params.problem_id}`);
+  if (!practiceSession) throw redirect(302, `/problem/${params.problem_id}`);
 
   return { problem, practiceSession };
 };
