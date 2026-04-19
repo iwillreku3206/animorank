@@ -5,7 +5,7 @@ import { Logger } from '$lib/logging/logger';
 
 export const handle: Handle = async ({ event, resolve }) => {
   const serviceProvider = ServiceProvider.instance()
-  const logger = serviceProvider.getService(Logger)
+  const logger = serviceProvider.getService(Logger, "webserver")
 
   const response = await authHandle({ event, resolve });
 
