@@ -5,14 +5,22 @@ import type { RequestHandler } from './$types';
 import { CTypeWithValueSchema } from '$lib/types/cType';
 import { ProblemTestCaseOperator } from '../../../../../zenstack/models';
 import { TestCase } from '$lib/codeExecutor/testCase';
+import type { Session } from "@auth/core/types";
+
+const getTestCase = async (id: string, session: Session) => {
+	return await db.problemTestCase.findUnique({
+		where: { id, problem: { problem_set: { owner_id: session.user.id } } }
+	});
+}
 
 export const DELETE: RequestHandler = async ({ locals, params }) => {
 	const session = await locals.auth();
 	if (!session || !session.user.id) return error(403, 'Unauthorized');
 
-	const testCase = await TestCase.delete(params.id);
+	const currentTestCase = await getTestCase(params.id, session);
+	if (!currentTestCase) return error(404, 'Not found');
 
-	if (testCase.count === 0) return error(404, 'Not found');
+	await TestCase.delete(params.id);
 
 	return successObject({ status: 'Success' });
 };
@@ -37,9 +45,7 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
 	const session = await locals.auth();
 	if (!session || !session.user.id) return error(403, 'Unauthorized');
 
-	const currentTestCase = await db.problemTestCase.findUnique({
-		where: { id: params.id, problem: { problem_set: { owner_id: session.user.id } } }
-	});
+	const currentTestCase = await getTestCase(params.id, session);
 	if (!currentTestCase) return error(404, 'Not found'); // should return 404 if not owned by user to hide existence of such an object
 
 	const {
