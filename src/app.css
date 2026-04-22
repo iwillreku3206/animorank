@@ -1,10 +1,58 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-body {
-    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-    @apply bg-white dark:bg-slate-800 text-slate-800 dark:text-white;
+@plugin "daisyui" {
+    themes: light --default, animorank-dark --prefersdark;
+}
+
+@plugin "daisyui/theme" {
+    name: "animorank-dark";
+    default: true;
+    /* set as default */
+    prefersdark: true;
+    /* set as default dark mode (prefers-color-scheme:dark) */
+    color-scheme: dark;
+    /* color of browser-provided UI */
+
+    --color-primary: #87F526;
+    --color-primary-focus: #67DC06;
+    --color-primary-content: #0B0908;
+    --color-secondary: #2D6D07;
+    --color-secondary-focus: #275C0B;
+    --color-secondary-content: #D4D0CE;
+    --color-accent: #FFB81C;
+    --color-accent-focus: #E69900;
+    --color-accent-content: #0B0908;
+    --color-neutral: #584E4D;
+    --color-neutral-focus: #3D3535;
+    --color-neutral-content: #E5E2E0;
+    --color-base-100: #1B1717;
+    --color-base-200: #161212;
+    --color-base-300: #110D0D;
+    --color-base-content: #D4D0CE;
+    --color-info: #00D0EF;
+    --color-info-content: #053344;
+    --color-success: #01DF72;
+    --color-success-content: #022D14;
+    --color-warning: #FDC700;
+    --color-warning-content: #411E03;
+    --color-error: #FF6266;
+    --color-error-content: #440607;
+
+    /* border radius */
+    --radius-selector: 1rem;
+    --radius-field: 0.25rem;
+    --radius-box: 0.5rem;
+
+    /* base sizes */
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+
+    /* border size */
+    --border: 1px;
+
+    /* effects */
+    --depth: 1;
+    --noise: 0;
 }
 
 .splitpanes-nobg .splitpanes {
@@ -18,6 +66,15 @@ body {
 }
 
 .splitpanes-nobg .splitpanes__splitter {
-  background-color: #242424 !important;
-  border-left: none !important;
+    background-color: #242424 !important;
+    border-left: none !important;
+}
+
+h1,
+h2,
+.font-header {
+    font-family: "Space Grotesk", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: normal;
 }

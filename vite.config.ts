@@ -3,12 +3,12 @@ import { defineConfig } from 'vitest/config';
 import mkcert from 'vite-plugin-mkcert'
 import monacoEditorEsmPlugin from 'vite-plugin-monaco-editor-esm'
 import { loadEnv, type Plugin } from 'vite';
-
+import tailwindcss from "@tailwindcss/vite";
 
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const plugins = [monacoEditorEsmPlugin(), sveltekit()]
+  const plugins = [monacoEditorEsmPlugin(), sveltekit(), tailwindcss()]
 
   if (env.SSL_DEV_SERVER === 'true')
     plugins.push(mkcert() as Plugin)

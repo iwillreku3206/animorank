@@ -1,8 +1,6 @@
 <script lang="ts">
 	import CodeEditor from '$lib/components/CodeEditor.svelte';
-	import Console from '$lib/components/Console.svelte';
 	import TestCaseDisplay from '$lib/components/TestCaseDisplay.svelte';
-	import TestCaseFeedBackIcon from '$lib/components/TestCaseFeedBackIcon.svelte';
 	import { Pane, Splitpanes } from 'svelte-splitpanes';
 	import type { PageProps } from './$types';
 	import transform from '@diplodoc/transform';
