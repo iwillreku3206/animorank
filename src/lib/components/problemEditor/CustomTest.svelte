@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { CustomTestCase } from '../../../../zenstack/models';
+	import type { CustomTestCase } from '$lib/zenstack/models';
 	import CodeEditor from '$lib/components/CodeEditor.svelte';
 	import CParameterSelector from './CParameterSelector.svelte';
 

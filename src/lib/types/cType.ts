@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BaseType, SizeModifier, type CType } from '../../../zenstack/models';
+import { BaseType, SizeModifier, type CType } from '$lib/zenstack/models';
 
 const BaseTypeEnum = z.enum(BaseType)
 const SizeModifierEnum = z.enum(SizeModifier);

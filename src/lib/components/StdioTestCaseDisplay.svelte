@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { TestCaseResult } from '$lib/types/codeExecution';
-	import { type ProgramIOTestCase } from '../../../zenstack/models';
+	import { type ProgramIOTestCase } from '$lib/zenstack/models';
 
 	interface Props {
 		tests: TestCaseResult[];

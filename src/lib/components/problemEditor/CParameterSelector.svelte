@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { typeToString } from '$lib/utils/typeToString';
 	import { Popover } from 'bits-ui';
-	import { type CType } from '../../../../zenstack/models';
+	import { type CType } from '$lib/zenstack/models';
 	import UndoIcon from '$lib/assets/undo.svg';
 
 	let { type = $bindable() }: { type: CType } = $props();

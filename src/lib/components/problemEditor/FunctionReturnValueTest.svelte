@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { type FunctionOutputTestCase, type ProblemTestCase } from '../../../../zenstack/models';
+	import { type FunctionOutputTestCase, type ProblemTestCase } from '$lib/zenstack/models';
 	import DeleteIcon from '$lib/assets/delete.svg';
 	import CParameterSelector from './CParameterSelector.svelte';
 

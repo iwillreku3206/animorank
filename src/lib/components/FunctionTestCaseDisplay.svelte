@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { TestCaseResult } from '$lib/types/codeExecution';
 	import { typeToString } from '$lib/utils/typeToString';
-	import type { CTypeWithValue, FunctionOutputTestCase } from '../../../zenstack/models';
+	import type { CTypeWithValue, FunctionOutputTestCase } from '$lib/zenstack/models';
 
 	interface Props {
 		tests: TestCaseResult[];

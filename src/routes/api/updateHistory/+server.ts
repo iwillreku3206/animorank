@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import { z } from 'zod'
-import { HistoryEntryType } from '../../../../zenstack/models';
-import type { PracticeHistoryEntryCreateManyArgs } from '../../../../zenstack/input';
+import { HistoryEntryType } from '$lib/zenstack/models';
+import type { PracticeHistoryEntryCreateManyArgs } from '$lib/zenstack/input';
 import { db } from '$lib/zenstack';
 
 const validator = z.array(z.object({

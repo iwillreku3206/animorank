@@ -1,4 +1,4 @@
-import type { CustomTestCase, FunctionOutputTestCase, Problem, ProblemTestCase, ProblemTestCaseType, ProgramIOTestCase } from "../../../../zenstack/models"
+import type { CustomTestCase, FunctionOutputTestCase, Problem, ProblemTestCase, ProblemTestCaseType, ProgramIOTestCase } from "$lib/zenstack/models"
 
 export async function createTestCase(problem: string, type: ProblemTestCaseType): Promise<ProblemTestCase | undefined> {
   const req = await fetch("/api/test-case", {

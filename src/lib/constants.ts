@@ -1,4 +1,4 @@
-import type { Problem } from "../../zenstack/models";
+import type { Problem } from "$lib/zenstack/models";
 
 export const DEFAULT_PROBLEM: Omit<Problem, "id" | "problem_set_id" | "created_at" | "updated_at"> = {
   name: 'New Problem',

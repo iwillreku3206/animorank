@@ -5,7 +5,7 @@
 		FunctionOutputTestCase,
 		ProblemTestCase,
 		ProgramIOTestCase
-	} from '../../../../zenstack/models';
+	} from '$lib/zenstack/models';
 	import CustomTest from './CustomTest.svelte';
 	import FunctionReturnValueTest from './FunctionReturnValueTest.svelte';
 	import ProgramIOTest from './ProgramIOTest.svelte';

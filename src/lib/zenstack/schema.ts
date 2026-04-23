@@ -5,7 +5,7 @@
 
 /* eslint-disable */
 
-import { type SchemaDef, ExpressionUtils } from "@zenstackhq/schema";
+import { type SchemaDef, type AttributeApplication, type FieldDefault, ExpressionUtils } from "@zenstackhq/schema";
 export class SchemaType implements SchemaDef {
     provider = {
         type: "postgresql"
@@ -18,8 +18,8 @@ export class SchemaType implements SchemaDef {
                     name: "id",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }],
-                    default: ExpressionUtils.call("uuid")
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
                 },
                 name: {
                     name: "name",
@@ -32,33 +32,33 @@ export class SchemaType implements SchemaDef {
                 language: {
                     name: "language",
                     type: "Language",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("C") }] }],
-                    default: "C"
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("C") }] }] as readonly AttributeApplication[],
+                    default: "C" as FieldDefault
                 },
                 starter_code: {
                     name: "starter_code",
                     type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }],
-                    default: ""
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
+                    default: "" as FieldDefault
                 },
                 visible: {
                     name: "visible",
                     type: "Boolean",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }],
-                    default: true
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
+                    default: true as FieldDefault
                 },
                 problem_set_id: {
                     name: "problem_set_id",
                     type: "String",
-                    attributes: [{ name: "@db.Uuid" }],
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
                         "problem_set"
-                    ]
+                    ] as readonly string[]
                 },
                 problem_set: {
                     name: "problem_set",
                     type: "ProblemSet",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_set_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_set_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "problems", fields: ["problem_set_id"], references: ["id"], onDelete: "Cascade" }
                 },
                 practice_sessions: {
@@ -70,14 +70,14 @@ export class SchemaType implements SchemaDef {
                 created_at: {
                     name: "created_at",
                     type: "DateTime",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }],
-                    default: ExpressionUtils.call("now")
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
                 },
                 updated_at: {
                     name: "updated_at",
                     type: "DateTime",
                     updatedAt: true,
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }]
+                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
                 },
                 problemTestCases: {
                     name: "problemTestCases",
@@ -98,52 +98,52 @@ export class SchemaType implements SchemaDef {
                     name: "id",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }],
-                    default: ExpressionUtils.call("uuid")
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
                 },
                 type: {
                     name: "type",
                     type: "ProblemTestCaseType",
                     isDiscriminator: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }],
-                    default: "FunctionOutputTestCase"
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
+                    default: "FunctionOutputTestCase" as FieldDefault
                 },
                 public: {
                     name: "public",
                     type: "Boolean",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }],
-                    default: true
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
+                    default: true as FieldDefault
                 },
                 problem_id: {
                     name: "problem_id",
                     type: "String",
-                    attributes: [{ name: "@db.Uuid" }],
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
                         "problem"
-                    ]
+                    ] as readonly string[]
                 },
                 problem: {
                     name: "problem",
                     type: "Problem",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "problemTestCases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
                 },
                 created_at: {
                     name: "created_at",
                     type: "DateTime",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }],
-                    default: ExpressionUtils.call("now")
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
                 },
                 updated_at: {
                     name: "updated_at",
                     type: "DateTime",
                     updatedAt: true,
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }]
+                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
                 }
             },
             attributes: [
                 { name: "@@delegate", args: [{ name: "discriminator", value: ExpressionUtils.field("type") }] }
-            ],
+            ] as readonly AttributeApplication[],
             idFields: ["id"],
             uniqueFields: {
                 id: { type: "String" }
@@ -159,78 +159,78 @@ export class SchemaType implements SchemaDef {
                     name: "id",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }],
-                    default: ExpressionUtils.call("uuid")
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
                 },
                 type: {
                     name: "type",
                     type: "ProblemTestCaseType",
                     originModel: "ProblemTestCase",
                     isDiscriminator: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }],
-                    default: "FunctionOutputTestCase"
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
+                    default: "FunctionOutputTestCase" as FieldDefault
                 },
                 public: {
                     name: "public",
                     type: "Boolean",
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }],
-                    default: true
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
+                    default: true as FieldDefault
                 },
                 problem_id: {
                     name: "problem_id",
                     type: "String",
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@db.Uuid" }],
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
                         "problem"
-                    ]
+                    ] as readonly string[]
                 },
                 problem: {
                     name: "problem",
                     type: "Problem",
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "problemTestCases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
                 },
                 created_at: {
                     name: "created_at",
                     type: "DateTime",
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }],
-                    default: ExpressionUtils.call("now")
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
                 },
                 updated_at: {
                     name: "updated_at",
                     type: "DateTime",
                     updatedAt: true,
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }]
+                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
                 },
                 parameters: {
                     name: "parameters",
                     type: "CTypeWithValue",
                     array: true,
-                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("[]") }] }],
-                    default: "[]"
+                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("[]") }] }] as readonly AttributeApplication[],
+                    default: "[]" as FieldDefault
                 },
                 expected_output: {
                     name: "expected_output",
                     type: "CTypeWithValue",
-                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("{\"base\": \"INT\"}") }] }],
-                    default: "{\"base\": \"INT\"}"
+                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("{\"base\": \"INT\"}") }] }] as readonly AttributeApplication[],
+                    default: "{\"base\": \"INT\"}" as FieldDefault
                 },
                 operator: {
                     name: "operator",
                     type: "ProblemTestCaseOperator",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("EQUAL") }] }],
-                    default: "EQUAL"
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("EQUAL") }] }] as readonly AttributeApplication[],
+                    default: "EQUAL" as FieldDefault
                 },
                 function_name: {
                     name: "function_name",
                     type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }],
-                    default: ""
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
+                    default: "" as FieldDefault
                 }
             },
             idFields: ["id"],
@@ -246,65 +246,65 @@ export class SchemaType implements SchemaDef {
                     name: "id",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }],
-                    default: ExpressionUtils.call("uuid")
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
                 },
                 type: {
                     name: "type",
                     type: "ProblemTestCaseType",
                     originModel: "ProblemTestCase",
                     isDiscriminator: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }],
-                    default: "FunctionOutputTestCase"
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
+                    default: "FunctionOutputTestCase" as FieldDefault
                 },
                 public: {
                     name: "public",
                     type: "Boolean",
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }],
-                    default: true
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
+                    default: true as FieldDefault
                 },
                 problem_id: {
                     name: "problem_id",
                     type: "String",
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@db.Uuid" }],
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
                         "problem"
-                    ]
+                    ] as readonly string[]
                 },
                 problem: {
                     name: "problem",
                     type: "Problem",
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "problemTestCases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
                 },
                 created_at: {
                     name: "created_at",
                     type: "DateTime",
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }],
-                    default: ExpressionUtils.call("now")
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
                 },
                 updated_at: {
                     name: "updated_at",
                     type: "DateTime",
                     updatedAt: true,
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }]
+                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
                 },
                 input: {
                     name: "input",
                     type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }],
-                    default: ""
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
+                    default: "" as FieldDefault
                 },
                 output: {
                     name: "output",
                     type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }],
-                    default: ""
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
+                    default: "" as FieldDefault
                 }
             },
             idFields: ["id"],
@@ -320,59 +320,59 @@ export class SchemaType implements SchemaDef {
                     name: "id",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }],
-                    default: ExpressionUtils.call("uuid")
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
                 },
                 type: {
                     name: "type",
                     type: "ProblemTestCaseType",
                     originModel: "ProblemTestCase",
                     isDiscriminator: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }],
-                    default: "FunctionOutputTestCase"
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
+                    default: "FunctionOutputTestCase" as FieldDefault
                 },
                 public: {
                     name: "public",
                     type: "Boolean",
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }],
-                    default: true
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
+                    default: true as FieldDefault
                 },
                 problem_id: {
                     name: "problem_id",
                     type: "String",
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@db.Uuid" }],
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
                         "problem"
-                    ]
+                    ] as readonly string[]
                 },
                 problem: {
                     name: "problem",
                     type: "Problem",
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "problemTestCases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
                 },
                 created_at: {
                     name: "created_at",
                     type: "DateTime",
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }],
-                    default: ExpressionUtils.call("now")
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
                 },
                 updated_at: {
                     name: "updated_at",
                     type: "DateTime",
                     updatedAt: true,
                     originModel: "ProblemTestCase",
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }]
+                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
                 },
                 test_code: {
                     name: "test_code",
                     type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }],
-                    default: ""
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
+                    default: "" as FieldDefault
                 }
             },
             idFields: ["id"],
@@ -387,8 +387,8 @@ export class SchemaType implements SchemaDef {
                     name: "id",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }],
-                    default: ExpressionUtils.call("uuid")
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
                 },
                 description: {
                     name: "description",
@@ -403,29 +403,29 @@ export class SchemaType implements SchemaDef {
                     name: "owner_id",
                     type: "String",
                     optional: true,
-                    attributes: [{ name: "@db.Uuid" }],
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
                         "owner"
-                    ]
+                    ] as readonly string[]
                 },
                 owner: {
                     name: "owner",
                     type: "Teacher",
                     optional: true,
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("owner_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("owner_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "problem_set", fields: ["owner_id"], references: ["id"], onDelete: "SetNull" }
                 },
                 auto_accept: {
                     name: "auto_accept",
                     type: "Boolean",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }],
-                    default: false
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
+                    default: false as FieldDefault
                 },
                 is_global: {
                     name: "is_global",
                     type: "Boolean",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }],
-                    default: false
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
+                    default: false as FieldDefault
                 },
                 problems: {
                     name: "problems",
@@ -442,14 +442,14 @@ export class SchemaType implements SchemaDef {
                 created_at: {
                     name: "created_at",
                     type: "DateTime",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }],
-                    default: ExpressionUtils.call("now")
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
                 },
                 updated_at: {
                     name: "updated_at",
                     type: "DateTime",
                     updatedAt: true,
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }]
+                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
                 }
             },
             idFields: ["id"],
@@ -464,42 +464,42 @@ export class SchemaType implements SchemaDef {
                     name: "id",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }],
-                    default: ExpressionUtils.call("uuid")
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
                 },
                 problem_id: {
                     name: "problem_id",
                     type: "String",
-                    attributes: [{ name: "@db.Uuid" }],
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
                         "problem"
-                    ]
+                    ] as readonly string[]
                 },
                 problem: {
                     name: "problem",
                     type: "Problem",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "practice_sessions", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
                 },
                 student_id: {
                     name: "student_id",
                     type: "String",
-                    attributes: [{ name: "@db.Uuid" }],
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
                         "student"
-                    ]
+                    ] as readonly string[]
                 },
                 student: {
                     name: "student",
                     type: "Student",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("student_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("student_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "practice_sessions", fields: ["student_id"], references: ["id"], onDelete: "Cascade" }
                 },
                 done: {
                     name: "done",
                     type: "Boolean",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }],
-                    default: false
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
+                    default: false as FieldDefault
                 },
                 previous_code: {
                     name: "previous_code",
@@ -508,14 +508,14 @@ export class SchemaType implements SchemaDef {
                 created_at: {
                     name: "created_at",
                     type: "DateTime",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }],
-                    default: ExpressionUtils.call("now")
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
                 },
                 updated_at: {
                     name: "updated_at",
                     type: "DateTime",
                     updatedAt: true,
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }]
+                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
                 },
                 practice_history_entries: {
                     name: "practice_history_entries",
@@ -536,14 +536,14 @@ export class SchemaType implements SchemaDef {
                     name: "id",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }],
-                    default: ExpressionUtils.call("uuid")
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
                 },
                 timestamp: {
                     name: "timestamp",
                     type: "DateTime",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }],
-                    default: ExpressionUtils.call("now")
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
                 },
                 type: {
                     name: "type",
@@ -556,15 +556,15 @@ export class SchemaType implements SchemaDef {
                 practice_session_id: {
                     name: "practice_session_id",
                     type: "String",
-                    attributes: [{ name: "@db.Uuid" }],
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
                         "practice_session"
-                    ]
+                    ] as readonly string[]
                 },
                 practice_session: {
                     name: "practice_session",
                     type: "PracticeSession",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("practice_session_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("practice_session_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "practice_history_entries", fields: ["practice_session_id"], references: ["id"], onDelete: "Cascade" }
                 }
             },
@@ -580,16 +580,16 @@ export class SchemaType implements SchemaDef {
                     name: "id",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }],
-                    default: ExpressionUtils.call("uuid"),
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault,
                     foreignKeyFor: [
                         "user"
-                    ]
+                    ] as readonly string[]
                 },
                 user: {
                     name: "user",
                     type: "User",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "student", fields: ["id"], references: ["id"], onDelete: "Cascade", hasDefault: true }
                 },
                 practice_sessions: {
@@ -617,30 +617,30 @@ export class SchemaType implements SchemaDef {
                     name: "problem_set_id",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@db.Uuid" }],
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
                         "problem_set"
-                    ]
+                    ] as readonly string[]
                 },
                 problem_set: {
                     name: "problem_set",
                     type: "ProblemSet",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_set_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_set_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "subscriptions", fields: ["problem_set_id"], references: ["id"], onDelete: "Cascade" }
                 },
                 student_id: {
                     name: "student_id",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@db.Uuid" }],
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
                         "student"
-                    ]
+                    ] as readonly string[]
                 },
                 student: {
                     name: "student",
                     type: "Student",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("student_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("student_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "subscription", fields: ["student_id"], references: ["id"], onDelete: "Cascade" }
                 },
                 status: {
@@ -651,19 +651,19 @@ export class SchemaType implements SchemaDef {
                 created_at: {
                     name: "created_at",
                     type: "DateTime",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }],
-                    default: ExpressionUtils.call("now")
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
                 },
                 updated_at: {
                     name: "updated_at",
                     type: "DateTime",
                     updatedAt: true,
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }]
+                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
                 }
             },
             attributes: [
                 { name: "@@id", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_set_id"), ExpressionUtils.field("student_id")]) }] }
-            ],
+            ] as readonly AttributeApplication[],
             idFields: ["problem_set_id", "student_id"],
             uniqueFields: {
                 problem_set_id_student_id: { problem_set_id: { type: "String" }, student_id: { type: "String" } }
@@ -676,16 +676,16 @@ export class SchemaType implements SchemaDef {
                     name: "id",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }],
-                    default: ExpressionUtils.call("uuid"),
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault,
                     foreignKeyFor: [
                         "user"
-                    ]
+                    ] as readonly string[]
                 },
                 user: {
                     name: "user",
                     type: "User",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "teacher", fields: ["id"], references: ["id"], onDelete: "Cascade", hasDefault: true }
                 },
                 problem_set: {
@@ -707,7 +707,7 @@ export class SchemaType implements SchemaDef {
                     name: "email",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@id" }]
+                    attributes: [{ name: "@id" }] as readonly AttributeApplication[]
                 }
             },
             idFields: ["email"],
@@ -722,8 +722,8 @@ export class SchemaType implements SchemaDef {
                     name: "id",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }],
-                    default: ExpressionUtils.call("uuid")
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
                 },
                 name: {
                     name: "name",
@@ -734,7 +734,7 @@ export class SchemaType implements SchemaDef {
                     name: "email",
                     type: "String",
                     unique: true,
-                    attributes: [{ name: "@unique" }]
+                    attributes: [{ name: "@unique" }] as readonly AttributeApplication[]
                 },
                 emailVerified: {
                     name: "emailVerified",
@@ -767,20 +767,20 @@ export class SchemaType implements SchemaDef {
                 createdAt: {
                     name: "createdAt",
                     type: "DateTime",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }],
-                    default: ExpressionUtils.call("now")
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
                 },
                 updatedAt: {
                     name: "updatedAt",
                     type: "DateTime",
                     updatedAt: true,
-                    attributes: [{ name: "@updatedAt" }]
+                    attributes: [{ name: "@updatedAt" }] as readonly AttributeApplication[]
                 },
                 hasAcceptedTOS: {
                     name: "hasAcceptedTOS",
                     type: "Boolean",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }],
-                    default: false
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
+                    default: false as FieldDefault
                 },
                 student: {
                     name: "student",
@@ -807,10 +807,10 @@ export class SchemaType implements SchemaDef {
                 userId: {
                     name: "userId",
                     type: "String",
-                    attributes: [{ name: "@db.Uuid" }],
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
                         "user"
-                    ]
+                    ] as readonly string[]
                 },
                 type: {
                     name: "type",
@@ -864,25 +864,25 @@ export class SchemaType implements SchemaDef {
                 createdAt: {
                     name: "createdAt",
                     type: "DateTime",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }],
-                    default: ExpressionUtils.call("now")
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
                 },
                 updatedAt: {
                     name: "updatedAt",
                     type: "DateTime",
                     updatedAt: true,
-                    attributes: [{ name: "@updatedAt" }]
+                    attributes: [{ name: "@updatedAt" }] as readonly AttributeApplication[]
                 },
                 user: {
                     name: "user",
                     type: "User",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("userId")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("userId")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "accounts", fields: ["userId"], references: ["id"], onDelete: "Cascade" }
                 }
             },
             attributes: [
                 { name: "@@id", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("provider"), ExpressionUtils.field("providerAccountId")]) }] }
-            ],
+            ] as readonly AttributeApplication[],
             idFields: ["provider", "providerAccountId"],
             uniqueFields: {
                 provider_providerAccountId: { provider: { type: "String" }, providerAccountId: { type: "String" } }
@@ -896,15 +896,15 @@ export class SchemaType implements SchemaDef {
                     type: "String",
                     id: true,
                     unique: true,
-                    attributes: [{ name: "@unique" }]
+                    attributes: [{ name: "@unique" }] as readonly AttributeApplication[]
                 },
                 userId: {
                     name: "userId",
                     type: "String",
-                    attributes: [{ name: "@db.Uuid" }],
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
                         "user"
-                    ]
+                    ] as readonly string[]
                 },
                 expires: {
                     name: "expires",
@@ -913,20 +913,20 @@ export class SchemaType implements SchemaDef {
                 user: {
                     name: "user",
                     type: "User",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("userId")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("userId")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "sessions", fields: ["userId"], references: ["id"], onDelete: "Cascade" }
                 },
                 createdAt: {
                     name: "createdAt",
                     type: "DateTime",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }],
-                    default: ExpressionUtils.call("now")
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
                 },
                 updatedAt: {
                     name: "updatedAt",
                     type: "DateTime",
                     updatedAt: true,
-                    attributes: [{ name: "@updatedAt" }]
+                    attributes: [{ name: "@updatedAt" }] as readonly AttributeApplication[]
                 }
             },
             idFields: ["sessionToken"],
@@ -954,7 +954,7 @@ export class SchemaType implements SchemaDef {
             },
             attributes: [
                 { name: "@@id", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("identifier"), ExpressionUtils.field("token")]) }] }
-            ],
+            ] as readonly AttributeApplication[],
             idFields: ["identifier", "token"],
             uniqueFields: {
                 identifier_token: { identifier: { type: "String" }, token: { type: "String" } }
@@ -968,16 +968,16 @@ export class SchemaType implements SchemaDef {
                     type: "String",
                     id: true,
                     unique: true,
-                    attributes: [{ name: "@unique" }]
+                    attributes: [{ name: "@unique" }] as readonly AttributeApplication[]
                 },
                 userId: {
                     name: "userId",
                     type: "String",
                     id: true,
-                    attributes: [{ name: "@db.Uuid" }],
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
                         "user"
-                    ]
+                    ] as readonly string[]
                 },
                 providerAccountId: {
                     name: "providerAccountId",
@@ -1007,13 +1007,13 @@ export class SchemaType implements SchemaDef {
                 user: {
                     name: "user",
                     type: "User",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("userId")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }],
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("userId")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "Authenticator", fields: ["userId"], references: ["id"], onDelete: "Cascade" }
                 }
             },
             attributes: [
                 { name: "@@id", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("userId"), ExpressionUtils.field("credentialID")]) }] }
-            ],
+            ] as readonly AttributeApplication[],
             idFields: ["credentialID", "userId"],
             uniqueFields: {
                 credentialID: { type: "String" },
@@ -1033,8 +1033,8 @@ export class SchemaType implements SchemaDef {
                     name: "signed",
                     type: "Boolean",
                     optional: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }],
-                    default: true
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
+                    default: true as FieldDefault
                 },
                 sizeModifier: {
                     name: "sizeModifier",
@@ -1051,15 +1051,15 @@ export class SchemaType implements SchemaDef {
                     name: "isPointer",
                     type: "Boolean",
                     optional: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }],
-                    default: false
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
+                    default: false as FieldDefault
                 },
                 isString: {
                     name: "isString",
                     type: "Boolean",
                     optional: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }],
-                    default: false
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
+                    default: false as FieldDefault
                 }
             },
             attributes: [
@@ -1067,7 +1067,7 @@ export class SchemaType implements SchemaDef {
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR"))), "||", ExpressionUtils.binary(ExpressionUtils.field("signed"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Signedness only applies to int or char") }] },
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(true))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] },
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] }
-            ]
+            ] as readonly AttributeApplication[]
         },
         CTypeWithValue: {
             name: "CTypeWithValue",
@@ -1080,8 +1080,8 @@ export class SchemaType implements SchemaDef {
                     name: "signed",
                     type: "Boolean",
                     optional: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }],
-                    default: true
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
+                    default: true as FieldDefault
                 },
                 sizeModifier: {
                     name: "sizeModifier",
@@ -1098,21 +1098,21 @@ export class SchemaType implements SchemaDef {
                     name: "isPointer",
                     type: "Boolean",
                     optional: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }],
-                    default: false
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
+                    default: false as FieldDefault
                 },
                 isString: {
                     name: "isString",
                     type: "Boolean",
                     optional: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }],
-                    default: false
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
+                    default: false as FieldDefault
                 },
                 value: {
                     name: "value",
                     type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }],
-                    default: ""
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
+                    default: "" as FieldDefault
                 }
             },
             attributes: [
@@ -1120,7 +1120,7 @@ export class SchemaType implements SchemaDef {
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR"))), "||", ExpressionUtils.binary(ExpressionUtils.field("signed"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Signedness only applies to int or char") }] },
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(true))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] },
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] }
-            ]
+            ] as readonly AttributeApplication[]
         }
     } as const;
     enums = {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Problem, ProblemTestCase, ProblemTestCaseType } from '../../../../zenstack/models';
+	import type { Problem, ProblemTestCase, ProblemTestCaseType } from '$lib/zenstack/models';
 	import Editor from '../Editor.svelte';
 	import { Pane, Splitpanes } from 'svelte-splitpanes';
 	import TestCase from './TestCase.svelte';

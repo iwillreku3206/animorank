@@ -2,8 +2,8 @@ import { error, successObject } from "$lib/response";
 import z from "zod";
 import type { RequestHandler } from "./$types";
 import { db } from "$lib/zenstack";
-import { ProblemTestCaseType } from "../../../../zenstack/models";
-import type { FunctionOutputTestCaseCreateArgs, FunctionOutputTestCaseSelect } from "../../../../zenstack/input";
+import { ProblemTestCaseType } from "$lib/zenstack/models";
+import type { FunctionOutputTestCaseCreateArgs, FunctionOutputTestCaseSelect } from "$lib/zenstack/input";
 
 const postValidator = z.object({
   problem: z.uuid(),
