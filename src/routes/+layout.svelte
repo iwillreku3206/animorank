@@ -20,9 +20,11 @@
 	let loggedIn = $derived(!!data.user);
 </script>
 
-<div class="flex flex-col h-screen bg-[#121212] text-white">
+<div class="flex flex-col min-h-screen bg-base-100 text-white">
 	<!--Navbar start-->
-	<div class="min-h-20 px-9 flex flex-row items-center border-b-">
+	<div
+		class="min-h-20 px-9 flex flex-row items-center border-b border-b-neutral sticky top-0 left-0 right-0 bg-base-100 z-50"
+	>
 		<div class="relative mr-auto">
 			<h1 class="font-bold text-2xl">
 				<a href="/">Animorank</a>
@@ -57,7 +59,6 @@
 	</div>
 
 	{@render children?.()}
-
 	{#if openSettings && loggedIn && data.user}
 		<MobileSettingsModal bind:openSettings user={data.user} />
 	{/if}

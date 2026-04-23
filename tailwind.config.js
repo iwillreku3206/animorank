@@ -5,7 +5,7 @@ export default {
     extend: {
       fontFamily: {
         'sans': ['DM Sans', 'Helvetica', 'sans-serif']
-      }
+      },
     }
   },
   plugins: [require('@tailwindcss/typography')],
