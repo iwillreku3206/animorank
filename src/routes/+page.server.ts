@@ -60,10 +60,10 @@ export const load: PageServerLoad = async ({ locals }) => {
       }),
       teacher: problemSet.owner
         ? {
-          id: problemSet.owner?.id,
-          name: problemSet.owner?.user.name || '',
-          profile_url: problemSet.owner?.user.image || undefined
-        }
+            id: problemSet.owner?.id,
+            name: problemSet.owner?.user.name || '',
+            profile_url: problemSet.owner?.user.image || undefined
+          }
         : undefined
     };
   });

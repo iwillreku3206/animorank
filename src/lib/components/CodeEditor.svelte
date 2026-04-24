@@ -1,64 +1,67 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { type monaco } from '$lib/monaco';
-	import { browser } from '$app/environment';
-	import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
-	import { TelemetryService } from '$lib/telemetry/telemetryService';
+  import { onMount } from 'svelte';
+  import { type monaco } from '$lib/monaco';
+  import { browser } from '$app/environment';
+  import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
+  import { TelemetryService } from '$lib/telemetry/telemetryService';
 
-	// export const setValue = () => {
-	// 	value = editor.getValue();
-	// };
+  // export const setValue = () => {
+  // 	value = editor.getValue();
+  // };
 
-	let {
-		code = $bindable(),
-		language,
-		...rest
-	}: { code: string; language?: string; class?: string } = $props();
+  let {
+    code = $bindable(),
+    language,
+    ...rest
+  }: { code: string; language?: string; class?: string } = $props();
 
-	let monacoInstance: monaco.editor.IStandaloneCodeEditor | undefined = $state();
-	let editorContainer = $state<HTMLDivElement>();
+  let monacoInstance: monaco.editor.IStandaloneCodeEditor | undefined = $state();
+  let editorContainer = $state<HTMLDivElement>();
 
-	onMount(() => {
-		if (!browser) return;
-		import('$lib/monaco').then((module) => {
-			if (!editorContainer) return;
-			const { monaco } = module;
+  onMount(() => {
+    if (!browser) return;
+    import('$lib/monaco').then((module) => {
+      if (!editorContainer) return;
+      const { monaco } = module;
 
-			monacoInstance = monaco.editor.create(editorContainer, {
-				bracketPairColorization: {
-					enabled: true
-				},
-				value: code,
-				automaticLayout: true,
-				fontFamily: 'JetBrains Mono',
-				language,
-				minimap: {
-					enabled: false
-				},
-				theme: 'vs-dark',
-				wordWrap: 'on'
-			});
+      monacoInstance = monaco.editor.create(editorContainer, {
+        bracketPairColorization: {
+          enabled: true
+        },
+        value: code,
+        automaticLayout: true,
+        fontFamily: 'JetBrains Mono',
+        language,
+        minimap: {
+          enabled: false
+        },
+        theme: 'vs-dark',
+        wordWrap: 'on'
+      });
 
-			monacoInstance.onDidChangeModelContent(() => {
-				code = monacoInstance?.getValue() || '';
-			});
+      monacoInstance.onDidChangeModelContent(() => {
+        code = monacoInstance?.getValue() || '';
+      });
 
-			const telemetry = ClientServiceProvider.instance().getService(TelemetryService);
-			telemetry.attachMonaco(monacoInstance);
+      const telemetry = ClientServiceProvider.instance().getService(TelemetryService);
+      telemetry.attachMonaco(monacoInstance);
 
-			return () => monacoInstance?.dispose();
-		});
-	});
+      return () => monacoInstance?.dispose();
+    });
+  });
 
-	$effect(() => {
-		if (monacoInstance && code !== monacoInstance.getValue()) {
-			monacoInstance.setValue(code);
-		}
-	});
+  $effect(() => {
+    if (monacoInstance && code !== monacoInstance.getValue()) {
+      monacoInstance.setValue(code);
+    }
+  });
 </script>
 
-<div class="{rest.class} w-full h-full" bind:this={editorContainer}>
-	{#if !monacoInstance}
-		<p class="content-center w-full h-full text-grey-400">Loading Editor...</p>
-	{/if}
+<div
+  class="{rest.class} w-full h-full"
+  bind:this={editorContainer}
+>
+  {#if !monacoInstance}
+    <p class="content-center w-full h-full text-grey-400">Loading Editor...</p>
+  {/if}
 </div>

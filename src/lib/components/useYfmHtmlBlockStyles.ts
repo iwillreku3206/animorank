@@ -9,7 +9,7 @@ const variablesMapping = {
   colorTextPrimary: '--g-color-text-primary',
   colorTextSecondary: '--g-color-text-secondary',
   fontFamily: '--g-font-family-sans',
-  fontSize: '--g-text-body-1-font-size',
+  fontSize: '--g-text-body-1-font-size'
 };
 
 export const useYfmHtmlBlockStyles = () => {
@@ -24,12 +24,12 @@ export const useYfmHtmlBlockStyles = () => {
         acc[key] = bodyStyles.getPropertyValue(cssVariable);
         return acc;
       },
-      {} as Record<string, string>,
+      {} as Record<string, string>
     );
 
     setConfig({
       styles: getYfmHtmlBlockCssVariables(styles),
-      classNames: [theme],
+      classNames: [theme]
     });
   }, [theme]);
 

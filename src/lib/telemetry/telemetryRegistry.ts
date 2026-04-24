@@ -1,17 +1,17 @@
-import { ServiceRegistry } from "$lib/services/registry"
-import { ConsoleTelemetryService } from "./consoleTelemetryService"
-import { DummyTelemetryService } from "./dummyTelemetryService"
-import type { TelemetryService } from "./telemetryService"
+import { ServiceRegistry } from '$lib/services/registry';
+import { ConsoleTelemetryService } from './consoleTelemetryService';
+import { DummyTelemetryService } from './dummyTelemetryService';
+import type { TelemetryService } from './telemetryService';
 
 export class TelemetryRegistry extends ServiceRegistry<TelemetryService, []> {
   public constructor() {
-    super()
+    super();
 
-    this.register('console', ConsoleTelemetryService)
-    this.register('dummy', DummyTelemetryService)
+    this.register('console', ConsoleTelemetryService);
+    this.register('dummy', DummyTelemetryService);
   }
 
   public getDefault(): TelemetryService {
-    return this.getInstance('console')
+    return this.getInstance('console');
   }
 }

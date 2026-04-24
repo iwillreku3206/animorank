@@ -2,9 +2,9 @@ export interface ISingleton<T> {
   instance(): T;
 }
 
-type Service<T, C extends any[]> = { classObject: new (...args: C) => T, singleton: false }
-  | { classObject: ISingleton<T>, singleton: true }
-
+type Service<T, C extends any[]> =
+  | { classObject: new (...args: C) => T; singleton: false }
+  | { classObject: ISingleton<T>; singleton: true };
 
 export abstract class ServiceRegistry<T, C extends any[]> {
   protected _registry = new Map<string, Service<T, C>>();
@@ -15,23 +15,23 @@ export abstract class ServiceRegistry<T, C extends any[]> {
   }
 
   public register(key: string, value: new (...args: any[]) => T) {
-    this._register(key, { classObject: value, singleton: false })
+    this._register(key, { classObject: value, singleton: false });
   }
 
   public registerSingleton(key: string, value: ISingleton<T>) {
-    this._register(key, { classObject: value, singleton: true })
+    this._register(key, { classObject: value, singleton: true });
   }
 
   public getInstance(key: string, ...args: C): T {
-    const service = this._registry.get(key)
+    const service = this._registry.get(key);
 
     if (!service) throw new Error(`Service ${key} not found`);
 
     if (service.singleton) {
-      return service.classObject.instance()
+      return service.classObject.instance();
     }
 
-    return new service.classObject(...args)
+    return new service.classObject(...args);
   }
   public abstract getDefault(...args: C): T;
 }

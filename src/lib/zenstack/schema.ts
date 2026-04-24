@@ -11,6 +11,48 @@ export class SchemaType implements SchemaDef {
         type: "postgresql"
     } as const;
     models = {
+        ProblemTag: {
+            name: "ProblemTag",
+            fields: {
+                problemId: {
+                    name: "problemId",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "problem"
+                    ] as readonly string[]
+                },
+                problem: {
+                    name: "problem",
+                    type: "Problem",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problemId")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "tags", fields: ["problemId"], references: ["id"], onDelete: "Cascade" }
+                },
+                tagId: {
+                    name: "tagId",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "tag"
+                    ] as readonly string[]
+                },
+                tag: {
+                    name: "tag",
+                    type: "Tag",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("tagId")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "problems", fields: ["tagId"], references: ["id"], onDelete: "Cascade" }
+                }
+            },
+            attributes: [
+                { name: "@@id", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problemId"), ExpressionUtils.field("tagId")]) }] }
+            ] as readonly AttributeApplication[],
+            idFields: ["problemId", "tagId"],
+            uniqueFields: {
+                problemId_tagId: { problemId: { type: "String" }, tagId: { type: "String" } }
+            }
+        },
         Problem: {
             name: "Problem",
             fields: {
@@ -46,6 +88,12 @@ export class SchemaType implements SchemaDef {
                     type: "Boolean",
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
                     default: true as FieldDefault
+                },
+                tags: {
+                    name: "tags",
+                    type: "ProblemTag",
+                    array: true,
+                    relation: { opposite: "problem" }
                 },
                 problem_set_id: {
                     name: "problem_set_id",
@@ -380,6 +428,99 @@ export class SchemaType implements SchemaDef {
                 id: { type: "String" }
             }
         },
+        Tag: {
+            name: "Tag",
+            fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
+                },
+                type: {
+                    name: "type",
+                    type: "TagType"
+                },
+                color: {
+                    name: "color",
+                    type: "TagColor",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("TAG_COLOR_DEFAULT") }] }] as readonly AttributeApplication[],
+                    default: "TAG_COLOR_DEFAULT" as FieldDefault
+                },
+                label: {
+                    name: "label",
+                    type: "String",
+                    unique: true,
+                    attributes: [{ name: "@unique" }] as readonly AttributeApplication[]
+                },
+                order: {
+                    name: "order",
+                    type: "Int",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(0) }] }] as readonly AttributeApplication[],
+                    default: 0 as FieldDefault
+                },
+                problems: {
+                    name: "problems",
+                    type: "ProblemTag",
+                    array: true,
+                    relation: { opposite: "tag" }
+                },
+                problemSets: {
+                    name: "problemSets",
+                    type: "ProblemSetTag",
+                    array: true,
+                    relation: { opposite: "tag" }
+                }
+            },
+            idFields: ["id"],
+            uniqueFields: {
+                id: { type: "String" },
+                label: { type: "String" }
+            }
+        },
+        ProblemSetTag: {
+            name: "ProblemSetTag",
+            fields: {
+                problemSetId: {
+                    name: "problemSetId",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "problemSet"
+                    ] as readonly string[]
+                },
+                problemSet: {
+                    name: "problemSet",
+                    type: "ProblemSet",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problemSetId")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "tags", fields: ["problemSetId"], references: ["id"], onDelete: "Cascade" }
+                },
+                tagId: {
+                    name: "tagId",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "tag"
+                    ] as readonly string[]
+                },
+                tag: {
+                    name: "tag",
+                    type: "Tag",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("tagId")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "problemSets", fields: ["tagId"], references: ["id"], onDelete: "Cascade" }
+                }
+            },
+            attributes: [
+                { name: "@@id", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problemSetId"), ExpressionUtils.field("tagId")]) }] }
+            ] as readonly AttributeApplication[],
+            idFields: ["problemSetId", "tagId"],
+            uniqueFields: {
+                problemSetId_tagId: { problemSetId: { type: "String" }, tagId: { type: "String" } }
+            }
+        },
         ProblemSet: {
             name: "ProblemSet",
             fields: {
@@ -426,6 +567,12 @@ export class SchemaType implements SchemaDef {
                     type: "Boolean",
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
                     default: false as FieldDefault
+                },
+                tags: {
+                    name: "tags",
+                    type: "ProblemSetTag",
+                    array: true,
+                    relation: { opposite: "problemSet" }
                 },
                 problems: {
                     name: "problems",
@@ -1167,6 +1314,97 @@ export class SchemaType implements SchemaDef {
                 LONG: "LONG",
                 LONG_LONG: "LONG_LONG",
                 SHORT: "SHORT"
+            }
+        },
+        TagType: {
+            name: "TagType",
+            values: {
+                TAG_SUBJECT: "TAG_SUBJECT",
+                TAG_DIFFICULTY: "TAG_DIFFICULTY",
+                TAG_TOPIC: "TAG_TOPIC"
+            },
+            fields: {
+                TAG_SUBJECT: {
+                    name: "TAG_SUBJECT",
+                    attributes: [
+                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("subject") }] }
+                    ] as readonly AttributeApplication[]
+                },
+                TAG_DIFFICULTY: {
+                    name: "TAG_DIFFICULTY",
+                    attributes: [
+                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("difficulty") }] }
+                    ] as readonly AttributeApplication[]
+                },
+                TAG_TOPIC: {
+                    name: "TAG_TOPIC",
+                    attributes: [
+                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("topic") }] }
+                    ] as readonly AttributeApplication[]
+                }
+            }
+        },
+        TagColor: {
+            name: "TagColor",
+            values: {
+                TAG_COLOR_DEFAULT: "TAG_COLOR_DEFAULT",
+                TAG_COLOR_PRIMARY: "TAG_COLOR_PRIMARY",
+                TAG_COLOR_SECONDARY: "TAG_COLOR_SECONDARY",
+                TAG_COLOR_ACCENT: "TAG_COLOR_ACCENT",
+                TAG_COLOR_RED: "TAG_COLOR_RED",
+                TAG_COLOR_YELLOW: "TAG_COLOR_YELLOW",
+                TAG_COLOR_GREEN: "TAG_COLOR_GREEN",
+                TAG_COLOR_BLUE: "TAG_COLOR_BLUE"
+            },
+            fields: {
+                TAG_COLOR_DEFAULT: {
+                    name: "TAG_COLOR_DEFAULT",
+                    attributes: [
+                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("default") }] }
+                    ] as readonly AttributeApplication[]
+                },
+                TAG_COLOR_PRIMARY: {
+                    name: "TAG_COLOR_PRIMARY",
+                    attributes: [
+                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("primary") }] }
+                    ] as readonly AttributeApplication[]
+                },
+                TAG_COLOR_SECONDARY: {
+                    name: "TAG_COLOR_SECONDARY",
+                    attributes: [
+                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("secondary") }] }
+                    ] as readonly AttributeApplication[]
+                },
+                TAG_COLOR_ACCENT: {
+                    name: "TAG_COLOR_ACCENT",
+                    attributes: [
+                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("accent") }] }
+                    ] as readonly AttributeApplication[]
+                },
+                TAG_COLOR_RED: {
+                    name: "TAG_COLOR_RED",
+                    attributes: [
+                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("red") }] }
+                    ] as readonly AttributeApplication[]
+                },
+                TAG_COLOR_YELLOW: {
+                    name: "TAG_COLOR_YELLOW",
+                    attributes: [
+                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("yellow") }] }
+                    ] as readonly AttributeApplication[]
+                },
+                TAG_COLOR_GREEN: {
+                    name: "TAG_COLOR_GREEN",
+                    attributes: [
+                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("green") }] }
+                    ] as readonly AttributeApplication[]
+                },
+                TAG_COLOR_BLUE: {
+                    name: "TAG_COLOR_BLUE",
+                    attributes: [
+                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("blue") }] }
+                    ] as readonly AttributeApplication[]
+                }
             }
         },
         HistoryEntryType: {

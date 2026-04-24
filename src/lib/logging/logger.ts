@@ -3,16 +3,16 @@ export enum LogLevel {
   INFO = 1,
   WARNING = 2,
   ERROR = 3,
-  CRITICAL = 4,
+  CRITICAL = 4
 }
 
 export const LogLevelNames = {
-  [LogLevel.DEBUG]: "debug",
-  [LogLevel.INFO]: "info",
-  [LogLevel.WARNING]: "warning",
-  [LogLevel.ERROR]: "error",
-  [LogLevel.CRITICAL]: "critical"
-}
+  [LogLevel.DEBUG]: 'debug',
+  [LogLevel.INFO]: 'info',
+  [LogLevel.WARNING]: 'warning',
+  [LogLevel.ERROR]: 'error',
+  [LogLevel.CRITICAL]: 'critical'
+};
 
 export interface Loggable {
   level: LogLevel;
@@ -20,10 +20,10 @@ export interface Loggable {
 }
 
 export abstract class Logger {
-  protected module: string
+  protected module: string;
 
   public constructor(module: string) {
-    this.module = module
+    this.module = module;
   }
 
   protected abstract log(message: Loggable): void;

@@ -1,23 +1,23 @@
-import { TelemetryRegistry } from "$lib/telemetry/telemetryRegistry";
-import { TelemetryService } from "$lib/telemetry/telemetryService";
-import type { ServiceRegistry } from "./registry";
+import { TelemetryRegistry } from '$lib/telemetry/telemetryRegistry';
+import { TelemetryService } from '$lib/telemetry/telemetryService';
+import type { ServiceRegistry } from './registry';
 
 type AbstractConstructor<T = any> = abstract new (...args: any[]) => T;
 
 export class ClientServiceProvider {
-  private static _instance: ClientServiceProvider | null
+  private static _instance: ClientServiceProvider | null;
   private _registries = new Map<AbstractConstructor<any>, ServiceRegistry<any, any[]>>();
 
   private constructor() {
     // Import any service registries here
-    this._registries.set(TelemetryService, new TelemetryRegistry())
+    this._registries.set(TelemetryService, new TelemetryRegistry());
   }
 
   public static instance(): ClientServiceProvider {
     if (!ClientServiceProvider._instance) {
-      ClientServiceProvider._instance = new ClientServiceProvider()
+      ClientServiceProvider._instance = new ClientServiceProvider();
     }
-    return ClientServiceProvider._instance
+    return ClientServiceProvider._instance;
   }
 
   public getService<T, C extends any[]>(service: AbstractConstructor<T>, ...args: C): T {

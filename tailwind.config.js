@@ -4,11 +4,11 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        'sans': ['DM Sans', 'Helvetica', 'sans-serif']
-      },
+        sans: ['DM Sans', 'Helvetica', 'sans-serif'],
+        mono: ['DM Mono', 'monospace']
+      }
     }
   },
   plugins: [require('@tailwindcss/typography')],
-  darkMode: 'selector',
-}
-
+  darkMode: 'selector'
+};

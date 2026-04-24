@@ -44,8 +44,8 @@ export async function testFunctionTestCase(
 
 int main() {
   ${typeToString(testCase.expected_output)} actual = ${testCase.function_name}(${testCase.parameters
-      .map((parameter) => parameter.value)
-      .join(', ')});
+    .map((parameter) => parameter.value)
+    .join(', ')});
 
   int success = ${operatorMap[testCase.operator](testCase.expected_output.value, 'actual')};
 

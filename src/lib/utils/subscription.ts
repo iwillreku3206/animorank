@@ -1,8 +1,8 @@
-export type Events = Record<string, any>
+export type Events = Record<string, any>;
 
 interface Subscription<T extends Events, K extends keyof T> {
-  event: K,
-  handler: (payload: T[K]) => void,
+  event: K;
+  handler: (payload: T[K]) => void;
 }
 
 function compareSubscriptions(
@@ -16,21 +16,21 @@ export class Subscribable<T extends Events> {
   private subscribers: Subscription<T, any>[] = [];
 
   private add<K extends keyof T>(subscriber: Subscription<T, K>): void {
-    if (this.subscribers.findIndex(s => compareSubscriptions(subscriber, s)) !== -1) return
+    if (this.subscribers.findIndex((s) => compareSubscriptions(subscriber, s)) !== -1) return;
     this.subscribers.push(subscriber);
   }
 
   private delete<K extends keyof T>(subscriber: Subscription<T, K>): void {
-    this.subscribers = this.subscribers.filter(s => !compareSubscriptions(subscriber, s))
+    this.subscribers = this.subscribers.filter((s) => !compareSubscriptions(subscriber, s));
   }
 
   public fire<K extends keyof T>(event: K, payload: T[K]): void {
-    for (const callback of this.subscribers.filter(s => s.event === event)) {
+    for (const callback of this.subscribers.filter((s) => s.event === event)) {
       callback.handler(payload);
     }
   }
 
-  public subscribe<K extends keyof T>(event: K, handler: (payload: T[K]) => void): (() => void) {
+  public subscribe<K extends keyof T>(event: K, handler: (payload: T[K]) => void): () => void {
     this.add({ event, handler });
 
     return () => {

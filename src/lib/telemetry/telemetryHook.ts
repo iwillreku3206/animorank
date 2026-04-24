@@ -1,24 +1,24 @@
-import type { ExecutionEvent } from "$lib/codeExecutor/executionHook";
-import type { monaco } from "$lib/monaco";
-import type { Subscribable } from "$lib/utils/subscription";
-import type { HistoryEntryType } from "$lib/zenstack/models";
+import type { ExecutionEvent } from '$lib/codeExecutor/executionHook';
+import type { monaco } from '$lib/monaco';
+import type { Subscribable } from '$lib/utils/subscription';
+import type { HistoryEntryType } from '$lib/zenstack/models';
 
 export type Entry<T = object> = {
-  type: HistoryEntryType,
-  data: T
-}
+  type: HistoryEntryType;
+  data: T;
+};
 
-export type TelemetryCallback = (entry: Entry) => void | Promise<void>
+export type TelemetryCallback = (entry: Entry) => void | Promise<void>;
 
 export abstract class TelemetryHook {
-  callback: TelemetryCallback
+  callback: TelemetryCallback;
 
   constructor(callback: TelemetryCallback) {
-    this.callback = callback
+    this.callback = callback;
   }
 
   protected addEntry(entry: Entry) {
-    this.callback(entry)
+    this.callback(entry);
   }
 
   public abstract monacoHook(monaco: monaco.editor.IStandaloneCodeEditor): () => void;

@@ -1,7 +1,17 @@
-import type { CustomTestCase, FunctionOutputTestCase, Problem, ProblemTestCase, ProblemTestCaseType, ProgramIOTestCase } from "$lib/zenstack/models"
+import type {
+  CustomTestCase,
+  FunctionOutputTestCase,
+  Problem,
+  ProblemTestCase,
+  ProblemTestCaseType,
+  ProgramIOTestCase
+} from '$lib/zenstack/models';
 
-export async function createTestCase(problem: string, type: ProblemTestCaseType): Promise<ProblemTestCase | undefined> {
-  const req = await fetch("/api/test-case", {
+export async function createTestCase(
+  problem: string,
+  type: ProblemTestCaseType
+): Promise<ProblemTestCase | undefined> {
+  const req = await fetch('/api/test-case', {
     method: 'POST',
     body: JSON.stringify({
       problem,
@@ -10,21 +20,21 @@ export async function createTestCase(problem: string, type: ProblemTestCaseType)
     headers: {
       'content-type': 'application/json'
     }
-  })
+  });
 
-  const res = await req.json()
+  const res = await req.json();
 
-  return res
+  return res;
 }
 
 export async function deleteTestCase(id: string): Promise<boolean> {
   const req = await fetch(`/api/test-case/${id}`, {
-    method: 'DELETE',
-  })
+    method: 'DELETE'
+  });
 
-  const res = await req.json()
+  const res = await req.json();
 
-  return res.status === "Success"
+  return res.status === 'Success';
 }
 
 export async function updateProblem(problem: Problem): Promise<boolean> {
@@ -39,39 +49,39 @@ export async function updateProblem(problem: Problem): Promise<boolean> {
     headers: {
       'content-type': 'application/json'
     }
-  })
+  });
 
-  const res = await req.json()
+  const res = await req.json();
 
-  return res.status === 'success'
+  return res.status === 'success';
 }
 
-type AnyTestCase = ProblemTestCase | FunctionOutputTestCase | ProgramIOTestCase | CustomTestCase
+type AnyTestCase = ProblemTestCase | FunctionOutputTestCase | ProgramIOTestCase | CustomTestCase;
 export async function updateTestCase(testCase: AnyTestCase): Promise<boolean> {
   let body;
   switch (testCase.type) {
-    case "FunctionOutputTestCase":
-      const functionTestCase = testCase as FunctionOutputTestCase
+    case 'FunctionOutputTestCase':
+      const functionTestCase = testCase as FunctionOutputTestCase;
       body = {
         parameters: functionTestCase.parameters,
         expected_output: functionTestCase.expected_output,
         operator: functionTestCase.operator,
         function_name: functionTestCase.function_name
-      }
-      break
-    case "ProgramIOTestCase":
-      const ioTestCase = testCase as ProgramIOTestCase
+      };
+      break;
+    case 'ProgramIOTestCase':
+      const ioTestCase = testCase as ProgramIOTestCase;
       body = {
         input: ioTestCase.input,
-        output: ioTestCase.output,
-      }
-      break
-    case "CustomTestCase":
-      const customTestCase = testCase as CustomTestCase
+        output: ioTestCase.output
+      };
+      break;
+    case 'CustomTestCase':
+      const customTestCase = testCase as CustomTestCase;
       body = {
-        test_code: customTestCase.test_code,
-      }
-      break
+        test_code: customTestCase.test_code
+      };
+      break;
   }
 
   const req = await fetch(`/api/test-case/${testCase.id}`, {
@@ -80,8 +90,8 @@ export async function updateTestCase(testCase: AnyTestCase): Promise<boolean> {
     headers: {
       'content-type': 'application/json'
     }
-  })
+  });
 
-  const res = await req.json()
-  return res.status === 'Success'
+  const res = await req.json();
+  return res.status === 'Success';
 }

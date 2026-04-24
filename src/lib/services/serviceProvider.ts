@@ -1,22 +1,22 @@
-import { Logger } from "$lib/logging/logger";
-import { LoggerRegistry } from "$lib/logging/loggerRegistry";
-import type { ServiceRegistry } from "./registry";
+import { Logger } from '$lib/logging/logger';
+import { LoggerRegistry } from '$lib/logging/loggerRegistry';
+import type { ServiceRegistry } from './registry';
 
 type AbstractConstructor<T = any> = abstract new (...args: any[]) => T;
 
 export class ServiceProvider {
-  private static _instance: ServiceProvider | null
+  private static _instance: ServiceProvider | null;
   private _registries = new Map<AbstractConstructor<any>, ServiceRegistry<any, any[]>>();
 
   private constructor() {
-    this._registries.set(Logger, new LoggerRegistry())
+    this._registries.set(Logger, new LoggerRegistry());
   }
 
   public static instance(): ServiceProvider {
     if (!ServiceProvider._instance) {
-      ServiceProvider._instance = new ServiceProvider()
+      ServiceProvider._instance = new ServiceProvider();
     }
-    return ServiceProvider._instance
+    return ServiceProvider._instance;
   }
 
   public getService<T, C extends any[]>(service: AbstractConstructor<T>, ...args: C): T {

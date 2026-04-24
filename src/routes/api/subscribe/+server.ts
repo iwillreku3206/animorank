@@ -8,13 +8,13 @@ const validator = z.object({
 });
 
 export const POST: RequestHandler = async ({ locals, request }) => {
-  const session = await locals.auth()
+  const session = await locals.auth();
 
   if (!session || !session.user.id) {
-    return new Response(JSON.stringify({ error: "Not signed in" }), {
+    return new Response(JSON.stringify({ error: 'Not signed in' }), {
       status: 403,
-      headers: { "Content-Type": "application/json" }
-    })
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   const body = await request.json();
@@ -30,11 +30,15 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
   // TODO: Add verification if the student is "allowed" to subscribe to this problem set
 
-  const obj = { problem_set_id: bodyData.problem_set, student_id: session.user.id }
-  await db.subscription.upsert({ create: obj, update: {}, where: { problem_set_id_student_id: obj } })
+  const obj = { problem_set_id: bodyData.problem_set, student_id: session.user.id };
+  await db.subscription.upsert({
+    create: obj,
+    update: {},
+    where: { problem_set_id_student_id: obj }
+  });
 
   return new Response(JSON.stringify({ success: true }), {
     status: 200,
-    headers: { "Content-Type": "application/json" }
+    headers: { 'Content-Type': 'application/json' }
   });
 };

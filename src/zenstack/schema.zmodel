@@ -8,6 +8,15 @@ enum Language {
   C
 }
 
+model ProblemTag {
+  problemId String  @db.Uuid
+  problem   Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  tagId     String  @db.Uuid
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([problemId, tagId])
+}
+
 model Problem {
   id                String            @id @default(uuid()) @db.Uuid
   name              String
@@ -15,6 +24,7 @@ model Problem {
   language          Language          @default(C)
   starter_code      String            @default("")
   visible           Boolean           @default(true)
+  tags              ProblemTag[]
   problem_set_id    String            @db.Uuid
   problem_set       ProblemSet        @relation(fields: [problem_set_id], references: [id], onDelete: Cascade)
   practice_sessions PracticeSession[]
@@ -100,18 +110,58 @@ model CustomTestCase extends ProblemTestCase {
   test_code String @default("")
 }
 
+enum TagType {
+  TAG_SUBJECT @map('subject')
+  TAG_DIFFICULTY @map('difficulty')
+  TAG_TOPIC @map('topic')
+}
+
+enum TagColor {
+  TAG_COLOR_DEFAULT @map('default')
+
+  TAG_COLOR_PRIMARY @map('primary')
+  TAG_COLOR_SECONDARY @map('secondary')
+  TAG_COLOR_ACCENT @map('accent')
+
+  TAG_COLOR_RED @map('red')
+  TAG_COLOR_YELLOW @map('yellow')
+  TAG_COLOR_GREEN @map('green')
+  TAG_COLOR_BLUE @map('blue')
+}
+
+model Tag {
+  id          String          @id @default(uuid()) @db.Uuid
+  type        TagType
+  color       TagColor        @default(TAG_COLOR_DEFAULT)
+  label       String          @unique()
+  order       Int             @default(0)
+
+  problems    ProblemTag[]
+  problemSets ProblemSetTag[]
+}
+
+model ProblemSetTag {
+  problemSetId String     @db.Uuid
+  problemSet   ProblemSet @relation(fields: [problemSetId], references: [id], onDelete: Cascade)
+  tagId        String     @db.Uuid
+  tag          Tag        @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([problemSetId, tagId])
+}
+
 model ProblemSet {
-  id            String         @id @default(uuid()) @db.Uuid
+  id            String          @id @default(uuid()) @db.Uuid
   description   String?
   title         String
-  owner_id      String?        @db.Uuid
-  owner         Teacher?       @relation(fields: [owner_id], references: [id], onDelete: SetNull)
-  auto_accept   Boolean        @default(false)
-  is_global     Boolean        @default(false)
+  owner_id      String?         @db.Uuid
+  owner         Teacher?        @relation(fields: [owner_id], references: [id], onDelete: SetNull)
+  auto_accept   Boolean         @default(false)
+  is_global     Boolean         @default(false)
+  tags          ProblemSetTag[]
   problems      Problem[]
   subscriptions Subscription[]
-  created_at    DateTime       @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime       @updatedAt @db.Timestamptz(6)
+  created_at    DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime        @updatedAt @db.Timestamptz(6)
 }
 
 model PracticeSession {

@@ -7,11 +7,14 @@
 
 import { schema as $schema, type SchemaType as $Schema } from "./schema";
 import type { ModelResult as $ModelResult, TypeDefResult as $TypeDefResult } from "@zenstackhq/orm";
+export type ProblemTag = $ModelResult<$Schema, "ProblemTag">;
 export type Problem = $ModelResult<$Schema, "Problem">;
 export type ProblemTestCase = $ModelResult<$Schema, "ProblemTestCase">;
 export type FunctionOutputTestCase = $ModelResult<$Schema, "FunctionOutputTestCase">;
 export type ProgramIOTestCase = $ModelResult<$Schema, "ProgramIOTestCase">;
 export type CustomTestCase = $ModelResult<$Schema, "CustomTestCase">;
+export type Tag = $ModelResult<$Schema, "Tag">;
+export type ProblemSetTag = $ModelResult<$Schema, "ProblemSetTag">;
 export type ProblemSet = $ModelResult<$Schema, "ProblemSet">;
 export type PracticeSession = $ModelResult<$Schema, "PracticeSession">;
 export type PracticeHistoryEntry = $ModelResult<$Schema, "PracticeHistoryEntry">;
@@ -36,5 +39,9 @@ export const BaseType = $schema.enums.BaseType.values;
 export type BaseType = (typeof BaseType)[keyof typeof BaseType];
 export const SizeModifier = $schema.enums.SizeModifier.values;
 export type SizeModifier = (typeof SizeModifier)[keyof typeof SizeModifier];
+export const TagType = $schema.enums.TagType.values;
+export type TagType = (typeof TagType)[keyof typeof TagType];
+export const TagColor = $schema.enums.TagColor.values;
+export type TagColor = (typeof TagColor)[keyof typeof TagColor];
 export const HistoryEntryType = $schema.enums.HistoryEntryType.values;
 export type HistoryEntryType = (typeof HistoryEntryType)[keyof typeof HistoryEntryType];
