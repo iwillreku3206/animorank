@@ -19,7 +19,7 @@
     [TagColor.TAG_COLOR_RED]: 'bg-error text-primary-content',
     [TagColor.TAG_COLOR_YELLOW]: 'bg-warning text-primary-content',
     [TagColor.TAG_COLOR_GREEN]: 'bg-success text-primary-content',
-    [TagColor.TAG_COLOR_BLUE]: 'bg-info bg-primary-content'
+    [TagColor.TAG_COLOR_BLUE]: 'bg-info text-primary-content'
   });
 </script>
 

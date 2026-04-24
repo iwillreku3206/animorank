@@ -25,11 +25,34 @@ export const load: PageServerLoad = async ({ locals }) => {
         }
       }
     },
-    orderBy: [{ type: 'asc' }, { problemSets: { _count: 'desc' } }, { order: 'asc' }, { label: 'asc' }]
+    orderBy: [
+      { type: 'asc' },
+      { problemSets: { _count: 'desc' } },
+      { order: 'asc' },
+      { label: 'asc' }
+    ]
   });
+
+  const creators =
+    session.user.type === 'student'
+      ? await db.teacher.findMany({
+          select: { user: { select: { id: true, name: true } } },
+          where: {
+            problem_set: {
+              some: {
+                OR: [
+                  { is_global: true },
+                  { subscriptions: { some: { student_id: session.user.id } } }
+                ]
+              }
+            }
+          }
+        })
+      : [];
 
   return {
     user: session.user,
-    tags
+    tags,
+    creators: creators.map((c) => c.user)
   };
 };
