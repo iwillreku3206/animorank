@@ -1,0 +1,93 @@
+import "problemSet.zmodel"
+import "practiceSession.zmodel"
+
+model Student {
+  id                String            @id @default(uuid()) @db.Uuid
+  user              User              @relation(fields: [id], references: [id], onDelete: Cascade)
+  practice_sessions PracticeSession[]
+  subscription      Subscription[]
+}
+
+model Teacher {
+  id                         String                   @id @default(uuid()) @db.Uuid
+  user                       User                     @relation(fields: [id], references: [id], onDelete: Cascade)
+  problem_set_collaborations ProblemSetCollaborator[]
+}
+
+model TeacherList {
+  email String @id
+}
+
+model User {
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String?
+  email          String          @unique
+  emailVerified  DateTime?
+  image          String?
+  accounts       Account[]
+  sessions       Session[]
+  // Optional for WebAuthn support
+  Authenticator  Authenticator[]
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  hasAcceptedTOS Boolean         @default(false)
+
+  student        Student?
+  teacher        Teacher?
+}
+
+model Account {
+  userId            String   @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String   @db.Uuid
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// Optional for WebAuthn support
+model Authenticator {
+  credentialID         String  @unique
+  userId               String  @db.Uuid
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
+}

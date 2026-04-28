@@ -1,0 +1,44 @@
+import "problem.zmodel"
+import "problemSet.zmodel"
+
+enum TagType {
+  TAG_SUBJECT @map('subject')
+  TAG_DIFFICULTY @map('difficulty')
+  TAG_TOPIC @map('topic')
+}
+
+enum TagColor {
+  TAG_COLOR_DEFAULT @map('default')
+
+  TAG_COLOR_PRIMARY @map('primary')
+  TAG_COLOR_SECONDARY @map('secondary')
+  TAG_COLOR_ACCENT @map('accent')
+
+  TAG_COLOR_RED @map('red')
+  TAG_COLOR_YELLOW @map('yellow')
+  TAG_COLOR_GREEN @map('green')
+  TAG_COLOR_BLUE @map('blue')
+}
+
+type Tag {
+  id    String   @id @default(uuid()) @db.Uuid
+  type  TagType
+  color TagColor @default(TAG_COLOR_DEFAULT)
+  label String   @unique()
+  order Int      @default(0)
+}
+
+model SubjectTag with Tag {
+  problems     Problem[]
+  problem_sets ProblemSet[]
+}
+
+model DifficultyTag with Tag {
+  problems     Problem[]
+  problem_sets ProblemSet[]
+}
+
+model TopicTag with Tag {
+  problems     ProblemTopic[]
+  problem_sets ProblemSetTopic[]
+}

@@ -2,27 +2,17 @@
   import TagChip from '$lib/components/TagChip.svelte';
   import BookmarkIcon from '@iconify-svelte/fa6-regular/bookmark';
   import BookmarkIconSolid from '@iconify-svelte/fa6-solid/bookmark';
-  import type { ProblemSet, Tag } from '$lib/zenstack/models';
+  import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
+  import type { ProblemSet } from './api';
 
   export interface ProblemSetCardProps {
-    problemSet: {
-      id: string;
-      title: string;
-      ownerName: string;
-      description: string;
-      progress: {
-        finished: number;
-        total: number;
-      };
-      bookmarked: boolean;
-      tags: Tag[];
-    };
+    problemSet: ProblemSet;
   }
 
   let { problemSet }: ProblemSetCardProps = $props();
 </script>
 
-<div class="relative max-w-96 w-full">
+<div class="relative w-full">
   <a
     href="/problemSet/{problemSet.id}"
     aria-label="Problem Set Link"
@@ -50,7 +40,7 @@
     </div>
     <div class="flex flex-col gap-0.5">
       <h2 class="font-sans! text-xl font-bold">{problemSet.title}</h2>
-      <div class="text-xs">by {problemSet.ownerName}</div>
+      <div class="text-sm text-primary">{problemSet.ownerName}</div>
     </div>
     <p>{problemSet.description}</p>
     <div

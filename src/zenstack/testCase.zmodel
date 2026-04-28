@@ -1,0 +1,47 @@
+import "problem.zmodel"
+import "ctype.zmodel"
+
+enum ProblemTestCaseType {
+  FunctionOutputTestCase
+  ProgramIOTestCase
+  CustomTestCase
+}
+
+enum ProblemTestCaseOperator {
+  EQUAL
+  NOT_EQUAL
+  LESS_THAN
+  LESS_THAN_EQUAL
+  GREATER_THAN
+  GREATER_THAN_EQUAL
+  WITHIN_RANGE
+  LEVENSHTEIN_SIMILARITY
+}
+
+model ProblemTestCase {
+  id         String              @id @default(uuid()) @db.Uuid
+  type       ProblemTestCaseType @default(FunctionOutputTestCase)
+  public     Boolean             @default(true)
+  problem_id String              @db.Uuid
+  problem    Problem             @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  created_at DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at DateTime            @updatedAt @db.Timestamptz(6)
+
+  @@delegate(type)
+}
+
+model FunctionOutputTestCase extends ProblemTestCase {
+  parameters      CTypeWithValue[]        @json() @default("[]")
+  expected_output CTypeWithValue          @json() @default('{"base": "INT"}')
+  operator        ProblemTestCaseOperator @default(EQUAL)
+  function_name   String                  @default("")
+}
+
+model ProgramIOTestCase extends ProblemTestCase {
+  input  String @default("")
+  output String @default("")
+}
+
+model CustomTestCase extends ProblemTestCase {
+  test_code String @default("")
+}

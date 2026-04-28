@@ -11,599 +11,6 @@ export class SchemaType implements SchemaDef {
         type: "postgresql"
     } as const;
     models = {
-        ProblemTag: {
-            name: "ProblemTag",
-            fields: {
-                problemId: {
-                    name: "problemId",
-                    type: "String",
-                    id: true,
-                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    foreignKeyFor: [
-                        "problem"
-                    ] as readonly string[]
-                },
-                problem: {
-                    name: "problem",
-                    type: "Problem",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problemId")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "tags", fields: ["problemId"], references: ["id"], onDelete: "Cascade" }
-                },
-                tagId: {
-                    name: "tagId",
-                    type: "String",
-                    id: true,
-                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    foreignKeyFor: [
-                        "tag"
-                    ] as readonly string[]
-                },
-                tag: {
-                    name: "tag",
-                    type: "Tag",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("tagId")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problems", fields: ["tagId"], references: ["id"], onDelete: "Cascade" }
-                }
-            },
-            attributes: [
-                { name: "@@id", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problemId"), ExpressionUtils.field("tagId")]) }] }
-            ] as readonly AttributeApplication[],
-            idFields: ["problemId", "tagId"],
-            uniqueFields: {
-                problemId_tagId: { problemId: { type: "String" }, tagId: { type: "String" } }
-            }
-        },
-        Problem: {
-            name: "Problem",
-            fields: {
-                id: {
-                    name: "id",
-                    type: "String",
-                    id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("uuid") as FieldDefault
-                },
-                name: {
-                    name: "name",
-                    type: "String"
-                },
-                description: {
-                    name: "description",
-                    type: "String"
-                },
-                language: {
-                    name: "language",
-                    type: "Language",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("C") }] }] as readonly AttributeApplication[],
-                    default: "C" as FieldDefault
-                },
-                starter_code: {
-                    name: "starter_code",
-                    type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
-                    default: "" as FieldDefault
-                },
-                visible: {
-                    name: "visible",
-                    type: "Boolean",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
-                    default: true as FieldDefault
-                },
-                tags: {
-                    name: "tags",
-                    type: "ProblemTag",
-                    array: true,
-                    relation: { opposite: "problem" }
-                },
-                problem_set_id: {
-                    name: "problem_set_id",
-                    type: "String",
-                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    foreignKeyFor: [
-                        "problem_set"
-                    ] as readonly string[]
-                },
-                problem_set: {
-                    name: "problem_set",
-                    type: "ProblemSet",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_set_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problems", fields: ["problem_set_id"], references: ["id"], onDelete: "Cascade" }
-                },
-                practice_sessions: {
-                    name: "practice_sessions",
-                    type: "PracticeSession",
-                    array: true,
-                    relation: { opposite: "problem" }
-                },
-                created_at: {
-                    name: "created_at",
-                    type: "DateTime",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("now") as FieldDefault
-                },
-                updated_at: {
-                    name: "updated_at",
-                    type: "DateTime",
-                    updatedAt: true,
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
-                },
-                problemTestCases: {
-                    name: "problemTestCases",
-                    type: "ProblemTestCase",
-                    array: true,
-                    relation: { opposite: "problem" }
-                }
-            },
-            idFields: ["id"],
-            uniqueFields: {
-                id: { type: "String" }
-            }
-        },
-        ProblemTestCase: {
-            name: "ProblemTestCase",
-            fields: {
-                id: {
-                    name: "id",
-                    type: "String",
-                    id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("uuid") as FieldDefault
-                },
-                type: {
-                    name: "type",
-                    type: "ProblemTestCaseType",
-                    isDiscriminator: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
-                    default: "FunctionOutputTestCase" as FieldDefault
-                },
-                public: {
-                    name: "public",
-                    type: "Boolean",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
-                    default: true as FieldDefault
-                },
-                problem_id: {
-                    name: "problem_id",
-                    type: "String",
-                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    foreignKeyFor: [
-                        "problem"
-                    ] as readonly string[]
-                },
-                problem: {
-                    name: "problem",
-                    type: "Problem",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problemTestCases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
-                },
-                created_at: {
-                    name: "created_at",
-                    type: "DateTime",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("now") as FieldDefault
-                },
-                updated_at: {
-                    name: "updated_at",
-                    type: "DateTime",
-                    updatedAt: true,
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
-                }
-            },
-            attributes: [
-                { name: "@@delegate", args: [{ name: "discriminator", value: ExpressionUtils.field("type") }] }
-            ] as readonly AttributeApplication[],
-            idFields: ["id"],
-            uniqueFields: {
-                id: { type: "String" }
-            },
-            isDelegate: true,
-            subModels: ["FunctionOutputTestCase", "ProgramIOTestCase", "CustomTestCase"]
-        },
-        FunctionOutputTestCase: {
-            name: "FunctionOutputTestCase",
-            baseModel: "ProblemTestCase",
-            fields: {
-                id: {
-                    name: "id",
-                    type: "String",
-                    id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("uuid") as FieldDefault
-                },
-                type: {
-                    name: "type",
-                    type: "ProblemTestCaseType",
-                    originModel: "ProblemTestCase",
-                    isDiscriminator: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
-                    default: "FunctionOutputTestCase" as FieldDefault
-                },
-                public: {
-                    name: "public",
-                    type: "Boolean",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
-                    default: true as FieldDefault
-                },
-                problem_id: {
-                    name: "problem_id",
-                    type: "String",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    foreignKeyFor: [
-                        "problem"
-                    ] as readonly string[]
-                },
-                problem: {
-                    name: "problem",
-                    type: "Problem",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problemTestCases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
-                },
-                created_at: {
-                    name: "created_at",
-                    type: "DateTime",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("now") as FieldDefault
-                },
-                updated_at: {
-                    name: "updated_at",
-                    type: "DateTime",
-                    updatedAt: true,
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
-                },
-                parameters: {
-                    name: "parameters",
-                    type: "CTypeWithValue",
-                    array: true,
-                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("[]") }] }] as readonly AttributeApplication[],
-                    default: "[]" as FieldDefault
-                },
-                expected_output: {
-                    name: "expected_output",
-                    type: "CTypeWithValue",
-                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("{\"base\": \"INT\"}") }] }] as readonly AttributeApplication[],
-                    default: "{\"base\": \"INT\"}" as FieldDefault
-                },
-                operator: {
-                    name: "operator",
-                    type: "ProblemTestCaseOperator",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("EQUAL") }] }] as readonly AttributeApplication[],
-                    default: "EQUAL" as FieldDefault
-                },
-                function_name: {
-                    name: "function_name",
-                    type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
-                    default: "" as FieldDefault
-                }
-            },
-            idFields: ["id"],
-            uniqueFields: {
-                id: { type: "String" }
-            }
-        },
-        ProgramIOTestCase: {
-            name: "ProgramIOTestCase",
-            baseModel: "ProblemTestCase",
-            fields: {
-                id: {
-                    name: "id",
-                    type: "String",
-                    id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("uuid") as FieldDefault
-                },
-                type: {
-                    name: "type",
-                    type: "ProblemTestCaseType",
-                    originModel: "ProblemTestCase",
-                    isDiscriminator: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
-                    default: "FunctionOutputTestCase" as FieldDefault
-                },
-                public: {
-                    name: "public",
-                    type: "Boolean",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
-                    default: true as FieldDefault
-                },
-                problem_id: {
-                    name: "problem_id",
-                    type: "String",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    foreignKeyFor: [
-                        "problem"
-                    ] as readonly string[]
-                },
-                problem: {
-                    name: "problem",
-                    type: "Problem",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problemTestCases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
-                },
-                created_at: {
-                    name: "created_at",
-                    type: "DateTime",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("now") as FieldDefault
-                },
-                updated_at: {
-                    name: "updated_at",
-                    type: "DateTime",
-                    updatedAt: true,
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
-                },
-                input: {
-                    name: "input",
-                    type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
-                    default: "" as FieldDefault
-                },
-                output: {
-                    name: "output",
-                    type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
-                    default: "" as FieldDefault
-                }
-            },
-            idFields: ["id"],
-            uniqueFields: {
-                id: { type: "String" }
-            }
-        },
-        CustomTestCase: {
-            name: "CustomTestCase",
-            baseModel: "ProblemTestCase",
-            fields: {
-                id: {
-                    name: "id",
-                    type: "String",
-                    id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("uuid") as FieldDefault
-                },
-                type: {
-                    name: "type",
-                    type: "ProblemTestCaseType",
-                    originModel: "ProblemTestCase",
-                    isDiscriminator: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
-                    default: "FunctionOutputTestCase" as FieldDefault
-                },
-                public: {
-                    name: "public",
-                    type: "Boolean",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
-                    default: true as FieldDefault
-                },
-                problem_id: {
-                    name: "problem_id",
-                    type: "String",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    foreignKeyFor: [
-                        "problem"
-                    ] as readonly string[]
-                },
-                problem: {
-                    name: "problem",
-                    type: "Problem",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problemTestCases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
-                },
-                created_at: {
-                    name: "created_at",
-                    type: "DateTime",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("now") as FieldDefault
-                },
-                updated_at: {
-                    name: "updated_at",
-                    type: "DateTime",
-                    updatedAt: true,
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
-                },
-                test_code: {
-                    name: "test_code",
-                    type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
-                    default: "" as FieldDefault
-                }
-            },
-            idFields: ["id"],
-            uniqueFields: {
-                id: { type: "String" }
-            }
-        },
-        Tag: {
-            name: "Tag",
-            fields: {
-                id: {
-                    name: "id",
-                    type: "String",
-                    id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("uuid") as FieldDefault
-                },
-                type: {
-                    name: "type",
-                    type: "TagType"
-                },
-                color: {
-                    name: "color",
-                    type: "TagColor",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("TAG_COLOR_DEFAULT") }] }] as readonly AttributeApplication[],
-                    default: "TAG_COLOR_DEFAULT" as FieldDefault
-                },
-                label: {
-                    name: "label",
-                    type: "String",
-                    unique: true,
-                    attributes: [{ name: "@unique" }] as readonly AttributeApplication[]
-                },
-                order: {
-                    name: "order",
-                    type: "Int",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(0) }] }] as readonly AttributeApplication[],
-                    default: 0 as FieldDefault
-                },
-                problems: {
-                    name: "problems",
-                    type: "ProblemTag",
-                    array: true,
-                    relation: { opposite: "tag" }
-                },
-                problemSets: {
-                    name: "problemSets",
-                    type: "ProblemSetTag",
-                    array: true,
-                    relation: { opposite: "tag" }
-                }
-            },
-            idFields: ["id"],
-            uniqueFields: {
-                id: { type: "String" },
-                label: { type: "String" }
-            }
-        },
-        ProblemSetTag: {
-            name: "ProblemSetTag",
-            fields: {
-                problemSetId: {
-                    name: "problemSetId",
-                    type: "String",
-                    id: true,
-                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    foreignKeyFor: [
-                        "problemSet"
-                    ] as readonly string[]
-                },
-                problemSet: {
-                    name: "problemSet",
-                    type: "ProblemSet",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problemSetId")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "tags", fields: ["problemSetId"], references: ["id"], onDelete: "Cascade" }
-                },
-                tagId: {
-                    name: "tagId",
-                    type: "String",
-                    id: true,
-                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    foreignKeyFor: [
-                        "tag"
-                    ] as readonly string[]
-                },
-                tag: {
-                    name: "tag",
-                    type: "Tag",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("tagId")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problemSets", fields: ["tagId"], references: ["id"], onDelete: "Cascade" }
-                }
-            },
-            attributes: [
-                { name: "@@id", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problemSetId"), ExpressionUtils.field("tagId")]) }] }
-            ] as readonly AttributeApplication[],
-            idFields: ["problemSetId", "tagId"],
-            uniqueFields: {
-                problemSetId_tagId: { problemSetId: { type: "String" }, tagId: { type: "String" } }
-            }
-        },
-        ProblemSet: {
-            name: "ProblemSet",
-            fields: {
-                id: {
-                    name: "id",
-                    type: "String",
-                    id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("uuid") as FieldDefault
-                },
-                description: {
-                    name: "description",
-                    type: "String",
-                    optional: true
-                },
-                title: {
-                    name: "title",
-                    type: "String"
-                },
-                owner_id: {
-                    name: "owner_id",
-                    type: "String",
-                    optional: true,
-                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    foreignKeyFor: [
-                        "owner"
-                    ] as readonly string[]
-                },
-                owner: {
-                    name: "owner",
-                    type: "Teacher",
-                    optional: true,
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("owner_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problem_set", fields: ["owner_id"], references: ["id"], onDelete: "SetNull" }
-                },
-                auto_accept: {
-                    name: "auto_accept",
-                    type: "Boolean",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
-                    default: false as FieldDefault
-                },
-                is_global: {
-                    name: "is_global",
-                    type: "Boolean",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
-                    default: false as FieldDefault
-                },
-                tags: {
-                    name: "tags",
-                    type: "ProblemSetTag",
-                    array: true,
-                    relation: { opposite: "problemSet" }
-                },
-                problems: {
-                    name: "problems",
-                    type: "Problem",
-                    array: true,
-                    relation: { opposite: "problem_set" }
-                },
-                subscriptions: {
-                    name: "subscriptions",
-                    type: "Subscription",
-                    array: true,
-                    relation: { opposite: "problem_set" }
-                },
-                created_at: {
-                    name: "created_at",
-                    type: "DateTime",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("now") as FieldDefault
-                },
-                updated_at: {
-                    name: "updated_at",
-                    type: "DateTime",
-                    updatedAt: true,
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
-                }
-            },
-            idFields: ["id"],
-            uniqueFields: {
-                id: { type: "String" }
-            }
-        },
         PracticeSession: {
             name: "PracticeSession",
             fields: {
@@ -720,41 +127,634 @@ export class SchemaType implements SchemaDef {
                 id: { type: "String" }
             }
         },
-        Student: {
-            name: "Student",
+        ProblemTopic: {
+            name: "ProblemTopic",
+            fields: {
+                problem_id: {
+                    name: "problem_id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "problem"
+                    ] as readonly string[]
+                },
+                problem: {
+                    name: "problem",
+                    type: "Problem",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "topics", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
+                },
+                tag_id: {
+                    name: "tag_id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "tag"
+                    ] as readonly string[]
+                },
+                tag: {
+                    name: "tag",
+                    type: "TopicTag",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("tag_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "problems", fields: ["tag_id"], references: ["id"], onDelete: "Cascade" }
+                }
+            },
+            attributes: [
+                { name: "@@id", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id"), ExpressionUtils.field("tag_id")]) }] }
+            ] as readonly AttributeApplication[],
+            idFields: ["problem_id", "tag_id"],
+            uniqueFields: {
+                problem_id_tag_id: { problem_id: { type: "String" }, tag_id: { type: "String" } }
+            }
+        },
+        Problem: {
+            name: "Problem",
             fields: {
                 id: {
                     name: "id",
                     type: "String",
                     id: true,
                     attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("uuid") as FieldDefault,
+                    default: ExpressionUtils.call("uuid") as FieldDefault
+                },
+                name: {
+                    name: "name",
+                    type: "String"
+                },
+                description: {
+                    name: "description",
+                    type: "String"
+                },
+                language: {
+                    name: "language",
+                    type: "Language",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("C") }] }] as readonly AttributeApplication[],
+                    default: "C" as FieldDefault
+                },
+                starter_code: {
+                    name: "starter_code",
+                    type: "String",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
+                    default: "" as FieldDefault
+                },
+                visible: {
+                    name: "visible",
+                    type: "Boolean",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
+                    default: true as FieldDefault
+                },
+                difficulty_id: {
+                    name: "difficulty_id",
+                    type: "String",
+                    optional: true,
                     foreignKeyFor: [
-                        "user"
+                        "difficulty",
+                        "subject"
                     ] as readonly string[]
                 },
-                user: {
-                    name: "user",
-                    type: "User",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "student", fields: ["id"], references: ["id"], onDelete: "Cascade", hasDefault: true }
+                difficulty: {
+                    name: "difficulty",
+                    type: "DifficultyTag",
+                    optional: true,
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("difficulty_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "problems", fields: ["difficulty_id"], references: ["id"], onDelete: "SetNull" }
+                },
+                subject_id: {
+                    name: "subject_id",
+                    type: "String",
+                    optional: true
+                },
+                subject: {
+                    name: "subject",
+                    type: "SubjectTag",
+                    optional: true,
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("difficulty_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "problems", fields: ["difficulty_id"], references: ["id"], onDelete: "SetNull" }
+                },
+                topics: {
+                    name: "topics",
+                    type: "ProblemTopic",
+                    array: true,
+                    relation: { opposite: "problem" }
+                },
+                problem_set_id: {
+                    name: "problem_set_id",
+                    type: "String",
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "problem_set"
+                    ] as readonly string[]
+                },
+                problem_set: {
+                    name: "problem_set",
+                    type: "ProblemSet",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_set_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "problems", fields: ["problem_set_id"], references: ["id"], onDelete: "Cascade" }
                 },
                 practice_sessions: {
                     name: "practice_sessions",
                     type: "PracticeSession",
                     array: true,
-                    relation: { opposite: "student" }
+                    relation: { opposite: "problem" }
                 },
-                subscription: {
-                    name: "subscription",
-                    type: "Subscription",
+                test_cases: {
+                    name: "test_cases",
+                    type: "ProblemTestCase",
                     array: true,
-                    relation: { opposite: "student" }
+                    relation: { opposite: "problem" }
+                },
+                created_at: {
+                    name: "created_at",
+                    type: "DateTime",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
+                },
+                updated_at: {
+                    name: "updated_at",
+                    type: "DateTime",
+                    updatedAt: true,
+                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
                 }
             },
             idFields: ["id"],
             uniqueFields: {
                 id: { type: "String" }
+            }
+        },
+        ProblemTestCase: {
+            name: "ProblemTestCase",
+            fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
+                },
+                type: {
+                    name: "type",
+                    type: "ProblemTestCaseType",
+                    isDiscriminator: true,
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
+                    default: "FunctionOutputTestCase" as FieldDefault
+                },
+                public: {
+                    name: "public",
+                    type: "Boolean",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
+                    default: true as FieldDefault
+                },
+                problem_id: {
+                    name: "problem_id",
+                    type: "String",
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "problem"
+                    ] as readonly string[]
+                },
+                problem: {
+                    name: "problem",
+                    type: "Problem",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "test_cases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
+                },
+                created_at: {
+                    name: "created_at",
+                    type: "DateTime",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
+                },
+                updated_at: {
+                    name: "updated_at",
+                    type: "DateTime",
+                    updatedAt: true,
+                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
+                }
+            },
+            attributes: [
+                { name: "@@delegate", args: [{ name: "discriminator", value: ExpressionUtils.field("type") }] }
+            ] as readonly AttributeApplication[],
+            idFields: ["id"],
+            uniqueFields: {
+                id: { type: "String" }
+            },
+            isDelegate: true,
+            subModels: ["FunctionOutputTestCase", "ProgramIOTestCase", "CustomTestCase"]
+        },
+        FunctionOutputTestCase: {
+            name: "FunctionOutputTestCase",
+            baseModel: "ProblemTestCase",
+            fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
+                },
+                type: {
+                    name: "type",
+                    type: "ProblemTestCaseType",
+                    originModel: "ProblemTestCase",
+                    isDiscriminator: true,
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
+                    default: "FunctionOutputTestCase" as FieldDefault
+                },
+                public: {
+                    name: "public",
+                    type: "Boolean",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
+                    default: true as FieldDefault
+                },
+                problem_id: {
+                    name: "problem_id",
+                    type: "String",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "problem"
+                    ] as readonly string[]
+                },
+                problem: {
+                    name: "problem",
+                    type: "Problem",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "test_cases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
+                },
+                created_at: {
+                    name: "created_at",
+                    type: "DateTime",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
+                },
+                updated_at: {
+                    name: "updated_at",
+                    type: "DateTime",
+                    updatedAt: true,
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
+                },
+                parameters: {
+                    name: "parameters",
+                    type: "CTypeWithValue",
+                    array: true,
+                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("[]") }] }] as readonly AttributeApplication[],
+                    default: "[]" as FieldDefault
+                },
+                expected_output: {
+                    name: "expected_output",
+                    type: "CTypeWithValue",
+                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("{\"base\": \"INT\"}") }] }] as readonly AttributeApplication[],
+                    default: "{\"base\": \"INT\"}" as FieldDefault
+                },
+                operator: {
+                    name: "operator",
+                    type: "ProblemTestCaseOperator",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("EQUAL") }] }] as readonly AttributeApplication[],
+                    default: "EQUAL" as FieldDefault
+                },
+                function_name: {
+                    name: "function_name",
+                    type: "String",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
+                    default: "" as FieldDefault
+                }
+            },
+            idFields: ["id"],
+            uniqueFields: {
+                id: { type: "String" }
+            }
+        },
+        ProgramIOTestCase: {
+            name: "ProgramIOTestCase",
+            baseModel: "ProblemTestCase",
+            fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
+                },
+                type: {
+                    name: "type",
+                    type: "ProblemTestCaseType",
+                    originModel: "ProblemTestCase",
+                    isDiscriminator: true,
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
+                    default: "FunctionOutputTestCase" as FieldDefault
+                },
+                public: {
+                    name: "public",
+                    type: "Boolean",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
+                    default: true as FieldDefault
+                },
+                problem_id: {
+                    name: "problem_id",
+                    type: "String",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "problem"
+                    ] as readonly string[]
+                },
+                problem: {
+                    name: "problem",
+                    type: "Problem",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "test_cases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
+                },
+                created_at: {
+                    name: "created_at",
+                    type: "DateTime",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
+                },
+                updated_at: {
+                    name: "updated_at",
+                    type: "DateTime",
+                    updatedAt: true,
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
+                },
+                input: {
+                    name: "input",
+                    type: "String",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
+                    default: "" as FieldDefault
+                },
+                output: {
+                    name: "output",
+                    type: "String",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
+                    default: "" as FieldDefault
+                }
+            },
+            idFields: ["id"],
+            uniqueFields: {
+                id: { type: "String" }
+            }
+        },
+        CustomTestCase: {
+            name: "CustomTestCase",
+            baseModel: "ProblemTestCase",
+            fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
+                },
+                type: {
+                    name: "type",
+                    type: "ProblemTestCaseType",
+                    originModel: "ProblemTestCase",
+                    isDiscriminator: true,
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
+                    default: "FunctionOutputTestCase" as FieldDefault
+                },
+                public: {
+                    name: "public",
+                    type: "Boolean",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
+                    default: true as FieldDefault
+                },
+                problem_id: {
+                    name: "problem_id",
+                    type: "String",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "problem"
+                    ] as readonly string[]
+                },
+                problem: {
+                    name: "problem",
+                    type: "Problem",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "test_cases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
+                },
+                created_at: {
+                    name: "created_at",
+                    type: "DateTime",
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
+                },
+                updated_at: {
+                    name: "updated_at",
+                    type: "DateTime",
+                    updatedAt: true,
+                    originModel: "ProblemTestCase",
+                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
+                },
+                test_code: {
+                    name: "test_code",
+                    type: "String",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
+                    default: "" as FieldDefault
+                }
+            },
+            idFields: ["id"],
+            uniqueFields: {
+                id: { type: "String" }
+            }
+        },
+        ProblemSetTopic: {
+            name: "ProblemSetTopic",
+            fields: {
+                problem_set_id: {
+                    name: "problem_set_id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "problem_set"
+                    ] as readonly string[]
+                },
+                problem_set: {
+                    name: "problem_set",
+                    type: "ProblemSet",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_set_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "topics", fields: ["problem_set_id"], references: ["id"], onDelete: "Cascade" }
+                },
+                topic_tag_id: {
+                    name: "topic_tag_id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "topic_tag"
+                    ] as readonly string[]
+                },
+                topic_tag: {
+                    name: "topic_tag",
+                    type: "TopicTag",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("topic_tag_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "problem_sets", fields: ["topic_tag_id"], references: ["id"], onDelete: "Cascade" }
+                }
+            },
+            attributes: [
+                { name: "@@id", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_set_id"), ExpressionUtils.field("topic_tag_id")]) }] }
+            ] as readonly AttributeApplication[],
+            idFields: ["problem_set_id", "topic_tag_id"],
+            uniqueFields: {
+                problem_set_id_topic_tag_id: { problem_set_id: { type: "String" }, topic_tag_id: { type: "String" } }
+            }
+        },
+        ProblemSet: {
+            name: "ProblemSet",
+            fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
+                },
+                description: {
+                    name: "description",
+                    type: "String",
+                    optional: true
+                },
+                title: {
+                    name: "title",
+                    type: "String"
+                },
+                auto_accept: {
+                    name: "auto_accept",
+                    type: "Boolean",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
+                    default: false as FieldDefault
+                },
+                is_global: {
+                    name: "is_global",
+                    type: "Boolean",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
+                    default: false as FieldDefault
+                },
+                difficulty_id: {
+                    name: "difficulty_id",
+                    type: "String",
+                    optional: true,
+                    foreignKeyFor: [
+                        "difficulty",
+                        "subject"
+                    ] as readonly string[]
+                },
+                difficulty: {
+                    name: "difficulty",
+                    type: "DifficultyTag",
+                    optional: true,
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("difficulty_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "problem_sets", fields: ["difficulty_id"], references: ["id"], onDelete: "SetNull" }
+                },
+                subject_id: {
+                    name: "subject_id",
+                    type: "String",
+                    optional: true
+                },
+                subject: {
+                    name: "subject",
+                    type: "SubjectTag",
+                    optional: true,
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("difficulty_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "problem_sets", fields: ["difficulty_id"], references: ["id"], onDelete: "SetNull" }
+                },
+                topics: {
+                    name: "topics",
+                    type: "ProblemSetTopic",
+                    array: true,
+                    relation: { opposite: "problem_set" }
+                },
+                problems: {
+                    name: "problems",
+                    type: "Problem",
+                    array: true,
+                    relation: { opposite: "problem_set" }
+                },
+                subscriptions: {
+                    name: "subscriptions",
+                    type: "Subscription",
+                    array: true,
+                    relation: { opposite: "problem_set" }
+                },
+                collaborators: {
+                    name: "collaborators",
+                    type: "ProblemSetCollaborator",
+                    array: true,
+                    relation: { opposite: "problem_set" }
+                },
+                created_at: {
+                    name: "created_at",
+                    type: "DateTime",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
+                },
+                updated_at: {
+                    name: "updated_at",
+                    type: "DateTime",
+                    updatedAt: true,
+                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
+                }
+            },
+            idFields: ["id"],
+            uniqueFields: {
+                id: { type: "String" }
+            }
+        },
+        ProblemSetCollaborator: {
+            name: "ProblemSetCollaborator",
+            fields: {
+                collaborator_id: {
+                    name: "collaborator_id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "collaborator"
+                    ] as readonly string[]
+                },
+                collaborator: {
+                    name: "collaborator",
+                    type: "Teacher",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("collaborator_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "problem_set_collaborations", fields: ["collaborator_id"], references: ["id"], onDelete: "Cascade" }
+                },
+                problem_set_id: {
+                    name: "problem_set_id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "problem_set"
+                    ] as readonly string[]
+                },
+                problem_set: {
+                    name: "problem_set",
+                    type: "ProblemSet",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_set_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "collaborators", fields: ["problem_set_id"], references: ["id"], onDelete: "Cascade" }
+                }
+            },
+            attributes: [
+                { name: "@@id", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("collaborator_id"), ExpressionUtils.field("problem_set_id")]) }] }
+            ] as readonly AttributeApplication[],
+            idFields: ["collaborator_id", "problem_set_id"],
+            uniqueFields: {
+                collaborator_id_problem_set_id: { collaborator_id: { type: "String" }, problem_set_id: { type: "String" } }
             }
         },
         Subscription: {
@@ -816,6 +816,196 @@ export class SchemaType implements SchemaDef {
                 problem_set_id_student_id: { problem_set_id: { type: "String" }, student_id: { type: "String" } }
             }
         },
+        SubjectTag: {
+            name: "SubjectTag",
+            fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
+                },
+                type: {
+                    name: "type",
+                    type: "TagType"
+                },
+                color: {
+                    name: "color",
+                    type: "TagColor",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("TAG_COLOR_DEFAULT") }] }] as readonly AttributeApplication[],
+                    default: "TAG_COLOR_DEFAULT" as FieldDefault
+                },
+                label: {
+                    name: "label",
+                    type: "String",
+                    unique: true,
+                    attributes: [{ name: "@unique" }] as readonly AttributeApplication[]
+                },
+                order: {
+                    name: "order",
+                    type: "Int",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(0) }] }] as readonly AttributeApplication[],
+                    default: 0 as FieldDefault
+                },
+                problems: {
+                    name: "problems",
+                    type: "Problem",
+                    array: true,
+                    relation: { opposite: "subject" }
+                },
+                problem_sets: {
+                    name: "problem_sets",
+                    type: "ProblemSet",
+                    array: true,
+                    relation: { opposite: "subject" }
+                }
+            },
+            idFields: ["id"],
+            uniqueFields: {
+                id: { type: "String" },
+                label: { type: "String" }
+            }
+        },
+        DifficultyTag: {
+            name: "DifficultyTag",
+            fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
+                },
+                type: {
+                    name: "type",
+                    type: "TagType"
+                },
+                color: {
+                    name: "color",
+                    type: "TagColor",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("TAG_COLOR_DEFAULT") }] }] as readonly AttributeApplication[],
+                    default: "TAG_COLOR_DEFAULT" as FieldDefault
+                },
+                label: {
+                    name: "label",
+                    type: "String",
+                    unique: true,
+                    attributes: [{ name: "@unique" }] as readonly AttributeApplication[]
+                },
+                order: {
+                    name: "order",
+                    type: "Int",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(0) }] }] as readonly AttributeApplication[],
+                    default: 0 as FieldDefault
+                },
+                problems: {
+                    name: "problems",
+                    type: "Problem",
+                    array: true,
+                    relation: { opposite: "difficulty" }
+                },
+                problem_sets: {
+                    name: "problem_sets",
+                    type: "ProblemSet",
+                    array: true,
+                    relation: { opposite: "difficulty" }
+                }
+            },
+            idFields: ["id"],
+            uniqueFields: {
+                id: { type: "String" },
+                label: { type: "String" }
+            }
+        },
+        TopicTag: {
+            name: "TopicTag",
+            fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
+                },
+                type: {
+                    name: "type",
+                    type: "TagType"
+                },
+                color: {
+                    name: "color",
+                    type: "TagColor",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("TAG_COLOR_DEFAULT") }] }] as readonly AttributeApplication[],
+                    default: "TAG_COLOR_DEFAULT" as FieldDefault
+                },
+                label: {
+                    name: "label",
+                    type: "String",
+                    unique: true,
+                    attributes: [{ name: "@unique" }] as readonly AttributeApplication[]
+                },
+                order: {
+                    name: "order",
+                    type: "Int",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(0) }] }] as readonly AttributeApplication[],
+                    default: 0 as FieldDefault
+                },
+                problems: {
+                    name: "problems",
+                    type: "ProblemTopic",
+                    array: true,
+                    relation: { opposite: "tag" }
+                },
+                problem_sets: {
+                    name: "problem_sets",
+                    type: "ProblemSetTopic",
+                    array: true,
+                    relation: { opposite: "topic_tag" }
+                }
+            },
+            idFields: ["id"],
+            uniqueFields: {
+                id: { type: "String" },
+                label: { type: "String" }
+            }
+        },
+        Student: {
+            name: "Student",
+            fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault,
+                    foreignKeyFor: [
+                        "user"
+                    ] as readonly string[]
+                },
+                user: {
+                    name: "user",
+                    type: "User",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "student", fields: ["id"], references: ["id"], onDelete: "Cascade", hasDefault: true }
+                },
+                practice_sessions: {
+                    name: "practice_sessions",
+                    type: "PracticeSession",
+                    array: true,
+                    relation: { opposite: "student" }
+                },
+                subscription: {
+                    name: "subscription",
+                    type: "Subscription",
+                    array: true,
+                    relation: { opposite: "student" }
+                }
+            },
+            idFields: ["id"],
+            uniqueFields: {
+                id: { type: "String" }
+            }
+        },
         Teacher: {
             name: "Teacher",
             fields: {
@@ -835,11 +1025,11 @@ export class SchemaType implements SchemaDef {
                     attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
                     relation: { opposite: "teacher", fields: ["id"], references: ["id"], onDelete: "Cascade", hasDefault: true }
                 },
-                problem_set: {
-                    name: "problem_set",
-                    type: "ProblemSet",
+                problem_set_collaborations: {
+                    name: "problem_set_collaborations",
+                    type: "ProblemSetCollaborator",
                     array: true,
-                    relation: { opposite: "owner" }
+                    relation: { opposite: "collaborator" }
                 }
             },
             idFields: ["id"],
@@ -1183,13 +1373,13 @@ export class SchemaType implements SchemaDef {
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
                     default: true as FieldDefault
                 },
-                sizeModifier: {
-                    name: "sizeModifier",
+                size_modifier: {
+                    name: "size_modifier",
                     type: "SizeModifier",
                     optional: true
                 },
-                arrayDimensions: {
-                    name: "arrayDimensions",
+                array_dimensions: {
+                    name: "array_dimensions",
                     type: "Int",
                     optional: true,
                     array: true
@@ -1210,7 +1400,7 @@ export class SchemaType implements SchemaDef {
                 }
             },
             attributes: [
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("sizeModifier"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Size modifier only applies to int") }] },
+                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("size_modifier"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Size modifier only applies to int") }] },
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR"))), "||", ExpressionUtils.binary(ExpressionUtils.field("signed"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Signedness only applies to int or char") }] },
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(true))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] },
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] }
@@ -1230,13 +1420,13 @@ export class SchemaType implements SchemaDef {
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
                     default: true as FieldDefault
                 },
-                sizeModifier: {
-                    name: "sizeModifier",
+                size_modifier: {
+                    name: "size_modifier",
                     type: "SizeModifier",
                     optional: true
                 },
-                arrayDimensions: {
-                    name: "arrayDimensions",
+                array_dimensions: {
+                    name: "array_dimensions",
                     type: "Int",
                     optional: true,
                     array: true
@@ -1263,14 +1453,76 @@ export class SchemaType implements SchemaDef {
                 }
             },
             attributes: [
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("sizeModifier"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Size modifier only applies to int") }] },
+                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("size_modifier"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Size modifier only applies to int") }] },
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR"))), "||", ExpressionUtils.binary(ExpressionUtils.field("signed"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Signedness only applies to int or char") }] },
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(true))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] },
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] }
             ] as readonly AttributeApplication[]
+        },
+        Tag: {
+            name: "Tag",
+            fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
+                },
+                type: {
+                    name: "type",
+                    type: "TagType"
+                },
+                color: {
+                    name: "color",
+                    type: "TagColor",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("TAG_COLOR_DEFAULT") }] }] as readonly AttributeApplication[],
+                    default: "TAG_COLOR_DEFAULT" as FieldDefault
+                },
+                label: {
+                    name: "label",
+                    type: "String",
+                    unique: true,
+                    attributes: [{ name: "@unique" }] as readonly AttributeApplication[]
+                },
+                order: {
+                    name: "order",
+                    type: "Int",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(0) }] }] as readonly AttributeApplication[],
+                    default: 0 as FieldDefault
+                }
+            }
         }
     } as const;
     enums = {
+        BaseType: {
+            name: "BaseType",
+            values: {
+                INT: "INT",
+                CHAR: "CHAR",
+                BOOL: "BOOL",
+                FLOAT: "FLOAT",
+                DOUBLE: "DOUBLE"
+            }
+        },
+        SizeModifier: {
+            name: "SizeModifier",
+            values: {
+                LONG: "LONG",
+                LONG_LONG: "LONG_LONG",
+                SHORT: "SHORT"
+            }
+        },
+        HistoryEntryType: {
+            name: "HistoryEntryType",
+            values: {
+                TEXT_MODIFIED: "TEXT_MODIFIED",
+                PAGE_OPENED: "PAGE_OPENED",
+                PAGE_FOCUS: "PAGE_FOCUS",
+                RUN_ATTEMPT: "RUN_ATTEMPT",
+                PING: "PING",
+                OTHER: "OTHER"
+            }
+        },
         Language: {
             name: "Language",
             values: {
@@ -1296,24 +1548,6 @@ export class SchemaType implements SchemaDef {
                 GREATER_THAN_EQUAL: "GREATER_THAN_EQUAL",
                 WITHIN_RANGE: "WITHIN_RANGE",
                 LEVENSHTEIN_SIMILARITY: "LEVENSHTEIN_SIMILARITY"
-            }
-        },
-        BaseType: {
-            name: "BaseType",
-            values: {
-                INT: "INT",
-                CHAR: "CHAR",
-                BOOL: "BOOL",
-                FLOAT: "FLOAT",
-                DOUBLE: "DOUBLE"
-            }
-        },
-        SizeModifier: {
-            name: "SizeModifier",
-            values: {
-                LONG: "LONG",
-                LONG_LONG: "LONG_LONG",
-                SHORT: "SHORT"
             }
         },
         TagType: {
@@ -1405,17 +1639,6 @@ export class SchemaType implements SchemaDef {
                         { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("blue") }] }
                     ] as readonly AttributeApplication[]
                 }
-            }
-        },
-        HistoryEntryType: {
-            name: "HistoryEntryType",
-            values: {
-                TEXT_MODIFIED: "TEXT_MODIFIED",
-                PAGE_OPENED: "PAGE_OPENED",
-                PAGE_FOCUS: "PAGE_FOCUS",
-                RUN_ATTEMPT: "RUN_ATTEMPT",
-                PING: "PING",
-                OTHER: "OTHER"
             }
         }
     } as const;

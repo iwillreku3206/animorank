@@ -6,100 +6,121 @@
   import ProblemSetCard from './ProblemSetCard.svelte';
   import SearchIcon from '@iconify-svelte/fa6-solid/magnifying-glass';
   import DownArrowIcon from '@iconify-svelte/fa6-solid/arrow-down';
-  import XIcon from '@iconify-svelte/fa6-solid/xmark';
+  import GridIcon from '@iconify-svelte/fa6-solid/grip';
+  import ListIcon from '@iconify-svelte/fa6-solid/list';
+  import FilterBox from './FilterBox.svelte';
+  import ProblemSetListItem from './ProblemSetListItem.svelte';
+  import type { Filters, ProblemSet } from './api';
   import { page } from '$app/state';
 
   let { data }: PageProps = $props();
 
-  const url = page.url;
+  function initialFilters(): Filters {
+    const params = page.url.searchParams;
+    const tags = params.getAll('tag');
+    let status = params.get('status') || '';
+    if (['', 'not_started', 'in_progress', 'complete'].includes(status)) status = '';
+    const creator = params.get('creator') || undefined;
+    const bookmarked = params.get('bookmarked') === 'true';
 
-  /// FILTERS
-  // TAGS
-  const initialTags = url.searchParams.getAll('tag');
-  let tags = $state(initialTags);
-  const MAX_TAGS_PER_TYPE = 5;
-  const tagTypeLabelMap: Record<string, string> = {
-    TAG_SUBJECT: 'Subject',
-    TAG_DIFFICULTY: 'Difficulty',
-    TAG_TOPIC: 'Topic'
-  };
-  const tagTypeOrder = ['TAG_SUBJECT', 'TAG_DIFFICULTY', 'TAG_TOPIC'];
-  const sortTags = (a: (typeof data.tags)[0], b: (typeof data.tags)[0]) => {
-    const countDiff = (b._count?.problemSets ?? 0) - (a._count?.problemSets ?? 0);
-    if (countDiff !== 0) return countDiff;
+    return {
+      tags,
+      status: status as Filters['status'],
+      creator,
+      bookmarked
+    };
+  }
 
-    const orderDiff = a.order - b.order;
-    if (orderDiff !== 0) return orderDiff;
+  function initialSort() {
+    const params = page.url.searchParams;
+    let by = params.get('sortBy') || '';
+    if (['', 'problems_solved', 'problem_count', 'completion_pct', 'difficulty'].includes(by))
+      by = '';
 
-    return a.label.localeCompare(b.label);
-  };
+    const order = params.get('sortOrder') === 'desc' ? 'desc' : 'asc';
+    return [by, order];
+  }
 
-  let tagsByType = $derived(
-    groupBy(data.tags, (t) => t.type) as Record<string, (typeof data.tags)[0][]>
-  );
-  let orderedTagTypes = $derived.by(() => {
-    const types = Object.keys(tagsByType);
-    return [...types].sort((a, b) => {
-      const idxA = tagTypeOrder.indexOf(a);
-      const idxB = tagTypeOrder.indexOf(b);
-      if (idxA === -1 && idxB === -1) return a.localeCompare(b);
-      if (idxA === -1) return 1;
-      if (idxB === -1) return -1;
-      return idxA - idxB;
-    });
-  });
-  let expandedTagTypes = $state<string[]>([]);
-  let visibleTagsByType = $derived.by(() => {
-    const result: Record<
-      string,
+  function initialSearch() {
+    const params = page.url.searchParams;
+
+    return params.get('search') || '';
+  }
+
+  function initialViewMode() {
+    const params = page.url.searchParams;
+
+    return params.get('viewMode') === 'list' ? 'list' : 'grid';
+  }
+
+  function initialPage() {
+    const params = page.url.searchParams;
+
+    return parseInt(params.get('page') || '1') || 1;
+  }
+
+  let filters: Filters = $state(initialFilters());
+
+  const [initialSortBy, initialSortOrder] = initialSort();
+  let sortBy = $state(initialSortBy);
+  let sortDesc = $state(initialSortOrder === 'desc');
+  let search = $state(initialSearch());
+  let viewMode = $state(initialViewMode());
+  let pageNumber = $state(initialPage());
+
+  const sampleProblemSet: ProblemSet = {
+    id: '',
+    title: 'Introduction to C Syntax and Basic Arithmetic',
+    description:
+      'Practice on variable declarations, using printf/scanf for data entry, and performing basic operations with integers and floats.',
+    ownerName: 'Thomas James Tiam-Lee',
+    bookmarked: true,
+    tags: [
       {
-        tags: (typeof data.tags)[0][];
-        canToggle: boolean;
-        expanded: boolean;
-      }
-    > = {};
+        id: '',
+        order: 0,
+        color: 'TAG_COLOR_DEFAULT',
+        type: 'TAG_SUBJECT',
 
-    for (const tagType of orderedTagTypes) {
-      const allTagsForType = [...tagsByType[tagType]].sort(sortTags);
-      const initiallyVisibleTagIds = allTagsForType
-        .slice(0, MAX_TAGS_PER_TYPE)
-        .map((tag) => tag.id);
-      for (const selectedTagId of tags) {
-        if (
-          allTagsForType.some((tag) => tag.id === selectedTagId) &&
-          !initiallyVisibleTagIds.includes(selectedTagId)
-        ) {
-          initiallyVisibleTagIds.push(selectedTagId);
-        }
+        label: 'CCPROG1'
+      },
+      {
+        id: '',
+        order: 0,
+        color: 'TAG_COLOR_YELLOW',
+        type: 'TAG_DIFFICULTY',
+        label: 'Intermediate'
+      },
+      {
+        id: '',
+        order: 0,
+        color: 'TAG_COLOR_DEFAULT',
+        type: 'TAG_TOPIC',
+        label: 'I/O'
+      },
+      {
+        id: '',
+        order: 0,
+        color: 'TAG_COLOR_DEFAULT',
+        type: 'TAG_TOPIC',
+        label: 'Data Types'
+      },
+      {
+        id: '',
+        order: 0,
+        color: 'TAG_COLOR_DEFAULT',
+        type: 'TAG_TOPIC',
+        label: 'Arithmetic'
       }
-      const collapsedTags = allTagsForType.filter((tag) => initiallyVisibleTagIds.includes(tag.id));
-      const expanded = expandedTagTypes.includes(tagType);
-
-      result[tagType] = {
-        tags: expanded ? allTagsForType : collapsedTags,
-        canToggle: allTagsForType.length > collapsedTags.length,
-        expanded
-      };
+    ],
+    progress: {
+      finished: 4,
+      total: 10
     }
-
-    return result;
-  });
-
-  let status = $state('');
-  let filterText = $derived.by(() => {
-    const filterTypes = [];
-    if (tags.length !== 0) filterTypes.push('Tags');
-    if (status !== '') filterTypes.push('Status');
-
-    return filterTypes.join(', ');
-  });
-
-  // SORT
-  let sortBy = $state('');
-  let sortDesc = $state(true);
+  };
 </script>
 
-<main class="px-4 xl:px-32 pt-4 flex flex-col">
+<main class="px-4 xl:px-32 pt-4 flex flex-col gap-8">
   <div class="flex flex-row gap-2">
     <label
       for="search"
@@ -109,6 +130,7 @@
       <input
         id="search"
         type="text"
+        bind:value={search}
       />
     </label>
     <button
@@ -132,154 +154,54 @@
       <option value="problems_solved">Sort: Problems Solved</option>
       <option value="problem_count">Sort: Problem Count</option>
       <option value="completion_pct">Sort: Completion %</option>
-      <option value="completion_pct">Sort: Difficulty</option>
+      <option value="difficulty">Sort: Difficulty</option>
     </select>
-    <button
-      class="select"
-      popovertarget="popover-filter"
-      style="anchor-name:--anchor-filter"
-    >
-      Filter{filterText === '' ? '' : ':'}
-      {filterText}
-    </button>
-    <div
-      class="dropdown bg-base-200 p-4 rounded-xl flex flex-col gap-2"
-      popover
-      id="popover-filter"
-      style="position-anchor:--anchor-filter"
-    >
-      <h3 class="font-bold">By tag:</h3>
-      <div class="flex flex-col gap-2">
-        {#each orderedTagTypes as tagType (tagType)}
-          <div class="flex flex-col gap-2">
-            <h4 class="font-semibold">{tagTypeLabelMap[tagType] ?? tagType}</h4>
-            <div class="flex flex-row flex-wrap gap-2">
-              {#each visibleTagsByType[tagType].tags as tag (tag.id)}
-                <TagChip
-                  {tag}
-                  class={tags.includes(tag.id) ? 'outline outline-accent' : ''}
-                  href={() => {
-                    if (tags.includes(tag.id)) tags = tags.filter((t) => t !== tag.id);
-                    else tags.push(tag.id);
-                  }}
-                />
-              {/each}
-              {#if visibleTagsByType[tagType].canToggle}
-                <TagChip
-                  tag={{
-                    id: '',
-                    label: `Show ${visibleTagsByType[tagType].expanded ? 'Less' : 'More'}`,
-                    color: 'TAG_COLOR_BLUE',
-                    order: 99,
-                    type: tagsByType[tagType][0].type
-                  }}
-                  href={() => {
-                    if (expandedTagTypes.includes(tagType))
-                      expandedTagTypes = expandedTagTypes.filter((type) => type !== tagType);
-                    else expandedTagTypes = [...expandedTagTypes, tagType];
-                  }}
-                />
-              {/if}
-            </div>
-          </div>
-        {/each}
-      </div>
-      <h3 class="font-bold">By status:</h3>
-      <div class="flex flex-row items-center">
-        <div class="join">
-          <input
-            class="join-item btn"
-            type="radio"
-            name="filter_status"
-            aria-label="Not Started"
-            value="not_started"
-            bind:group={status}
-          />
-          <input
-            class="join-item btn"
-            type="radio"
-            name="filter_status"
-            aria-label="In Progress"
-            value="in_progress"
-            bind:group={status}
-          />
-          <input
-            class="join-item btn"
-            type="radio"
-            name="filter_status"
-            aria-label="Complete"
-            value="complete"
-            bind:group={status}
-          />
-        </div>
-        <button
-          class="btn btn-sm btn-ghost"
-          onclick={() => (status = '')}
-        >
-          <XIcon class="text-error w-6 h-6" />
-        </button>
-      </div>
-      {#if data.user.type === 'student'}
-        <h3 class="font-bold">By creator:</h3>
-        <select class="select">
-          {#each data.creators as creator (creator.id)}
-            <option value={creator.id}>{creator.name}</option>
-          {/each}
-        </select>
-      {/if}
-    </div>
+    <FilterBox
+      {data}
+      bind:filters
+    />
     <Button>Apply Filters</Button>
+    <div class="join">
+      <label
+        class="join-item has-checked:btn-primary has-checked:bg-primary has-checked:text-primary-content text-base-content btn bg-base-100"
+      >
+        <input
+          class="w-0 h-0 absolute"
+          type="radio"
+          name="view_mode"
+          value="grid"
+          bind:group={viewMode}
+        />
+        <GridIcon class="w-6 h-6" />
+      </label>
+      <label
+        class="join-item has-checked:btn-primary has-checked:bg-primary has-checked:text-primary-content text-base-content btn bg-base-100"
+      >
+        <input
+          class="w-0 h-0 absolute"
+          type="radio"
+          name="view_mode"
+          value="list"
+          bind:group={viewMode}
+        />
+        <ListIcon class="w-6 h-6" />
+      </label>
+    </div>
   </div>
-  <ProblemSetCard
-    problemSet={{
-      id: '',
-      title: 'Introduction to C Syntax and Basic Arithmetic',
-      description:
-        'Practice on variable declarations, using printf/scanf for data entry, and performing basic operations with integers and floats.',
-      ownerName: 'Thomas James Tiam-Lee',
-      bookmarked: true,
-      tags: [
-        {
-          id: '',
-          order: 0,
-          color: 'TAG_COLOR_DEFAULT',
-          type: 'TAG_SUBJECT',
-
-          label: 'CCPROG1'
-        },
-        {
-          id: '',
-          order: 0,
-          color: 'TAG_COLOR_YELLOW',
-          type: 'TAG_DIFFICULTY',
-          label: 'Intermediate'
-        },
-        {
-          id: '',
-          order: 0,
-          color: 'TAG_COLOR_DEFAULT',
-          type: 'TAG_TOPIC',
-          label: 'I/O'
-        },
-        {
-          id: '',
-          order: 0,
-          color: 'TAG_COLOR_DEFAULT',
-          type: 'TAG_TOPIC',
-          label: 'Data Types'
-        },
-        {
-          id: '',
-          order: 0,
-          color: 'TAG_COLOR_DEFAULT',
-          type: 'TAG_TOPIC',
-          label: 'Arithmetic'
-        }
-      ],
-      progress: {
-        finished: 4,
-        total: 10
-      }
-    }}
-  />
+  <div class="{viewMode === 'list' ? 'flex flex-col' : 'grid grid-cols-3'} gap-4">
+    {#each data.problemSets as problemSet (problemSet.id)}
+      {#if viewMode === 'list'}
+        <ProblemSetListItem {problemSet} />
+      {:else}
+        <ProblemSetCard {problemSet} />
+      {/if}
+    {/each}
+  </div>
+  <div class="flex flex-row w-full items-center justify-center">
+    <div class="join">
+      <button class="join-item btn">«</button>
+      <button class="join-item btn">Page {pageNumber}/{data.pagination.pageCount}</button>
+      <button class="join-item btn">»</button>
+    </div>
+  </div>
 </main>
