@@ -9,11 +9,10 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
   const session = await locals.auth();
   if (!session || !session.user.id) return error(403, 'Unauthorized');
 
-  const testCase = await db.problemTestCase.deleteMany({
-    where: { id: params.id, problem: { problem_set: { owner_id: session.user.id } } }
-  });
+	const currentTestCase = await getTestCase(params.id, session);
+	if (!currentTestCase) return error(404, 'Not found');
 
-  if (testCase.count === 0) return error(404, 'Not found');
+	await TestCase.delete(params.id);
 
   return successObject({ status: 'Success' });
 };
@@ -38,10 +37,8 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
   const session = await locals.auth();
   if (!session || !session.user.id) return error(403, 'Unauthorized');
 
-  const currentTestCase = await db.problemTestCase.findUnique({
-    where: { id: params.id, problem: { problem_set: { owner_id: session.user.id } } }
-  });
-  if (!currentTestCase) return error(404, 'Not found'); // should return 404 if not owned by user to hide existence of such an object
+	const currentTestCase = await getTestCase(params.id, session);
+	if (!currentTestCase) return error(404, 'Not found'); // should return 404 if not owned by user to hide existence of such an object
 
   const {
     success,
@@ -54,26 +51,7 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
   }[currentTestCase.type].safeParseAsync(await request.json());
   if (!success) return error(400, zodError);
 
-  switch (currentTestCase.type) {
-    case 'FunctionOutputTestCase':
-      await db.functionOutputTestCase.update({
-        where: { id: params.id },
-        data: data as z.output<typeof functionOutputTestCaseValidator>
-      });
-      break;
-    case 'ProgramIOTestCase':
-      await db.programIOTestCase.update({
-        where: { id: params.id },
-        data: data as z.output<typeof programIOTestCaseValidator>
-      });
-      break;
-    case 'CustomTestCase':
-      await db.customTestCase.update({
-        where: { id: params.id },
-        data: data as z.output<typeof customTestCaseValidator>
-      });
-      break;
-  }
+	await TestCase.for(currentTestCase).update(params.id, data);
 
   return successObject({ status: 'Success' });
 };

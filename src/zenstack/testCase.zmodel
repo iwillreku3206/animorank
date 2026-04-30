@@ -1,5 +1,4 @@
 import "problem.zmodel"
-import "ctype.zmodel"
 
 enum ProblemTestCaseType {
   FunctionOutputTestCase
@@ -30,11 +29,22 @@ model ProblemTestCase {
   @@delegate(type)
 }
 
+type Parameter {
+  type String
+  data Json
+}
+
+type Comparison {
+  type     String
+  data     Json
+  symbol   String
+  operator String
+}
+
 model FunctionOutputTestCase extends ProblemTestCase {
-  parameters      CTypeWithValue[]        @json() @default("[]")
-  expected_output CTypeWithValue          @json() @default('{"base": "INT"}')
-  operator        ProblemTestCaseOperator @default(EQUAL)
-  function_name   String                  @default("")
+  parameters    Comparison[] @json
+  comparisons   Parameter[]  @json
+  function_name String       @default("")
 }
 
 model ProgramIOTestCase extends ProblemTestCase {

@@ -19,16 +19,7 @@ const runValidator = z.object({
 });
 
 async function runTestCase(testCase: ProblemTestCase, code: string): Promise<TestCaseResult> {
-  switch (testCase.type) {
-    case 'FunctionOutputTestCase':
-      return testFunctionTestCase(testCase as FunctionOutputTestCase, code);
-    case 'ProgramIOTestCase':
-      return testStdioTestCase(testCase as ProgramIOTestCase, code);
-    case 'CustomTestCase':
-      return testCustomTestCase(testCase as CustomTestCase, code);
-    default:
-      return { success: false, error_reason: { type: 'unknown_error' as const } };
-  }
+	return TestCase.for(testCase).execute(code);
 }
 
 export const POST: RequestHandler = async ({ locals, params, request }) => {

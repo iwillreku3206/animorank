@@ -77,3 +77,8 @@ export enum Judge0StatusId {
   InternalError = 13,
   ExecFormatError = 14
 }
+
+export enum Judge0Language {
+	C = 50,
+	MultiFile = 89
+}

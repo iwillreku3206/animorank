@@ -14,8 +14,8 @@ const postValidator = z.object({
 });
 
 export const POST: RequestHandler = async ({ locals, request }) => {
-  const session = await locals.auth();
-  if (!session || !session.user.id) return error(403, 'Unauthorized');
+  const session = await locals.auth()
+  if (!session || !session.user.id) return error(403, 'Unauthorized')
 
   const {
     success,
@@ -24,24 +24,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
   } = await postValidator.safeParseAsync(await request.json());
   if (!success) return error(400, zodError);
 
-  const problem = await db.problem.findUnique({
-    where: { id: data.problem },
-    select: { id: true, problem_set: true }
-  });
-  if (!problem || problem.problem_set.owner_id !== session.user.id) return error(404, 'Not found');
+  const problem = await db.problem.findUnique({ where: { id: data.problem }, select: { id: true, problem_set: true } })
+  if (!problem || problem.problem_set.owner_id !== session.user.id) return error(404, 'Not found')
 
-  let id: string | undefined;
-
-  const creationOperation = {
-    data: { problem_id: data.problem }
-  };
-
-  switch (data.type) {
-    case 'FunctionOutputTestCase':
-      return successObject(await db.functionOutputTestCase.create(creationOperation));
-    case 'ProgramIOTestCase':
-      return successObject(await db.programIOTestCase.create(creationOperation));
-    case 'CustomTestCase':
-      return successObject(await db.customTestCase.create(creationOperation));
-  }
-};
+  return successObject(await TestCase.create(data.type, data.problem))
+}
