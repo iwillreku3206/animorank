@@ -1,6 +1,5 @@
 import type { ExecutionEvent } from '$lib/codeExecutor/executionHook';
 import type { monaco } from '$lib/monaco';
-import type { ISingleton } from '$lib/services/registry';
 import type { Subscribable } from '$lib/utils/subscription';
 import type { Entry, TelemetryCallback, TelemetryHook } from './telemetryHook';
 import { TextInputHook } from './textInput';

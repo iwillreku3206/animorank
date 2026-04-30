@@ -1,23 +1,9 @@
-import { Logger } from '$lib/logging/logger';
-import { LoggerRegistry } from '$lib/logging/loggerRegistry';
-import type { ServiceRegistry } from './registry';
+import type { ISingleton, ServiceRegistry } from './registry';
 
-type AbstractConstructor<T = any> = abstract new (...args: any[]) => T;
+type AbstractConstructor<T = any> = (abstract new (...args: any[]) => T) | ISingleton<T>;
 
 export class ServiceProvider {
-  private static _instance: ServiceProvider | null;
-  private _registries = new Map<AbstractConstructor<any>, ServiceRegistry<any, any[]>>();
-
-  private constructor() {
-    this._registries.set(Logger, new LoggerRegistry());
-  }
-
-  public static instance(): ServiceProvider {
-    if (!ServiceProvider._instance) {
-      ServiceProvider._instance = new ServiceProvider();
-    }
-    return ServiceProvider._instance;
-  }
+  protected _registries = new Map<AbstractConstructor<any>, ServiceRegistry<any, any[]>>();
 
   public getService<T, C extends any[]>(service: AbstractConstructor<T>, ...args: C): T {
     const serviceRegistry = this._registries.get(service);

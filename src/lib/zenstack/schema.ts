@@ -401,22 +401,15 @@ export class SchemaType implements SchemaDef {
                 },
                 parameters: {
                     name: "parameters",
-                    type: "CTypeWithValue",
+                    type: "Comparison",
                     array: true,
-                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("[]") }] }] as readonly AttributeApplication[],
-                    default: "[]" as FieldDefault
+                    attributes: [{ name: "@json" }] as readonly AttributeApplication[]
                 },
-                expected_output: {
-                    name: "expected_output",
-                    type: "CTypeWithValue",
-                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("{\"base\": \"INT\"}") }] }] as readonly AttributeApplication[],
-                    default: "{\"base\": \"INT\"}" as FieldDefault
-                },
-                operator: {
-                    name: "operator",
-                    type: "ProblemTestCaseOperator",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("EQUAL") }] }] as readonly AttributeApplication[],
-                    default: "EQUAL" as FieldDefault
+                comparisons: {
+                    name: "comparisons",
+                    type: "Parameter",
+                    array: true,
+                    attributes: [{ name: "@json" }] as readonly AttributeApplication[]
                 },
                 function_name: {
                     name: "function_name",
@@ -1384,15 +1377,15 @@ export class SchemaType implements SchemaDef {
                     optional: true,
                     array: true
                 },
-                isPointer: {
-                    name: "isPointer",
+                is_pointer: {
+                    name: "is_pointer",
                     type: "Boolean",
                     optional: true,
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
                     default: false as FieldDefault
                 },
-                isString: {
-                    name: "isString",
+                is_string: {
+                    name: "is_string",
                     type: "Boolean",
                     optional: true,
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
@@ -1402,8 +1395,8 @@ export class SchemaType implements SchemaDef {
             attributes: [
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("size_modifier"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Size modifier only applies to int") }] },
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR"))), "||", ExpressionUtils.binary(ExpressionUtils.field("signed"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Signedness only applies to int or char") }] },
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(true))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] },
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] }
+                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils.literal(true))), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils.literal(false))) }, { name: "message", value: ExpressionUtils.literal("is_string only applies to char") }] },
+                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils.literal(false))), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("is_string only applies to char") }] }
             ] as readonly AttributeApplication[]
         },
         CTypeWithValue: {
@@ -1431,15 +1424,15 @@ export class SchemaType implements SchemaDef {
                     optional: true,
                     array: true
                 },
-                isPointer: {
-                    name: "isPointer",
+                is_pointer: {
+                    name: "is_pointer",
                     type: "Boolean",
                     optional: true,
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
                     default: false as FieldDefault
                 },
-                isString: {
-                    name: "isString",
+                is_string: {
+                    name: "is_string",
                     type: "Boolean",
                     optional: true,
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
@@ -1455,9 +1448,43 @@ export class SchemaType implements SchemaDef {
             attributes: [
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("size_modifier"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Size modifier only applies to int") }] },
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR"))), "||", ExpressionUtils.binary(ExpressionUtils.field("signed"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Signedness only applies to int or char") }] },
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(true))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] },
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils.literal(false))), "||", ExpressionUtils.binary(ExpressionUtils.field("isString"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("isString only applies to char") }] }
+                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils.literal(true))), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils.literal(false))) }, { name: "message", value: ExpressionUtils.literal("is_string only applies to char") }] },
+                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils.literal(false))), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("is_string only applies to char") }] }
             ] as readonly AttributeApplication[]
+        },
+        Parameter: {
+            name: "Parameter",
+            fields: {
+                type: {
+                    name: "type",
+                    type: "String"
+                },
+                data: {
+                    name: "data",
+                    type: "Json"
+                }
+            }
+        },
+        Comparison: {
+            name: "Comparison",
+            fields: {
+                type: {
+                    name: "type",
+                    type: "String"
+                },
+                data: {
+                    name: "data",
+                    type: "Json"
+                },
+                symbol: {
+                    name: "symbol",
+                    type: "String"
+                },
+                operator: {
+                    name: "operator",
+                    type: "String"
+                }
+            }
         },
         Tag: {
             name: "Tag",
