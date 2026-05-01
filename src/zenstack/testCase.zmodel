@@ -6,17 +6,6 @@ enum ProblemTestCaseType {
   CustomTestCase
 }
 
-enum ProblemTestCaseOperator {
-  EQUAL
-  NOT_EQUAL
-  LESS_THAN
-  LESS_THAN_EQUAL
-  GREATER_THAN
-  GREATER_THAN_EQUAL
-  WITHIN_RANGE
-  LEVENSHTEIN_SIMILARITY
-}
-
 model ProblemTestCase {
   id         String              @id @default(uuid()) @db.Uuid
   type       ProblemTestCaseType @default(FunctionOutputTestCase)
@@ -29,21 +18,40 @@ model ProblemTestCase {
   @@delegate(type)
 }
 
+type DataTypeWithValue {
+  type String
+  data Json
+}
+
 type Parameter {
   type String
   data Json
 }
 
+enum FunctionOutputTestCaseOperator {
+  EQUAL
+  NOT_EQUAL
+  LESS_THAN
+  LESS_THAN_EQUAL
+  GREATER_THAN
+  GREATER_THAN_EQUAL
+  WITHIN_RANGE
+}
+
 type Comparison {
-  type     String
-  data     Json
-  symbol   String
-  operator String
+  type        String
+  data        Json
+  symbol      String
+  operator    FunctionOutputTestCaseOperator
+  range_value String?
+
+  @@validate(operator != WITHIN_RANGE || range_value != null, "range_value must be provided when operator is WITHIN_RANGE")
 }
 
 model FunctionOutputTestCase extends ProblemTestCase {
-  parameters    Comparison[] @json
-  comparisons   Parameter[]  @json
+  parameters    Parameter[]  @json
+  comparisons   Comparison[] @json
+  return_type   Parameter    @json
   function_name String       @default("")
 }
 

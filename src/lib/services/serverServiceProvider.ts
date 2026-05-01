@@ -19,7 +19,7 @@ export class ServerServiceProvider extends ServiceProvider {
 
   public static instance(): ServiceProvider {
     if (!ServerServiceProvider._instance) {
-      ServerServiceProvider._instance = new ServiceProvider();
+      ServerServiceProvider._instance = new ServerServiceProvider();
     }
     return ServerServiceProvider._instance;
   }

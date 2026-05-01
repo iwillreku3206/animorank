@@ -401,14 +401,19 @@ export class SchemaType implements SchemaDef {
                 },
                 parameters: {
                     name: "parameters",
-                    type: "Comparison",
+                    type: "Parameter",
                     array: true,
                     attributes: [{ name: "@json" }] as readonly AttributeApplication[]
                 },
                 comparisons: {
                     name: "comparisons",
-                    type: "Parameter",
+                    type: "Comparison",
                     array: true,
+                    attributes: [{ name: "@json" }] as readonly AttributeApplication[]
+                },
+                return_type: {
+                    name: "return_type",
+                    type: "Parameter",
                     attributes: [{ name: "@json" }] as readonly AttributeApplication[]
                 },
                 function_name: {
@@ -1452,6 +1457,19 @@ export class SchemaType implements SchemaDef {
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils.literal(false))), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("is_string only applies to char") }] }
             ] as readonly AttributeApplication[]
         },
+        DataTypeWithValue: {
+            name: "DataTypeWithValue",
+            fields: {
+                type: {
+                    name: "type",
+                    type: "String"
+                },
+                data: {
+                    name: "data",
+                    type: "Json"
+                }
+            }
+        },
         Parameter: {
             name: "Parameter",
             fields: {
@@ -1482,9 +1500,17 @@ export class SchemaType implements SchemaDef {
                 },
                 operator: {
                     name: "operator",
-                    type: "String"
+                    type: "FunctionOutputTestCaseOperator"
+                },
+                range_value: {
+                    name: "range_value",
+                    type: "String",
+                    optional: true
                 }
-            }
+            },
+            attributes: [
+                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("operator"), "!=", ExpressionUtils.literal("WITHIN_RANGE")), "||", ExpressionUtils.binary(ExpressionUtils.field("range_value"), "!=", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("range_value must be provided when operator is WITHIN_RANGE") }] }
+            ] as readonly AttributeApplication[]
         },
         Tag: {
             name: "Tag",
@@ -1564,8 +1590,8 @@ export class SchemaType implements SchemaDef {
                 CustomTestCase: "CustomTestCase"
             }
         },
-        ProblemTestCaseOperator: {
-            name: "ProblemTestCaseOperator",
+        FunctionOutputTestCaseOperator: {
+            name: "FunctionOutputTestCaseOperator",
             values: {
                 EQUAL: "EQUAL",
                 NOT_EQUAL: "NOT_EQUAL",
@@ -1573,8 +1599,7 @@ export class SchemaType implements SchemaDef {
                 LESS_THAN_EQUAL: "LESS_THAN_EQUAL",
                 GREATER_THAN: "GREATER_THAN",
                 GREATER_THAN_EQUAL: "GREATER_THAN_EQUAL",
-                WITHIN_RANGE: "WITHIN_RANGE",
-                LEVENSHTEIN_SIMILARITY: "LEVENSHTEIN_SIMILARITY"
+                WITHIN_RANGE: "WITHIN_RANGE"
             }
         },
         TagType: {

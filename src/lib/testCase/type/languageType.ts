@@ -9,10 +9,25 @@ export abstract class LanguageType<T, TV = TypeWithValue<T>> {
 
   public abstract constructInit(symbol: string): string;
   public abstract constructExpression(): string;
-  public abstract constructEqualityCheck(symbolA: string, symbolB: string): string;
-  public abstract constructLessThanCheck(symbolA: string, symbolB: string): string;
-  public abstract constructLessThanEqualCheck(symbolA: string, symbolB: string): string;
+  public abstract constructTypeExpression(): string;
+  public abstract constructPrint(symbol: string): string;
+  public abstract constructEqualityCheck(
+    resultSymbol: string,
+    symbolA: string,
+    symbolB: string
+  ): string;
+  public abstract constructLessThanCheck(
+    resultSymbol: string,
+    symbolA: string,
+    symbolB: string
+  ): string;
+  public abstract constructLessThanEqualCheck(
+    resultSymbol: string,
+    symbolA: string,
+    symbolB: string
+  ): string;
   public abstract constructWithinRangeCheck(
+    resultSymbol: string,
     symbol: string,
     actualSymbol: string,
     range: string

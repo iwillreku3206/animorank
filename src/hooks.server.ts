@@ -1,10 +1,10 @@
 import type { Handle } from '@sveltejs/kit';
 import { handle as authHandle } from '$lib/auth';
-import { ServiceProvider } from '$lib/services/serviceProvider';
 import { Logger } from '$lib/logging/logger';
+import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 
 export const handle: Handle = async ({ event, resolve }) => {
-  const serviceProvider = ServiceProvider.instance();
+  const serviceProvider = ServerServiceProvider.instance();
   const logger = serviceProvider.getService(Logger, 'webserver');
 
   const response = await authHandle({ event, resolve });

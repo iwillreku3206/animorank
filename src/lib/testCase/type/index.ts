@@ -11,6 +11,6 @@ export abstract class TypeWithValue<T> {
   }
 
   public getLanguage(language: string) {
-    this.languageRegistry.getInstance(language, this);
+    return this.languageRegistry.getInstance(language, this);
   }
 }

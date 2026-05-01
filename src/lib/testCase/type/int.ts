@@ -3,6 +3,7 @@ import z from 'zod';
 import { TypeWithValue } from '.';
 import { LanguageRegistry } from '../languageRegistry';
 import { LanguageType } from './languageType';
+import type { JsonValue } from '@zenstackhq/orm';
 
 const ValueSchema = z.object({
   value: z.string().regex(/(?:0[0-7]*)|(?:0[xX][0-9a-fA-F]*)|(?:[0-9]*)|(?:'.')/),
@@ -13,7 +14,10 @@ const ValueSchema = z.object({
 type Value = z.infer<typeof ValueSchema>;
 
 export class Int extends TypeWithValue<Value> {
-  constructor(value: Value) {
+  constructor(data?: JsonValue) {
+    let value: Value = { value: '0', size: 32, signed: 'none' };
+    if (data) value = ValueSchema.parse(data);
+
     super(value, new IntLanguageRegistry());
   }
 }
@@ -63,20 +67,65 @@ class CInt extends LanguageType<Value> {
     return `${this.cType} ${symbol} = ${this.cExpression};`;
   }
 
+  public constructTypeExpression(): string {
+    return this.cType;
+  }
+
   public constructExpression(): string {
     return this.cExpression;
   }
 
-  public constructEqualityCheck(symbolA: string, symbolB: string): string {
-    return `${symbolA} == ${symbolB}`;
+  public constructPrint(symbol: string): string {
+    const { value } = this.typeWithValue;
+    let printfTemplate = '%';
+
+    if (value.size == 64) {
+      printfTemplate += 'll';
+    }
+
+    if (value.size == 16) {
+      printfTemplate += 'h';
+    }
+
+    if (value.size == 8) {
+      printfTemplate += 'hh';
+    }
+
+    if (value.signed == 'signed' || value.signed == 'none') {
+      printfTemplate += 'd';
+    } else {
+      printfTemplate += 'u';
+    }
+
+    if (value.size == 8) {
+      printfTemplate += " (\\'%c\\')";
+    }
+
+    return `printf("${printfTemplate}", ${symbol});`;
   }
-  public constructLessThanCheck(symbolA: string, symbolB: string): string {
-    return `${symbolA} < ${symbolB}`;
+
+  public constructEqualityCheck(resultSymbol: string, symbolA: string, symbolB: string): string {
+    return `int ${resultSymbol} = ${symbolA} == ${symbolB};`;
   }
-  public constructLessThanEqualCheck(symbolA: string, symbolB: string): string {
-    return `${symbolA} <= ${symbolB}`;
+
+  public constructLessThanCheck(resultSymbol: string, symbolA: string, symbolB: string): string {
+    return `int ${resultSymbol} = ${symbolA} < ${symbolB};`;
   }
-  public constructWithinRangeCheck(symbol: string, actualSymbol: string, range: string): string {
-    return `(${symbol} < ${actualSymbol} + ${range}) && (${symbol} > ${actualSymbol} - ${range})`;
+
+  public constructLessThanEqualCheck(
+    resultSymbol: string,
+    symbolA: string,
+    symbolB: string
+  ): string {
+    return `int ${resultSymbol} = ${symbolA} <= ${symbolB};`;
+  }
+
+  public constructWithinRangeCheck(
+    resultSymbol: string,
+    symbol: string,
+    actualSymbol: string,
+    range: string
+  ): string {
+    return `int ${resultSymbol} = (${actualSymbol} < ${symbol} + ${range}) && (${actualSymbol} > ${symbol} - ${range});`;
   }
 }
