@@ -12,16 +12,17 @@ export const GET: RequestHandler = async () => {
     public: false,
 
     function_name: 'square',
-    parameters: [{ type: 'int', data: { signed: 'none', size: 64, value: '5' } }],
+    parameters: [{ type: 'float', data: { size: 64, value: '5.0' } }],
     comparisons: [
       {
-        type: 'int',
-        data: { signed: 'none', size: 64, value: '25' },
-        operator: 'EQUAL',
-        symbol: 'return'
+        type: 'float',
+        data: { size: 64, value: '25.0' },
+        operator: 'WITHIN_RANGE',
+        symbol: 'return',
+        range_value: '0.00001'
       }
     ],
-    return_type: { type: 'int', data: { signed: 'none', size: 64, value: '0' } },
+    return_type: { type: 'float', data: { size: 64, value: '0' } },
 
     type: 'FunctionOutputTestCase',
 
