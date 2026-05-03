@@ -403,18 +403,21 @@ export class SchemaType implements SchemaDef {
                     name: "parameters",
                     type: "Parameter",
                     array: true,
-                    attributes: [{ name: "@json" }] as readonly AttributeApplication[]
+                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("[]") }] }] as readonly AttributeApplication[],
+                    default: "[]" as FieldDefault
                 },
                 comparisons: {
                     name: "comparisons",
                     type: "Comparison",
                     array: true,
-                    attributes: [{ name: "@json" }] as readonly AttributeApplication[]
+                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("[]") }] }] as readonly AttributeApplication[],
+                    default: "[]" as FieldDefault
                 },
                 return_type: {
                     name: "return_type",
                     type: "Parameter",
-                    attributes: [{ name: "@json" }] as readonly AttributeApplication[]
+                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("{\"type\":\"int\", \"data\":{\"signed\":\"none\",\"value\": \"5\",\"size\": 32}}") }] }] as readonly AttributeApplication[],
+                    default: "{\"type\":\"int\", \"data\":{\"signed\":\"none\",\"value\": \"5\",\"size\": 32}}" as FieldDefault
                 },
                 function_name: {
                     name: "function_name",

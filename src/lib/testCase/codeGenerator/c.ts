@@ -24,7 +24,11 @@ export class CCodeGenerator extends CodeGenerator {
     return `${returnType} ${function_name}(${parameterTypes.join(', ')});`;
   }
 
-  private generateComparison(comparison: Comparison, testIndex: number): string {
+  private generateComparison(
+    comparison: Comparison,
+    testIndex: number,
+    parameters: Array<{ type: string; data: JsonValue }>
+  ) {
     const { data, operator, symbol, type, range_value } = comparison;
 
     const typeRegistry = TypeRegistry.instance();
@@ -32,11 +36,19 @@ export class CCodeGenerator extends CodeGenerator {
     const expectedSymbol = `__ar_test_expected_${testIndex}`;
     const expected = typeRegistry.getInstance(type, data).getLanguage('c');
 
+    let actualSymbol: string;
+    let actualLanguage: any;
+
     if (symbol === 'return') {
-      var actualSymbol = '__ar_test_return_value';
+      actualSymbol = '__ar_test_return_value';
+      actualLanguage = expected;
     } else {
-      var actualSymbol = `__ar_test_param_index_${symbol}`;
+      actualSymbol = `__ar_test_param_${symbol}`;
+      const param = parameters[parseInt(symbol)];
+      actualLanguage = typeRegistry.getInstance(param.type, param.data).getLanguage('c');
     }
+
+    const resolvedSymbol = actualLanguage.resolveSymbol(actualSymbol);
 
     const comparisonSymbol = `__ar_test_${testIndex}_comparison`;
     let comparisonExpression = comparisonSymbol;
@@ -48,7 +60,7 @@ export class CCodeGenerator extends CodeGenerator {
       case 'LESS_THAN':
         comparisonCompute = expected.constructLessThanCheck(
           comparisonSymbol,
-          actualSymbol,
+          resolvedSymbol,
           expectedSymbol
         );
         break;
@@ -57,7 +69,7 @@ export class CCodeGenerator extends CodeGenerator {
       case 'LESS_THAN_EQUAL':
         comparisonCompute = expected.constructLessThanEqualCheck(
           comparisonSymbol,
-          actualSymbol,
+          resolvedSymbol,
           expectedSymbol
         );
         break;
@@ -66,20 +78,20 @@ export class CCodeGenerator extends CodeGenerator {
       case 'EQUAL':
         comparisonCompute = expected.constructEqualityCheck(
           comparisonSymbol,
-          actualSymbol,
+          resolvedSymbol,
           expectedSymbol
         );
         break;
       case 'WITHIN_RANGE':
         comparisonCompute = expected.constructWithinRangeCheck(
           comparisonSymbol,
-          actualSymbol,
+          resolvedSymbol,
           expectedSymbol,
           range_value as string
         );
     }
 
-    return `${expected.constructPrint(actualSymbol)};
+    return `${actualLanguage.constructPrint(actualSymbol)};
 printf("\\n");
 ${expected.constructInit(expectedSymbol)}
 ${expected.constructPrint(expectedSymbol)}
@@ -110,7 +122,7 @@ int main() {
   int __ar_test_success = 1;
   ${params.map((param, index) => param.constructInit(`__ar_test_param_${index}`)).join('\n\n')}
   ${returnTypeExpression} __ar_test_return_value = ${function_name}(${parameters.map((_, index) => `__ar_test_param_${index}`)});
-  ${comparisons.map((comparison, index) => this.generateComparison(comparison, index))}
+  ${comparisons.map((comparison, index) => this.generateComparison(comparison, index, parameters))}
   return !__ar_test_success;
 }
     `;

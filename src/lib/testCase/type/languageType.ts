@@ -32,4 +32,8 @@ export abstract class LanguageType<T, TV = TypeWithValue<T>> {
     actualSymbol: string,
     range: string
   ): string;
+
+  public resolveSymbol(symbol: string): string {
+    return symbol;
+  }
 }

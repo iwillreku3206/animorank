@@ -49,9 +49,9 @@ type Comparison {
 }
 
 model FunctionOutputTestCase extends ProblemTestCase {
-  parameters    Parameter[]  @json
-  comparisons   Comparison[] @json
-  return_type   Parameter    @json
+  parameters    Parameter[]  @json @default("[]")
+  comparisons   Comparison[] @json @default("[]")
+  return_type   Parameter    @json @default("{\"type\":\"int\", \"data\":{\"signed\":\"none\",\"value\": \"5\",\"size\": 32}}")
   function_name String       @default("")
 }
 

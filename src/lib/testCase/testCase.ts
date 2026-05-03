@@ -1,10 +1,21 @@
 import type { ProblemTestCase } from '$lib/zenstack/models';
 import type { CodeExecutionResponse } from './executor';
 
-export type TestCaseResult = {
+type TestCaseResultBase = {
   success: boolean;
-  runInfo: CodeExecutionResponse;
+  testCaseInfo: {
+    symbol: string;
+    expected: string;
+    actual: string;
+  }[];
 };
+
+interface TestCaseResultFail extends TestCaseResultBase {
+  success: false;
+  reason: string;
+}
+
+export type TestCaseResult = TestCaseResultFail | TestCaseResultBase;
 
 export interface CreateOptions {
   problemId: string;
@@ -22,6 +33,6 @@ export abstract class TestCase<T extends ProblemTestCase, TUpdate = never> {
     this.dbTestCase = dbTestCase;
   }
 
-  public abstract execute(): Promise<TestCaseResult>;
+  public abstract execute(studentCode: string): Promise<TestCaseResult>;
   public abstract update(options: UpdateOptions<TUpdate>): Promise<void>;
 }

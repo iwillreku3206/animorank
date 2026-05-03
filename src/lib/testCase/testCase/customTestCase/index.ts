@@ -4,26 +4,19 @@ import { TestCase, type CreateOptions, type TestCaseResult } from '$lib/testCase
 
 import compile from './compile.sh?raw';
 import run from './run.sh?raw';
-import { CCodeGenerator } from '$lib/testCase/codeGenerator/c';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { CodeExecutor, type CodeExecutionRequest } from '$lib/testCase/executor';
 
 const mainRegex = /\s*(int|void)\s+main\s*\([^)]*\)\s*\{[^}]*\}\s*/g;
 
-export class FunctionOutputTestCase extends TestCase<
-  Extract<ProblemTestCase, { type: 'FunctionOutputTestCase' }>
-> {
+export class CustomTestCase extends TestCase<Extract<ProblemTestCase, { type: 'CustomTestCase' }>> {
   constructor(dbTestCase: ProblemTestCase) {
-    super(dbTestCase as Extract<ProblemTestCase, { type: 'FunctionOutputTestCase' }>);
+    super(dbTestCase as Extract<ProblemTestCase, { type: 'CustomTestCase' }>);
   }
 
   public async execute(studentCode: string): Promise<TestCaseResult> {
     const { dbTestCase } = this;
     const codeExecutor = ServerServiceProvider.instance().getService(CodeExecutor);
-
-    // For now, we assume that it will be written in C.
-    const codeGenerator = new CCodeGenerator();
-    const testCode = codeGenerator.generateTestCode(dbTestCase);
 
     const codeExecutionRequest: CodeExecutionRequest = {
       compileScript: compile,
@@ -33,7 +26,7 @@ export class FunctionOutputTestCase extends TestCase<
           name: 'submission.c',
           contents: Buffer.from(studentCode.replaceAll(mainRegex, ''), 'utf8')
         },
-        { name: 'main.c', contents: Buffer.from(testCode, 'utf8') }
+        { name: 'main.c', contents: Buffer.from(dbTestCase.test_code, 'utf8') }
       ],
       timeLimit: 30
     };
@@ -43,28 +36,21 @@ export class FunctionOutputTestCase extends TestCase<
       return { success: false, testCaseInfo: [], reason: executionResults.reason };
     }
 
-    const { stdout } = executionResults;
-    const lines = stdout.split('\n');
+    const exitCode = executionResults.exitCode;
 
-    let success = true;
-
-    const comparisons: TestCaseResult['testCaseInfo'][number][] = [];
-
-    for (let i = 0; i < dbTestCase.comparisons.length; i++) {
-      const actual = lines[i * 3];
-      const expected = lines[i * 3 + 1];
-      const result = lines[i * 3 + 2];
-
-      comparisons.push({ actual, expected, symbol: dbTestCase.comparisons[i].symbol });
-
-      if (result.trim().startsWith('0')) success = false;
+    if (exitCode === 0) {
+      return { success: true, testCaseInfo: [] };
+    } else {
+      return {
+        success: false,
+        testCaseInfo: [],
+        reason: `custom test failed with exit code ${exitCode}`
+      };
     }
-
-    return { success, testCaseInfo: comparisons };
   }
 
   public static async create(options: CreateOptions): Promise<ProblemTestCase> {
-    const newTestCase = await db.functionOutputTestCase.create({
+    const newTestCase = await db.customTestCase.create({
       data: { problem_id: options.problemId }
     });
     return newTestCase as ProblemTestCase;

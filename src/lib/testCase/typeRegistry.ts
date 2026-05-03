@@ -1,9 +1,10 @@
 import { ServiceRegistry } from '$lib/services/registry';
 import type { JsonValue } from '@zenstackhq/orm';
-import type { TypeWithValue } from './type';
+import { TypeWithValue } from './type';
 import { Int } from './type/int';
 import { Float } from './type/float';
 import { String } from './type/string';
+import { Pointer } from './type/pointer';
 
 export class TypeRegistry extends ServiceRegistry<TypeWithValue<any>, [JsonValue | undefined]> {
   private static _instance: TypeRegistry | null;
@@ -24,5 +25,6 @@ export class TypeRegistry extends ServiceRegistry<TypeWithValue<any>, [JsonValue
     this.register('int', Int);
     this.register('float', Float);
     this.register('string', String);
+    this.register('pointer', Pointer);
   }
 }

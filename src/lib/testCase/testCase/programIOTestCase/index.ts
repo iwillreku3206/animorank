@@ -4,17 +4,14 @@ import { TestCase, type CreateOptions, type TestCaseResult } from '$lib/testCase
 
 import compile from './compile.sh?raw';
 import run from './run.sh?raw';
-import { CCodeGenerator } from '$lib/testCase/codeGenerator/c';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { CodeExecutor, type CodeExecutionRequest } from '$lib/testCase/executor';
 
-const mainRegex = /\s*(int|void)\s+main\s*\([^)]*\)\s*\{[^}]*\}\s*/g;
-
-export class FunctionOutputTestCase extends TestCase<
-  Extract<ProblemTestCase, { type: 'FunctionOutputTestCase' }>
+export class ProgramIOTestCase extends TestCase<
+  Extract<ProblemTestCase, { type: 'ProgramIOTestCase' }>
 > {
   constructor(dbTestCase: ProblemTestCase) {
-    super(dbTestCase as Extract<ProblemTestCase, { type: 'FunctionOutputTestCase' }>);
+    super(dbTestCase as Extract<ProblemTestCase, { type: 'ProgramIOTestCase' }>);
   }
 
   public async execute(studentCode: string): Promise<TestCaseResult> {
@@ -22,18 +19,16 @@ export class FunctionOutputTestCase extends TestCase<
     const codeExecutor = ServerServiceProvider.instance().getService(CodeExecutor);
 
     // For now, we assume that it will be written in C.
-    const codeGenerator = new CCodeGenerator();
-    const testCode = codeGenerator.generateTestCode(dbTestCase);
 
     const codeExecutionRequest: CodeExecutionRequest = {
       compileScript: compile,
       runScript: run,
+      stdin: dbTestCase.input,
       files: [
         {
-          name: 'submission.c',
-          contents: Buffer.from(studentCode.replaceAll(mainRegex, ''), 'utf8')
-        },
-        { name: 'main.c', contents: Buffer.from(testCode, 'utf8') }
+          name: 'main.c',
+          contents: Buffer.from(studentCode, 'utf8')
+        }
       ],
       timeLimit: 30
     };
@@ -44,27 +39,18 @@ export class FunctionOutputTestCase extends TestCase<
     }
 
     const { stdout } = executionResults;
-    const lines = stdout.split('\n');
+    let success = stdout === dbTestCase.output;
 
-    let success = true;
-
-    const comparisons: TestCaseResult['testCaseInfo'][number][] = [];
-
-    for (let i = 0; i < dbTestCase.comparisons.length; i++) {
-      const actual = lines[i * 3];
-      const expected = lines[i * 3 + 1];
-      const result = lines[i * 3 + 2];
-
-      comparisons.push({ actual, expected, symbol: dbTestCase.comparisons[i].symbol });
-
-      if (result.trim().startsWith('0')) success = false;
-    }
-
-    return { success, testCaseInfo: comparisons };
+    return {
+      success,
+      testCaseInfo: [
+        { expected: dbTestCase.output, actual: executionResults.stdout, symbol: 'stdio' }
+      ]
+    };
   }
 
   public static async create(options: CreateOptions): Promise<ProblemTestCase> {
-    const newTestCase = await db.functionOutputTestCase.create({
+    const newTestCase = await db.programIOTestCase.create({
       data: { problem_id: options.problemId }
     });
     return newTestCase as ProblemTestCase;
