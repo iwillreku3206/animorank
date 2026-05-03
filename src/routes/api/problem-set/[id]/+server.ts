@@ -11,11 +11,16 @@ export const GET: RequestHandler = async ({ locals, params }) => {
   const problemSet = await db.problemSet.findUnique({
     where: {
       id: params.id,
-      ...(session.user.type === 'student'
-        ? { subscriptions: { some: { student_id: session.user.id } } }
-        : { owner_id: session?.user.id })
+      OR: [
+        { is_global: true },
+        { subscriptions: { some: { student_id: session.user.id } } },
+        { collaborators: { some: { collaborator_id: session.user.id } } }
+      ]
     },
-    include: { problems: true, owner: { include: { user: true } } }
+    include: {
+      problems: true,
+      collaborators: { include: { collaborator: { include: { user: true } } } }
+    }
   });
 
   if (!problemSet) return error(404, 'Not found');
@@ -32,12 +37,10 @@ export const GET: RequestHandler = async ({ locals, params }) => {
         visible: problem.visible
       };
     }),
-    teacher: problemSet.owner
-      ? {
-          id: problemSet.owner?.id,
-          name: problemSet.owner?.user.name || ''
-        }
-      : undefined
+    teachers: problemSet.collaborators.map((c) => ({
+      id: c.collaborator.user.id,
+      name: c.collaborator.user.name
+    }))
   });
 };
 
@@ -61,7 +64,10 @@ export const PUT: RequestHandler = async ({ locals, request, params }) => {
 
   if (!success) return error(400, zodError);
 
-  await db.problemSet.update({ where: { id: params.id, owner_id: session.user.id }, data });
+  await db.problemSet.update({
+    where: { id: params.id, collaborators: { some: { collaborator_id: session.user.id } } },
+    data
+  });
 
   return successObject({ status: 'success' });
 };

@@ -24,10 +24,10 @@ model Problem {
   starter_code      String            @default("")
   visible           Boolean           @default(true)
 
-  difficulty_id     String?
+  difficulty_id     String?           @db.Uuid
   difficulty        DifficultyTag?    @relation(fields: [difficulty_id], references: [id], onDelete: SetNull)
-  subject_id        String?
-  subject           SubjectTag?       @relation(fields: [difficulty_id], references: [id], onDelete: SetNull)
+  subject_id        String?           @db.Uuid
+  subject           SubjectTag?       @relation(fields: [subject_id], references: [id], onDelete: SetNull)
   topics            ProblemTopic[]
 
   problem_set_id    String            @db.Uuid

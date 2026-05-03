@@ -19,9 +19,9 @@ model TeacherList {
 }
 
 model User {
-  id             String          @id @default(uuid()) @db.Uuid
+  id             String               @id @default(uuid()) @db.Uuid
   name           String?
-  email          String          @unique
+  email          String               @unique
   emailVerified  DateTime?
   image          String?
   accounts       Account[]
@@ -29,12 +29,14 @@ model User {
   // Optional for WebAuthn support
   Authenticator  Authenticator[]
 
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  hasAcceptedTOS Boolean         @default(false)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  hasAcceptedTOS Boolean              @default(false)
 
   student        Student?
   teacher        Teacher?
+
+  bookmarks      ProblemSetBookmark[]
 }
 
 model Account {

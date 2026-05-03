@@ -18,19 +18,30 @@ model ProblemSet {
   auto_accept   Boolean                  @default(false)
   is_global     Boolean                  @default(false)
 
-  difficulty_id String?
+  difficulty_id String?                  @db.Uuid
   difficulty    DifficultyTag?           @relation(fields: [difficulty_id], references: [id], onDelete: SetNull)
-  subject_id    String?
-  subject       SubjectTag?              @relation(fields: [difficulty_id], references: [id], onDelete: SetNull)
+  subject_id    String?                  @db.Uuid
+  subject       SubjectTag?              @relation(fields: [subject_id], references: [id], onDelete: SetNull)
   topics        ProblemSetTopic[]
 
   problems      Problem[]
   subscriptions Subscription[]
+  bookmarks     ProblemSetBookmark[]
 
   collaborators ProblemSetCollaborator[]
 
   created_at    DateTime                 @default(now()) @db.Timestamptz(6)
   updated_at    DateTime                 @updatedAt @db.Timestamptz(6)
+}
+
+model ProblemSetBookmark {
+  user_id        String     @db.Uuid
+  user           User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  problem_set_id String     @db.Uuid
+  problem_set    ProblemSet @relation(fields: [problem_set_id], references: [id], onDelete: Cascade)
+
+  @@id([problem_set_id, user_id])
 }
 
 model ProblemSetCollaborator {

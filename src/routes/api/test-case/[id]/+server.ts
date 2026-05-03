@@ -1,7 +1,7 @@
 import { error, successObject } from '$lib/response';
-import { db } from '$lib/zenstack';
 import z from 'zod';
 import type { RequestHandler } from './$types';
+import { TestCaseService } from '$lib/testCase/testCaseService';
 import { CTypeWithValueSchema } from '$lib/types/cType';
 import { ProblemTestCaseOperator } from '$lib/zenstack/models';
 
@@ -9,10 +9,11 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
   const session = await locals.auth();
   if (!session || !session.user.id) return error(403, 'Unauthorized');
 
-	const currentTestCase = await getTestCase(params.id, session);
-	if (!currentTestCase) return error(404, 'Not found');
+  const testCaseService = TestCaseService.instance();
+  const currentTestCase = await testCaseService.findById({ id: params.id, user: session.user });
+  if (!currentTestCase) return error(404, 'Not found');
 
-	await TestCase.delete(params.id);
+  await testCaseService.delete(params.id);
 
   return successObject({ status: 'Success' });
 };
@@ -37,8 +38,9 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
   const session = await locals.auth();
   if (!session || !session.user.id) return error(403, 'Unauthorized');
 
-	const currentTestCase = await getTestCase(params.id, session);
-	if (!currentTestCase) return error(404, 'Not found'); // should return 404 if not owned by user to hide existence of such an object
+  const testCaseService = TestCaseService.instance();
+  const currentTestCase = await testCaseService.findById({ id: params.id, user: session.user });
+  if (!currentTestCase) return error(404, 'Not found');
 
   const {
     success,
@@ -51,7 +53,7 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
   }[currentTestCase.type].safeParseAsync(await request.json());
   if (!success) return error(400, zodError);
 
-	await TestCase.for(currentTestCase).update(params.id, data);
+  await currentTestCase.update({ id: params.id, update: data });
 
   return successObject({ status: 'Success' });
 };

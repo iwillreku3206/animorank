@@ -13,7 +13,7 @@ const putValidator = z.object({
 
 export const PUT: RequestHandler = async ({ locals, request, params }) => {
   const session = await locals.auth();
-  if (!session) return error(403, 'Unauthorized');
+  if (!session || !session.user.id) return error(403, 'Unauthorized');
   if (session.user.type != 'teacher') return error(403, 'Unauthorized');
 
   const {
@@ -24,7 +24,10 @@ export const PUT: RequestHandler = async ({ locals, request, params }) => {
   if (!success) return error(400, zodError);
 
   await db.problem.update({
-    where: { id: params.id, problem_set: { owner_id: session.user.id } },
+    where: {
+      id: params.id,
+      problem_set: { collaborators: { some: { collaborator_id: session.user.id } } }
+    },
     data
   });
   return successObject({ status: 'success' });

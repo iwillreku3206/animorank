@@ -1,12 +1,8 @@
 import { error, successObject } from '$lib/response';
 import z from 'zod';
 import type { RequestHandler } from './$types';
-import { db } from '$lib/zenstack';
+import { TestCaseService } from '$lib/testCase/testCaseService';
 import { ProblemTestCaseType } from '$lib/zenstack/models';
-import type {
-  FunctionOutputTestCaseCreateArgs,
-  FunctionOutputTestCaseSelect
-} from '$lib/zenstack/input';
 
 const postValidator = z.object({
   problem: z.uuid(),
@@ -24,8 +20,11 @@ export const POST: RequestHandler = async ({ locals, request }) => {
   } = await postValidator.safeParseAsync(await request.json());
   if (!success) return error(400, zodError);
 
-  const problem = await db.problem.findUnique({ where: { id: data.problem }, select: { id: true, problem_set: true } })
-  if (!problem || problem.problem_set.owner_id !== session.user.id) return error(404, 'Not found')
+  const testCaseService = TestCaseService.instance();
 
-  return successObject(await TestCase.create(data.type, data.problem))
+  return successObject(await testCaseService.create({
+    type: data.type,
+    problemId: data.problem,
+    user: session.user
+  }))
 }

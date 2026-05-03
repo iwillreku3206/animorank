@@ -5,7 +5,13 @@ import { TagType, TagColor } from '../src/lib/zenstack/models.ts';
 
 async function createTag(name: string, type: TagType, color?: TagColor, order?: number) {
   const db = _db as ClientContract<typeof schema>;
-  await db.tag.upsert({
+  await db[
+    {
+      [TagType.TAG_TOPIC]: 'topicTag',
+      [TagType.TAG_DIFFICULTY]: 'difficultyTag',
+      [TagType.TAG_SUBJECT]: 'subjectTag'
+    }[type]
+  ].upsert({
     where: { label: name },
     create: { label: name, type, color, order },
     update: {}

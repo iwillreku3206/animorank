@@ -1,7 +1,6 @@
 <script lang="ts">
   import Button from '$lib/components/Button.svelte';
   import TagChip from '$lib/components/TagChip.svelte';
-  import { groupBy } from '$lib/utils/groupBy';
   import type { PageProps } from './$types';
   import ProblemSetCard from './ProblemSetCard.svelte';
   import SearchIcon from '@iconify-svelte/fa6-solid/magnifying-glass';
@@ -12,8 +11,25 @@
   import ProblemSetListItem from './ProblemSetListItem.svelte';
   import type { Filters, ProblemSet } from './api';
   import { page } from '$app/state';
+  import { goto } from '$app/navigation';
+
+  function buildSearchParams() {
+    const params = new URLSearchParams();
+    for (const tag of filters.tags) params.append('tag', tag);
+    if (filters.status !== '') params.set('status', filters.status);
+    if (filters.creator !== '' && filters.creator !== undefined)
+      params.set('creator', filters.creator);
+    if (filters.bookmarked) params.set('bookmarked', 'true');
+    if (search) params.set('search', search);
+    if (sortBy) params.set('sortBy', sortBy);
+    if (sortDesc) params.set('sortOrder', 'desc');
+    if (viewMode === 'list') params.set('viewMode', 'list');
+    if (pageNumber !== 1) params.set('page', String(pageNumber));
+    return params.toString();
+  }
 
   let { data }: PageProps = $props();
+  console.log(data.problemSets);
 
   function initialFilters(): Filters {
     const params = page.url.searchParams;
@@ -160,7 +176,7 @@
       {data}
       bind:filters
     />
-    <Button>Apply Filters</Button>
+    <Button onclick={() => goto(`?${buildSearchParams()}`)}>Apply Filters</Button>
     <div class="join">
       <label
         class="join-item has-checked:btn-primary has-checked:bg-primary has-checked:text-primary-content text-base-content btn bg-base-100"

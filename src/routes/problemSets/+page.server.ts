@@ -15,17 +15,17 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     redirect(302, '/about');
   }
 
-  const tags = await db.tag.findMany({
+  const topicTags = await db.topicTag.findMany({
     include: {
       _count: {
         select: {
-          problemSets: {
+          problem_sets: {
             where: {
-              problemSet: {
+              problem_set: {
                 OR: [
                   { is_global: true },
                   { subscriptions: { some: { student_id: session.user.id } } },
-                  { owner_id: session.user.id }
+                  { collaborators: { some: { collaborator_id: session.user.id } } }
                 ]
               }
             }
@@ -35,25 +35,79 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     },
     orderBy: [
       { type: 'asc' },
-      { problemSets: { _count: 'desc' } },
+      { problem_sets: { _count: 'desc' } },
       { order: 'asc' },
       { label: 'asc' }
     ]
   });
 
-  const tagsMap = arrayToHashMap(tags, (t) => t.id);
+  const topicTagsMap = arrayToHashMap(topicTags, (t) => t.id);
+
+  const subjectTags = await db.subjectTag.findMany({
+    include: {
+      _count: {
+        select: {
+          problem_sets: {
+            where: {
+              OR: [
+                { is_global: true },
+                { subscriptions: { some: { student_id: session.user.id } } },
+                { collaborators: { some: { collaborator_id: session.user.id } } }
+              ]
+            }
+          }
+        }
+      }
+    },
+    orderBy: [
+      { type: 'asc' },
+      { problem_sets: { _count: 'desc' } },
+      { order: 'asc' },
+      { label: 'asc' }
+    ]
+  });
+
+  const subjectTagsMap = arrayToHashMap(subjectTags, (t) => t.id);
+
+  const difficultyTags = await db.difficultyTag.findMany({
+    include: {
+      _count: {
+        select: {
+          problem_sets: {
+            where: {
+              OR: [
+                { is_global: true },
+                { subscriptions: { some: { student_id: session.user.id } } },
+                { collaborators: { some: { collaborator_id: session.user.id } } }
+              ]
+            }
+          }
+        }
+      }
+    },
+    orderBy: [
+      { type: 'asc' },
+      { problem_sets: { _count: 'desc' } },
+      { order: 'asc' },
+      { label: 'asc' }
+    ]
+  });
+
+  const difficultyTagsMap = arrayToHashMap(subjectTags, (t) => t.id);
 
   const creators =
     session.user.type === 'student'
       ? await db.teacher.findMany({
           select: { user: { select: { id: true, name: true } } },
           where: {
-            problem_set: {
+            problem_set_collaborations: {
               some: {
-                OR: [
-                  { is_global: true },
-                  { subscriptions: { some: { student_id: session.user.id } } }
-                ]
+                problem_set: {
+                  OR: [
+                    { is_global: true },
+                    { subscriptions: { some: { student_id: session.user.id } } }
+                  ]
+                }
               }
             }
           }
@@ -75,18 +129,21 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const creator = params.get('creator') || undefined;
   const bookmarked = params.get('bookmarked') === 'true';
 
-  const problemSetWhere: WhereInput<SchemaType, 'ProblemSet'> = {
-    OR: [{ is_global: true }, { subscriptions: { some: { student_id: session.user.id } } }]
-  };
-
   let problemSetQuery = db.$qb
     .selectFrom((db) =>
       db
         .selectFrom('ProblemSet')
-        .innerJoin('Teacher', 'Teacher.id', 'ProblemSet.owner_id')
+        .innerJoin(
+          'ProblemSetCollaborator',
+          'ProblemSetCollaborator.problem_set_id',
+          'ProblemSet.id'
+        )
+        .innerJoin('Teacher', 'Teacher.id', 'ProblemSetCollaborator.collaborator_id')
         .innerJoin('User', 'User.id', 'Teacher.id')
-        .leftJoin('ProblemSetTag', 'ProblemSetTag.problemSetId', 'ProblemSet.id')
-        .leftJoin('Tag', 'Tag.id', 'ProblemSetTag.tagId')
+        .leftJoin('ProblemSetBookmark', 'ProblemSetBookmark.problem_set_id', 'ProblemSet.id')
+        .leftJoin('ProblemSetTopic', 'ProblemSetTopic.problem_set_id', 'ProblemSet.id')
+        .leftJoin('TopicTag', 'TopicTag.id', 'ProblemSetTopic.topic_tag_id')
+        .leftJoin('DifficultyTag', 'DifficultyTag.id', 'ProblemSet.difficulty_id')
         .innerJoin('Problem', 'Problem.problem_set_id', 'ProblemSet.id')
         .leftJoin('PracticeSession', 'PracticeSession.problem_id', 'Problem.id')
         .where((eb) =>
@@ -95,7 +152,19 @@ export const load: PageServerLoad = async ({ locals, url }) => {
             eb('PracticeSession.student_id', '=', String(session.user.id))
           ])
         )
-        .groupBy(['ProblemSet.id', 'User.name', 'User.id'])
+        .where((eb) =>
+          eb.or([
+            eb('ProblemSetBookmark.user_id', 'is', null),
+            eb('ProblemSetBookmark.user_id', '=', session.user.id || '')
+          ])
+        )
+        .groupBy([
+          'ProblemSet.id',
+          'User.name',
+          'User.id',
+          'ProblemSetBookmark.user_id',
+          'DifficultyTag.id'
+        ])
         .select('ProblemSet.id as id')
         .select('ProblemSet.title as title')
         .select('User.id as ownerId')
@@ -129,7 +198,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
             eb.cast<number>(eb.fn.count('Problem.id').distinct(), 'float8')
           ).as('progress_pct')
         )
-        .select((eb) => eb.fn.agg<string[]>('array_agg', ['Tag.id']).as('tags'))
+        .select((eb) => eb.fn.agg<string[]>('array_agg', ['TopicTag.id']).as('topic_tags'))
+        .select((eb) => eb.ref('ProblemSet.subject_id').as('subject_tag'))
+        .select((eb) => eb.ref('ProblemSet.difficulty_id').as('difficulty_tag'))
+        .select((eb) => eb.fn.coalesce('DifficultyTag.order', eb.val('-99')).as('difficulty_order'))
+        .select((eb) => eb.ref('ProblemSetBookmark.user_id').as('bookmark_user_id'))
         .where('ProblemSet.title', 'like', `%${search}%`)
         .as('queryTable')
     )
@@ -138,15 +211,27 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     .select('title')
     .select('ownerName')
     .select('description')
-    .select('tags')
+    .select('topic_tags')
+    .select('subject_tag')
+    .select('difficulty_tag')
     .select('progress_finished')
     .select('progress_total');
 
-  if (selectedTags.length !== 0) {
-    problemSetQuery = problemSetQuery.where('tags', '&&', selectedTags);
+  if (bookmarked) {
+    problemSetQuery = problemSetQuery.where('bookmark_user_id', 'is not', null);
   }
 
-  if (creator && creator.length !== 0) {
+  if (selectedTags.length !== 0) {
+    problemSetQuery = problemSetQuery.where((eb) =>
+      eb.or([
+        eb('topic_tags', '&&', eb.val(selectedTags)),
+        eb('difficulty_tag', '=', eb.fn.any(eb.val(selectedTags))),
+        eb('subject_tag', '=', eb.fn.any(eb.val(selectedTags)))
+      ])
+    );
+  }
+
+  if (creator && creator.length > 0) {
     problemSetQuery = problemSetQuery.where('ownerId', '=', creator);
   }
 
@@ -174,8 +259,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     problemSetQuery = problemSetQuery.orderBy('progress_pct', sortOrder);
   }
 
-  console.log(problemSetQuery.compile().sql);
-  console.log(await problemSetQuery.execute());
+  if (sortBy === 'difficulty') {
+    problemSetQuery = problemSetQuery.orderBy('difficulty_order', sortOrder);
+  }
+
+  problemSetQuery = problemSetQuery.limit(pageSize).offset((page - 1) * pageSize);
 
   const problemSetQueryResult = await problemSetQuery.execute();
 
@@ -189,14 +277,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
       total: parseInt(String(ps.progress_total))
     },
     bookmarked: true,
-    tags: Array.from(new Set(ps.tags.filter((tag) => !!tag))).map((tag) => tagsMap[tag])
+    tags: []
   }));
-
-  // TODO: Implement Difficulty Sort
 
   return {
     user: session.user,
-    tags,
+    topicTags,
+    difficultyTags,
+    subjectTags,
     creators: creators.map((c) => c.user),
     pagination: {
       pageCount: Math.ceil(

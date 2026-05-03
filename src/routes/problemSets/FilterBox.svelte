@@ -2,17 +2,22 @@
   import TagChip from '$lib/components/TagChip.svelte';
   import { groupBy } from '$lib/utils/groupBy';
   import { flip } from 'svelte/animate';
+  const FLIP_DURATION = 30;
   import type { PageProps } from './$types';
   import XIcon from '@iconify-svelte/fa6-solid/xmark';
   import type { Filters } from './api';
 
   let { data, filters = $bindable() }: { data: PageProps['data']; filters: Filters } = $props();
-  let { creators, tags, user } = $derived(data);
+  let { creators, topicTags, difficultyTags, subjectTags, user } = $derived(data);
 
-  let tagsByType = $derived(groupBy(tags, (t) => t.type));
+  const allTags = $derived([...topicTags, ...difficultyTags, ...subjectTags]);
+
+  type Tag = (typeof allTags)[0];
+
+  let tagsByType = $derived(groupBy(allTags, (t: Tag) => t.type));
   let tagTypes = $derived(Object.keys(tagsByType) as (keyof typeof tagsByType)[]);
 
-  type TagMap = Record<keyof typeof tagsByType, (typeof tags)[0][]>;
+  type TagMap = Record<keyof typeof tagsByType, Tag[]>;
 
   let [tagsByTypeSelectedFirst, numberSelectedByType] = $derived.by(() => {
     const tagsMap: Partial<TagMap> = {};
@@ -84,43 +89,65 @@
     {#each tagTypes as tagType (tagType)}
       {#if tagsByTypeSelectedFirst[tagType]}
         <div class="flex flex-col gap-2">
-          <h4 class="font-bold">
+          <button
+            class="font-bold cursor-pointer text-left"
+            onclick={() => (expandTags[tagType] = !expandTags[tagType])}
+          >
             {tagType
               .split('_')
               .slice(1)
-              .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
               .join(' ')
               .replaceAll('_', ' ')}
-          </h4>
-          <div class="flex flex-row flex-wrap gap-2">
-            {#each shortenedTagListByType[tagType] as tag (tag.id)}
-              <div animate:flip={{ duration: 50 }}>
-                <TagChip
-                  {tag}
-                  class={filters.tags.includes(tag.id) ? 'outline outline-accent' : ''}
-                  href={() => {
-                    if (filters.tags.includes(tag.id))
+          </button>
+          {#if (tagsByTypeSelectedFirst[tagType] as any[]).filter( (t) => filters.tags.includes(t.id) ).length > 0}
+            <div class="flex flex-wrap gap-2 pt-1 border-t border-base-300 mt-1">
+              {#each (tagsByTypeSelectedFirst[tagType] as any[]).filter( (t) => filters.tags.includes(t.id) ) as tag (tag.id)}
+                <div animate:flip={{ duration: FLIP_DURATION } as any}>
+                  <TagChip
+                    {tag}
+                    class="outline outline-accent"
+                    href={() => {
                       filters.tags = filters.tags.filter((t) => t !== tag.id);
-                    else filters.tags.push(tag.id);
+                    }}
+                  />
+                </div>
+              {/each}
+            </div>
+          {/if}
+          {#if shortenedTagListByType[tagType].length > 0}
+            <div class="flex flex-row flex-wrap gap-2">
+              {#each shortenedTagListByType[tagType] as tag (tag.id)}
+                {#if !filters.tags.includes(tag.id)}
+                  <div>
+                    <TagChip
+                      {tag}
+                      class={filters.tags.includes(tag.id) ? 'outline outline-accent' : ''}
+                      href={() => {
+                        if (filters.tags.includes(tag.id))
+                          filters.tags = filters.tags.filter((t) => t !== tag.id);
+                        else filters.tags.push(tag.id);
+                      }}
+                    />
+                  </div>
+                {/if}
+              {/each}
+              {#if (tagsByTypeSelectedFirst[tagType] as any[]).length > 5}
+                <TagChip
+                  tag={{
+                    id: '',
+                    label: `Show ${expandTags[tagType] ? 'Less' : 'More'}`,
+                    color: 'TAG_COLOR_BLUE',
+                    order: 99,
+                    type: tagsByType[tagType][0].type
+                  }}
+                  href={() => {
+                    expandTags[tagType] = !expandTags[tagType];
                   }}
                 />
-              </div>
-            {/each}
-            {#if tagsByTypeSelectedFirst[tagType].length > 5}
-              <TagChip
-                tag={{
-                  id: '',
-                  label: `Show ${expandTags[tagType] ? 'Less' : 'More'}`,
-                  color: 'TAG_COLOR_BLUE',
-                  order: 99,
-                  type: tagsByType[tagType][0].type
-                }}
-                href={() => {
-                  expandTags[tagType] = !expandTags[tagType];
-                }}
-              />
-            {/if}
-          </div>
+              {/if}
+            </div>
+          {/if}
         </div>
       {/if}
     {/each}

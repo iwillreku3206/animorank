@@ -17,6 +17,7 @@ export type ProgramIOTestCase = $ModelResult<$Schema, "ProgramIOTestCase">;
 export type CustomTestCase = $ModelResult<$Schema, "CustomTestCase">;
 export type ProblemSetTopic = $ModelResult<$Schema, "ProblemSetTopic">;
 export type ProblemSet = $ModelResult<$Schema, "ProblemSet">;
+export type ProblemSetBookmark = $ModelResult<$Schema, "ProblemSetBookmark">;
 export type ProblemSetCollaborator = $ModelResult<$Schema, "ProblemSetCollaborator">;
 export type Subscription = $ModelResult<$Schema, "Subscription">;
 export type SubjectTag = $ModelResult<$Schema, "SubjectTag">;

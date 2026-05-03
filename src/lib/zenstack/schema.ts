@@ -209,9 +209,9 @@ export class SchemaType implements SchemaDef {
                     name: "difficulty_id",
                     type: "String",
                     optional: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
-                        "difficulty",
-                        "subject"
+                        "difficulty"
                     ] as readonly string[]
                 },
                 difficulty: {
@@ -224,14 +224,18 @@ export class SchemaType implements SchemaDef {
                 subject_id: {
                     name: "subject_id",
                     type: "String",
-                    optional: true
+                    optional: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "subject"
+                    ] as readonly string[]
                 },
                 subject: {
                     name: "subject",
                     type: "SubjectTag",
                     optional: true,
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("difficulty_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problems", fields: ["difficulty_id"], references: ["id"], onDelete: "SetNull" }
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("subject_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "problems", fields: ["subject_id"], references: ["id"], onDelete: "SetNull" }
                 },
                 topics: {
                     name: "topics",
@@ -650,9 +654,9 @@ export class SchemaType implements SchemaDef {
                     name: "difficulty_id",
                     type: "String",
                     optional: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
                     foreignKeyFor: [
-                        "difficulty",
-                        "subject"
+                        "difficulty"
                     ] as readonly string[]
                 },
                 difficulty: {
@@ -665,14 +669,18 @@ export class SchemaType implements SchemaDef {
                 subject_id: {
                     name: "subject_id",
                     type: "String",
-                    optional: true
+                    optional: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "subject"
+                    ] as readonly string[]
                 },
                 subject: {
                     name: "subject",
                     type: "SubjectTag",
                     optional: true,
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("difficulty_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problem_sets", fields: ["difficulty_id"], references: ["id"], onDelete: "SetNull" }
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("subject_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "problem_sets", fields: ["subject_id"], references: ["id"], onDelete: "SetNull" }
                 },
                 topics: {
                     name: "topics",
@@ -689,6 +697,12 @@ export class SchemaType implements SchemaDef {
                 subscriptions: {
                     name: "subscriptions",
                     type: "Subscription",
+                    array: true,
+                    relation: { opposite: "problem_set" }
+                },
+                bookmarks: {
+                    name: "bookmarks",
+                    type: "ProblemSetBookmark",
                     array: true,
                     relation: { opposite: "problem_set" }
                 },
@@ -714,6 +728,48 @@ export class SchemaType implements SchemaDef {
             idFields: ["id"],
             uniqueFields: {
                 id: { type: "String" }
+            }
+        },
+        ProblemSetBookmark: {
+            name: "ProblemSetBookmark",
+            fields: {
+                user_id: {
+                    name: "user_id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "user"
+                    ] as readonly string[]
+                },
+                user: {
+                    name: "user",
+                    type: "User",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("user_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "bookmarks", fields: ["user_id"], references: ["id"], onDelete: "Cascade" }
+                },
+                problem_set_id: {
+                    name: "problem_set_id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "problem_set"
+                    ] as readonly string[]
+                },
+                problem_set: {
+                    name: "problem_set",
+                    type: "ProblemSet",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_set_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "bookmarks", fields: ["problem_set_id"], references: ["id"], onDelete: "Cascade" }
+                }
+            },
+            attributes: [
+                { name: "@@id", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_set_id"), ExpressionUtils.field("user_id")]) }] }
+            ] as readonly AttributeApplication[],
+            idFields: ["user_id", "problem_set_id"],
+            uniqueFields: {
+                problem_set_id_user_id: { problem_set_id: { type: "String" }, user_id: { type: "String" } }
             }
         },
         ProblemSetCollaborator: {
@@ -1130,6 +1186,12 @@ export class SchemaType implements SchemaDef {
                     name: "teacher",
                     type: "Teacher",
                     optional: true,
+                    relation: { opposite: "user" }
+                },
+                bookmarks: {
+                    name: "bookmarks",
+                    type: "ProblemSetBookmark",
+                    array: true,
                     relation: { opposite: "user" }
                 }
             },

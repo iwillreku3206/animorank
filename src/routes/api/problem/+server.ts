@@ -10,7 +10,7 @@ const postValidator = z.object({
 
 export const POST: RequestHandler = async ({ locals, request }) => {
   const session = await locals.auth();
-  if (!session) return error(403, 'Unauthorized');
+  if (!session || !session.user.id) return error(403, 'Unauthorized');
   if (session.user.type != 'teacher') return error(403, 'Unauthorized');
 
   const {
@@ -21,10 +21,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
   if (!success) return error(400, zodError);
 
   const problemSet = await db.problemSet.findUnique({
-    where: { id: data.problemSet },
-    select: { owner_id: true }
+    where: { id: data.problemSet, collaborators: { some: { collaborator_id: session.user.id } } }
   });
-  if (!problemSet || problemSet.owner_id !== session.user.id) return error(404, 'Not found');
+  if (!problemSet) return error(404, 'Not found');
 
   const creation = await db.problem.create({
     data: {
