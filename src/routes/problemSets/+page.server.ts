@@ -276,10 +276,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     },
     bookmarked: true,
     subject: ps.subject_tag ? subjectTagsMap[ps.subject_tag] : undefined,
-    tags: [
-      ps.difficulty_tag ? difficultyTagsMap[ps.difficulty_tag] : undefined,
-      ...ps.topic_tags.map((t) => topicTagsMap[t])
-    ].filter((x) => !!x)
+    tags: Array.from(
+      new Set(
+        [
+          ps.difficulty_tag ? difficultyTagsMap[ps.difficulty_tag] : undefined,
+          ...ps.topic_tags.map((t) => topicTagsMap[t])
+        ].filter((x) => !!x)
+      )
+    )
   }));
 
   return {

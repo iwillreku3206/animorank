@@ -89,6 +89,8 @@
     problemSerialized;
     testCasesSerialized;
 
+    console.log(testCases);
+
     if (untrack(() => saveLock)) {
       changesAfterLock = true;
       return;

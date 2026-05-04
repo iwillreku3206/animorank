@@ -6,13 +6,17 @@
     href,
     class: className
   }: { tag: Tag; class?: string } & { href?: string | (() => void | Promise<void>) } = $props();
+  const color = $derived(
+    tag.color.startsWith('TAG_COLOR_') ? tag.color : `TAG_COLOR_${tag.color.toUpperCase()}`
+  );
+  const type = $derived(tag.type.startsWith('TAG_') ? tag.type : `TAG_${tag.type.toUpperCase()}`);
 
-  const colorMap: Record<TagColor, string> = $derived({
+  const colorMap: Record<string, string> = $derived({
     [TagColor.TAG_COLOR_DEFAULT]: {
       [TagType.TAG_SUBJECT]: 'bg-secondary text-secondary-content',
       [TagType.TAG_DIFFICULTY]: 'bg-info text-into-content',
       [TagType.TAG_TOPIC]: 'bg-neutral text-neutral-content'
-    }[tag.type],
+    }[type] as string,
     [TagColor.TAG_COLOR_PRIMARY]: 'bg-primary text-primary-content',
     [TagColor.TAG_COLOR_SECONDARY]: 'bg-secondary text-secondary-content',
     [TagColor.TAG_COLOR_ACCENT]: 'bg-accent text-accent-content',
@@ -26,14 +30,16 @@
 {#if typeof href === 'string'}
   <a
     {href}
-    class="px-2 py-0.5 font-mono text-xs rounded-lg {colorMap[tag.color]} {className}"
+    class="px-2 py-0.5 font-semibold text-sm leading-5 rounded-lg {colorMap[color]} {className}"
   >
     {tag.label}
   </a>
 {:else}
   <button
     onclick={href}
-    class="px-2 py-0.5 font-mono text-xs rounded-lg pointer {colorMap[tag.color]} {className}"
+    class="px-2 py-0.5 font-semibold text-sm leading-5 rounded-lg pointer {colorMap[
+      color
+    ]} {className}"
   >
     {tag.label}
   </button>

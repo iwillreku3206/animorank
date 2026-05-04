@@ -22,7 +22,7 @@
   <div class="flex flex-col gap-4 bg-base-100 rounded-lg p-8">
     <div class="flex flex-row">
       <div class="flex flex-row flex-wrap gap-2">
-        {#each problemSet.tags as tag}
+        {#each problemSet.tags as tag (tag.id)}
           <TagChip
             {tag}
             href="/problemSets?tag={tag.id}"
@@ -62,7 +62,7 @@
           </div>
         </div>
         <progress
-          class="h-2 w-full bg-neutral-focus problemSetProgress"
+          class="h-2 w-full bg-neutral-focus problemSetProgress rounded-sm"
           value={problemSet.progress.finished}
           max={problemSet.progress.total}
         ></progress>

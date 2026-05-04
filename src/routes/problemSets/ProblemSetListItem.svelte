@@ -10,7 +10,6 @@
   }
 
   let { problemSet }: ProblemSetCardProps = $props();
-  console.log(problemSet);
 </script>
 
 <div class="relative w-full">
@@ -24,7 +23,7 @@
     <div class="flex flex-col">
       <div class="flex flex-row">
         <div class="flex flex-row flex-wrap gap-2">
-          {#each problemSet.tags as tag}
+          {#each problemSet.tags as tag (tag.id)}
             <TagChip
               {tag}
               href="/problemSets?tag={tag.id}"
@@ -65,7 +64,7 @@
             </div>
           </div>
           <progress
-            class="h-2 w-full bg-neutral-focus problemSetProgress"
+            class="h-2 w-full bg-neutral-focus problemSetProgress rounded-sm"
             value={problemSet.progress.finished}
             max={problemSet.progress.total}
           ></progress>

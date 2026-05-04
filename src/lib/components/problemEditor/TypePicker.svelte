@@ -6,11 +6,11 @@
 
   let {
     type = $bindable(),
-    value: data = $bindable(),
+    data: data = $bindable(),
     root = true
   }: {
     type: string;
-    value: any;
+    data: any;
     root?: boolean;
   } = $props();
 
@@ -42,27 +42,22 @@
   $effect(() => console.log(type));
 </script>
 
-<div class="flex flex-col gap-2">
+<div class="flex flex-col gap-2 border border-primary p-2 rounded-lg">
   {#if !root}
-    <div class="text-sm text-gray-400 pl-4">
-      <!-- Indentation indicator for nested fields -->
+    <div class="flex flex-row gap-2 items-center">
+      <select
+        bind:value={type}
+        class="select select-sm select-primary select-bordered w-40"
+      >
+        {#each registry.getTypeList() as typeKey}
+          {#if registry.getStatic(typeKey).typeInfo}
+            {@const typeInfo = registry.getStatic(typeKey).typeInfo}
+            <option value={typeKey}><typeInfo.icon />{typeInfo.label}</option>
+          {/if}
+        {/each}
+      </select>
     </div>
   {/if}
-
-  <!-- Type selector dropdown -->
-  <div class="flex flex-row gap-2 items-center">
-    <select
-      bind:value={type}
-      class="select select-sm select-primary select-bordered w-40"
-    >
-      {#each registry.getTypeList() as typeKey}
-        {#if registry.getStatic(typeKey).typeInfo}
-          {@const typeInfo = registry.getStatic(typeKey).typeInfo}
-          <option value={typeKey}><typeInfo.icon />{typeInfo.label}</option>
-        {/if}
-      {/each}
-    </select>
-  </div>
 
   <div class="flex flex-col flex-wrap gap-2 mt-2">
     {#each fieldsArr as field}
@@ -73,7 +68,7 @@
             {#if field.name in data}
               <TypePicker
                 type={data[field.name]['type']}
-                value={data[field.name]['data']}
+                data={data[field.name]['data']}
                 root={false}
               />
             {/if}

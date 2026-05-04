@@ -21,7 +21,9 @@ export const load: PageServerLoad = async ({ locals, params }) => {
       problems: {
         include: {
           difficulty: true,
-          topics: true,
+          topics: {
+            include: { tag: true }
+          },
           subject: true,
           practice_sessions: { where: { student_id: session.user.id } }
         }
@@ -35,11 +37,21 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   if (!problemSet) throw redirect(302, '/');
 
-  const problemSolves = groupBy(
+  const globalProblemSolves = groupBy(
     await db.practiceSession.groupBy({
-      by: 'problem_id',
-      _count: { done: true }
+      by: ['problem_id', 'done'],
+      _count: { _all: true }
     }),
+    (p) => p.problem_id
+  );
+
+  const globalProblemAttempts = groupBy(
+    await db.$qb
+      .selectFrom('PracticeSession')
+      .groupBy('PracticeSession.problem_id')
+      .select('problem_id')
+      .select((eb) => eb.fn.count('student_id').distinct().as('attempts'))
+      .execute(),
     (p) => p.problem_id
   );
 
@@ -58,18 +70,21 @@ export const load: PageServerLoad = async ({ locals, params }) => {
       difficulty: problemSet.difficulty,
       topics: problemSet.topics.map((t) => t.topic_tag),
       problems: problemSet.problems.map((p) => ({
+        id: p.id,
         title: p.name,
         difficulty: p.difficulty,
         subject: p.subject,
-        topics: p.topics,
+        topics: p.topics.map((t) => t.tag),
         status:
           p.practice_sessions.length === 0
             ? 'not_started'
-            : p.practice_sessions.findIndex((s) => s.done === true)
+            : p.practice_sessions.findIndex((s) => s.done === true) !== -1
               ? 'done'
               : 'not_finished'
       }))
     },
+    globalProblemSolves,
+    globalProblemAttempts,
     bookmarked
   };
 };

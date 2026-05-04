@@ -1,6 +1,5 @@
 <script lang="ts">
   import Button from '$lib/components/Button.svelte';
-  import TagChip from '$lib/components/TagChip.svelte';
   import type { PageProps } from './$types';
   import ProblemSetCard from './ProblemSetCard.svelte';
   import SearchIcon from '@iconify-svelte/fa6-solid/magnifying-glass';
@@ -29,7 +28,6 @@
   }
 
   let { data }: PageProps = $props();
-  console.log(data.problemSets);
 
   function initialFilters(): Filters {
     const params = page.url.searchParams;

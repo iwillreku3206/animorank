@@ -14,12 +14,10 @@
 
   function addParameter() {
     const intTypeInfo = registry.getStatic('int').typeInfo;
-    if (intTypeInfo) {
-      testCase.parameters.push({
-        type: 'int',
-        data: structuredClone(intTypeInfo.defaultValue)
-      });
-    }
+    testCase.parameters.push({
+      type: 'int',
+      data: structuredClone(intTypeInfo.defaultValue)
+    });
   }
 
   function updateParameterType(index: number, typeKey: string) {
@@ -139,7 +137,7 @@
         <label class="text-xs text-gray-400">Value</label>
         <TypePicker
           bind:type={testCase.comparisons[i].type}
-          bind:value={testCase.comparisons[i].data}
+          bind:data={testCase.comparisons[i].data}
         />
       </div>
       {#if comp.operator === 'WITHIN_RANGE'}
@@ -186,8 +184,8 @@
       <div class="flex flex-col gap-1">
         <label class="text-xs text-gray-400">Value</label>
         <TypePicker
-          typeInfo={getParameterTypeInfo(i)}
-          value={param.data}
+          bind:type={testCase.parameters[i].type}
+          bind:data={testCase.parameters[i].data}
         />
       </div>
       <button
@@ -204,8 +202,10 @@
   {/each}
   <button
     class="btn btn-success w-full btn-sm"
-    onclick={addParameter}>Add Parameter</button
+    onclick={addParameter}
   >
+    Add Parameter
+  </button>
 </div>
 
 <style>

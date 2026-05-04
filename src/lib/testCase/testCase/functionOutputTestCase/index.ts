@@ -1,5 +1,5 @@
 import { db } from '$lib/zenstack';
-import type { ProblemTestCase } from '$lib/zenstack/models';
+import type { Comparison, ProblemTestCase } from '$lib/zenstack/models';
 import {
   TestCase,
   type CreateOptions,
@@ -30,7 +30,7 @@ const comparisonSchema = z.object({
   operator: z
     .enum(Object.keys(FunctionOutputTestCaseOperator))
     .transform((o) => o as FunctionOutputTestCaseOperator),
-  range_value: z.string().optional()
+  range_value: z.string().optional().nullable()
 });
 
 const functionOutputTestCaseValidator = z.object({
@@ -113,10 +113,10 @@ export class FunctionOutputTestCase extends TestCase<
     await db.functionOutputTestCase.update({
       where: { id },
       data: {
-        comparisons: { set: [result.data.comparisons] },
+        comparisons: { set: result.data.comparisons as any },
         function_name: result.data.function_name,
         return_type: result.data.return_type,
-        parameters: { set: [result.data.parameters] }
+        parameters: { set: result.data.parameters as any }
       }
     });
   }
