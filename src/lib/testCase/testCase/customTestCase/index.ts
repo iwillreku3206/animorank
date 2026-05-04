@@ -1,11 +1,16 @@
 import { db } from '$lib/zenstack';
 import type { ProblemTestCase } from '$lib/zenstack/models';
-import { TestCase, type CreateOptions, type TestCaseResult } from '$lib/testCase/testCase';
+import { TestCase, type CreateOptions, type TestCaseResult, type UpdateOptions } from '$lib/testCase/testCase';
+import { z } from 'zod';
 
 import compile from './compile.sh?raw';
 import run from './run.sh?raw';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { CodeExecutor, type CodeExecutionRequest } from '$lib/testCase/executor';
+
+const customTestCaseValidator = z.object({
+  test_code: z.string()
+});
 
 const mainRegex = /\s*(int|void)\s+main\s*\([^)]*\)\s*\{[^}]*\}\s*/g;
 
@@ -56,5 +61,15 @@ export class CustomTestCase extends TestCase<Extract<ProblemTestCase, { type: 'C
     return newTestCase as ProblemTestCase;
   }
 
-  async update() {}
+  async update(options: UpdateOptions<z.infer<typeof customTestCaseValidator>>): Promise<void> {
+    const { id, update } = options;
+    const result = customTestCaseValidator.safeParse(update);
+    if (!result.success) {
+      throw new Error(`Invalid CustomTestCase data: ${JSON.stringify(result.error.errors)}`);
+    }
+    await db.customTestCase.update({
+      where: { id },
+      data: result.data
+    });
+  }
 }

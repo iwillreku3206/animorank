@@ -10,8 +10,8 @@ const postValidator = z.object({
 });
 
 export const POST: RequestHandler = async ({ locals, request }) => {
-  const session = await locals.auth()
-  if (!session || !session.user.id) return error(403, 'Unauthorized')
+  const session = await locals.auth();
+  if (!session || !session.user.id) return error(403, 'Unauthorized');
 
   const {
     success,
@@ -22,9 +22,11 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
   const testCaseService = TestCaseService.instance();
 
-  return successObject(await testCaseService.create({
+  const newTestCase = await testCaseService.create({
     type: data.type,
     problemId: data.problem,
     user: session.user
-  }))
-}
+  });
+
+  return newTestCase ? successObject(newTestCase) : error(404, 'Problem not found');
+};

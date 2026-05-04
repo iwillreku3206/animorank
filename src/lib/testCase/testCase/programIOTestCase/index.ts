@@ -1,11 +1,17 @@
 import { db } from '$lib/zenstack';
 import type { ProblemTestCase } from '$lib/zenstack/models';
-import { TestCase, type CreateOptions, type TestCaseResult } from '$lib/testCase/testCase';
+import { TestCase, type CreateOptions, type TestCaseResult, type UpdateOptions } from '$lib/testCase/testCase';
+import { z } from 'zod';
 
 import compile from './compile.sh?raw';
 import run from './run.sh?raw';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { CodeExecutor, type CodeExecutionRequest } from '$lib/testCase/executor';
+
+const programIOTestCaseValidator = z.object({
+  input: z.string(),
+  output: z.string()
+});
 
 export class ProgramIOTestCase extends TestCase<
   Extract<ProblemTestCase, { type: 'ProgramIOTestCase' }>
@@ -56,5 +62,15 @@ export class ProgramIOTestCase extends TestCase<
     return newTestCase as ProblemTestCase;
   }
 
-  async update() {}
+  async update(options: UpdateOptions<z.infer<typeof programIOTestCaseValidator>>): Promise<void> {
+    const { id, update } = options;
+    const result = programIOTestCaseValidator.safeParse(update);
+    if (!result.success) {
+      throw new Error(`Invalid ProgramIOTestCase data: ${JSON.stringify(result.error.errors)}`);
+    }
+    await db.programIOTestCase.update({
+      where: { id },
+      data: result.data
+    });
+  }
 }

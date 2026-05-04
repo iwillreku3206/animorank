@@ -26,7 +26,7 @@ export interface UpdateOptions<TUpdate> {
   update: TUpdate;
 }
 
-export abstract class TestCase<T extends ProblemTestCase, TUpdate = never> {
+export abstract class TestCase<T extends ProblemTestCase, TUpdate = unknown> {
   public dbTestCase: T;
 
   constructor(dbTestCase: T) {

@@ -2,6 +2,8 @@ import { error, successObject } from '$lib/response';
 import z from 'zod';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/zenstack';
+import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { TestCaseService } from '$lib/testCase/testCaseService';
 
 export const GET: RequestHandler = async ({ locals, params }) => {
   const session = await locals.auth();
@@ -25,18 +27,28 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 
   if (!problemSet) return error(404, 'Not found');
 
+  const testCaseService = ServerServiceProvider.instance().getService(TestCaseService);
+
   return successObject({
     id: problemSet.id,
     title: problemSet.title,
     description: problemSet.description || undefined,
     global: problemSet.is_global,
-    problems: problemSet.problems.map((problem) => {
-      return {
-        id: problem.id,
-        name: problem.name,
-        visible: problem.visible
-      };
-    }),
+    problems: await Promise.all(
+      problemSet.problems.map(async (problem) => {
+        const testCases = await testCaseService.findByProblem({
+          problemId: problem.id,
+          user: session.user
+        });
+
+        return {
+          id: problem.id,
+          name: problem.name,
+          visible: problem.visible,
+          testCases: testCases.map((tc) => tc.dbTestCase)
+        };
+      })
+    ),
     teachers: problemSet.collaborators.map((c) => ({
       id: c.collaborator.user.id,
       name: c.collaborator.user.name

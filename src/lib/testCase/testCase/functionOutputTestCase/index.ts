@@ -1,6 +1,8 @@
 import { db } from '$lib/zenstack';
 import type { ProblemTestCase } from '$lib/zenstack/models';
-import { TestCase, type CreateOptions, type TestCaseResult } from '$lib/testCase/testCase';
+import { TestCase, type CreateOptions, type TestCaseResult, type UpdateOptions } from '$lib/testCase/testCase';
+import { FunctionOutputTestCaseOperator } from '$lib/zenstack/models';
+import { z } from 'zod';
 
 import compile from './compile.sh?raw';
 import run from './run.sh?raw';
@@ -9,6 +11,26 @@ import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { CodeExecutor, type CodeExecutionRequest } from '$lib/testCase/executor';
 
 const mainRegex = /\s*(int|void)\s+main\s*\([^)]*\)\s*\{[^}]*\}\s*/g;
+
+const parameterSchema = z.object({
+  type: z.string(),
+  data: z.unknown()
+});
+
+const comparisonSchema = z.object({
+  type: z.string(),
+  data: z.unknown(),
+  symbol: z.string(),
+  operator: z.enum(FunctionOutputTestCaseOperator),
+  range_value: z.string().optional()
+});
+
+const functionOutputTestCaseValidator = z.object({
+  parameters: z.array(parameterSchema),
+  comparisons: z.array(comparisonSchema),
+  return_type: parameterSchema,
+  function_name: z.string()
+});
 
 export class FunctionOutputTestCase extends TestCase<
   Extract<ProblemTestCase, { type: 'FunctionOutputTestCase' }>
@@ -70,5 +92,15 @@ export class FunctionOutputTestCase extends TestCase<
     return newTestCase as ProblemTestCase;
   }
 
-  async update() {}
+  async update(options: UpdateOptions<z.infer<typeof functionOutputTestCaseValidator>>): Promise<void> {
+    const { id, update } = options;
+    const result = functionOutputTestCaseValidator.safeParse(update);
+    if (!result.success) {
+      throw new Error(`Invalid FunctionOutputTestCase data: ${JSON.stringify(result.error.errors)}`);
+    }
+    await db.functionOutputTestCase.update({
+      where: { id },
+      data: result.data
+    });
+  }
 }

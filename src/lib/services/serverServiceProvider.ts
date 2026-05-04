@@ -1,6 +1,8 @@
 import { Logger } from '$lib/logging/logger';
 import { LoggerRegistry } from '$lib/logging/loggerRegistry';
 import { TestCaseService } from '$lib/testCase/testCaseService';
+import { CodeExecutor } from '$lib/testCase/executor';
+import { Judge0Executor } from '$lib/testCase/executor/judge0';
 import { ServiceRegistry, type ISingleton } from './registry';
 import { ServiceProvider } from './serviceProvider';
 
@@ -14,6 +16,10 @@ export class ServerServiceProvider extends ServiceProvider {
     this._registries.set(
       TestCaseService as ISingleton<TestCaseService>,
       ServiceRegistry.createSingleSingletonServiceRegistry(TestCaseService)
+    );
+    this._registries.set(
+      CodeExecutor,
+      ServiceRegistry.createSingleServiceRegistry(Judge0Executor)
     );
   }
 
