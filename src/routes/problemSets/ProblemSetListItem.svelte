@@ -10,16 +10,17 @@
   }
 
   let { problemSet }: ProblemSetCardProps = $props();
+  console.log(problemSet);
 </script>
 
 <div class="relative w-full">
   <a
-    href="/problemSet/{problemSet.id}"
+    href="/problemSets/{problemSet.id}"
     aria-label="Problem Set Link"
     class="absolute top-0 bottom-0 left-0 right-0 w-full h-full z-10"
   >
   </a>
-  <div class="flex flex row gap-4 bg-base-100 rounded-lg p-8 items-center">
+  <div class="flex flex-row gap-4 bg-base-100 rounded-lg p-8 items-center">
     <div class="flex flex-col">
       <div class="flex flex-row">
         <div class="flex flex-row flex-wrap gap-2">

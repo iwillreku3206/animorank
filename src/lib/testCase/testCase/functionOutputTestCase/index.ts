@@ -1,6 +1,11 @@
 import { db } from '$lib/zenstack';
 import type { ProblemTestCase } from '$lib/zenstack/models';
-import { TestCase, type CreateOptions, type TestCaseResult, type UpdateOptions } from '$lib/testCase/testCase';
+import {
+  TestCase,
+  type CreateOptions,
+  type TestCaseResult,
+  type UpdateOptions
+} from '$lib/testCase/testCase';
 import { FunctionOutputTestCaseOperator } from '$lib/zenstack/models';
 import { z } from 'zod';
 
@@ -9,19 +14,22 @@ import run from './run.sh?raw';
 import { CCodeGenerator } from '$lib/testCase/codeGenerator/c';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { CodeExecutor, type CodeExecutionRequest } from '$lib/testCase/executor';
+import type { JsonValue } from '@zenstackhq/orm';
 
 const mainRegex = /\s*(int|void)\s+main\s*\([^)]*\)\s*\{[^}]*\}\s*/g;
 
 const parameterSchema = z.object({
   type: z.string(),
-  data: z.unknown()
+  data: z.unknown().transform((d) => d as JsonValue)
 });
 
 const comparisonSchema = z.object({
   type: z.string(),
-  data: z.unknown(),
+  data: z.unknown().transform((d) => d as JsonValue),
   symbol: z.string(),
-  operator: z.enum(FunctionOutputTestCaseOperator),
+  operator: z
+    .enum(Object.keys(FunctionOutputTestCaseOperator))
+    .transform((o) => o as FunctionOutputTestCaseOperator),
   range_value: z.string().optional()
 });
 
@@ -92,15 +100,24 @@ export class FunctionOutputTestCase extends TestCase<
     return newTestCase as ProblemTestCase;
   }
 
-  async update(options: UpdateOptions<z.infer<typeof functionOutputTestCaseValidator>>): Promise<void> {
+  async update(
+    options: UpdateOptions<z.infer<typeof functionOutputTestCaseValidator>>
+  ): Promise<void> {
     const { id, update } = options;
     const result = functionOutputTestCaseValidator.safeParse(update);
     if (!result.success) {
-      throw new Error(`Invalid FunctionOutputTestCase data: ${JSON.stringify(result.error.errors)}`);
+      throw new Error(
+        `Invalid FunctionOutputTestCase data: ${JSON.stringify(result.error.message)}`
+      );
     }
     await db.functionOutputTestCase.update({
       where: { id },
-      data: result.data
+      data: {
+        comparisons: { set: [result.data.comparisons] },
+        function_name: result.data.function_name,
+        return_type: result.data.return_type,
+        parameters: { set: [result.data.parameters] }
+      }
     });
   }
 }

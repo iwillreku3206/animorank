@@ -17,5 +17,6 @@ export interface ProblemSet {
     total: number;
   };
   bookmarked: boolean;
+  subject?: Tag;
   tags: Tag[];
 }

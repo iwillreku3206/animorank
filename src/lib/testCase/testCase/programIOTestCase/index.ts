@@ -1,6 +1,11 @@
 import { db } from '$lib/zenstack';
 import type { ProblemTestCase } from '$lib/zenstack/models';
-import { TestCase, type CreateOptions, type TestCaseResult, type UpdateOptions } from '$lib/testCase/testCase';
+import {
+  TestCase,
+  type CreateOptions,
+  type TestCaseResult,
+  type UpdateOptions
+} from '$lib/testCase/testCase';
 import { z } from 'zod';
 
 import compile from './compile.sh?raw';
@@ -66,7 +71,7 @@ export class ProgramIOTestCase extends TestCase<
     const { id, update } = options;
     const result = programIOTestCaseValidator.safeParse(update);
     if (!result.success) {
-      throw new Error(`Invalid ProgramIOTestCase data: ${JSON.stringify(result.error.errors)}`);
+      throw new Error(`Invalid ProgramIOTestCase data: ${JSON.stringify(result.error)}`);
     }
     await db.programIOTestCase.update({
       where: { id },

@@ -1,9 +1,11 @@
+import { TypeWithValue } from './index';
+import type { TypeInfo } from './typeInfo';
 import z from 'zod';
-import { TypeWithValue } from '.';
+import type { JsonValue } from '@zenstackhq/orm';
 import { LanguageRegistry } from '../languageRegistry';
 import { LanguageType } from './languageType';
-import type { JsonValue } from '@zenstackhq/orm';
 import { TypeRegistry } from '../typeRegistry';
+import AsteriskIcon from '@iconify-svelte/fa6-solid/asterisk';
 
 /**
  * Schema for the pointer's value.
@@ -14,30 +16,31 @@ const PointerSchema = z.object({
   target: z.object({
     type: z.string(),
     data: z.any()
-  }),
-  useArithmetic: z.boolean().optional()
+  })
 });
 
 type PointerValue = z.infer<typeof PointerSchema>;
 
-/**
- * Represents a pointer type that wraps any inner type.
- *
- * Example data shape:
- *   { target: { type: 'int', data: { value: '5', size: 32, signed: 'none' } } }
- *   { target: { type: 'float', data: { value: '3.14', size: 64 } } }
- *   { target: { type: 'string', data: { value: 'hello', length: 5, nullTerminated: true } } }
- *
- * The C implementation dynamically resolves the inner type from TypeRegistry
- * and delegates all code generation to that type's C language implementation.
- * This means any new type added to TypeRegistry automatically works as a pointer target.
- */
 export class Pointer extends TypeWithValue<PointerValue> {
+  static typeInfo: TypeInfo<PointerValue> = {
+    typeKey: 'pointer',
+    label: 'Pointer',
+    icon: AsteriskIcon,
+    valueSchema: PointerSchema,
+    fields: {
+      target: {
+        name: 'target',
+        label: 'Pointed To Type',
+        type: 'type-reference'
+      }
+    },
+    defaultValue: {
+      target: { type: 'int', data: { value: '0', size: 32, signed: 'none' } }
+    }
+  };
+
   constructor(data?: JsonValue) {
-    let value: PointerValue = {
-      target: { type: '', data: {} },
-      useArithmetic: false
-    };
+    let value: PointerValue = Pointer.typeInfo.defaultValue;
     if (data) {
       try {
         const parsed = PointerSchema.parse(data);
@@ -63,11 +66,8 @@ export class Pointer extends TypeWithValue<PointerValue> {
     return this.value.target.data;
   }
 
-  /**
-   * Check if pointer arithmetic is enabled.
-   */
-  public isArithmeticSupported(): boolean {
-    return this.value.useArithmetic ?? false;
+  static createDefault(): Pointer {
+    return new Pointer();
   }
 }
 

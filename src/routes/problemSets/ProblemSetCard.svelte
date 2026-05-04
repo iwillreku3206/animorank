@@ -14,7 +14,7 @@
 
 <div class="relative w-full">
   <a
-    href="/problemSet/{problemSet.id}"
+    href="/problemSets/{problemSet.id}"
     aria-label="Problem Set Link"
     class="absolute top-0 bottom-0 left-0 right-0 w-full h-full z-10"
   >

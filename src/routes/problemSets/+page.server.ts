@@ -1,8 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/zenstack';
-import type { CountArgs, FindManyArgs, WhereInput } from '@zenstackhq/orm';
-import type { SchemaType } from '$lib/zenstack/schema';
 import type { ProblemSet } from './api';
 import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
 
@@ -93,7 +91,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     ]
   });
 
-  const difficultyTagsMap = arrayToHashMap(subjectTags, (t) => t.id);
+  const difficultyTagsMap = arrayToHashMap(difficultyTags, (t) => t.id);
 
   const creators =
     session.user.type === 'student'
@@ -144,7 +142,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
         .leftJoin('ProblemSetTopic', 'ProblemSetTopic.problem_set_id', 'ProblemSet.id')
         .leftJoin('TopicTag', 'TopicTag.id', 'ProblemSetTopic.topic_tag_id')
         .leftJoin('DifficultyTag', 'DifficultyTag.id', 'ProblemSet.difficulty_id')
-        .innerJoin('Problem', 'Problem.problem_set_id', 'ProblemSet.id')
+        .leftJoin('Problem', 'Problem.problem_set_id', 'ProblemSet.id')
         .leftJoin('PracticeSession', 'PracticeSession.problem_id', 'Problem.id')
         .where((eb) =>
           eb.or([
@@ -277,7 +275,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
       total: parseInt(String(ps.progress_total))
     },
     bookmarked: true,
-    tags: []
+    subject: ps.subject_tag ? subjectTagsMap[ps.subject_tag] : undefined,
+    tags: [
+      ps.difficulty_tag ? difficultyTagsMap[ps.difficulty_tag] : undefined,
+      ...ps.topic_tags.map((t) => topicTagsMap[t])
+    ].filter((x) => !!x)
   }));
 
   return {

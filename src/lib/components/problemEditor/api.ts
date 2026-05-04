@@ -64,8 +64,8 @@ export async function updateTestCase(testCase: AnyTestCase): Promise<boolean> {
       const functionTestCase = testCase as FunctionOutputTestCase;
       body = {
         parameters: functionTestCase.parameters,
-        expected_output: functionTestCase.expected_output,
-        operator: functionTestCase.operator,
+        comparisons: functionTestCase.comparisons,
+        return_type: functionTestCase.return_type,
         function_name: functionTestCase.function_name
       };
       break;

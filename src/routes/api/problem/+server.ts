@@ -1,7 +1,6 @@
 import z from 'zod';
 import type { RequestHandler } from './$types';
 import { error, successObject } from '$lib/response';
-import { DEFAULT_PROBLEM } from '$lib/constants';
 import { db } from '$lib/zenstack';
 
 const postValidator = z.object({
@@ -27,7 +26,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
   const creation = await db.problem.create({
     data: {
-      ...DEFAULT_PROBLEM,
+      name: 'New Problem',
+      description: 'Edit this description.',
       problem_set_id: data.problemSet
     },
     select: { id: true }

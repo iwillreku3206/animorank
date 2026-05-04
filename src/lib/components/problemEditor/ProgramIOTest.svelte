@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { ProblemTestCase, ProgramIOTestCase } from '$lib/zenstack/models';
   import CodeEditor from '$lib/components/CodeEditor.svelte';
-  import CParameterSelector from './CParameterSelector.svelte';
 
   let { testCase = $bindable() }: { testCase: ProgramIOTestCase } = $props();
 </script>

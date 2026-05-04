@@ -1,9 +1,10 @@
-import { Language } from '$lib/zenstack/models';
+import { TypeWithValue } from './index';
+import type { TypeInfo } from './typeInfo';
 import z from 'zod';
-import { TypeWithValue } from '.';
+import type { JsonValue } from '@zenstackhq/orm';
 import { LanguageRegistry } from '../languageRegistry';
 import { LanguageType } from './languageType';
-import type { JsonValue } from '@zenstackhq/orm';
+import OneIcon from '@iconify-svelte/fa6-solid/1';
 
 const ValueSchema = z.object({
   value: z.string().regex(/(?:0[0-7]*)|(?:0[xX][0-9a-fA-F]*)|(?:[0-9]*)|(?:'.')/),
@@ -14,11 +15,54 @@ const ValueSchema = z.object({
 type Value = z.infer<typeof ValueSchema>;
 
 export class Int extends TypeWithValue<Value> {
+  static typeInfo: TypeInfo<Value> = {
+    typeKey: 'int',
+    label: 'Integer',
+    icon: OneIcon,
+    valueSchema: ValueSchema,
+    fields: {
+      value: {
+        name: 'value',
+        label: 'Value',
+        type: 'text',
+        defaultValue: '0'
+      },
+      signed: {
+        name: 'signed',
+        label: 'Signedness',
+        type: 'select',
+        options: [
+          { label: 'None', value: 'none' },
+          { label: 'Signed', value: 'signed' },
+          { label: 'Unsigned', value: 'unsigned' }
+        ],
+        defaultValue: 'none'
+      },
+      size: {
+        name: 'size',
+        label: 'Size',
+        type: 'select',
+        options: [
+          { label: '8-bit (char)', value: 8 },
+          { label: '16-bit (short)', value: 16 },
+          { label: '32-bit (int)', value: 32 },
+          { label: '64-bit (long long)', value: 64 }
+        ],
+        defaultValue: 32
+      }
+    },
+    defaultValue: { value: '0', size: 32, signed: 'none' }
+  };
+
   constructor(data?: JsonValue) {
     let value: Value = { value: '0', size: 32, signed: 'none' };
     if (data) value = ValueSchema.parse(data);
 
     super(value, new IntLanguageRegistry());
+  }
+
+  static createDefault(): Int {
+    return new Int();
   }
 }
 

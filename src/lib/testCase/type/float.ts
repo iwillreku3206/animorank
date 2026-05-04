@@ -1,8 +1,10 @@
+import { TypeWithValue } from './index';
+import type { TypeInfo } from './typeInfo';
 import z from 'zod';
-import { TypeWithValue } from '.';
+import type { JsonValue } from '@zenstackhq/orm';
 import { LanguageRegistry } from '../languageRegistry';
 import { LanguageType } from './languageType';
-import type { JsonValue } from '@zenstackhq/orm';
+import PercentIcon from '@iconify-svelte/fa6-solid/percent';
 
 const ValueSchema = z.object({
   value: z.string().regex(/^-?\d+(\.\d+)?(e[+-]?\d+)?$/),
@@ -12,11 +14,41 @@ const ValueSchema = z.object({
 type Value = z.infer<typeof ValueSchema>;
 
 export class Float extends TypeWithValue<Value> {
+  static typeInfo: TypeInfo<Value> = {
+    typeKey: 'float',
+    label: 'Floating Point',
+    icon: PercentIcon,
+    valueSchema: ValueSchema,
+    fields: {
+      value: {
+        name: 'value',
+        label: 'Value',
+        type: 'text',
+        defaultValue: '0'
+      },
+      size: {
+        name: 'size',
+        label: 'Precision',
+        type: 'select',
+        options: [
+          { label: '32-bit (float)', value: 32 },
+          { label: '64-bit (double)', value: 64 }
+        ],
+        defaultValue: 32
+      }
+    },
+    defaultValue: { value: '0', size: 32 }
+  };
+
   constructor(data?: JsonValue) {
     let value: Value = { value: '0', size: 32 };
     if (data) value = ValueSchema.parse(data);
 
     super(value, new FloatLanguageRegistry());
+  }
+
+  static createDefault(): Float {
+    return new Float();
   }
 }
 

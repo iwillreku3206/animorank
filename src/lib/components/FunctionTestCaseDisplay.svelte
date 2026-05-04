@@ -1,7 +1,8 @@
 <script lang="ts">
+  import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
+  import { TypeRegistry } from '$lib/testCase/typeRegistry';
   import type { TestCaseResult } from '$lib/types/codeExecution';
-  import { typeToString } from '$lib/utils/typeToString';
-  import type { CTypeWithValue, FunctionOutputTestCase } from '$lib/zenstack/models';
+  import type { FunctionOutputTestCase, Parameter } from '$lib/zenstack/models';
 
   interface Props {
     tests: TestCaseResult[];
@@ -9,9 +10,14 @@
 
   let { tests }: Props = $props();
 
-  function formatParameters(params: CTypeWithValue[] | undefined): string {
+  function formatParameters(params: Parameter[] | undefined): string {
+    const typeRegistry = ClientServiceProvider.instance().getService(TypeRegistry);
     if (!params || params.length === 0) return '';
-    return params.map((p) => typeToString(p)).join(', ');
+    return params
+      .map((p) =>
+        typeRegistry.getInstance(p.type, p.data).getLanguage('c').constructTypeExpression()
+      )
+      .join(', ');
   }
 </script>
 

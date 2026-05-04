@@ -1,24 +1,45 @@
-import { Language } from '$lib/zenstack/models';
+import { TypeWithValue } from './index';
+import type { TypeInfo } from './typeInfo';
 import z from 'zod';
-import { TypeWithValue } from '.';
+import type { JsonValue } from '@zenstackhq/orm';
 import { LanguageRegistry } from '../languageRegistry';
 import { LanguageType } from './languageType';
-import type { JsonValue } from '@zenstackhq/orm';
+import FontIcon from '@iconify-svelte/fa6-solid/font';
 
 const ValueSchema = z.object({
-  value: z.string(),
-  length: z.number().min(0),
-  nullTerminated: z.boolean()
+  value: z.string()
 });
 
 type Value = z.infer<typeof ValueSchema>;
 
-export class String extends TypeWithValue<Value> {
+export class StringType extends TypeWithValue<Value> {
+  static typeInfo: TypeInfo<Value> = {
+    typeKey: 'string',
+    label: 'String',
+    icon: FontIcon,
+    valueSchema: ValueSchema,
+    fields: {
+      value: {
+        name: 'value',
+        label: 'String Value',
+        type: 'text',
+        defaultValue: ''
+      }
+    },
+    defaultValue: { value: '' }
+  };
+
+  static valueSchema = ValueSchema;
+
   constructor(data?: JsonValue) {
-    let value: Value = { value: '', length: 1, nullTerminated: true };
+    let value: Value = { value: '' };
     if (data) value = ValueSchema.parse(data);
 
     super(value, new StringLanguageRegistry());
+  }
+
+  static createDefault(): StringType {
+    return new StringType();
   }
 }
 
@@ -31,40 +52,32 @@ class StringLanguageRegistry extends LanguageRegistry<Value> {
 
 class CString extends LanguageType<Value> {
   private cType: string = '';
-  private cExpression: string = '';
 
-  constructor(typeWithValue: String) {
+  constructor(typeWithValue: StringType) {
     super(typeWithValue);
 
-    const { value, length, nullTerminated } = this.typeWithValue.value;
-
     this.cType = 'char *';
-    this.cExpression = value;
   }
 
   public constructInit(symbol: string): string {
-    const { value, length, nullTerminated } = this.typeWithValue.value;
-    const actualLength = Math.max(value.length, length);
+    const { value } = this.typeWithValue.value;
+    const actualLength = Math.max(value.length);
     const buffer = `[${actualLength}]`;
-    const nullTerm = nullTerminated ? `\\0` : '';
 
     // Create a string literal with padding
     const paddedValue = value.padEnd(actualLength, '\0');
-    const charArray = `"${paddedValue.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}${nullTerm}"`;
+    const charArray = `"${paddedValue.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 
     return `${this.cType}${buffer} ${symbol} = ${charArray};`;
   }
 
   public constructTypeExpression(): string {
-    const { value, length, nullTerminated } = this.typeWithValue.value;
-    const actualLength = Math.max(value.length, length);
-    return `char[${actualLength}]`;
+    return `char*`;
   }
 
   public constructExpression(): string {
-    const { value, length, nullTerminated } = this.typeWithValue.value;
-    const actualLength = Math.max(value.length, length);
-    return `char[${actualLength}]`;
+    const { value } = this.typeWithValue.value;
+    return `"${value}"`;
   }
 
   public constructPrint(symbol: string): string {

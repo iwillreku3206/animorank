@@ -1,4 +1,4 @@
-import type { ExecutionEvent } from '$lib/codeExecutor/executionHook';
+import type { ExecutionEvent } from '$lib/testCase/executionHook';
 import type { Subscribable } from '$lib/utils/subscription';
 import type { editor } from 'monaco-editor';
 import { TelemetryHook, type Entry } from './telemetryHook';
