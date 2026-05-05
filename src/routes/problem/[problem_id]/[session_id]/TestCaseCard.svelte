@@ -110,7 +110,13 @@
         {/each}
       </div>
     {:else}
-      error: {result.reason}
+      Error: {result.reason
+        .split('_')
+        .map((x) => `${x.charAt(0).toUpperCase()}${x.substring(1)}`)
+        .join(' ')}
+      {#if result.reason === 'compile_error'}
+        <pre class="font-mono bg-base-100 text-xs">{result.error}</pre>
+      {/if}
     {/if}
   {/if}
 </div>

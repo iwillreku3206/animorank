@@ -13,7 +13,6 @@
   let selectedTest = $state(0);
 
   let publicTests = $derived(tests.results.filter((x) => !x.hidden));
-  let hiddenTests = $derived(tests.results.filter((x) => x.hidden));
 </script>
 
 {#if toggleTestResults}
@@ -51,7 +50,21 @@
         class="tab"
         aria-label="Hidden Test Cases"
       />
-      <div class="tab-content p-6">tab2</div>
+      <div class="tab-content">
+        <div class="flex flex-row flex-wrap gap-2">
+          {#each tests.results as result, i (i)}
+            <div class=" bg-base-100 p-2 rounded-lg text-sm flex flex-row gap-4 items-center">
+              <span class={result.success ? 'text-primary' : 'text-error'}>Case {i + 1}</span>
+              {result.success
+                ? 'Passed'
+                : result.reason
+                    .split('_')
+                    .map((x) => `${x.charAt(0).toUpperCase()}${x.substring(1)}`)
+                    .join(' ')}
+            </div>
+          {/each}
+        </div>
+      </div>
 
       <input
         type="radio"
@@ -59,7 +72,8 @@
         class="tab"
         aria-label="Custom Input"
       />
-      <div class="tab-content p-6">tab3</div>
+      <!--TODO: Implement this-->
+      <div class="tab-content p-6">To be implemented...</div>
     </div>
   </div>
 {/if}
