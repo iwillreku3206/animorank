@@ -5,6 +5,7 @@ import { Int } from './type/int';
 import { Float } from './type/float';
 import { StringType } from './type/string';
 import { Pointer } from './type/pointer';
+import { VoidType } from './type/void';
 import type { TypeInfo } from './type/typeInfo';
 
 export class TypeRegistry extends ServiceRegistry<
@@ -41,5 +42,6 @@ export class TypeRegistry extends ServiceRegistry<
     this.register('float', Float);
     this.register('string', StringType);
     this.register('pointer', Pointer);
+    this.register('void', VoidType);
   }
 }

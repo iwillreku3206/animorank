@@ -1,6 +1,6 @@
 <script lang="ts">
   import CodeEditor from '$lib/components/CodeEditor.svelte';
-  import TestCaseDisplay from '$lib/components/TestCaseDisplay.svelte';
+  import TestCaseDisplay from './TestCaseDisplay.svelte';
   import { Pane, Splitpanes } from 'svelte-splitpanes';
   import type { PageProps } from './$types';
   import transform from '@diplodoc/transform';
@@ -11,7 +11,7 @@
   import { browser } from '$app/environment';
   import { untrack } from 'svelte';
   import deepEqual from 'deep-equal';
-  import { runTestCases } from './api';
+  import { runTestCases, type TestRunResponse } from './api';
   import { page } from '$app/state';
   import type { TestCaseResult } from '$lib/types/codeExecution';
 
@@ -28,9 +28,9 @@
 
   let toggleTestResults = $state(false);
 
-  let testCaseResults = $state<any[]>([]);
-  let test_passed = $derived(testCaseResults.filter((r) => r.success));
-  let test_failed = $derived(testCaseResults.filter((r) => !r.success));
+  let testCaseResults = $state<TestRunResponse>({ results: [] });
+  let testPassed = $derived(testCaseResults.results.filter((x) => x.success));
+  let testFailed = $derived(testCaseResults.results.filter((x) => !x.success));
 
   let currentTimeout = $state<NodeJS.Timeout | undefined>(undefined);
 
@@ -96,8 +96,7 @@
   const handleRun = async () => {
     await saveCode(code);
     const results = await runTestCases(page.params.session_id || '', code);
-    testCaseResults = results as TestCaseResult[];
-    console.log(results);
+    testCaseResults = results as TestRunResponse;
     toggleTestResults = true;
   };
 </script>
@@ -155,13 +154,13 @@
                   onclick={() => (toggleTestResults = !toggleTestResults)}
                 >
                   {toggleTestResults ? 'Hide' : 'Show'} Test Results
-                  {#if test_passed.length > 0 || test_failed.length > 0}
+                  {#if testPassed.length > 0 || testFailed.length > 0}
                     <span
-                      class="badge badge-sm {test_failed.length > 0
+                      class="badge badge-sm {testFailed.length > 0
                         ? 'badge-error'
                         : 'badge-success'}"
                     >
-                      {test_passed.length + test_failed.length}
+                      {testPassed.length + testFailed.length}
                     </span>
                   {/if}
                 </button>

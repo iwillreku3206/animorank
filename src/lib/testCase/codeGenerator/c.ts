@@ -97,9 +97,6 @@ ${expected.constructInit(expectedSymbol)}
 ${expected.constructPrint(expectedSymbol)}
 printf("\\n");
 ${comparisonCompute}
-if (!${comparisonExpression}) {
-  __ar_test_success = 0;
-}
 printf("%d\\n", ${comparisonExpression});`;
   }
 
@@ -114,16 +111,18 @@ printf("%d\\n", ${comparisonExpression});`;
       typeRegistry.getInstance(parameter.type, parameter.data).getLanguage('c')
     );
 
-    return `#include <submission.c>
+    return `
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <math.h>
 ${this.generateFunctionSignature(testCase)}
 
 int main() {
-  int __ar_test_success = 1;
   ${params.map((param, index) => param.constructInit(`__ar_test_param_${index}`)).join('\n\n')}
-  ${returnTypeExpression} __ar_test_return_value = ${function_name}(${parameters.map((_, index) => `__ar_test_param_${index}`)});
+  ${returnTypeExpression !== 'void' ? `${returnTypeExpression} __ar_test_return_value = ` : ''} ${function_name}(${parameters.map((_, index) => `__ar_test_param_${index}`)});
   ${comparisons.map((comparison, index) => this.generateComparison(comparison, index, parameters))}
-  return !__ar_test_success;
+  return 0;
 }
     `;
   }

@@ -20,7 +20,11 @@ async function runTestCase(dbTestCase: ProblemTestCase, code: string): Promise<T
   const result = await testCaseInstance.execute(code);
 
   if (!dbTestCase.public) {
-    result.testCaseInfo = [];
+    result.runInfo = [];
+    if (!result.hidden) {
+      (result.testCaseInfo as any) = undefined;
+      (result.hidden as boolean) = true;
+    }
   }
 
   return result;
@@ -59,6 +63,6 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   }
 
   return successObject({
-    results: results
+    results
   });
 };

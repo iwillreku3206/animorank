@@ -67,8 +67,8 @@
             {field.label}
             {#if field.name in data}
               <TypePicker
-                type={data[field.name]['type']}
-                data={data[field.name]['data']}
+                bind:type={data[field.name]['type']}
+                bind:data={data[field.name]['data']}
                 root={false}
               />
             {/if}

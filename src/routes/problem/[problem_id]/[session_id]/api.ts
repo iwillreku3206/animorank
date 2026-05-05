@@ -1,6 +1,11 @@
-import type { TestCaseResult } from '$lib/types/codeExecution';
+import type { TestCaseResult } from '$lib/testCase/testCase';
+import type { ProblemTestCase } from '$lib/zenstack/models';
 
-export async function runTestCases(session_id: string, code: string): Promise<TestCaseResult[]> {
+type TestCaseInfo = ProblemTestCase | { id: ProblemTestCase['id'] };
+
+export type TestRunResponse = { results: TestCaseResult[] };
+
+export async function runTestCases(session_id: string, code: string): Promise<TestRunResponse> {
   const req = await fetch(`/api/practice-session/${session_id}/run`, {
     method: 'POST',
     body: JSON.stringify({
@@ -14,5 +19,5 @@ export async function runTestCases(session_id: string, code: string): Promise<Te
 
   const res = await req.json();
 
-  return res.results as TestCaseResult[];
+  return res as TestRunResponse;
 }

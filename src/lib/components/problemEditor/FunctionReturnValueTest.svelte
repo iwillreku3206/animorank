@@ -88,6 +88,12 @@
     placeholder="Function Name (Case-sensitive)"
     bind:value={testCase.function_name}
   />
+  Return Type:
+  <TypePicker
+    root={false}
+    bind:type={testCase.return_type.type}
+    bind:data={testCase.return_type.data}
+  />
   Comparisons:
   {#if testCase.comparisons.length === 0}
     <p class="text-gray-500 text-sm">No comparisons yet. Add one below.</p>
@@ -102,7 +108,7 @@
         >
           <option value="return">return value</option>
           {#each testCase.parameters as param, j}
-            <option value={`param_${j}`}>param {j}</option>
+            <option value={`${j}`}>param {j}</option>
           {/each}
         </select>
       </div>

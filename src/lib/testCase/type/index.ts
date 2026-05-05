@@ -17,12 +17,11 @@ export abstract class TypeWithValue<T> {
     this.languageRegistry = languageRegistry;
   }
 
-  /**
-   * Zod schema for validating the value.
-   */
   static valueSchema: z.ZodType;
 
   public getLanguage(language: string): LanguageType<T> {
     return this.languageRegistry.getInstance(language, this);
   }
+
+  public abstract toString(): string;
 }

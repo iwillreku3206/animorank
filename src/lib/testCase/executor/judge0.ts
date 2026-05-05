@@ -25,14 +25,19 @@ export class Judge0Executor extends CodeExecutor {
     });
     const res = (await req.json()) as Judge0SubmissionResponse;
 
+    let { stdout, stderr } = res;
+
+    stdout = Buffer.from(res.stdout || '', 'base64').toString('utf8');
+    stderr = Buffer.from(res.stderr || '', 'base64').toString('utf8');
+
     if (res.status.id === 6) {
       // Compile error
       return {
         success: false,
         reason: 'compile_error',
         error: Buffer.from(res.compile_output || '', 'base64').toString('utf8'),
-        stdout: res.stdout || '',
-        stderr: res.stderr || ''
+        stdout,
+        stderr
       };
     }
 
@@ -41,8 +46,8 @@ export class Judge0Executor extends CodeExecutor {
       return {
         success: false,
         reason: 'timeout',
-        stdout: res.stdout || '',
-        stderr: res.stderr || ''
+        stdout,
+        stderr
       };
     }
 
@@ -51,15 +56,15 @@ export class Judge0Executor extends CodeExecutor {
       return {
         success: false,
         reason: 'runtime_error',
-        stdout: res.stdout || '',
-        stderr: res.stderr || ''
+        stdout,
+        stderr
       };
     }
 
     return {
       success: true,
-      stdout: res.stdout || '',
-      stderr: res.stderr || '',
+      stdout,
+      stderr,
       executionTime: parseFloat(res.time || ''),
       exitCode: res.exit_code || -99
     };

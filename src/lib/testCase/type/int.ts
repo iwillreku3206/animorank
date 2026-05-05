@@ -64,6 +64,10 @@ export class Int extends TypeWithValue<Value> {
   static createDefault(): Int {
     return new Int();
   }
+
+  public toString(): string {
+    return this.value.value;
+  }
 }
 
 class IntLanguageRegistry extends LanguageRegistry<Value> {

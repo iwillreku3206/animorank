@@ -50,6 +50,10 @@ export class Float extends TypeWithValue<Value> {
   static createDefault(): Float {
     return new Float();
   }
+
+  public toString(): string {
+    return this.value.value;
+  }
 }
 
 class FloatLanguageRegistry extends LanguageRegistry<Value> {

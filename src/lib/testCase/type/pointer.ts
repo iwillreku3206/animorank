@@ -69,6 +69,12 @@ export class Pointer extends TypeWithValue<PointerValue> {
   static createDefault(): Pointer {
     return new Pointer();
   }
+
+  public toString(): string {
+    const { target } = this.value;
+    const tv = TypeRegistry.instance().getInstance(target.type, target.data);
+    return `Pointer(${tv.toString()})`;
+  }
 }
 
 /**

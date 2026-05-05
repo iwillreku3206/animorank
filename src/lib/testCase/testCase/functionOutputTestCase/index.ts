@@ -70,15 +70,25 @@ export class FunctionOutputTestCase extends TestCase<
 
     const executionResults = await codeExecutor.executeCode(codeExecutionRequest);
     if (!executionResults.success) {
-      return { success: false, testCaseInfo: [], reason: executionResults.reason };
+      let returnObject: TestCaseResult = {
+        success: false,
+        runInfo: [],
+        hidden: false,
+        testCaseInfo: dbTestCase,
+        reason: executionResults.reason,
+        error: executionResults.reason === 'compile_error' ? executionResults.error : undefined
+      };
+      if (executionResults.reason === 'compile_error') returnObject.error = executionResults.error;
+      return returnObject;
     }
 
     const { stdout } = executionResults;
+    console.log(stdout);
     const lines = stdout.split('\n');
 
     let success = true;
 
-    const comparisons: TestCaseResult['testCaseInfo'][number][] = [];
+    const comparisons: TestCaseResult['runInfo'][number][] = [];
 
     for (let i = 0; i < dbTestCase.comparisons.length; i++) {
       const actual = lines[i * 3];
@@ -90,7 +100,13 @@ export class FunctionOutputTestCase extends TestCase<
       if (result.trim().startsWith('0')) success = false;
     }
 
-    return { success, testCaseInfo: comparisons };
+    const result = {
+      hidden: false,
+      testCaseInfo: dbTestCase,
+      runInfo: comparisons
+    };
+
+    return success ? { success, ...result } : { success, reason: 'wrong_answer', ...result };
   }
 
   public static async create(options: CreateOptions): Promise<ProblemTestCase> {

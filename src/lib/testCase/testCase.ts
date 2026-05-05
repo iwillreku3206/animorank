@@ -3,19 +3,31 @@ import type { CodeExecutionResponse } from './executor';
 
 type TestCaseResultBase = {
   success: boolean;
-  testCaseInfo: {
+  hidden: boolean;
+  runInfo: {
     symbol: string;
     expected: string;
     actual: string;
   }[];
+} & (
+  | {
+      testCaseInfo: ProblemTestCase;
+      hidden: false;
+    }
+  | { hidden: true }
+);
+
+type TestCaseResultPass = TestCaseResultBase & {
+  success: true;
 };
 
-interface TestCaseResultFail extends TestCaseResultBase {
+type TestCaseResultFail = TestCaseResultBase & {
   success: false;
-  reason: string;
-}
+  reason: Extract<CodeExecutionResponse, { success: false }>['reason'] | 'wrong_answer';
+  error?: string;
+};
 
-export type TestCaseResult = TestCaseResultFail | TestCaseResultBase;
+export type TestCaseResult = TestCaseResultFail | TestCaseResultPass;
 
 export interface CreateOptions {
   problemId: string;

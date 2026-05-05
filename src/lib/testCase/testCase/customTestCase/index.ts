@@ -43,17 +43,25 @@ export class CustomTestCase extends TestCase<Extract<ProblemTestCase, { type: 'C
 
     const executionResults = await codeExecutor.executeCode(codeExecutionRequest);
     if (!executionResults.success) {
-      return { success: false, testCaseInfo: [], reason: executionResults.reason };
+      return {
+        success: false,
+        hidden: false,
+        testCaseInfo: dbTestCase,
+        runInfo: [],
+        reason: executionResults.reason
+      };
     }
 
     const exitCode = executionResults.exitCode;
 
     if (exitCode === 0) {
-      return { success: true, testCaseInfo: [] };
+      return { success: true, hidden: false, testCaseInfo: dbTestCase, runInfo: [] };
     } else {
       return {
         success: false,
-        testCaseInfo: [],
+        hidden: false,
+        testCaseInfo: dbTestCase,
+        runInfo: [],
         reason: `custom test failed with exit code ${exitCode}`
       };
     }

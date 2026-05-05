@@ -1,4 +1,3 @@
-import "ctype.zmodel"
 import "practiceSession.zmodel"
 import "problem.zmodel"
 import "problemSet.zmodel"

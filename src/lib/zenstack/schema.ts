@@ -1422,106 +1422,6 @@ export class SchemaType implements SchemaDef {
         }
     } as const;
     typeDefs = {
-        CType: {
-            name: "CType",
-            fields: {
-                base: {
-                    name: "base",
-                    type: "BaseType"
-                },
-                signed: {
-                    name: "signed",
-                    type: "Boolean",
-                    optional: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
-                    default: true as FieldDefault
-                },
-                size_modifier: {
-                    name: "size_modifier",
-                    type: "SizeModifier",
-                    optional: true
-                },
-                array_dimensions: {
-                    name: "array_dimensions",
-                    type: "Int",
-                    optional: true,
-                    array: true
-                },
-                is_pointer: {
-                    name: "is_pointer",
-                    type: "Boolean",
-                    optional: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
-                    default: false as FieldDefault
-                },
-                is_string: {
-                    name: "is_string",
-                    type: "Boolean",
-                    optional: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
-                    default: false as FieldDefault
-                }
-            },
-            attributes: [
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("size_modifier"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Size modifier only applies to int") }] },
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR"))), "||", ExpressionUtils.binary(ExpressionUtils.field("signed"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Signedness only applies to int or char") }] },
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils.literal(true))), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils.literal(false))) }, { name: "message", value: ExpressionUtils.literal("is_string only applies to char") }] },
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils.literal(false))), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("is_string only applies to char") }] }
-            ] as readonly AttributeApplication[]
-        },
-        CTypeWithValue: {
-            name: "CTypeWithValue",
-            fields: {
-                base: {
-                    name: "base",
-                    type: "BaseType"
-                },
-                signed: {
-                    name: "signed",
-                    type: "Boolean",
-                    optional: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
-                    default: true as FieldDefault
-                },
-                size_modifier: {
-                    name: "size_modifier",
-                    type: "SizeModifier",
-                    optional: true
-                },
-                array_dimensions: {
-                    name: "array_dimensions",
-                    type: "Int",
-                    optional: true,
-                    array: true
-                },
-                is_pointer: {
-                    name: "is_pointer",
-                    type: "Boolean",
-                    optional: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
-                    default: false as FieldDefault
-                },
-                is_string: {
-                    name: "is_string",
-                    type: "Boolean",
-                    optional: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
-                    default: false as FieldDefault
-                },
-                value: {
-                    name: "value",
-                    type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
-                    default: "" as FieldDefault
-                }
-            },
-            attributes: [
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("size_modifier"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Size modifier only applies to int") }] },
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("INT")), "||", ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR"))), "||", ExpressionUtils.binary(ExpressionUtils.field("signed"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("Signedness only applies to int or char") }] },
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils.literal(true))), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils.literal(false))) }, { name: "message", value: ExpressionUtils.literal("is_string only applies to char") }] },
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("base"), "==", ExpressionUtils.literal("CHAR")), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils.literal(false))), "||", ExpressionUtils.binary(ExpressionUtils.field("is_string"), "==", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("is_string only applies to char") }] }
-            ] as readonly AttributeApplication[]
-        },
         DataTypeWithValue: {
             name: "DataTypeWithValue",
             fields: {
@@ -1612,24 +1512,6 @@ export class SchemaType implements SchemaDef {
         }
     } as const;
     enums = {
-        BaseType: {
-            name: "BaseType",
-            values: {
-                INT: "INT",
-                CHAR: "CHAR",
-                BOOL: "BOOL",
-                FLOAT: "FLOAT",
-                DOUBLE: "DOUBLE"
-            }
-        },
-        SizeModifier: {
-            name: "SizeModifier",
-            values: {
-                LONG: "LONG",
-                LONG_LONG: "LONG_LONG",
-                SHORT: "SHORT"
-            }
-        },
         HistoryEntryType: {
             name: "HistoryEntryType",
             values: {

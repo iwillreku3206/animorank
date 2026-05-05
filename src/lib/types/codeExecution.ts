@@ -1,29 +1,29 @@
 import type { ProblemTestCase } from '$lib/zenstack/models';
 
-interface Success {
+export interface Success {
   success: true;
 }
 
-interface IncorrectResponseError {
+export interface IncorrectResponseError {
   type: 'incorrect_response';
 }
 
-interface RuntimeError {
+export interface RuntimeError {
   type: 'runtime_error';
 }
 
-interface UnknownError {
+export interface UnknownError {
   type: 'unknown_error';
 }
 
-interface CompileError {
+export interface CompileError {
   type: 'compile_error';
   error: string;
 }
 
 export type ErrorReason = IncorrectResponseError | RuntimeError | CompileError | UnknownError;
 
-interface Failure {
+export interface Failure {
   success: false;
   error_reason: ErrorReason;
 }
@@ -35,3 +35,23 @@ export type TestCaseResult = (Success | Failure) & {
   };
   test_info?: ProblemTestCase;
 };
+
+export function isSuccess(result: TestCaseResult): result is TestCaseResult & Success {
+  return result.success === true;
+}
+
+export function isFailure(result: TestCaseResult): result is TestCaseResult & Failure {
+  return result.success === false;
+}
+
+export function isCompileError(
+  result: TestCaseResult
+): result is TestCaseResult & Failure & { error_reason: CompileError } {
+  return result.success === false && result.error_reason?.type === 'compile_error';
+}
+
+export function isRuntimeError(
+  result: TestCaseResult
+): result is TestCaseResult & Failure & { error_reason: RuntimeError } {
+  return result.success === false && result.error_reason?.type === 'runtime_error';
+}
