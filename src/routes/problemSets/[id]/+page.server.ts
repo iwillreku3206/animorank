@@ -61,6 +61,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   return {
     problemSet: {
+      id: params.id,
       title: problemSet.title,
       description: problemSet.description,
       collaborators: problemSet.collaborators

@@ -12,11 +12,11 @@ export interface ProblemSet {
   title: string;
   ownerName: string;
   description: string;
+  bookmarked: boolean;
   progress: {
     finished: number;
     total: number;
   };
-  bookmarked: boolean;
   subject?: Tag;
   tags: Tag[];
 }

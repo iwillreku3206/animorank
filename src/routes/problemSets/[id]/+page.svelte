@@ -1,11 +1,25 @@
 <script lang="ts">
   import TagChip from '$lib/components/TagChip.svelte';
+  import BookmarkIcon from '@iconify-svelte/fa6-regular/bookmark';
+  import BookmarkIconSolid from '@iconify-svelte/fa6-solid/bookmark';
   import type { PageProps } from './$types';
   import ProblemListItem from './ProblemListItem.svelte';
+  import { removeBookmark, toggleBookmark } from '../bookmark';
 
   let { data }: PageProps = $props();
 
-  const { problemSet, bookmarked, globalProblemSolves, globalProblemAttempts } = $derived(data);
+  const { problemSet, globalProblemSolves, globalProblemAttempts } = $derived(data);
+  let isBookmarked = $state(data.bookmarked);
+
+  async function handleBookmarkClick() {
+    if (isBookmarked) {
+      await removeBookmark(problemSet.id);
+      isBookmarked = false;
+    } else {
+      await toggleBookmark(problemSet.id);
+      isBookmarked = true;
+    }
+  }
 
   let tags = $derived([problemSet.difficulty, ...problemSet.topics].filter((x) => !!x));
   console.log(problemSet.problems);
@@ -50,6 +64,19 @@
     </div>
 
     <p class="text-base-content">{problemSet.description}</p>
+
+    <button
+      class="btn btn-outline gap-2"
+      onclick={handleBookmarkClick}
+    >
+      {#if isBookmarked}
+        <BookmarkIconSolid class="w-5 h-5" />
+        Bookmarked
+      {:else}
+        <BookmarkIcon class="w-5 h-5" />
+        Bookmark
+      {/if}
+    </button>
 
     <div
       class="flex flex-row gap-8"

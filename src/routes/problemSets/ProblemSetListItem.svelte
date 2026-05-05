@@ -3,13 +3,20 @@
   import BookmarkIcon from '@iconify-svelte/fa6-regular/bookmark';
   import BookmarkIconSolid from '@iconify-svelte/fa6-solid/bookmark';
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
+  import { removeBookmark, toggleBookmark } from './bookmark';
   import type { ProblemSet } from './api';
 
-  export interface ProblemSetCardProps {
-    problemSet: ProblemSet;
-  }
+  let { problemSet = $bindable() }: { problemSet: ProblemSet } = $props();
 
-  let { problemSet }: ProblemSetCardProps = $props();
+  async function handleBookmarkClick() {
+    if (problemSet.bookmarked) {
+      await removeBookmark(problemSet.id);
+      problemSet.bookmarked = false;
+    } else {
+      await toggleBookmark(problemSet.id);
+      problemSet.bookmarked = true;
+    }
+  }
 </script>
 
 <div class="relative w-full">
@@ -38,7 +45,10 @@
       </div>
     </div>
     <div class="flex flex-row items-center gap-8 w-80 ml-auto">
-      <button class="btn w-6 h-6 btn-ghost p-0 py-0 ml-auto z-20">
+      <button
+        class="btn w-6 h-6 btn-ghost p-0 py-0 ml-auto z-20"
+        onclick={handleBookmarkClick}
+      >
         {#if problemSet.bookmarked}
           <BookmarkIconSolid class="w-6 h-6" />
         {:else}

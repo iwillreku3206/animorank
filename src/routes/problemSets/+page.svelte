@@ -29,6 +29,9 @@
 
   let { data }: PageProps = $props();
 
+  // svelte-ignore state_referenced_locally
+  let problemSets = $state(data.problemSets);
+
   function initialFilters(): Filters {
     const params = page.url.searchParams;
     const tags = params.getAll('tag');
@@ -81,57 +84,6 @@
   let search = $state(initialSearch());
   let viewMode = $state(initialViewMode());
   let pageNumber = $state(initialPage());
-
-  const sampleProblemSet: ProblemSet = {
-    id: '',
-    title: 'Introduction to C Syntax and Basic Arithmetic',
-    description:
-      'Practice on variable declarations, using printf/scanf for data entry, and performing basic operations with integers and floats.',
-    ownerName: 'Thomas James Tiam-Lee',
-    bookmarked: true,
-    tags: [
-      {
-        id: '',
-        order: 0,
-        color: 'TAG_COLOR_DEFAULT',
-        type: 'TAG_SUBJECT',
-
-        label: 'CCPROG1'
-      },
-      {
-        id: '',
-        order: 0,
-        color: 'TAG_COLOR_YELLOW',
-        type: 'TAG_DIFFICULTY',
-        label: 'Intermediate'
-      },
-      {
-        id: '',
-        order: 0,
-        color: 'TAG_COLOR_DEFAULT',
-        type: 'TAG_TOPIC',
-        label: 'I/O'
-      },
-      {
-        id: '',
-        order: 0,
-        color: 'TAG_COLOR_DEFAULT',
-        type: 'TAG_TOPIC',
-        label: 'Data Types'
-      },
-      {
-        id: '',
-        order: 0,
-        color: 'TAG_COLOR_DEFAULT',
-        type: 'TAG_TOPIC',
-        label: 'Arithmetic'
-      }
-    ],
-    progress: {
-      finished: 4,
-      total: 10
-    }
-  };
 </script>
 
 <main class="px-4 xl:px-32 pt-4 flex flex-col gap-8">
@@ -203,11 +155,11 @@
     </div>
   </div>
   <div class="{viewMode === 'list' ? 'flex flex-col' : 'grid grid-cols-3'} gap-4">
-    {#each data.problemSets as problemSet (problemSet.id)}
+    {#each problemSets as problemSet, i (problemSet.id)}
       {#if viewMode === 'list'}
-        <ProblemSetListItem {problemSet} />
+        <ProblemSetListItem bind:problemSet={problemSets[i]} />
       {:else}
-        <ProblemSetCard {problemSet} />
+        <ProblemSetCard bind:problemSet={problemSets[i]} />
       {/if}
     {/each}
   </div>

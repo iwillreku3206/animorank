@@ -213,6 +213,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     .select('subject_tag')
     .select('difficulty_tag')
     .select('progress_finished')
+    .select('bookmark_user_id')
     .select('progress_total');
 
   if (bookmarked) {
@@ -270,11 +271,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     title: ps.title,
     ownerName: ps.ownerName || '',
     description: ps.description || '',
+    bookmarked: ps.bookmark_user_id !== null,
     progress: {
       finished: parseInt(String(ps.progress_finished)),
       total: parseInt(String(ps.progress_total))
     },
-    bookmarked: true,
     subject: ps.subject_tag ? subjectTagsMap[ps.subject_tag] : undefined,
     tags: Array.from(
       new Set(
