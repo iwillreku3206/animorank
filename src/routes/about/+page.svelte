@@ -16,7 +16,7 @@
   ></script>
 </svelte:head>
 
-<div class="relative">
+<div class="relative overflow-x-hidden">
   <div class="blob-cont">
     <div class="green blob"></div>
     <div class="green blob"></div>
