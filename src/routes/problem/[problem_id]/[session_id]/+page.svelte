@@ -11,9 +11,10 @@
   import { browser } from '$app/environment';
   import { untrack } from 'svelte';
   import deepEqual from 'deep-equal';
-  import { runTestCases, type TestRunResponse } from './api';
+  import { runTestCases, submit, type TestRunResponse } from './api';
   import { page } from '$app/state';
-  import type { TestCaseResult } from '$lib/types/codeExecution';
+  import { goto } from '$app/navigation';
+  import Button from '$lib/components/Button.svelte';
 
   if (browser) {
     import('@diplodoc/latex-extension/runtime');
@@ -27,6 +28,8 @@
   };
 
   let toggleTestResults = $state(false);
+
+  let testSubmitted = $state(false);
 
   let testCaseResults = $state<TestRunResponse>({ results: [] });
   let testPassed = $derived(testCaseResults.results.filter((x) => x.success));
@@ -99,6 +102,41 @@
     testCaseResults = results as TestRunResponse;
     toggleTestResults = true;
   };
+
+  const handleSubmit = async () => {
+    saveLock = true;
+    const codeToSave = code;
+    lastSavedCode = code;
+
+    const results = await submit(data.practiceSession.id, codeToSave);
+    testCaseResults = results;
+    toggleTestResults = true;
+
+    const allSuccess = results.results.every((x) => x.success);
+    if (allSuccess) {
+      testSubmitted = true;
+      // Mark as done in backend and keep editor locked
+      const res = await fetch(`/api/practice-session/${data.practiceSession.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ code: codeToSave, done: true }),
+        headers: { 'content-type': 'application/json' }
+      });
+      if (!res.ok) {
+        saveLock = false;
+      }
+    } else {
+      saveLock = false;
+    }
+  };
+
+  const handleReturn = () => {
+    const problemSetId = data.problem.problem_set_id;
+    if (problemSetId) {
+      goto(`/problemSets/${problemSetId}`);
+    } else {
+      goto(`/problemSets`);
+    }
+  };
 </script>
 
 <div class="splitpanes-nobg h-full">
@@ -140,6 +178,8 @@
               <div class="flex items-center gap-2">
                 {#if saveHasError}
                   <span class="text-red-500 text-sm">Save failed</span>
+                {:else if testSubmitted}
+                  <span class="text-success text-sm">All tests passed!</span>
                 {:else if ongoingSave}
                   <span class="text-yellow-500 text-sm">Saving...</span>
                 {:else if !saveLock && !deepEqual(code, lastSavedCode, { strict: true })}
@@ -172,7 +212,9 @@
                   class="btn btn-sm"
                   onclick={handleRun}>Run</button
                 >
-                <button class="btn btn-sm bg-[#006239] text-white hover:bg-[#004327]">Submit</button
+                <Button
+                  class="btn-sm"
+                  onclick={handleSubmit}>Submit</Button
                 >
               </div>
             </div>
@@ -188,6 +230,8 @@
             <TestCaseDisplay
               tests={testCaseResults}
               {toggleTestResults}
+              {testSubmitted}
+              {handleReturn}
             />
           </Pane>
         {/if}

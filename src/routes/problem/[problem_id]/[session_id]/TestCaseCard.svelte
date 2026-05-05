@@ -1,16 +1,12 @@
 <script lang="ts">
-  import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
-  import { CCodeGenerator } from '$lib/testCase/codeGenerator/c';
   import type { TestCaseResult } from '$lib/testCase/testCase';
   import { TypeRegistry } from '$lib/testCase/typeRegistry';
   import {
     ProblemTestCaseType,
     type CustomTestCase,
     type FunctionOutputTestCase,
-    type ProblemTestCase,
     type ProgramIOTestCase
   } from '$lib/zenstack/models';
-  import type { TestRunResponse } from './api';
 
   let { result }: { result: TestCaseResult } = $props();
 

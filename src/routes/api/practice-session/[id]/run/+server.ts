@@ -57,8 +57,19 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   const results = await Promise.all(testCases.map((tc) => runTestCase(tc, code)));
 
   if (test_type === 'all') {
+    const allSuccess = results.reduce((prev, next) => prev && next.success, true);
+
+    if (allSuccess) {
+      await db.practiceSession.update({
+        where: { id: params.id, student_id: session.user.id },
+        data: {
+          done: true
+        }
+      });
+    }
+
     return successObject({
-      results: results.map((r) => ({ success: r.success }))
+      results
     });
   }
 
