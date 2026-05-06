@@ -17,6 +17,7 @@ WORKDIR /app
 COPY --from=builder /app/build build/
 COPY --from=builder /app/node_modules node_modules/
 COPY --from=builder /app/src/zenstack src/zenstack
+COPY --from=builder /app/prisma/migration prisma/migrations
 COPY package.json .
 COPY docker-entrypoint.sh .
 EXPOSE 3000
