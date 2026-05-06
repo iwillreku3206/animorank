@@ -20,4 +20,4 @@ COPY package.json .
 COPY docker-entrypoint.sh .
 EXPOSE 3000
 ENV NODE_ENV=production
-CMD ["./docker-entrypoint.sh"]
+CMD ["bash", "./docker-entrypoint.sh"]
