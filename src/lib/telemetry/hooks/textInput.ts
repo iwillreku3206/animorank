@@ -1,8 +1,8 @@
 import type { ExecutionEvent } from '$lib/testCase/executionHook';
 import type { Subscribable } from '$lib/utils/subscription';
 import type { editor } from 'monaco-editor';
-import { TelemetryHook, type Entry } from './telemetryHook';
-import type { TextEvent } from './types/textEvent';
+import { TelemetryHook, type Entry } from '../telemetryHook';
+import type { TextEvent } from '../types/textEvent';
 import type { monaco } from '$lib/monaco';
 
 const reasonMap: Record<monaco.editor.CursorChangeReason, TextEvent['type']> = {

@@ -83,7 +83,6 @@ export class FunctionOutputTestCase extends TestCase<
     }
 
     const { stdout } = executionResults;
-    console.log(stdout);
     const lines = stdout.split('\n');
 
     let success = true;

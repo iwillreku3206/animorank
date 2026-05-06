@@ -9,12 +9,16 @@
   import { transform as mermaid } from '@diplodoc/mermaid-extension/plugin';
   import { transform as transformHTML } from '@diplodoc/html-extension';
   import { browser } from '$app/environment';
-  import { untrack } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import deepEqual from 'deep-equal';
   import { runTestCases, submit, type TestRunResponse } from './api';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import Button from '$lib/components/Button.svelte';
+  import { Subscribable } from '$lib/utils/subscription';
+  import type { ExecutionEvent } from '$lib/testCase/executionHook';
+  import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
+  import { TelemetryService } from '$lib/telemetry/telemetryService';
 
   if (browser) {
     import('@diplodoc/latex-extension/runtime');
@@ -43,6 +47,13 @@
   let saveLock = $state(false);
   let changesAfterLock = $state(false);
   let saveHasError = $state(false);
+
+  let executionObservable = new Subscribable<ExecutionEvent>();
+
+  onMount(() => {
+    const telemetry = ClientServiceProvider.instance().getService(TelemetryService);
+    telemetry.attachExecution(executionObservable);
+  });
 
   async function saveCode(codeToSave: string) {
     const res = await fetch(`/api/practice-session/${data.practiceSession.id}`, {
@@ -99,6 +110,12 @@
   const handleRun = async () => {
     await saveCode(code);
     const results = await runTestCases(page.params.session_id || '', code);
+    executionObservable.fire('run', {
+      generalTestResults: results.results.map((r) => r.success),
+      publicTestResults: results.results.filter((p) => !p.hidden).map((p) => p),
+      runType: 'run',
+      submittedCode: code
+    });
     testCaseResults = results as TestRunResponse;
     toggleTestResults = true;
   };
@@ -109,6 +126,12 @@
     lastSavedCode = code;
 
     const results = await submit(data.practiceSession.id, codeToSave);
+    executionObservable.fire('run', {
+      generalTestResults: results.results.map((r) => r.success),
+      publicTestResults: results.results.filter((p) => !p.hidden).map((p) => p),
+      runType: 'submit',
+      submittedCode: code
+    });
     testCaseResults = results;
     toggleTestResults = true;
 

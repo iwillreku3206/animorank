@@ -64,7 +64,6 @@
     }
 
     // persist to db
-    console.log('saving');
     const promises: Promise<boolean>[] = [];
     promises.push(updateProblem($state.snapshot(problemToSave)));
 
@@ -88,8 +87,6 @@
     // track these two objects
     problemSerialized;
     testCasesSerialized;
-
-    console.log(testCases);
 
     if (untrack(() => saveLock)) {
       changesAfterLock = true;

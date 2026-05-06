@@ -2,7 +2,8 @@ import type { ExecutionEvent } from '$lib/testCase/executionHook';
 import type { monaco } from '$lib/monaco';
 import type { Subscribable } from '$lib/utils/subscription';
 import type { Entry, TelemetryCallback, TelemetryHook } from './telemetryHook';
-import { TextInputHook } from './textInput';
+import { TextInputHook } from './hooks/textInput';
+import { ExecutionHook } from './hooks/execution';
 
 type UnmountCallback = () => void;
 
@@ -15,6 +16,7 @@ export abstract class TelemetryService {
 
   public constructor() {
     this.registerHook(TextInputHook);
+    this.registerHook(ExecutionHook);
   }
 
   private registerHook(hook: new (callback: TelemetryCallback) => TelemetryHook) {

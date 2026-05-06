@@ -22,7 +22,6 @@
   }
 
   let tags = $derived([problemSet.difficulty, ...problemSet.topics].filter((x) => !!x));
-  console.log(problemSet.problems);
   let progress = $derived(
     problemSet.problems.reduce(
       (prev, next) => [prev[0] + (next.status === 'done' ? 1 : 0), prev[1] + 1],

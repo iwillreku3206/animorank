@@ -19,7 +19,6 @@
   function updateType(newTypeKey: string) {
     // When the type changes, update the value with the new type's default data
     const newTypeInfo = registry.getStatic(newTypeKey).typeInfo;
-    console.log('updating from typepicker');
     if (previousType !== newTypeKey) {
       type = newTypeKey;
       const merged = newTypeInfo.defaultValue;
@@ -39,7 +38,6 @@
 
   let fields = $derived(registry.getStatic(type).typeInfo.fields);
   let fieldsArr = $derived(Object.values(fields));
-  $effect(() => console.log(type));
 </script>
 
 <div class="flex flex-col gap-2 border border-primary p-2 rounded-lg">

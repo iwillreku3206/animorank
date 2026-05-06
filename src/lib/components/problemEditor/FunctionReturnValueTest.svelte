@@ -57,7 +57,6 @@
 
   const updateComparisonExpectedType = (index: number, typeKey: string) => {
     const typeInfo = registry.getStatic(typeKey).typeInfo;
-    console.log('updating:', typeInfo);
     if (typeInfo) {
       const comp = testCase.comparisons[index];
       comp.type = typeKey;

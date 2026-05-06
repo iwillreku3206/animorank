@@ -1,4 +1,4 @@
-import type { TestCaseResult } from '$lib/types/codeExecution';
+import type { TestCaseResult } from './testCase';
 
 type Execution = {
   runType: 'run' | 'submit';
