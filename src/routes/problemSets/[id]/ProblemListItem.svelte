@@ -40,7 +40,7 @@
     </div>
     <h2 class="text-xl">{problem.title}</h2>
     <div class="flex flex-row">
-      <div class="w-42">
+      <div class="w-48">
         Passing Rate: <span class="font-bold">{(passRate * 100).toFixed(2)}%</span>
       </div>
       <div>
