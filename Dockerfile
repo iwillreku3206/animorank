@@ -16,6 +16,7 @@ FROM node:24-trixie
 WORKDIR /app
 COPY --from=builder /app/build build/
 COPY --from=builder /app/node_modules node_modules/
+COPY --from=builder /app/src/zenstack src/zenstack
 COPY package.json .
 COPY docker-entrypoint.sh .
 EXPOSE 3000
