@@ -17,9 +17,11 @@ WORKDIR /app
 COPY --from=builder /app/build build/
 COPY --from=builder /app/node_modules node_modules/
 COPY --from=builder /app/src/zenstack src/zenstack
-COPY --from=builder /app/prisma/migration prisma/migrations
+COPY --from=builder /app/prisma/migrations prisma/migrations
 COPY package.json .
 COPY docker-entrypoint.sh .
+RUN npm install -g @zenstackhq/cli
+# RUN npx zenstack generate
 EXPOSE 3000
 ENV NODE_ENV=production
 CMD ["bash", "./docker-entrypoint.sh"]
