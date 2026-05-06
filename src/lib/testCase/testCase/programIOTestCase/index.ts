@@ -46,18 +46,25 @@ export class ProgramIOTestCase extends TestCase<
 
     const executionResults = await codeExecutor.executeCode(codeExecutionRequest);
     if (!executionResults.success) {
-      return { success: false, testCaseInfo: [], reason: executionResults.reason };
+      return {
+        success: false,
+        runInfo: [],
+        hidden: false,
+        testCaseInfo: dbTestCase,
+        reason: executionResults.reason
+      };
     }
 
     const { stdout } = executionResults;
     let success = stdout === dbTestCase.output;
 
-    return {
-      success,
-      testCaseInfo: [
-        { expected: dbTestCase.output, actual: executionResults.stdout, symbol: 'stdio' }
-      ]
+    const result = {
+      hidden: false,
+      testCaseInfo: dbTestCase,
+      runInfo: [{ expected: dbTestCase.output, actual: executionResults.stdout, symbol: 'stdio' }]
     };
+
+    return success ? { success, ...result } : { success, reason: 'wrong_answer', ...result };
   }
 
   public static async create(options: CreateOptions): Promise<ProblemTestCase> {

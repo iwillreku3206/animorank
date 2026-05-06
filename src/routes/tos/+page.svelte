@@ -1,7 +1,5 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
-  import { error } from '@sveltejs/kit';
-  const { form } = $props();
 
   let showModal = $state(false);
   let isConfirmed = $state(false);

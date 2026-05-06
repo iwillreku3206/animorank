@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
   import TagChip from '$lib/components/TagChip.svelte';
   import type { PageProps } from './$types';
 
@@ -16,7 +15,7 @@
   let tags = $derived([problem.difficulty, ...problem.topics].filter((x) => !!x));
 
   let totalAttempts = $derived(
-    problemPassingRate?.reduce((prev, next) => (prev += next._count._all), 0) || 1
+    problemPassingRate?.reduce((prev, next) => prev + next._count._all, 0) || 1
   );
 
   let passRate = $derived(
@@ -24,7 +23,7 @@
   );
 
   let solveUsers = $derived(
-    problemAttempts?.reduce((prev, next) => (prev += Number(next?.attempts || 0)), 0) || 0
+    problemAttempts?.reduce((prev, next) => prev + Number(next?.attempts || 0), 0) || 0
   );
 </script>
 

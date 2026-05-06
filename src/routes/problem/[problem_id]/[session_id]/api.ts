@@ -1,7 +1,4 @@
 import type { TestCaseResult } from '$lib/testCase/testCase';
-import type { ProblemTestCase } from '$lib/zenstack/models';
-
-type TestCaseInfo = ProblemTestCase | { id: ProblemTestCase['id'] };
 
 export type TestRunResponse = { results: TestCaseResult[] };
 

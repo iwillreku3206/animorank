@@ -1,7 +1,5 @@
 import { successObject } from '$lib/response';
 import { CCodeGenerator } from '$lib/testCase/codeGenerator/c';
-import { Int } from '$lib/testCase/type/int';
-import { TypeRegistry } from '$lib/testCase/typeRegistry';
 import type { FunctionOutputTestCase } from '$lib/zenstack/models';
 import type { RequestHandler } from './$types';
 

@@ -1,12 +1,14 @@
 <script lang="ts">
-  import CreateNewSet from '$lib/components/CreateNewSet.svelte';
-  import StudentPSBox from './StudentPSBox.svelte';
-  import TeacherPSBox from './TeacherPSBox.svelte';
+  //import CreateNewSet from '$lib/components/CreateNewSet.svelte';
+  //import type { PageProps } from './$types';
+  //import StudentPSBox from './StudentPSBox.svelte';
+  //import TeacherPSBox from './TeacherPSBox.svelte';
 
-  let showCreatePSetModal = $state(false);
-  let { data } = $props();
+  //let showCreatePSetModal = $state(false);
+  //let { data }: PageProps = $props();
 </script>
 
+<!--
 {#if data.user?.type === 'teacher'}
   <div class="w-screen bg-[#121212]">
     <div class="mt-12 px-3 flex justify-between">
@@ -50,3 +52,4 @@
     <h>404 User Not Found</h>
   </div>
 {/if}
+-->

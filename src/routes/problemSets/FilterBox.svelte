@@ -100,10 +100,10 @@
               .join(' ')
               .replaceAll('_', ' ')}
           </button>
-          {#if (tagsByTypeSelectedFirst[tagType] as any[]).filter( (t) => filters.tags.includes(t.id) ).length > 0}
+          {#if tagsByTypeSelectedFirst[tagType].filter( (t) => filters.tags.includes(t.id) ).length > 0}
             <div class="flex flex-wrap gap-2 pt-1 border-t border-base-300 mt-1">
-              {#each (tagsByTypeSelectedFirst[tagType] as any[]).filter( (t) => filters.tags.includes(t.id) ) as tag (tag.id)}
-                <div animate:flip={{ duration: FLIP_DURATION } as any}>
+              {#each tagsByTypeSelectedFirst[tagType].filter( (t) => filters.tags.includes(t.id) ) as tag (tag.id)}
+                <div animate:flip={{ duration: FLIP_DURATION }}>
                   <TagChip
                     {tag}
                     class="outline outline-accent"
@@ -132,7 +132,7 @@
                   </div>
                 {/if}
               {/each}
-              {#if (tagsByTypeSelectedFirst[tagType] as any[]).length > 5}
+              {#if tagsByTypeSelectedFirst[tagType].length > 5}
                 <TagChip
                   tag={{
                     id: '',

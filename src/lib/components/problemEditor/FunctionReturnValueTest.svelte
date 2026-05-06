@@ -20,24 +20,6 @@
     });
   }
 
-  function updateParameterType(index: number, typeKey: string) {
-    const typeInfo = registry.getStatic(typeKey).typeInfo;
-    if (typeInfo) {
-      const param = testCase.parameters[index];
-      param.type = typeKey;
-      param.data = { ...typeInfo.defaultValue, ...(param.data as object) };
-    }
-  }
-
-  function getParameterType(index: number) {
-    return testCase.parameters[index]?.type || 'int';
-  }
-
-  function getParameterTypeInfo(index: number) {
-    const typeKey = getParameterType(index);
-    return registry.getStatic(typeKey).typeInfo;
-  }
-
   const addComparison = () => {
     const intTypeInfo = registry.getStatic('int').typeInfo;
     if (intTypeInfo) {
@@ -53,30 +35,6 @@
 
   const deleteComparison = (index: number) => () => {
     testCase.comparisons = testCase.comparisons.filter((_, i) => i !== index);
-  };
-
-  const updateComparisonExpectedType = (index: number, typeKey: string) => {
-    const typeInfo = registry.getStatic(typeKey).typeInfo;
-    if (typeInfo) {
-      const comp = testCase.comparisons[index];
-      comp.type = typeKey;
-      comp.data = { ...typeInfo.defaultValue, ...(comp.data as object) };
-    }
-  };
-
-  const updateComparisonSymbol = (index: number, symbol: string) => {
-    testCase.comparisons[index].symbol = symbol;
-  };
-
-  const getComparisonExpectedTypeInfo = (index: number) => {
-    const comp = testCase.comparisons[index];
-    return registry.getStatic(comp?.type || 'int').typeInfo;
-  };
-
-  const getComparisonSymbolLabel = (symbol: string) => {
-    if (symbol === 'return') return 'return value';
-    const paramIndex = parseInt(symbol.replace('param_', ''));
-    return `param ${paramIndex}`;
   };
 </script>
 
@@ -97,63 +55,74 @@
   {#if testCase.comparisons.length === 0}
     <p class="text-gray-500 text-sm">No comparisons yet. Add one below.</p>
   {/if}
-  {#each testCase.comparisons as comp, i}
+  {#each testCase.comparisons as comp, i (i)}
     <div class="flex flex-row flex-wrap gap-2 items-end">
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-gray-400">Compare</label>
-        <select
-          bind:value={comp.symbol}
-          class="select select-xs select-primary select-bordered w-32"
-        >
-          <option value="return">return value</option>
-          {#each testCase.parameters as param, j}
-            <option value={`${j}`}>param {j}</option>
-          {/each}
-        </select>
+        <label class="text-xs text-gray-400">
+          Compare
+          <select
+            bind:value={comp.symbol}
+            class="select select-xs select-primary select-bordered w-32"
+          >
+            <option value="return">return value</option>
+            {#each testCase.parameters as _, j (j)}
+              <option value={`${j}`}>param {j}</option>
+            {/each}
+          </select>
+        </label>
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-gray-400">Operator</label>
-        <select
-          bind:value={comp.operator}
-          class="select select-xs select-primary select-bordered w-32"
-        >
-          <option value="EQUAL">==</option>
-          <option value="NOT_EQUAL">!=</option>
-          <option value="LESS_THAN">&lt;</option>
-          <option value="LESS_THAN_EQUAL">&lt;=</option>
-          <option value="GREATER_THAN">&gt;</option>
-          <option value="GREATER_THAN_EQUAL">&gt;=</option>
-          <option value="WITHIN_RANGE">±</option>
-        </select>
+        <label class="text-xs text-gray-400">
+          Operator
+          <select
+            bind:value={comp.operator}
+            class="select select-xs select-primary select-bordered w-32"
+          >
+            <option value="EQUAL">==</option>
+            <option value="NOT_EQUAL">!=</option>
+            <option value="LESS_THAN">&lt;</option>
+            <option value="LESS_THAN_EQUAL">&lt;=</option>
+            <option value="GREATER_THAN">&gt;</option>
+            <option value="GREATER_THAN_EQUAL">&gt;=</option>
+            <option value="WITHIN_RANGE">±</option>
+          </select>
+        </label>
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-gray-400">Type</label>
-        <select
-          bind:value={comp.type}
-          class="select select-xs select-primary select-bordered w-32"
-        >
-          {#each registry.getTypeList() as typeKey}
-            <option value={typeKey}>{registry.getStatic(typeKey)?.typeInfo.label || typeKey}</option
-            >
-          {/each}
-        </select>
+        <label class="text-xs text-gray-400">
+          Type
+          <select
+            bind:value={comp.type}
+            class="select select-xs select-primary select-bordered w-32"
+          >
+            {#each registry.getTypeList() as typeKey (typeKey)}
+              <option value={typeKey}
+                >{registry.getStatic(typeKey)?.typeInfo.label || typeKey}</option
+              >
+            {/each}
+          </select>
+        </label>
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-gray-400">Value</label>
-        <TypePicker
-          bind:type={testCase.comparisons[i].type}
-          bind:data={testCase.comparisons[i].data}
-        />
+        <label class="text-xs text-gray-400">
+          Value
+          <TypePicker
+            bind:type={testCase.comparisons[i].type}
+            bind:data={testCase.comparisons[i].data}
+          />
+        </label>
       </div>
       {#if comp.operator === 'WITHIN_RANGE'}
         <div class="flex flex-col gap-1">
-          <label class="text-xs text-gray-400">Range</label>
-          <input
-            type="text"
-            class="input input-xs input-primary input-bordered w-24"
-            placeholder="Range"
-            bind:value={comp.range_value}
-          />
+          <label class="text-xs text-gray-400">
+            Range
+            <input
+              type="text"
+              class="input input-xs input-primary input-bordered w-24"
+              placeholder="Range"
+              bind:value={comp.range_value}
+            />
+          </label>
         </div>
       {/if}
       <button
@@ -173,25 +142,31 @@
     onclick={addComparison}>Add Comparison</button
   >
   Input Parameters:
-  {#each testCase.parameters as param, i}
+  {#each testCase.parameters as param, i (i)}
     <div class="flex flex-row flex-wrap gap-2 items-center">
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-gray-400">Type</label>
-        <select
-          bind:value={param.type}
-          class="select select-xs select-primary select-bordered w-32"
-        >
-          {#each registry.getTypeList() as typeKey}
-            <option value={typeKey}>{registry.getStatic(typeKey).typeInfo.label || typeKey}</option>
-          {/each}
-        </select>
+        <label class="text-xs text-gray-400">
+          Type
+          <select
+            bind:value={param.type}
+            class="select select-xs select-primary select-bordered w-32"
+          >
+            {#each registry.getTypeList() as typeKey (typeKey)}
+              <option value={typeKey}
+                >{registry.getStatic(typeKey).typeInfo.label || typeKey}</option
+              >
+            {/each}
+          </select>
+        </label>
       </div>
       <div class="flex flex-col gap-1">
-        <label class="text-xs text-gray-400">Value</label>
-        <TypePicker
-          bind:type={testCase.parameters[i].type}
-          bind:data={testCase.parameters[i].data}
-        />
+        <label class="text-xs text-gray-400">
+          Value
+          <TypePicker
+            bind:type={testCase.parameters[i].type}
+            bind:data={testCase.parameters[i].data}
+          />
+        </label>
       </div>
       <button
         class="btn btn-xs btn-ghost"

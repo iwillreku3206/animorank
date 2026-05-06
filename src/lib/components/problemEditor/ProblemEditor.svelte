@@ -56,6 +56,7 @@
       }
     });
 
+    // @ts-ignore
     lastSavedTestCases = structuredClone($state.snapshot(testCases));
     const testCasesToSave = structuredClone($state.snapshot(testCases));
 

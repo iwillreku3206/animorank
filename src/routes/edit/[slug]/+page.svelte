@@ -4,7 +4,9 @@
 
   let { data }: PageProps = $props();
 
+  // svelte-ignore state_referenced_locally
   let problem = $state(data.problem);
+  // svelte-ignore state_referenced_locally
   let testCases = $state(data.testCases);
 </script>
 

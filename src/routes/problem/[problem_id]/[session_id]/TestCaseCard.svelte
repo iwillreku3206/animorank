@@ -12,8 +12,8 @@
 
   type Input = { symbol: string; value: string };
   type Output = { symbol: string; actual: string; expected: string };
-  type InputGetter = (result: TestCaseResult) => Input[];
-  type OutputGetter = (result: TestCaseResult) => Output[];
+  type InputGetter = (_result: TestCaseResult) => Input[];
+  type OutputGetter = (_result: TestCaseResult) => Output[];
 
   const getFunctionOutputInput: InputGetter = (result) => {
     if (result.hidden) return [];
@@ -57,7 +57,7 @@
     return [{ symbol: 'test code', value: (result.testCaseInfo as CustomTestCase).test_code }];
   };
 
-  const getCustomOutput: OutputGetter = (_result) => {
+  const getCustomOutput: OutputGetter = () => {
     return [];
   };
 

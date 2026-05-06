@@ -41,6 +41,10 @@ export class StringType extends TypeWithValue<Value> {
   static createDefault(): StringType {
     return new StringType();
   }
+
+  public toString(): string {
+    return this.value.value;
+  }
 }
 
 class StringLanguageRegistry extends LanguageRegistry<Value> {

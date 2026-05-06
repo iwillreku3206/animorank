@@ -8,12 +8,13 @@
   import ListIcon from '@iconify-svelte/fa6-solid/list';
   import FilterBox from './FilterBox.svelte';
   import ProblemSetListItem from './ProblemSetListItem.svelte';
-  import type { Filters, ProblemSet } from './api';
+  import type { Filters } from './api';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
+  import { SvelteURLSearchParams } from 'svelte/reactivity';
 
   function buildSearchParams() {
-    const params = new URLSearchParams();
+    const params = new SvelteURLSearchParams();
     for (const tag of filters.tags) params.append('tag', tag);
     if (filters.status !== '') params.set('status', filters.status);
     if (filters.creator !== '' && filters.creator !== undefined)

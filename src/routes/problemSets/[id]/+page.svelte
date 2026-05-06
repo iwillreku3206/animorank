@@ -9,6 +9,7 @@
   let { data }: PageProps = $props();
 
   const { problemSet, globalProblemSolves, globalProblemAttempts } = $derived(data);
+  // svelte-ignore state_referenced_locally
   let isBookmarked = $state(data.bookmarked);
 
   async function handleBookmarkClick() {

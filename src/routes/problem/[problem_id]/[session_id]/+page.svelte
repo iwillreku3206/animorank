@@ -26,6 +26,7 @@
 
   let { data }: PageProps = $props();
 
+  // svelte-ignore state_referenced_locally
   let code = $state(data.practiceSession.previous_code);
   const handleReset = () => {
     code = data.problem.starter_code;
@@ -41,6 +42,7 @@
 
   let currentTimeout = $state<NodeJS.Timeout | undefined>(undefined);
 
+  // svelte-ignore state_referenced_locally
   let lastSavedCode = $state(data.practiceSession.previous_code);
 
   let ongoingSave = $derived(!!currentTimeout);
@@ -94,6 +96,8 @@
   }
 
   $effect(() => {
+    // Capture this variable for effect
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     code;
     if (code == lastSavedCode) return;
     if (untrack(() => saveLock)) {

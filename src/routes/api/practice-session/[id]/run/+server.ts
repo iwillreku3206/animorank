@@ -3,9 +3,7 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/zenstack';
 import { error, successObject } from '$lib/response';
 import type { ProblemTestCase } from '$lib/zenstack/models';
-// import type { TestCaseResult } from '$lib/types/codeExecution';
 import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
-import { TestCaseService } from '$lib/testCase/testCaseService';
 import type { TestCaseResult } from '$lib/testCase/testCase';
 
 const runValidator = z.object({
@@ -22,7 +20,7 @@ async function runTestCase(dbTestCase: ProblemTestCase, code: string): Promise<T
   if (!dbTestCase.public) {
     result.runInfo = [];
     if (!result.hidden) {
-      (result.testCaseInfo as any) = undefined;
+      (result.testCaseInfo as ProblemTestCase | undefined) = undefined;
       (result.hidden as boolean) = true;
     }
   }

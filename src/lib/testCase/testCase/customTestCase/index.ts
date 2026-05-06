@@ -62,7 +62,7 @@ export class CustomTestCase extends TestCase<Extract<ProblemTestCase, { type: 'C
         hidden: false,
         testCaseInfo: dbTestCase,
         runInfo: [],
-        reason: `custom test failed with exit code ${exitCode}`
+        reason: `wrong_answer`
       };
     }
   }
