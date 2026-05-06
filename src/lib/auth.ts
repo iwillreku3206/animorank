@@ -62,5 +62,6 @@ export const { handle } = SvelteKitAuth({
         await db.student.upsert({ create: obj, update: {}, where: obj });
       }
     }
-  }
+  },
+  trustHost: true
 });
