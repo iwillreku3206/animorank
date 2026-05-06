@@ -6,6 +6,7 @@ WORKDIR /app
 COPY package*.json .
 RUN npm ci
 COPY . .
+ENV NODE_OPTIONS=--max_old_space_size=4096
 RUN npx svelte-kit sync
 RUN npm run build
 RUN npm prune --production
