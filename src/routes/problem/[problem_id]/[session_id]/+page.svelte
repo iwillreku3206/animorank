@@ -20,6 +20,7 @@
   import { TelemetryService } from '$lib/telemetry/telemetryService';
   import { AutoSave } from '$lib/utils/autosave.svelte.ts';
   import { createHotkey } from '@tanstack/svelte-hotkeys';
+  import defaultPlugins from '@diplodoc/transform/lib/plugins';
 
   if (browser) {
     import('@diplodoc/latex-extension/runtime');
@@ -146,7 +147,8 @@
               transformHTML({
                 bundle: false,
                 runtimeJsPath: 'extension:html'
-              })
+              }),
+              ...defaultPlugins
             ]
           }).result.html}
         />

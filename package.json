@@ -64,7 +64,7 @@
     "@diplodoc/html-extension": "^2.9.2",
     "@diplodoc/latex-extension": "^1.4.1",
     "@diplodoc/mermaid-extension": "^1.4.2",
-    "@diplodoc/transform": "^4.70.2",
+    "@diplodoc/transform": "^4.74.1",
     "@gravity-ui/icons": "^2.12.0",
     "@gravity-ui/markdown-editor": "^15.34.5",
     "@iconify-svelte/fa6-regular": "^1.0.0",
