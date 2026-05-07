@@ -17,9 +17,12 @@ export class Judge0Executor extends CodeExecutor {
     zip.addFile('compile', Buffer.from(request.compileScript, 'utf8'));
     zip.addFile('run', Buffer.from(request.runScript, 'utf8'));
 
+    logger.debug('stdin:' + request.stdin);
+
     const submissionParams: Judge0SubmissionRequest = {
       language_id: 89,
-      additional_files: zip.toBuffer().toString('base64')
+      additional_files: zip.toBuffer().toString('base64'),
+      stdin: request.stdin ? Buffer.from(request.stdin, 'utf8').toString('base64') : undefined
     };
 
     const req = await fetch(`${JUDGE0_BASE_URL}/submissions?wait=true&base64_encoded=true`, {
