@@ -71,6 +71,7 @@
     "@iconify-svelte/fa6-solid": "^1.0.0",
     "@tailwindcss/postcss": "^4.2.2",
     "@tailwindcss/vite": "^4.2.2",
+    "@tanstack/svelte-hotkeys": "^0.10.0",
     "@zenstackhq/orm": "^3.4.4",
     "@zenstackhq/schema": "^3.4.4",
     "adm-zip": "^0.5.16",

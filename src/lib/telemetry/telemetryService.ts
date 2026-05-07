@@ -19,7 +19,7 @@ export abstract class TelemetryService {
     this.registerHook(ExecutionHook);
   }
 
-  private registerHook(hook: new (callback: TelemetryCallback) => TelemetryHook) {
+  private registerHook(hook: new (_callback: TelemetryCallback) => TelemetryHook) {
     this.hooks.add(new hook(this.telemetryCallback));
   }
 
@@ -59,5 +59,5 @@ export abstract class TelemetryService {
     }
   }
 
-  protected abstract telemetryCallback(entry: Entry): void | Promise<void>;
+  protected abstract telemetryCallback(_entry: Entry): void | Promise<void>;
 }

@@ -10,7 +10,6 @@
   import { transform as transformHTML } from '@diplodoc/html-extension';
   import { browser } from '$app/environment';
   import { onMount, untrack } from 'svelte';
-  import deepEqual from 'deep-equal';
   import { runTestCases, submit, type TestRunResponse } from './api';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -19,6 +18,8 @@
   import type { ExecutionEvent } from '$lib/testCase/executionHook';
   import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
   import { TelemetryService } from '$lib/telemetry/telemetryService';
+  import { AutoSave } from '$lib/utils/autosave.svelte.ts';
+  import { createHotkey } from '@tanstack/svelte-hotkeys';
 
   if (browser) {
     import('@diplodoc/latex-extension/runtime');
@@ -32,28 +33,19 @@
     code = data.problem.starter_code;
   };
 
-  let toggleTestResults = $state(false);
+  // svelte-ignore state_referenced_locally
+  let autosave = $state(new AutoSave(() => saveCode(code), code));
 
+  let toggleTestResults = $state(false);
   let testSubmitted = $state(false);
 
   let testCaseResults = $state<TestRunResponse>({ results: [] });
   let testPassed = $derived(testCaseResults.results.filter((x) => x.success));
   let testFailed = $derived(testCaseResults.results.filter((x) => !x.success));
 
-  let currentTimeout = $state<NodeJS.Timeout | undefined>(undefined);
-
-  // svelte-ignore state_referenced_locally
-  let lastSavedCode = $state(data.practiceSession.previous_code);
-
-  let ongoingSave = $derived(!!currentTimeout);
-  let saveLock = $state(false);
-  let changesAfterLock = $state(false);
-  let saveHasError = $state(false);
-
   let disableEdit = $state(false);
 
   let executionObservable = new Subscribable<ExecutionEvent>();
-
   let selectedTest = $state(-1);
 
   onMount(() => {
@@ -61,63 +53,26 @@
     telemetry.attachExecution(executionObservable);
   });
 
+  createHotkey('Control+S', () => autosave.forceSave(code));
+
   async function saveCode(codeToSave: string) {
-    const res = await fetch(`/api/practice-session/${data.practiceSession.id}`, {
+    await fetch(`/api/practice-session/${data.practiceSession.id}`, {
       method: 'PUT',
       body: JSON.stringify({ code: codeToSave }),
       headers: { 'content-type': 'application/json' }
     });
-
-    saveHasError = !res.ok;
-    saveLock = false;
-    currentTimeout = undefined;
-
-    if (changesAfterLock) {
-      changesAfterLock = false;
-      checkChangesAndSave();
-    }
-  }
-
-  async function checkChangesAndSave() {
-    if (saveLock) return;
-
-    const codeUpdated = !deepEqual(code, lastSavedCode, { strict: true });
-
-    if (codeUpdated) {
-      saveLock = true;
-      ongoingSave = true;
-    }
-
-    const codeToSave = code;
-    lastSavedCode = code;
-
-    if (!codeUpdated) {
-      saveLock = false;
-      return;
-    }
-
-    await saveCode(codeToSave);
   }
 
   $effect(() => {
     // Capture this variable for effect
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     code;
-    if (code == lastSavedCode) return;
-    if (untrack(() => saveLock)) {
-      changesAfterLock = true;
-      return;
-    }
-    clearTimeout(untrack(() => currentTimeout));
-    currentTimeout = setTimeout(
-      untrack(() => checkChangesAndSave),
-      3000
-    );
+    untrack(() => autosave).save(code);
   });
 
   const handleRun = async () => {
     disableEdit = true;
-    await saveCode(code);
+    await autosave.forceSave(code);
     const results = await runTestCases(page.params.session_id || '', code);
     executionObservable.fire('run', {
       generalTestResults: results.results.map((r) => r.success),
@@ -133,11 +88,8 @@
 
   const handleSubmit = async () => {
     disableEdit = true;
-    saveLock = true;
-    const codeToSave = code;
-    lastSavedCode = code;
-
-    const results = await submit(data.practiceSession.id, codeToSave);
+    await autosave.forceSave(code);
+    const results = await submit(data.practiceSession.id, code);
     executionObservable.fire('run', {
       generalTestResults: results.results.map((r) => r.success),
       publicTestResults: results.results.filter((p) => !p.hidden).map((p) => p),
@@ -154,7 +106,6 @@
       selectedTest = testCaseResults.results.length > 0 ? 0 : -1;
       disableEdit = false;
     }
-    saveLock = false;
   };
 
   const handleReturn = () => {
@@ -207,13 +158,13 @@
           <div class="flex flex-col h-full w-full">
             <div class="flex flex-row p-2">
               <div class="flex items-center gap-2">
-                {#if saveHasError}
+                {#if autosave.state === 'error'}
                   <span class="text-red-500 text-sm">Save failed</span>
                 {:else if testSubmitted}
                   <span class="text-success text-sm">All tests passed!</span>
-                {:else if ongoingSave}
+                {:else if autosave.state === 'saving'}
                   <span class="text-yellow-500 text-sm">Saving...</span>
-                {:else if !saveLock && !deepEqual(code, lastSavedCode, { strict: true })}
+                {:else if autosave.state === 'hold'}
                   <span class="text-gray-400 text-sm">Unsaved changes</span>
                 {:else}
                   <span class="text-green-500 text-sm">Saved</span>
