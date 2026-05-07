@@ -8,7 +8,7 @@
 </script>
 
 <svelte:head>
-  <title>Animorank</title>
+  <title>AnimoRank</title>
   <script
     async
     defer

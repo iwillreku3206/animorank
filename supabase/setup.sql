@@ -1,4 +1,4 @@
--- Animorank Database Setup Script
+-- AnimoRank Database Setup Script
 -- Run this in the Supabase SQL Editor to create all required tables.
 
 -- Teacher table (must be created before Problem_set due to FK)

@@ -132,7 +132,7 @@
         <h2 class="text-xl font-bold mb-4">Confirm Account Deletion</h2>
         <p class="text-gray-600 dark:text-gray-300 mb-4">
           You have declined the Terms of Service. If you do not accept them, you will not be able to
-          use Animorank. Are you sure you want to delete your account? This action cannot be undone.
+          use AnimoRank. Are you sure you want to delete your account? This action cannot be undone.
         </p>
 
         <label class="flex items-start gap-3 mb-6 cursor-pointer group">

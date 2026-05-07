@@ -27,7 +27,7 @@
   >
     <div class="relative mr-auto">
       <h1 class="font-bold text-2xl">
-        <a href="/">Animorank</a>
+        <a href="/">AnimoRank</a>
       </h1>
     </div>
 
