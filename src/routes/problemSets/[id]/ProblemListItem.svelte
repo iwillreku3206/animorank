@@ -14,14 +14,14 @@
 
   let tags = $derived([problem.difficulty, ...problem.topics].filter((x) => !!x));
 
+  console.log({ problemPassingRate, problemAttempts });
+
   let totalAttempts = $derived(
-    problemPassingRate?.reduce((prev, next) => prev + next._count._all, 0) || 0
+    parseInt((problemAttempts || [])[0]?.attempts.toString() || '0') || 0
   );
 
   let passRate = $derived(
-    (problemPassingRate?.find((x) => x.done)?._count._all || 0) / totalAttempts === 0
-      ? 1
-      : totalAttempts
+    (problemPassingRate?.find((x) => x.done)?._count._all || 0) / totalAttempts
   );
 
   let solveUsers = $derived(

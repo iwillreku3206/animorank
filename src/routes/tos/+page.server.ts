@@ -29,7 +29,7 @@ export const actions: Actions = {
       data: { hasAcceptedTOS: true }
     });
 
-    throw redirect(303, '/');
+    throw redirect(303, '/about');
   },
 
   deleteAccount: async ({ locals }) => {
