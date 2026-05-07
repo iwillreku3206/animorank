@@ -42,7 +42,7 @@
           </h2>
         </div>
         <div class="flex items-center gap-4">
-          <Button>Start Coding</Button>
+          <Button onclick={() => signIn('google')}>Start Coding</Button>
           <div>
             <span class="text-base-content text-base">View Demo</span>
           </div>
