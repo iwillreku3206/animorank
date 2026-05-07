@@ -11,9 +11,10 @@
 
   let {
     code = $bindable(),
+    locked = $bindable(false),
     language,
     ...rest
-  }: { code: string; language?: string; class?: string } = $props();
+  }: { code: string; locked?: boolean; language?: string; class?: string } = $props();
 
   let monacoInstance: monaco.editor.IStandaloneCodeEditor | undefined = $state();
   let editorContainer = $state<HTMLDivElement>();
@@ -52,13 +53,30 @@
 
   $effect(() => {
     if (monacoInstance && code !== monacoInstance.getValue()) {
-      monacoInstance.setValue(code);
+      const model = monacoInstance.getModel() as monaco.editor.IModel;
+
+      const fullRange = model.getFullModelRange();
+
+      monacoInstance.pushUndoStop();
+
+      monacoInstance.executeEdits('undoable-reset', [
+        {
+          range: fullRange,
+          text: code
+        }
+      ]);
+
+      monacoInstance.pushUndoStop();
     }
+  });
+
+  $effect(() => {
+    monacoInstance?.updateOptions({ readOnly: locked });
   });
 </script>
 
 <div
-  class="{rest.class} w-full h-full"
+  class="{rest.class} w-full h-full {locked ? 'opacity-90' : ''}"
   bind:this={editorContainer}
 >
   {#if !monacoInstance}

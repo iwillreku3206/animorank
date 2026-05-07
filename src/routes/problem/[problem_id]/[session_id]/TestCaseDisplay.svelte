@@ -7,16 +7,16 @@
     toggleTestResults?: boolean;
     testSubmitted?: boolean;
     handleReturn?: () => void;
+    selectedTest: number;
   }
 
   let {
     tests,
     toggleTestResults = $bindable(true),
     testSubmitted = false,
+    selectedTest = $bindable(-1),
     handleReturn
   }: Props = $props();
-
-  let selectedTest = $state(-1);
 
   let publicTests = $derived(tests.results.filter((x) => !x.hidden));
 

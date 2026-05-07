@@ -4,8 +4,7 @@ import { db } from '$lib/zenstack';
 import { error, successObject } from '$lib/response';
 
 const updateCodeValidator = z.object({
-  code: z.string().optional(),
-  done: z.boolean().optional()
+  code: z.string().optional()
 });
 
 export const PUT: RequestHandler = async ({ locals, params, request }) => {
@@ -29,8 +28,7 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
   await db.practiceSession.update({
     where: { id: params.id },
     data: {
-      ...(data.code !== undefined ? { previous_code: data.code } : {}),
-      ...(data.done !== undefined ? { done: data.done } : {})
+      ...(data.code !== undefined ? { previous_code: data.code } : {})
     }
   });
 

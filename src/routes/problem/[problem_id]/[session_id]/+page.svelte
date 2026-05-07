@@ -50,7 +50,11 @@
   let changesAfterLock = $state(false);
   let saveHasError = $state(false);
 
+  let disableEdit = $state(false);
+
   let executionObservable = new Subscribable<ExecutionEvent>();
+
+  let selectedTest = $state(-1);
 
   onMount(() => {
     const telemetry = ClientServiceProvider.instance().getService(TelemetryService);
@@ -112,6 +116,7 @@
   });
 
   const handleRun = async () => {
+    disableEdit = true;
     await saveCode(code);
     const results = await runTestCases(page.params.session_id || '', code);
     executionObservable.fire('run', {
@@ -121,10 +126,13 @@
       submittedCode: code
     });
     testCaseResults = results as TestRunResponse;
+    selectedTest = testCaseResults.results.length > 0 ? 0 : -1;
+    disableEdit = false;
     toggleTestResults = true;
   };
 
   const handleSubmit = async () => {
+    disableEdit = true;
     saveLock = true;
     const codeToSave = code;
     lastSavedCode = code;
@@ -142,18 +150,11 @@
     const allSuccess = results.results.every((x) => x.success);
     if (allSuccess) {
       testSubmitted = true;
-      // Mark as done in backend and keep editor locked
-      const res = await fetch(`/api/practice-session/${data.practiceSession.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ code: codeToSave, done: true }),
-        headers: { 'content-type': 'application/json' }
-      });
-      if (!res.ok) {
-        saveLock = false;
-      }
     } else {
-      saveLock = false;
+      selectedTest = testCaseResults.results.length > 0 ? 0 : -1;
+      disableEdit = false;
     }
+    saveLock = false;
   };
 
   const handleReturn = () => {
@@ -171,7 +172,10 @@
     class="overflow-auto"
     style="height: calc(100vh - 4rem)"
   >
-    <Pane class="pl-5 pb-10 pt-5 pr-3 overflow-scroll h-full">
+    <Pane
+      class="pl-5 pb-10 pt-5 pr-3 overflow-scroll h-full"
+      minSize={25}
+    >
       <h2 class="text-2xl">{data.problem.name}</h2>
       <div style="filter: invert(100%) hue-rotate(180deg);">
         <YfmStaticView
@@ -237,17 +241,20 @@
                 >
                 <button
                   class="btn btn-sm"
-                  onclick={handleRun}>Run</button
+                  onclick={handleRun}
+                  disabled={disableEdit}>Run</button
                 >
                 <Button
                   class="btn-sm"
-                  onclick={handleSubmit}>Submit</Button
+                  onclick={handleSubmit}
+                  disabled={disableEdit}>Submit</Button
                 >
               </div>
             </div>
 
             <CodeEditor
               bind:code
+              bind:locked={disableEdit}
               language={data.problem.language.toLowerCase()}
             />
           </div>
@@ -256,6 +263,7 @@
           <Pane>
             <TestCaseDisplay
               tests={testCaseResults}
+              bind:selectedTest
               {toggleTestResults}
               {testSubmitted}
               {handleReturn}
