@@ -146,12 +146,6 @@ export const load: PageServerLoad = async ({ locals, url }) => {
         .leftJoin('PracticeSession', 'PracticeSession.problem_id', 'Problem.id')
         .where((eb) =>
           eb.or([
-            eb('PracticeSession.student_id', 'is', null),
-            eb('PracticeSession.student_id', '=', String(session.user.id))
-          ])
-        )
-        .where((eb) =>
-          eb.or([
             eb('ProblemSetBookmark.user_id', 'is', null),
             eb('ProblemSetBookmark.user_id', '=', session.user.id || '')
           ])
