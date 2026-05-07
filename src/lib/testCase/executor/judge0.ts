@@ -53,7 +53,7 @@ export class Judge0Executor extends CodeExecutor {
       };
     }
 
-    logger.debug('status: ' + res.status);
+    logger.debug('status: ' + JSON.stringify(res.status));
 
     if (res.status.id !== 3) {
       // 3 is success, so anything else is a runtime error
