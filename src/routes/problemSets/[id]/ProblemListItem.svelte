@@ -1,6 +1,7 @@
 <script lang="ts">
   import TagChip from '$lib/components/TagChip.svelte';
   import type { PageProps } from './$types';
+  import CheckIcon from '@iconify-svelte/fa6-solid/circle-check';
 
   let {
     problem,
@@ -37,7 +38,12 @@
         />
       {/each}
     </div>
-    <h2 class="text-xl">{problem.title}</h2>
+    <h2 class="text-xl flex flex-row items-center gap-4">
+      {problem.title}
+      {#if problem.status === 'done'}
+        <CheckIcon class="w-6 h-6 text-success" />
+      {/if}
+    </h2>
     <div class="flex flex-row">
       <div class="w-48">
         Passing Rate: <span class="font-bold">{(passRate * 100).toFixed(2)}%</span>
