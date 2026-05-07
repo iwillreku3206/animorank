@@ -19,6 +19,7 @@ COPY --from=builder /app/node_modules node_modules/
 COPY --from=builder /app/src/zenstack src/zenstack
 COPY --from=builder /app/prisma/migrations prisma/migrations
 COPY package.json .
+COPY prisma.config.ts .
 COPY docker-entrypoint.sh .
 RUN npm install -g @zenstackhq/cli
 # RUN npx zenstack generate
