@@ -102,7 +102,7 @@
     </div>
   </header>
 
-  <div class="px-4 xl:px-32 gap-4 py-8">
+  <div class="flex flex-col px-4 xl:px-32 gap-4 py-8">
     {#each problemSet.problems as problem (problem.id)}
       <ProblemListItem
         {problem}

@@ -15,11 +15,13 @@
   let tags = $derived([problem.difficulty, ...problem.topics].filter((x) => !!x));
 
   let totalAttempts = $derived(
-    problemPassingRate?.reduce((prev, next) => prev + next._count._all, 0) || 1
+    problemPassingRate?.reduce((prev, next) => prev + next._count._all, 0) || 0
   );
 
   let passRate = $derived(
-    (problemPassingRate?.find((x) => x.done)?._count._all || 0) / totalAttempts
+    (problemPassingRate?.find((x) => x.done)?._count._all || 0) / totalAttempts === 0
+      ? 1
+      : totalAttempts
   );
 
   let solveUsers = $derived(
