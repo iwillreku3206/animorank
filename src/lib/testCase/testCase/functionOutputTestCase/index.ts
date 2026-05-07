@@ -15,6 +15,7 @@ import { CCodeGenerator } from '$lib/testCase/codeGenerator/c';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { CodeExecutor, type CodeExecutionRequest } from '$lib/testCase/executor';
 import type { JsonValue } from '@zenstackhq/orm';
+import { Logger } from '$lib/logging/logger';
 
 const mainRegex = /\s*(int|void)\s+main\s*\([^)]*\)\s*\{[^}]*\}\s*/g;
 
@@ -51,9 +52,16 @@ export class FunctionOutputTestCase extends TestCase<
     const { dbTestCase } = this;
     const codeExecutor = ServerServiceProvider.instance().getService(CodeExecutor);
 
+    const logger = ServerServiceProvider.instance().getService(
+      Logger,
+      'testCase/functionOutputTestCase'
+    );
+
     // For now, we assume that it will be written in C.
     const codeGenerator = new CCodeGenerator();
     const testCode = codeGenerator.generateTestCode(dbTestCase);
+
+    logger.debug(testCode);
 
     const codeExecutionRequest: CodeExecutionRequest = {
       compileScript: compile,

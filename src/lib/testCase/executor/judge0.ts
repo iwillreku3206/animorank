@@ -2,9 +2,13 @@ import AdmZip from 'adm-zip';
 import { CodeExecutor, type CodeExecutionRequest, type CodeExecutionResponse } from '.';
 import type { Judge0SubmissionRequest, Judge0SubmissionResponse } from '$lib/types/judge0';
 import { JUDGE0_BASE_URL } from '$env/static/private';
+import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { Logger } from '$lib/logging/logger';
 
 export class Judge0Executor extends CodeExecutor {
   public async executeCode(request: CodeExecutionRequest): Promise<CodeExecutionResponse> {
+    const logger = ServerServiceProvider.instance().getService(Logger, 'executor/judge0');
+
     const zip = new AdmZip();
     for (const file of request.files) {
       zip.addFile(file.name, file.contents);
@@ -25,10 +29,8 @@ export class Judge0Executor extends CodeExecutor {
     });
     const res = (await req.json()) as Judge0SubmissionResponse;
 
-    let { stdout, stderr } = res;
-
-    stdout = Buffer.from(res.stdout || '', 'base64').toString('utf8');
-    stderr = Buffer.from(res.stderr || '', 'base64').toString('utf8');
+    const stdout = Buffer.from(res.stdout || '', 'base64').toString('utf8');
+    const stderr = Buffer.from(res.stderr || '', 'base64').toString('utf8');
 
     if (res.status.id === 6) {
       // Compile error
@@ -50,6 +52,8 @@ export class Judge0Executor extends CodeExecutor {
         stderr
       };
     }
+
+    logger.debug('status: ' + res.status);
 
     if (res.status.id !== 3) {
       // 3 is success, so anything else is a runtime error
