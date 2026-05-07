@@ -238,7 +238,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   }
 
   if (status === 'in_progress') {
-    problemSetQuery = problemSetQuery.where('progress_started', '<>', 0);
+    problemSetQuery = problemSetQuery
+      .where('progress_started', '<>', 0)
+      .where('progress_pct', '<>', 1);
   }
 
   if (status === 'complete') {
