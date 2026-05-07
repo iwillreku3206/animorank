@@ -10,8 +10,8 @@
   import ProblemSetListItem from './ProblemSetListItem.svelte';
   import type { Filters } from './api';
   import { page } from '$app/state';
-  import { goto } from '$app/navigation';
   import { SvelteURLSearchParams } from 'svelte/reactivity';
+  import ButtonLink from '$lib/components/ButtonLink.svelte';
 
   function buildSearchParams() {
     const params = new SvelteURLSearchParams();
@@ -25,6 +25,7 @@
     if (sortDesc) params.set('sortOrder', 'desc');
     if (viewMode === 'list') params.set('viewMode', 'list');
     if (pageNumber !== 1) params.set('page', String(pageNumber));
+
     return params.toString();
   }
 
@@ -127,7 +128,10 @@
       {data}
       bind:filters
     />
-    <Button onclick={() => goto(`?${buildSearchParams()}`)}>Apply Filters</Button>
+    <ButtonLink
+      href="?{buildSearchParams()}"
+      data-sveltekit-reload>Apply Filters</ButtonLink
+    >
     <div class="join">
       <label
         class="join-item has-checked:btn-primary has-checked:bg-primary has-checked:text-primary-content text-base-content btn bg-base-100"

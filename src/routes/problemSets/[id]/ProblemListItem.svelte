@@ -14,8 +14,6 @@
 
   let tags = $derived([problem.difficulty, ...problem.topics].filter((x) => !!x));
 
-  console.log({ problemPassingRate, problemAttempts });
-
   let totalAttempts = $derived(
     parseInt((problemAttempts || [])[0]?.attempts.toString() || '0') || 0
   );
@@ -57,10 +55,18 @@
   </div>
   <div class="ml-auto">
     <a
-      class="btn bg-primary text-primary-content px-4 py-3"
+      class="btn px-4 py-3 {problem.status === 'not_started'
+        ? 'bg-primary text-primary-content '
+        : 'bg-neutral text-neutral-content'}"
       href="/problem/{problem.id}"
     >
-      Start
+      {#if problem.status === 'not_started'}
+        Start
+      {:else if problem.status === 'not_finished'}
+        Continue
+      {:else}
+        Retry
+      {/if}
     </a>
   </div>
 </div>

@@ -114,7 +114,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
   const params = url.searchParams;
   let sortBy = params.get('sortBy') || '';
-  if (['', 'problems_solved', 'problem_count', 'completion_pct', 'difficulty'].includes(sortBy))
+  if (!['', 'problems_solved', 'problem_count', 'completion_pct', 'difficulty'].includes(sortBy))
     sortBy = '';
   const sortOrder = params.get('sortOrder') === 'desc' ? 'desc' : 'asc';
 
@@ -123,7 +123,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
   const selectedTags = params.getAll('tag');
   let status = params.get('status') || '';
-  if (['', 'not_started', 'in_progress', 'complete'].includes(status)) status = '';
+  if (!['', 'not_started', 'in_progress', 'complete'].includes(status)) status = '';
   const creator = params.get('creator') || undefined;
   const bookmarked = params.get('bookmarked') === 'true';
 
@@ -138,17 +138,19 @@ export const load: PageServerLoad = async ({ locals, url }) => {
         )
         .innerJoin('Teacher', 'Teacher.id', 'ProblemSetCollaborator.collaborator_id')
         .innerJoin('User', 'User.id', 'Teacher.id')
-        .leftJoin('ProblemSetBookmark', 'ProblemSetBookmark.problem_set_id', 'ProblemSet.id')
+        .leftJoin('ProblemSetBookmark', (join) =>
+          join
+            .onRef('ProblemSetBookmark.problem_set_id', '=', 'ProblemSet.id')
+            .on('ProblemSetBookmark.user_id', '=', session.user.id || '')
+        )
         .leftJoin('ProblemSetTopic', 'ProblemSetTopic.problem_set_id', 'ProblemSet.id')
         .leftJoin('TopicTag', 'TopicTag.id', 'ProblemSetTopic.topic_tag_id')
         .leftJoin('DifficultyTag', 'DifficultyTag.id', 'ProblemSet.difficulty_id')
         .leftJoin('Problem', 'Problem.problem_set_id', 'ProblemSet.id')
-        .leftJoin('PracticeSession', 'PracticeSession.problem_id', 'Problem.id')
-        .where((eb) =>
-          eb.or([
-            eb('ProblemSetBookmark.user_id', 'is', null),
-            eb('ProblemSetBookmark.user_id', '=', session.user.id || '')
-          ])
+        .leftJoin('PracticeSession', (join) =>
+          join
+            .onRef('PracticeSession.problem_id', '=', 'Problem.id')
+            .on('PracticeSession.student_id', '=', session.user.id || '')
         )
         .groupBy([
           'ProblemSet.id',
@@ -166,6 +168,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
           eb.fn
             .count('Problem.id')
             .filterWhere((eb) => eb('PracticeSession.done', 'is not', null))
+            .filterWhere((eb) => eb('PracticeSession.student_id', '=', session.user.id || ''))
             .distinct()
             .as('progress_started')
         )
@@ -173,6 +176,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
           eb.fn
             .count('Problem.id')
             .filterWhere((eb) => eb('PracticeSession.done', '=', true))
+            .filterWhere((eb) => eb('PracticeSession.student_id', '=', session.user.id || ''))
             .distinct()
             .as('progress_finished')
         )
@@ -183,6 +187,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
               eb.fn
                 .count('Problem.id')
                 .filterWhere((eb) => eb('PracticeSession.done', '=', true))
+                .filterWhere((eb) => eb('PracticeSession.student_id', '=', session.user.id || ''))
                 .distinct(),
               'float8'
             ),
@@ -257,6 +262,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   }
 
   problemSetQuery = problemSetQuery.limit(pageSize).offset((page - 1) * pageSize);
+  console.log(problemSetQuery.compile().sql);
 
   const problemSetQueryResult = await problemSetQuery.execute();
 
