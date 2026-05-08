@@ -49,6 +49,8 @@
   let executionObservable = new Subscribable<ExecutionEvent>();
   let selectedTest = $state(-1);
 
+  let lastTestType: 'run' | 'submit' = $state('run');
+
   onMount(() => {
     const telemetry = ClientServiceProvider.instance().getService(TelemetryService);
     telemetry.attachExecution(executionObservable);
@@ -82,6 +84,7 @@
       submittedCode: code
     });
     testCaseResults = results as TestRunResponse;
+    lastTestType = 'run';
     selectedTest = testCaseResults.results.length > 0 ? 0 : -1;
     disableEdit = false;
     toggleTestResults = true;
@@ -97,6 +100,7 @@
       runType: 'submit',
       submittedCode: code
     });
+    lastTestType = 'submit';
     testCaseResults = results;
     toggleTestResults = true;
 
@@ -119,10 +123,10 @@
   };
 </script>
 
-<div class="splitpanes-nobg h-full">
+<div class="splitpanes-nobg">
   <Splitpanes
-    class="overflow-auto"
-    style="height: calc(100vh - 4rem)"
+    class="overflow-hidden"
+    style="height: calc(100vh - 5rem)"
   >
     <Pane
       class="pl-5 pb-10 pt-5 pr-3 overflow-scroll h-full"
@@ -213,13 +217,14 @@
           </div>
         </Pane>
         {#if toggleTestResults}
-          <Pane>
+          <Pane minSize={20}>
             <TestCaseDisplay
               tests={testCaseResults}
               bind:selectedTest
               {toggleTestResults}
               {testSubmitted}
               {handleReturn}
+              {lastTestType}
             />
           </Pane>
         {/if}
