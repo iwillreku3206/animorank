@@ -21,6 +21,7 @@
 
   onMount(() => {
     if (!browser) return;
+
     import('$lib/monaco').then((module) => {
       if (!editorContainer) return;
       const { monaco } = module;
@@ -37,8 +38,11 @@
           enabled: false
         },
         theme: 'vs-dark',
-        wordWrap: 'on'
+        wordWrap: 'on',
+        wordBasedSuggestions: 'currentDocument'
       });
+
+      monacoInstance.setModel(monaco.editor.createModel(code, 'c'));
 
       monacoInstance.onDidChangeModelContent(() => {
         code = monacoInstance?.getValue() || '';
