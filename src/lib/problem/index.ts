@@ -1,3 +1,4 @@
+import type { PreviousCodeSection } from '$lib/practiceSession/index.svelte';
 import { parseSlots } from '$lib/utils/parseSlots';
 import type { Problem as ProblemModel } from '$lib/zenstack/models';
 
@@ -25,6 +26,14 @@ export class Problem {
   getProcessedCode(): string {
     const parsed = parseSlots(this.starter_code);
     return parsed.fullCode;
+  }
+
+  /**
+   * Return the default sections
+   */
+  getDefaultSections(): PreviousCodeSection[] {
+    const parsed = parseSlots(this.starter_code);
+    return parsed.sections;
   }
 
   // Getters for Problem model fields

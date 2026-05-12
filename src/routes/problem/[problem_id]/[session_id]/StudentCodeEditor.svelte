@@ -51,19 +51,24 @@
     monacoInstance?.setModel(newModel);
     monacoModel?.dispose();
     monacoModel = newModel;
-    registerConstrained();
+    registerConstrained(
+      problem.getSlots().map((slot) => ({ label: slot.label, range: slot.initialRange }))
+    );
+    codeSections = Object.fromEntries(
+      problem.getDefaultSections().map((s) => [s.slot.label, s.code])
+    );
   }
 
-  function registerConstrained() {
+  function registerConstrained(
+    ranges: { range: [number, number, number, number]; label: string }[]
+  ) {
     if (useSlots && monacoInstance && constrainedInstance && monacoModel) {
       constrainedInstance.initializeIn(monacoInstance);
+      const model = monacoInstance.getModel();
+      if (!model) return;
       constrainedInstance.addRestrictionsTo(
-        monacoModel,
-        practiceSession.previousCode.sections.map((section) => ({
-          range: section.slot.initialRange,
-          label: section.slot.label,
-          allowMultiline: true
-        }))
+        model,
+        ranges.map((range) => ({ ...range, allowMultiline: true }))
       );
 
       // @ts-expect-error Added by non-TypeScript plugin
@@ -76,6 +81,8 @@
       monacoModel.onDidChangeContentInEditableRange((newCode) => {
         codeSections = { ...$state.snapshot(codeSections), ...newCode };
       });
+
+      monacoInstance.onDidAttemptReadOnlyEdit((change) => console.log(change));
     }
   }
 
@@ -89,7 +96,12 @@
 
       telemetry.attachMonaco(monacoInstance);
 
-      registerConstrained();
+      registerConstrained(
+        practiceSession.previousCode.sections.map((section) => ({
+          range: section.slot.initialRange,
+          label: section.slot.label
+        }))
+      );
     });
   });
 

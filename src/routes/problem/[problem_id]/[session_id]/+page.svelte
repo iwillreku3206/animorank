@@ -77,7 +77,6 @@
 
   $effect(() => {
     $state.snapshot(codeSections);
-    console.log('updated in page');
     untrack(() => autosave).save($state.snapshot(codeSections));
   });
 
