@@ -55,9 +55,9 @@ export class SchemaType implements SchemaDef {
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
                     default: false as FieldDefault
                 },
-                previous_code: {
-                    name: "previous_code",
-                    type: "String"
+                previous_state: {
+                    name: "previous_state",
+                    type: "Json"
                 },
                 created_at: {
                     name: "created_at",
@@ -204,6 +204,12 @@ export class SchemaType implements SchemaDef {
                     type: "Boolean",
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
                     default: true as FieldDefault
+                },
+                uses_slots: {
+                    name: "uses_slots",
+                    type: "Boolean",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
+                    default: false as FieldDefault
                 },
                 difficulty_id: {
                     name: "difficulty_id",

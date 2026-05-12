@@ -76,6 +76,7 @@
     "@zenstackhq/schema": "^3.4.4",
     "adm-zip": "^0.5.16",
     "bits-ui": "^2.16.3",
+    "constrained-editor-plugin": "^1.4.0",
     "deep-equal": "^2.2.3",
     "dotenv": "^17.3.1",
     "google-auth-library": "^9.14.1",

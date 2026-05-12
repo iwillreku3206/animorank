@@ -24,7 +24,7 @@
 <div class="flex flex-col min-h-screen bg-base-300 text-white">
   <!--Navbar start-->
   <div
-    class="min-h-20 px-9 flex flex-row items-center border-b border-b-neutral sticky top-0 left-0 right-0 bg-base-100 z-50"
+    class="min-h-16 px-9 flex flex-row items-center border-b border-b-neutral sticky top-0 left-0 right-0 bg-base-100 z-50"
   >
     <div class="relative mr-auto">
       <h1 class="font-bold text-2xl">

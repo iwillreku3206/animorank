@@ -3,21 +3,23 @@ import type { RequestHandler } from './$types';
 import { db } from '$lib/zenstack';
 import { error, successObject } from '$lib/response';
 import type { ProblemTestCase } from '$lib/zenstack/models';
-import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
-import type { TestCaseResult } from '$lib/testCase/testCase';
+import type { TestCase, TestCaseResult } from '$lib/testCase/testCase';
+import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
+import { ProblemService } from '$lib/problem/problemService';
+import { TestCaseService } from '$lib/testCase/testCaseService';
 
 const runValidator = z.object({
-  code: z.string(),
   test_type: z.enum(['public', 'all']).default('public')
 });
 
-const testCaseRegistry = new TestCaseRegistry();
+async function runTestCase(
+  testCase: TestCase<ProblemTestCase>,
+  code: string
+): Promise<TestCaseResult> {
+  const result = await testCase.execute(code);
 
-async function runTestCase(dbTestCase: ProblemTestCase, code: string): Promise<TestCaseResult> {
-  const testCaseInstance = testCaseRegistry.getInstance(dbTestCase.type, dbTestCase);
-  const result = await testCaseInstance.execute(code);
-
-  if (!dbTestCase.public) {
+  if (!testCase.dbTestCase.public) {
     result.runInfo = [];
     if (!result.hidden) {
       (result.testCaseInfo as ProblemTestCase | undefined) = undefined;
@@ -32,6 +34,11 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   const session = await locals.auth();
   if (!session) return error(403, 'Unauthorized');
 
+  const serviceProvider = ServerServiceProvider.instance();
+  const practiceSessionService = serviceProvider.getService(PracticeSessionService);
+  const problemService = serviceProvider.getService(ProblemService);
+  const testCaseService = serviceProvider.getService(TestCaseService);
+
   const {
     success: parseSuccess,
     data: parsedData,
@@ -39,20 +46,33 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   } = await runValidator.safeParseAsync(await request.json());
   if (!parseSuccess) return error(400, parseError);
 
-  const practiceSession = await db.practiceSession.findUnique({
-    where: { id: params.id, student_id: session.user.id },
-    include: { problem: { include: { test_cases: true } } }
+  const practiceSession = await practiceSessionService.findById({
+    id: params.id,
+    user: session.user
   });
-
   if (!practiceSession) return error(404, 'Practice session not found');
 
-  const { code, test_type } = parsedData;
-  const testCases =
-    test_type === 'public'
-      ? practiceSession.problem.test_cases.filter((tc) => tc.public)
-      : practiceSession.problem.test_cases;
+  const problem = await problemService.findById({
+    id: practiceSession.problemId,
+    user: session.user
+  });
+  // this should never happen, this is just a TypeScript assertion
+  if (!problem) return error(404, 'Problem not found');
 
-  const results = await Promise.all(testCases.map((tc) => runTestCase(tc, code)));
+  const testCasesRaw = await testCaseService.findByProblem({
+    problemId: problem.id,
+    user: session.user
+  });
+
+  console.log(testCasesRaw);
+
+  const { test_type } = parsedData;
+  const testCases =
+    test_type === 'public' ? testCasesRaw.filter((tc) => tc.dbTestCase.public) : testCasesRaw;
+
+  const results = await Promise.all(
+    testCases.map((tc) => runTestCase(tc, practiceSession.previousCode.fullCode))
+  );
 
   if (test_type === 'all') {
     const allSuccess = results.reduce((prev, next) => prev && next.success, true);

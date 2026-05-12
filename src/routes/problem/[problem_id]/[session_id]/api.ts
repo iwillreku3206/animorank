@@ -2,11 +2,10 @@ import type { TestCaseResult } from '$lib/testCase/testCase';
 
 export type TestRunResponse = { results: TestCaseResult[] };
 
-export async function runTestCases(session_id: string, code: string): Promise<TestRunResponse> {
+export async function runTestCases(session_id: string): Promise<TestRunResponse> {
   const req = await fetch(`/api/practice-session/${session_id}/run`, {
     method: 'POST',
     body: JSON.stringify({
-      code,
       test_type: 'public'
     }),
     headers: {
@@ -19,11 +18,10 @@ export async function runTestCases(session_id: string, code: string): Promise<Te
   return res as TestRunResponse;
 }
 
-export async function submit(session_id: string, code: string): Promise<TestRunResponse> {
+export async function submit(session_id: string): Promise<TestRunResponse> {
   const req = await fetch(`/api/practice-session/${session_id}/run`, {
     method: 'POST',
     body: JSON.stringify({
-      code,
       test_type: 'all'
     }),
     headers: {

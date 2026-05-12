@@ -56,7 +56,13 @@ export class TestCaseService {
       where: {
         problem_id: options.problemId,
         problem: {
-          problem_set: { collaborators: { some: { collaborator_id: options.user.id || '' } } }
+          problem_set: {
+            OR: [
+              { collaborators: { some: { collaborator_id: options.user.id || '' } } },
+              { is_global: true },
+              { subscriptions: { some: { student_id: options.user.id || '' } } }
+            ]
+          }
         }
       }
     });

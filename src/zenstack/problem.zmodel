@@ -23,6 +23,7 @@ model Problem {
   language          Language          @default(C)
   starter_code      String            @default("")
   visible           Boolean           @default(true)
+  uses_slots        Boolean           @default(false)
 
   difficulty_id     String?           @db.Uuid
   difficulty        DifficultyTag?    @relation(fields: [difficulty_id], references: [id], onDelete: SetNull)

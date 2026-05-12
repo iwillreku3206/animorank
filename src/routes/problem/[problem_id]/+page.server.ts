@@ -1,41 +1,22 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { db } from '$lib/zenstack';
+import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
   const session = await locals.auth();
 
   if (!session || !session.user.id) redirect(302, '/about');
 
-  const problem = await db.problem.findUnique({
-    where: {
-      id: params.problem_id,
-      problem_set: {
-        OR: [{ subscriptions: { some: { student_id: session.user.id } } }, { is_global: true }]
-      }
-    },
-    include: { practice_sessions: { where: { student_id: session.user.id } } }
-  });
-  if (!problem) throw error(404, { message: 'Not Found' });
+  const serviceProvider = ServerServiceProvider.instance();
+  const practiceSessionService = serviceProvider.getService(PracticeSessionService);
 
-  let practiceSessionId: string;
-
-  const practiceSession = await db.practiceSession.findFirst({
-    where: { problem_id: params.problem_id, student_id: session.user.id, done: false }
+  const practiceSession = await practiceSessionService.findLatestNonDoneOrCreate({
+    problemId: params.problem_id,
+    user: session.user
   });
 
-  if (practiceSession) {
-    practiceSessionId = practiceSession.id;
-  } else {
-    const newPracticeSession = await db.practiceSession.create({
-      data: {
-        student_id: session.user.id,
-        problem_id: problem.id,
-        previous_code: problem.starter_code
-      }
-    });
-    practiceSessionId = newPracticeSession.id;
-  }
+  if (!practiceSession) throw error(404, { message: 'Not Found' });
 
-  throw redirect(302, `/problem/${params.problem_id}/${practiceSessionId}`);
+  throw redirect(302, `/problem/${params.problem_id}/${practiceSession.id}`);
 };

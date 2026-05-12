@@ -2,29 +2,38 @@
   import { onMount } from 'svelte';
   import { type monaco } from '$lib/monaco';
   import { browser } from '$app/environment';
-  import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
-  import { TelemetryService } from '$lib/telemetry/telemetryService';
-
-  // export const setValue = () => {
-  // 	value = editor.getValue();
-  // };
+  import constrainedEditor from 'constrained-editor-plugin';
 
   let {
-    code = $bindable(),
-    locked = $bindable(false),
+    // eslint-disable-next-line no-useless-assignment
+    monacoNamespace = $bindable(undefined),
+    monacoInstance = $bindable(undefined),
+    monacoModel = $bindable(undefined),
+    // eslint-disable-next-line no-useless-assignment
+    constrainedInstance = $bindable(undefined),
+    code = $bindable(''),
     language,
     ...rest
-  }: { code: string; locked?: boolean; language?: string; class?: string } = $props();
+  }: {
+    monacoNamespace?: Promise<typeof monaco | undefined>;
+    monacoInstance?: monaco.editor.IStandaloneCodeEditor;
+    monacoModel?: monaco.editor.ITextModel;
+    constrainedInstance?: ReturnType<typeof constrainedEditor>;
+    code: string;
+    language: string;
+    class?: string;
+  } = $props();
 
-  let monacoInstance: monaco.editor.IStandaloneCodeEditor | undefined = $state();
   let editorContainer = $state<HTMLDivElement>();
 
   onMount(() => {
     if (!browser) return;
 
-    import('$lib/monaco').then((module) => {
+    monacoNamespace = import('$lib/monaco').then((module) => {
       if (!editorContainer) return;
       const { monaco } = module;
+      const constrained = constrainedEditor(monaco);
+      constrainedInstance = constrained;
 
       monacoInstance = monaco.editor.create(editorContainer, {
         bracketPairColorization: {
@@ -42,27 +51,26 @@
         wordBasedSuggestions: 'currentDocument'
       });
 
-      monacoInstance.setModel(monaco.editor.createModel(code, 'c'));
+      monacoModel = monacoInstance.getModel() || undefined;
 
       monacoInstance.onDidChangeModelContent(() => {
         code = monacoInstance?.getValue() || '';
       });
 
-      const telemetry = ClientServiceProvider.instance().getService(TelemetryService);
-      telemetry.attachMonaco(monacoInstance);
-
-      return () => monacoInstance?.dispose();
+      return monaco;
     });
+    return () => {
+      monacoInstance?.dispose();
+      monacoModel?.dispose();
+    };
   });
 
   $effect(() => {
     if (monacoInstance && code !== monacoInstance.getValue()) {
       const model = monacoInstance.getModel() as monaco.editor.IModel;
-
+      if (!model) return;
       const fullRange = model.getFullModelRange();
-
       monacoInstance.pushUndoStop();
-
       monacoInstance.executeEdits('undoable-reset', [
         {
           range: fullRange,
@@ -73,17 +81,28 @@
       monacoInstance.pushUndoStop();
     }
   });
-
-  $effect(() => {
-    monacoInstance?.updateOptions({ readOnly: locked });
-  });
 </script>
 
 <div
-  class="{rest.class} w-full h-full {locked ? 'opacity-90' : ''}"
+  class="{rest.class} w-full h-full"
   bind:this={editorContainer}
 >
   {#if !monacoInstance}
     <p class="content-center w-full h-full text-grey-400">Loading Editor...</p>
   {/if}
 </div>
+
+<style>
+  :global(.customClass--singleLine) {
+    padding: 0.25rem;
+    background-color: black;
+    width: 100% !important;
+    opacity: 60%;
+  }
+  :global(.customClass--multiLine) {
+    padding: 0.25rem;
+    background-color: black;
+    width: 100% !important;
+    opacity: 60%;
+  }
+</style>

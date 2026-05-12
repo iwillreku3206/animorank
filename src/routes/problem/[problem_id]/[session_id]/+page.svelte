@@ -1,5 +1,4 @@
 <script lang="ts">
-  import CodeEditor from '$lib/components/CodeEditor.svelte';
   import TestCaseDisplay from './TestCaseDisplay.svelte';
   import { Pane, Splitpanes } from 'svelte-splitpanes';
   import type { PageProps } from './$types';
@@ -21,21 +20,20 @@
   import { AutoSave } from '$lib/utils/autosave.svelte.ts';
   import { createHotkey } from '@tanstack/svelte-hotkeys';
   import defaultPlugins from '@diplodoc/transform/lib/plugins';
+  import { Problem } from '$lib/problem';
+  import { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
+  import StudentCodeEditor from './StudentCodeEditor.svelte';
 
   if (browser) {
     import('@diplodoc/latex-extension/runtime');
   }
 
   let { data }: PageProps = $props();
-
+  let problem = $derived(new Problem(data.problem));
   // svelte-ignore state_referenced_locally
-  let code = $state(data.practiceSession.previous_code);
-  const handleReset = () => {
-    code = data.problem.starter_code;
-  };
+  let practiceSession = new ClientPracticeSession(data.practiceSession, problem, data.user);
 
-  // svelte-ignore state_referenced_locally
-  let autosave = $state(new AutoSave(() => saveCode(code), code));
+  let handleReset = $state(() => {});
 
   let toggleTestResults = $state(false);
   let testSubmitted = $state(false);
@@ -51,37 +49,47 @@
 
   let lastTestType: 'run' | 'submit' = $state('run');
 
+  let codeSections: Record<string, string> = $state(
+    Object.fromEntries(
+      practiceSession.previousCode.sections.map((section) => [section.slot.label, section.code])
+    )
+  );
+
+  // svelte-ignore state_referenced_locally
+  let autosave = $state(new AutoSave(saveCode, $state.snapshot(codeSections)));
+
   onMount(() => {
     const telemetry = ClientServiceProvider.instance().getService(TelemetryService);
     telemetry.attachExecution(executionObservable);
   });
 
-  createHotkey('Control+S', () => autosave.forceSave(code));
+  createHotkey('Control+S', () => autosave.forceSave($state.snapshot(codeSections)));
 
-  async function saveCode(codeToSave: string) {
-    await fetch(`/api/practice-session/${data.practiceSession.id}`, {
+  async function saveCode() {
+    await fetch(`/api/practice-session/${practiceSession.id}`, {
       method: 'PUT',
-      body: JSON.stringify({ code: codeToSave }),
+      body: JSON.stringify({
+        code: $state.snapshot(codeSections)
+      }),
       headers: { 'content-type': 'application/json' }
     });
   }
 
   $effect(() => {
-    // Capture this variable for effect
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    code;
-    untrack(() => autosave).save(code);
+    $state.snapshot(codeSections);
+    console.log('updated in page');
+    untrack(() => autosave).save($state.snapshot(codeSections));
   });
 
   const handleRun = async () => {
     disableEdit = true;
-    await autosave.forceSave(code);
-    const results = await runTestCases(page.params.session_id || '', code);
+    await autosave.forceSave($state.snapshot(codeSections));
+    const results = await runTestCases(page.params.session_id || '');
     executionObservable.fire('run', {
       generalTestResults: results.results.map((r) => r.success),
       publicTestResults: results.results.filter((p) => !p.hidden).map((p) => p),
       runType: 'run',
-      submittedCode: code
+      submittedCode: practiceSession.previousCode.fullCode
     });
     testCaseResults = results as TestRunResponse;
     lastTestType = 'run';
@@ -92,13 +100,13 @@
 
   const handleSubmit = async () => {
     disableEdit = true;
-    await autosave.forceSave(code);
-    const results = await submit(data.practiceSession.id, code);
+    await autosave.forceSave($state.snapshot(codeSections));
+    const results = await submit(data.practiceSession.id);
     executionObservable.fire('run', {
       generalTestResults: results.results.map((r) => r.success),
       publicTestResults: results.results.filter((p) => !p.hidden).map((p) => p),
       runType: 'submit',
-      submittedCode: code
+      submittedCode: practiceSession.previousCode.fullCode
     });
     lastTestType = 'submit';
     testCaseResults = results;
@@ -194,7 +202,9 @@
                 </button>
                 <button
                   class="btn btn-sm"
-                  onclick={handleReset}>Reset Code</button
+                  onclick={() =>
+                    confirm('Reset code? This action cannot be undone.') && handleReset()}
+                  >Reset Code</button
                 >
                 <button
                   class="btn btn-sm"
@@ -209,10 +219,14 @@
               </div>
             </div>
 
-            <CodeEditor
-              bind:code
+            <StudentCodeEditor
               bind:locked={disableEdit}
               language={data.problem.language.toLowerCase()}
+              bind:codeSections
+              useSlots={problem.uses_slots}
+              registerReset={(cb) => (handleReset = cb)}
+              {problem}
+              {practiceSession}
             />
           </div>
         </Pane>

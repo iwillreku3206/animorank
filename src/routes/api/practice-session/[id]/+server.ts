@@ -1,10 +1,10 @@
 import z from 'zod';
 import type { RequestHandler } from './$types';
-import { db } from '$lib/zenstack';
+import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
 import { error, successObject } from '$lib/response';
 
 const updateCodeValidator = z.object({
-  code: z.string().optional()
+  code: z.record(z.string(), z.string())
 });
 
 export const PUT: RequestHandler = async ({ locals, params, request }) => {
@@ -18,19 +18,13 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
   } = await updateCodeValidator.safeParseAsync(await request.json());
   if (!success) return error(400, zodError);
 
-  const practiceSession = await db.practiceSession.findUnique({
-    where: { id: params.id }
+  const service = PracticeSessionService.instance();
+
+  const update = await service.update({
+    id: params.id,
+    user: session.user,
+    newState: { previous_state: data }
   });
 
-  if (!practiceSession) return error(404, 'Practice session not found');
-  if (practiceSession.student_id !== session.user.id) return error(403, 'Unauthorized');
-
-  await db.practiceSession.update({
-    where: { id: params.id },
-    data: {
-      ...(data.code !== undefined ? { previous_code: data.code } : {})
-    }
-  });
-
-  return successObject({ status: 'success' });
+  return update ? successObject({ status: 'success' }) : error(404, 'Not found');
 };
