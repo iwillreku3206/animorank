@@ -34,24 +34,40 @@ export abstract class PracticeSession {
    * with any saved user code sections. Slots are resolved from the Problem.
    */
   public get previousCode(): PreviousCode {
-    return parseSlots(
-      this.problem.starter_code,
-      (this.model.previous_state as PracticeSessionData).code
-    );
+    return this.problem.uses_slots
+      ? parseSlots(this.problem.starter_code, this.getPreviousState().code)
+      : {
+          fullCode: this.getCodeSection('body') || '',
+          sections: [
+            {
+              code: this.getCodeSection('body') || '',
+              slot: {
+                initialRange: [
+                  1,
+                  1,
+                  1,
+                  (this.getCodeSection('body') || '').replaceAll('\r\n', '\n').split('\n').at(-1)
+                    ?.length || 0
+                ],
+                label: 'body'
+              }
+            }
+          ]
+        };
   }
 
   /**
    * Get all previous code sections as a plain object.
    */
-  public getPreviousState(): Record<string, string> {
-    return (this.model.previous_state as Record<string, string>) ?? {};
+  public getPreviousState(): PracticeSessionData {
+    return (this.model.previous_state as PracticeSessionData) ?? { code: {}, extensionData: {} };
   }
 
   /**
    * Get code from a specific section.
    */
   public getCodeSection(section: string): string | undefined {
-    return (this.model.previous_state as Record<string, string>)[section];
+    return this.getPreviousState().code[section];
   }
 
   // Getters for model fields

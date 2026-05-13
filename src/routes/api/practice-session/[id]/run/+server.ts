@@ -64,11 +64,12 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
     user: session.user
   });
 
-  console.log(testCasesRaw);
-
   const { test_type } = parsedData;
   const testCases =
     test_type === 'public' ? testCasesRaw.filter((tc) => tc.dbTestCase.public) : testCasesRaw;
+
+  console.log(practiceSession.previousCode.fullCode);
+  console.log(practiceSession);
 
   const results = await Promise.all(
     testCases.map((tc) => runTestCase(tc, practiceSession.previousCode.fullCode))

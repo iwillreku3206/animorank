@@ -82,7 +82,9 @@
         codeSections = { ...$state.snapshot(codeSections), ...newCode };
       });
 
-      monacoInstance.onDidAttemptReadOnlyEdit((change) => console.log(change));
+      monacoInstance.onDidChangeModelContent((change) => {
+        console.log(change);
+      });
     }
   }
 

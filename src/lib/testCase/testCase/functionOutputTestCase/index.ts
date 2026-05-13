@@ -61,7 +61,7 @@ export class FunctionOutputTestCase extends TestCase<
     const codeGenerator = new CCodeGenerator();
     const testCode = codeGenerator.generateTestCode(dbTestCase);
 
-    logger.debug(testCode);
+    logger.debug(studentCode);
 
     const codeExecutionRequest: CodeExecutionRequest = {
       compileScript: compile,
@@ -78,7 +78,7 @@ export class FunctionOutputTestCase extends TestCase<
 
     const executionResults = await codeExecutor.executeCode(codeExecutionRequest);
     if (!executionResults.success) {
-      let returnObject: TestCaseResult = {
+      const returnObject: TestCaseResult = {
         success: false,
         runInfo: [],
         hidden: false,
