@@ -12,6 +12,6 @@ export class TelemetryRegistry extends ServiceRegistry<TelemetryService, []> {
   }
 
   public getDefault(): TelemetryService {
-    return this.getInstance('dummy');
+    return this.getInstance('console');
   }
 }

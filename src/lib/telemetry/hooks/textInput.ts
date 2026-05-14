@@ -17,20 +17,48 @@ const reasonMap: Record<monaco.editor.CursorChangeReason, TextEvent['type']> = {
 
 export class TextInputHook extends TelemetryHook {
   public monacoHook(monaco: editor.IStandaloneCodeEditor): () => void {
-    let eventQueue: Entry<Partial<TextEvent>>[] = [];
+    const eventQueue: [Entry<Partial<TextEvent>>, number][] = [];
+    const textEventQueue: [Entry<Partial<TextEvent>>, number][] = [];
+    let timeout: number | NodeJS.Timeout | undefined;
     let prevText: string = monaco.getModel()?.getLinesContent().join('\n') || '';
 
     const reasonHook = monaco.onDidChangeCursorPosition((e) => {
-      const event = eventQueue.shift();
-      if (!event) return;
+      const ev = eventQueue.shift();
+      if (!ev) return;
+      const [event, timestamp] = ev;
       event.data.type = reasonMap[e.reason];
 
-      this.addEntry(event);
+      if (textEventQueue.length === 0) {
+        textEventQueue.push(ev);
+        timeout = setTimeout(() => {
+          this.addEntry(event);
+        });
+      } else if (textEventQueue.length === 1 && event.data.type === 'undo') {
+        clearTimeout(timeout);
+        timeout = undefined;
+        console.log(performance.now() - timestamp);
+        if (performance.now() - timestamp < 3) {
+          textEventQueue.shift();
+        } else {
+          const item = textEventQueue.shift()?.[0];
+          this.addEntry(item!);
+          this.addEntry(event);
+        }
+      } else {
+        clearTimeout(timeout);
+        timeout = undefined;
+        const item = textEventQueue.shift()?.[0];
+        this.addEntry(item!);
+        this.addEntry(event);
+      }
     });
     const changeHook = monaco.onDidChangeModelContent((e) => {
       e.changes.forEach(({ rangeLength, rangeOffset, text }) => {
         const old = prevText.substring(rangeOffset, rangeOffset + rangeLength);
-        eventQueue.push({ type: 'TEXT_MODIFIED', data: { old, offset: rangeOffset, new: text } });
+        eventQueue.push([
+          { type: 'TEXT_MODIFIED', data: { old, offset: rangeOffset, new: text } },
+          performance.now()
+        ]);
         prevText = monaco.getModel()?.getLinesContent().join('\n') || '';
       });
     });
@@ -40,10 +68,10 @@ export class TextInputHook extends TelemetryHook {
       changeHook.dispose();
     };
   }
-  public windowHook(_window: Window): () => void {
+  public windowHook(): () => void {
     return () => {};
   }
-  public executionHook(_executionObservable: Subscribable<ExecutionEvent>): () => void {
+  public executionHook(): () => void {
     return () => {};
   }
 }
