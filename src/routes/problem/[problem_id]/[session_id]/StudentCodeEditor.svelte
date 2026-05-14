@@ -7,6 +7,7 @@
   import { TelemetryService } from '$lib/telemetry/telemetryService';
   import constrainedEditor from 'constrained-editor-plugin';
   import { onMount } from 'svelte';
+  import Spinner from '@iconify-svelte/fa6-solid/spinner';
 
   let {
     language,
@@ -108,11 +109,21 @@
   });
 </script>
 
-<CodeEditor
-  bind:code
-  bind:monacoNamespace
-  bind:monacoInstance
-  bind:monacoModel
-  bind:constrainedInstance
-  {language}
-/>
+<div class="relative w-full h-full">
+  <CodeEditor
+    bind:code
+    bind:monacoNamespace
+    bind:monacoInstance
+    bind:monacoModel
+    bind:constrainedInstance
+    {language}
+  />
+
+  {#if locked}
+    <div
+      class="absolute inset-0 bg-base-200 backdrop-blur-[1px] flex items-center justify-center rounded-lg"
+    >
+      <Spinner class="w-10 h-10 text-base-content animate-spin" />
+    </div>
+  {/if}
+</div>
