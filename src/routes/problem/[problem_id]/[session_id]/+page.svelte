@@ -61,6 +61,19 @@
   onMount(() => {
     const telemetry = ClientServiceProvider.instance().getService(TelemetryService);
     telemetry.attachExecution(executionObservable);
+
+    // Warn before unloading if there are unsaved changes
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (untrack(() => autosave.state) !== 'saved') {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
   });
 
   createHotkey('Control+S', () => autosave.forceSave($state.snapshot(codeSections)));
