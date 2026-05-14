@@ -18,7 +18,7 @@ const reasonMap: Record<monaco.editor.CursorChangeReason, TextEvent['type']> = {
 export class TextInputHook extends TelemetryHook {
   public monacoHook(monaco: editor.IStandaloneCodeEditor): () => void {
     const eventQueue: [Entry<Partial<TextEvent>>, number][] = [];
-    const textEventQueue: [Entry<Partial<TextEvent>>, number][] = [];
+    let textEventQueue: [Entry<Partial<TextEvent>>, number][] = [];
     let timeout: number | NodeJS.Timeout | undefined;
     let prevText: string = monaco.getModel()?.getLinesContent().join('\n') || '';
 
@@ -31,14 +31,21 @@ export class TextInputHook extends TelemetryHook {
       if (textEventQueue.length === 0) {
         textEventQueue.push(ev);
         timeout = setTimeout(() => {
+          textEventQueue = textEventQueue.filter((x) => x !== ev);
           this.addEntry(event);
-        });
+        }, 5);
       } else if (textEventQueue.length === 1 && event.data.type === 'undo') {
         clearTimeout(timeout);
         timeout = undefined;
-        console.log(performance.now() - timestamp);
         if (performance.now() - timestamp < 3) {
           textEventQueue.shift();
+          // I don't want to repeat this code, so I'll just create the code to create the tooltip here
+          if (monaco) {
+            monaco
+              .getContribution('editor.contrib.messageController')
+              // @ts-expect-error EditorContributions cannot be type narrowed down
+              ?.showMessage('Cannot edit this area', monaco.getPosition());
+          }
         } else {
           const item = textEventQueue.shift()?.[0];
           this.addEntry(item!);

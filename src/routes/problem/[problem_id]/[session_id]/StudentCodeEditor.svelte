@@ -81,10 +81,6 @@
       monacoModel.onDidChangeContentInEditableRange((newCode) => {
         codeSections = { ...$state.snapshot(codeSections), ...newCode };
       });
-
-      monacoInstance.onDidChangeModelContent((change) => {
-        console.log(change);
-      });
     }
   }
 
