@@ -1,8 +1,8 @@
 import type { Comparison, FunctionOutputTestCase } from '$lib/zenstack/models';
 import type { JsonValue } from '@zenstackhq/orm';
-import type { TypeWithValue } from '../type';
 import { TypeRegistry } from '../typeRegistry';
 import { CodeGenerator } from './codeGenerator';
+import type { LanguageType } from '../type/languageType';
 
 export class CCodeGenerator extends CodeGenerator {
   private generateFunctionSignature(testCase: FunctionOutputTestCase) {
@@ -10,13 +10,13 @@ export class CCodeGenerator extends CodeGenerator {
     const typeRegistry = TypeRegistry.instance();
 
     const returnType = typeRegistry
-      .getInstance(return_type.type, return_type.data)
+      .getInstance(return_type.type, return_type.data || undefined)
       .getLanguage('c')
       .constructTypeExpression();
 
     const parameterTypes = parameters.map((parameter) => {
       return typeRegistry
-        .getInstance(parameter.type, parameter.data)
+        .getInstance(parameter.type, parameter.data || undefined)
         .getLanguage('c')
         .constructTypeExpression();
     });
@@ -34,10 +34,10 @@ export class CCodeGenerator extends CodeGenerator {
     const typeRegistry = TypeRegistry.instance();
 
     const expectedSymbol = `__ar_test_expected_${testIndex}`;
-    const expected = typeRegistry.getInstance(type, data).getLanguage('c');
+    const expected = typeRegistry.getInstance(type, data || undefined).getLanguage('c');
 
     let actualSymbol: string;
-    let actualLanguage: any;
+    let actualLanguage: LanguageType<unknown>;
 
     if (symbol === 'return') {
       actualSymbol = '__ar_test_return_value';
@@ -57,6 +57,7 @@ export class CCodeGenerator extends CodeGenerator {
     switch (operator) {
       case 'GREATER_THAN_EQUAL':
         comparisonExpression = `!${comparisonExpression}`;
+      // eslint-disable-next-line no-fallthrough
       case 'LESS_THAN':
         comparisonCompute = expected.constructLessThanCheck(
           comparisonSymbol,
@@ -66,6 +67,7 @@ export class CCodeGenerator extends CodeGenerator {
         break;
       case 'GREATER_THAN':
         comparisonExpression = `!${comparisonExpression}`;
+      // eslint-disable-next-line no-fallthrough
       case 'LESS_THAN_EQUAL':
         comparisonCompute = expected.constructLessThanEqualCheck(
           comparisonSymbol,
@@ -75,6 +77,7 @@ export class CCodeGenerator extends CodeGenerator {
         break;
       case 'NOT_EQUAL':
         comparisonExpression = `!${comparisonExpression}`;
+      // eslint-disable-next-line no-fallthrough
       case 'EQUAL':
         comparisonCompute = expected.constructEqualityCheck(
           comparisonSymbol,
@@ -104,11 +107,11 @@ printf("%d\\n", ${comparisonExpression});`;
     const typeRegistry = TypeRegistry.instance();
 
     const { return_type, parameters, function_name, comparisons } = testCase;
-    const returnType = typeRegistry.getInstance(return_type.type, return_type.data);
+    const returnType = typeRegistry.getInstance(return_type.type, return_type.data || undefined);
     const returnTypeExpression = returnType.getLanguage('c').constructTypeExpression();
 
     const params = parameters.map((parameter) =>
-      typeRegistry.getInstance(parameter.type, parameter.data).getLanguage('c')
+      typeRegistry.getInstance(parameter.type, parameter.data || undefined).getLanguage('c')
     );
 
     return `
@@ -121,7 +124,13 @@ ${this.generateFunctionSignature(testCase)}
 int main() {
   ${params.map((param, index) => param.constructInit(`__ar_test_param_${index}`)).join('\n\n')}
   ${returnTypeExpression !== 'void' ? `${returnTypeExpression} __ar_test_return_value = ` : ''} ${function_name}(${parameters.map((_, index) => `__ar_test_param_${index}`)});
-  ${comparisons.map((comparison, index) => this.generateComparison(comparison, index, parameters))}
+  ${comparisons.map((comparison, index) =>
+    this.generateComparison(
+      comparison,
+      index,
+      parameters.map((p) => ({ ...p, data: p.data || {} }))
+    )
+  )}
   return 0;
 }
     `;

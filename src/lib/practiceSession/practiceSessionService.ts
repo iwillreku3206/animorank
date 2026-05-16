@@ -208,7 +208,7 @@ export class PracticeSessionService {
   }): Promise<ServerPracticeSession | null> {
     const updated = await db.practiceSession.update({
       where: { id: options.id, student_id: options.user.id || '' },
-      data: options.newState
+      data: { ...options.newState, previous_state: options.newState.previous_state || undefined }
     });
 
     const problem = await ProblemService.instance().findById({
