@@ -21,7 +21,7 @@
   let loggedIn = $derived(!!data.user);
 </script>
 
-<div class="flex flex-col min-h-screen bg-base-300 text-white">
+<div class="md:flex flex-col min-h-screen bg-base-300 text-white hidden">
   <!--Navbar start-->
   <div
     class="min-h-16 px-9 flex flex-row items-center border-b border-b-neutral sticky top-0 left-0 right-0 bg-base-100 z-50"
@@ -77,4 +77,9 @@
       user={data.user}
     />
   {/if}
+</div>
+
+<div class="flex flex-row justify-center items-center md:hidden w-full text-center h-screen">
+  AnimoRank is not yet supported on mobile. If you are on desktop, kindly increase the size of the
+  AnimoRank tab.
 </div>
