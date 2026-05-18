@@ -26,7 +26,8 @@ export const load: PageServerLoad = async ({ locals, params }) => {
           },
           subject: true,
           practice_sessions: { where: { student_id: session.user.id } }
-        }
+        },
+        orderBy: { name: 'asc' }
       },
       collaborators: { include: { collaborator: { include: { user: true } } } },
       difficulty: true,
