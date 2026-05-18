@@ -1,5 +1,5 @@
 <div class="flex flex-row justify-center w-full mt-16">
-  <main class="max-w-xl p-4">
+  <main class="max-w-2xl p-4">
     <h1 class="text-4xl font-bold mb-6">Terms of Service</h1>
 
     <div class="prose dark:prose-invert prose-a:leading-0 prose-h2:leading-0 prose-h2:inline">
