@@ -118,6 +118,8 @@
   --noise: 0;
 }
 
+@plugin "@tailwindcss/typography";
+
 .splitpanes-nobg .splitpanes {
   background-color: inherit !important;
 }
