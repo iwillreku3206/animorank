@@ -1,0 +1,68 @@
+import "tag.zmodel"
+import "user.zmodel"
+import "problem.zmodel"
+
+model ProblemSetTopic {
+  problem_set_id String     @db.Uuid
+  problem_set    ProblemSet @relation(fields: [problem_set_id], references: [id], onDelete: Cascade)
+  topic_tag_id   String     @db.Uuid
+  topic_tag      TopicTag   @relation(fields: [topic_tag_id], references: [id], onDelete: Cascade)
+
+  @@id([problem_set_id, topic_tag_id])
+}
+
+model ProblemSet {
+  id            String                   @id @default(uuid()) @db.Uuid
+  description   String?
+  title         String
+  auto_accept   Boolean                  @default(false)
+  is_global     Boolean                  @default(false)
+
+  difficulty_id String?                  @db.Uuid
+  difficulty    DifficultyTag?           @relation(fields: [difficulty_id], references: [id], onDelete: SetNull)
+  subject_id    String?                  @db.Uuid
+  subject       SubjectTag?              @relation(fields: [subject_id], references: [id], onDelete: SetNull)
+  topics        ProblemSetTopic[]
+
+  problems      Problem[]
+  subscriptions Subscription[]
+  bookmarks     ProblemSetBookmark[]
+
+  collaborators ProblemSetCollaborator[]
+
+  created_at    DateTime                 @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime                 @updatedAt @db.Timestamptz(6)
+}
+
+model ProblemSetBookmark {
+  user_id        String     @db.Uuid
+  user           User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  problem_set_id String     @db.Uuid
+  problem_set    ProblemSet @relation(fields: [problem_set_id], references: [id], onDelete: Cascade)
+
+  @@id([problem_set_id, user_id])
+}
+
+model ProblemSetCollaborator {
+  collaborator_id String     @db.Uuid
+  collaborator    Teacher    @relation(fields: [collaborator_id], references: [id], onDelete: Cascade)
+
+  problem_set_id  String     @db.Uuid
+  problem_set     ProblemSet @relation(fields: [problem_set_id], references: [id], onDelete: Cascade)
+
+  @@id([collaborator_id, problem_set_id])
+}
+
+model Subscription {
+  problem_set_id String     @db.Uuid
+  problem_set    ProblemSet @relation(fields: [problem_set_id], references: [id], onDelete: Cascade)
+  student_id     String     @db.Uuid
+  student        Student    @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  status         String?
+  created_at     DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime   @updatedAt @db.Timestamptz(6)
+
+  @@id([problem_set_id, student_id])
+}
+

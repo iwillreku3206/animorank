@@ -1,70 +1,145 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-body {
-    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-    @apply bg-white dark:bg-slate-800 text-slate-800 dark:text-white;
+@theme {
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
 }
 
-.tiptap {
-    border: 1px solid grey;
-    padding: 10px;
-    border-radius: 5px;
+@plugin "daisyui" {
+  themes:
+    light --default,
+    animorank-dark --prefersdark;
 }
 
-.editor-button {
-    background-color: #1F1F1F;
-    border-radius: 5px;
-    padding: 0px 5px;
-    text-align: center;
-    margin-bottom: 5px;
+/* TODO: Set these to light mode colors*/
+@theme {
+  --color-primary: #87f526;
+  --color-primary-focus: #67dc06;
+  --color-primary-content: #0b0908;
+  --color-secondary: #2d6d07;
+  --color-secondary-focus: #275c0b;
+  --color-secondary-content: #d4d0ce;
+  --color-accent: #ffb81c;
+  --color-accent-focus: #e69900;
+  --color-accent-content: #0b0908;
+  --color-neutral: #584e4d;
+  --color-neutral-focus: #3d3535;
+  --color-neutral-content: #e5e2e0;
+  --color-base-100: #1b1717;
+  --color-base-200: #161212;
+  --color-base-300: #110d0d;
+  --color-base-content: #d4d0ce;
+  --color-info: #00d0ef;
+  --color-info-content: #053344;
+  --color-success: #01df72;
+  --color-success-content: #022d14;
+  --color-warning: #fdc700;
+  --color-warning-content: #411e03;
+  --color-error: #ff6266;
+  --color-error-content: #440607;
 }
 
-.editor-button:hover {
-    background-color: #2F2F2F;
+@layer theme {
+  [data-theme='animorank-dark'] {
+    --color-primary: #87f526;
+    --color-primary-focus: #67dc06;
+    --color-primary-content: #0b0908;
+    --color-secondary: #2d6d07;
+    --color-secondary-focus: #275c0b;
+    --color-secondary-content: #d4d0ce;
+    --color-accent: #ffb81c;
+    --color-accent-focus: #e69900;
+    --color-accent-content: #0b0908;
+    --color-neutral: #584e4d;
+    --color-neutral-focus: #3d3535;
+    --color-neutral-content: #e5e2e0;
+    --color-base-100: #1b1717;
+    --color-base-200: #161212;
+    --color-base-300: #110d0d;
+    --color-base-content: #d4d0ce;
+    --color-info: #00d0ef;
+    --color-info-content: #053344;
+    --color-success: #01df72;
+    --color-success-content: #022d14;
+    --color-warning: #fdc700;
+    --color-warning-content: #411e03;
+    --color-error: #ff6266;
+    --color-error-content: #440607;
+  }
 }
 
-.editor-button-active {
-    background-color: #006239;
-    border-radius: 5px;
-    padding: 0px 5px;
-    text-align: center;
-    margin-bottom: 5px;
+@plugin "daisyui/theme" {
+  name: 'animorank-dark';
+  default: true;
+  /* set as default */
+  prefersdark: true;
+  /* set as default dark mode (prefers-color-scheme:dark) */
+  color-scheme: dark;
+  /* color of browser-provided UI */
+
+  --color-primary: #87f526;
+  --color-primary-focus: #67dc06;
+  --color-primary-content: #0b0908;
+  --color-secondary: #2d6d07;
+  --color-secondary-focus: #275c0b;
+  --color-secondary-content: #d4d0ce;
+  --color-accent: #ffb81c;
+  --color-accent-focus: #e69900;
+  --color-accent-content: #0b0908;
+  --color-neutral: #584e4d;
+  --color-neutral-focus: #3d3535;
+  --color-neutral-content: #e5e2e0;
+  --color-base-100: #1b1717;
+  --color-base-200: #161212;
+  --color-base-300: #110d0d;
+  --color-base-content: #d4d0ce;
+  --color-info: #00d0ef;
+  --color-info-content: #053344;
+  --color-success: #01df72;
+  --color-success-content: #022d14;
+  --color-warning: #fdc700;
+  --color-warning-content: #411e03;
+  --color-error: #ff6266;
+  --color-error-content: #440607;
+
+  /* border radius */
+  --radius-selector: 1rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+
+  /* base sizes */
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+
+  /* border size */
+  --border: 1px;
+
+  /* effects */
+  --depth: 1;
+  --noise: 0;
 }
 
-.tiptap h1 {
-    @apply text-3xl;
+@plugin "@tailwindcss/typography";
+
+.splitpanes-nobg .splitpanes {
+  background-color: inherit !important;
 }
 
-.tiptap h2 {
-    @apply text-2xl;
+.splitpanes-nobg .splitpanes__pane {
+  background-color: inherit !important;
+  position: relative;
+  overflow: scroll;
 }
 
-.tiptap h3 {
-    @apply text-xl;
+.splitpanes-nobg .splitpanes__splitter {
+  background-color: #242424 !important;
+  border-left: none !important;
 }
 
-.tiptap pre {
-    background-color: #2F2F2F;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 5px;
-    width: inherit;
-}
-
-.tiptap ol {
-    list-style-type: decimal;
-    margin: 10px 0px 10px 30px;
-}
-
-.tiptap ul {
-    list-style-type: disc;
-    margin: 10px 0px 10px 30px;
-}
-
-.tiptap blockquote {
-    border-left: 2px solid white;
-    padding: 0px 0px 0px 10px;
-    margin: 10px 10px;
+h1,
+h2,
+.font-header {
+  font-family: 'Space Grotesk', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
 }

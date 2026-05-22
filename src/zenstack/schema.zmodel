@@ -1,0 +1,12 @@
+import "practiceSession.zmodel"
+import "problem.zmodel"
+import "problemSet.zmodel"
+import "tag.zmodel"
+import "testCase.zmodel"
+import "user.zmodel"
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}

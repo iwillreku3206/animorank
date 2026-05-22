@@ -1,89 +1,133 @@
-<script>
-    import { openLogin } from '$lib/state/login.svelte';
-    import { openTerms } from '$lib/state/terms.svelte';
+<script lang="ts">
+  import Button from '$lib/components/Button.svelte';
+  import { signIn } from '@auth/sveltekit/client';
+  import BenefitCard from './BenefitCard.svelte';
+  import type { PageProps } from './$types';
 
+  let { data }: PageProps = $props();
 </script>
-  
+
 <svelte:head>
-    <title>Animorank</title>
-    <script async defer src="https://buttons.github.io/buttons.js"></script>
+  <title>AnimoRank</title>
+  <script
+    async
+    defer
+    src="https://buttons.github.io/buttons.js"
+  ></script>
 </svelte:head>
 
+<div class="relative overflow-x-hidden">
+  <div class="blob-cont">
+    <div class="green blob"></div>
+    <div class="green blob"></div>
+    <div class="green blob"></div>
+  </div>
 
-<div class="w-full flex flex-col items-center justify-center min-h-[140%] md:min-h-[120%] overflow-auto bg-[#121212]">
-    <div class="flex flex-col items-center justify-center w-full h-[120%] md:h-full p-4 z-10">
-        <div class="bg-[#121D18] rounded-2xl p-2 px-4 flex w-fit text-forestGreen text-xs">Curated by Professors, Built by Students</div>
-        <div class="font-sans text-5xl lg:text-7xl font-bold mt-4 flex flex-col justify-center items-center lg:flex-row text-center">Practice with Animorank</div>
-        <div class="mt-4 text-gray-400 text-base block md:hidden text-center">Practice, and improve your programming skills with challenges designed for DLSU students</div>
-        <div class="mt-4 text-gray-400 text-xl hidden md:block ">Practice, and improve your programming skills with challenges</div>
-        <div class="text-gray-400 text-xl hidden md:block"> designed for the CCPROG series</div>
-        <button class="btn btn-outline mt-5" onclick={() => {openLogin.openSignUp = true}}>Get started</button>
-    </div>
-    <div class="blob-cont">
-        <div class="yellow blob"></div>
-        <div class="red blob"></div>
-        <div class="green blob"></div>
-    </div>
-    <!-- <div class="w-full p-2 bg-[#040605]">
-        <div class="w-full bg-[#000000] py-2 px-4 overflow-hidden">
-            <div class="text-md font-mono text-gray-400 whitespace-nowrap">
-              <span class="text-purple-400">const</span> <span class="text-blue-400">solution</span> = <span class="text-blue-400">analyze</span>(<span class="text-orange-400">input</span>);<span class="text-blue-400">return</span> solution.<span class="text-blue-400">optimize</span>();<span class="text-gray-500">// DLSU Animorank Platform</span><span class="text-purple-400">const</span> <span class="text-blue-400">rank</span> = <span class="text-purple-400">await</span> <span class="text-blue-400">submitSolution</span>(solveProblem); console.<span class="text-blue-400">log</span>(rank);
-            </div>
+  <main class="px-4 xl:px-32 opacity-80">
+    <div
+      class="w-full flex flex-col xl:flex-row gap-20 justify-center items-center"
+      style="min-height: calc(100vh - 80px);"
+    >
+      <div class="flex flex-col gap-24">
+        <div class="flex flex-col items-start gap-8 w-full">
+          <h2
+            class="text-base-content text-5xl xl:text-7xl font-bold"
+            style="letter-spacing: -4px;"
+          >
+            Master Programming<br />with <span class="text-primary">AnimoRank</span>
+          </h2>
+          <h2 class="text-base-content text-base">
+            Work through curated programming problems aligned with DLSU's CCPROG series. <br />
+            Track your growth and build real skills — one problem at a time.
+          </h2>
         </div>
-    </div> -->
-    <footer class="bg-black py-8 px-8 w-full z-10">
-        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="flex items-center gap-4">
+          <Button onclick={() => signIn('google')}>Start Coding</Button>
           <div>
-            <div class="flex flex-row items-center mb-2 align-center">
-                <span class="font-semibold mr-2">Animorank</span>
-                <div class="mt-2">
-                    <a class="github-button" href="https://github.com/ivanenclonar/animorank" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star ivanenclonar/animorank on GitHub">Star</a>
-                </div>
-            </div>
-            <p class="text-gray-400 text-sm">
-              A dedicated practice coding platform for students who want to master programming
-              through structured challenges and hands-on learning, designed for CCPROG students.
-            </p>
-          </div>
-          
-          <div class="flex flex-col md:items-end">
-            <ul class="text-gray-400 text-sm">
-                <li class="font-semibold mb-2 text-white">Connect</li>
-                <li class="mb-1 hover:text-white cursor-pointer" >
-                    <button onclick={() => {openTerms.contact = true}} class="mb-1 hover:text-white cursor-pointer block">Contact Us</button>
-                </li>
-                <li class="mb-1 hover:text-white cursor-pointer" >
-                    <a href="https://forms.gle/uDpnjEoYkyjHZsWVA" class="mb-1 hover:text-white cursor-pointer block">Feedback</a>
-                </li>
-                <li class="mb-1 hover:text-white cursor-pointer" >
-                    <button onclick={() => { openTerms.open = true}} class="mb-1 hover:text-white cursor-pointer block">Terms of Service</button>
-                </li>
-            </ul>
+            <span class="text-base-content text-base">View Demo</span>
           </div>
         </div>
-        
-        <div class="text-center text-gray-500 text-xs mt-10">
-          © 2025 AnimoRank. All rights reserved.
-        </div>
-      </footer>
+      </div>
+      <img
+        src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/Cm92ASBTFf/ekk9i7k9_expires_30_days.png"
+        class="w-lg aspect-auto"
+      />
+    </div>
+    <div class="w-full flex flex-col gap-20 justify-center items-center py-8 xl:py-32">
+      <h2 class="text-4xl font-bold">Everything you need for the CCPROG series.</h2>
+
+      <BenefitCard
+        title="Problem Sets"
+        image={{ src: '/img/sample-1.png', alt: 'Problem Sets' }}
+      >
+        <p>
+          AnimoRank offers a curated collection of programming problems designed to align with the
+          <span class="text-primary">CCPROG series at DLSU</span>. Because the problems are drawn
+          from the same material covered in your actual coursework, practicing on AnimoRank directly
+          reinforces what you're learning in class.
+        </p>
+      </BenefitCard>
+      <BenefitCard
+        title="Instant Feedback"
+        image={{ src: '/img/sample-1.png', alt: 'Problem Sets' }}
+        flip={true}
+      >
+        <p>
+          AnimoRank runs your code against a set of test cases the moment you submit, giving you
+          immediate results on what passed and what didn't. Rather than waiting for a professor to
+          review your work, you get <span class="text-primary"
+            >real compilation output and test case results</span
+          > on the spot, so you can identify the problem, adjust your approach, and try again right away.
+        </p>
+      </BenefitCard>
+      <BenefitCard
+        title="Problem Sets"
+        image={{ src: '/img/sample-1.png', alt: 'Problem Sets' }}
+      >
+        <p>
+          AnimoRank offers a curated collection of programming problems designed to align with the
+          <span class="text-primary">CCPROG series at DLSU</span>. Because the problems are drawn
+          from the same material covered in your actual coursework, practicing on AnimoRank directly
+          reinforces what you're learning in class.
+        </p>
+      </BenefitCard>
+    </div>
+    <div class="w-full flex flex-col gap-8 justify-center items-center py-8 xl:py-32">
+      <h2
+        class="font-bold text-5xl xl:text-7xl"
+        style="letter-spacing: -4px;"
+      >
+        Ready to start<br /><span class="text-primary">practicing?</span>
+      </h2>
+      <p>Log in with your DLSU account to access your problem sets and start practicing.</p>
+      {#if !data.user}
+        <Button onclick={() => signIn('google')}>Sign in</Button>
+      {:else}
+        <a
+          class="btn bg-primary text-primary-content px-4 py-3"
+          href="/">Dashboard</a
+        >
+      {/if}
+    </div>
+  </main>
 </div>
 
 <style>
-    /* Blobs */
+  /* Blobs */
 
-.blob-cont {
+  .blob-cont {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 5;
-    height: 900px;
-    width: 900px;
-    position: absolute;
-    right: 5em;
-}
+    width: 100vw;
+    position: sticky;
+    top: 0;
+    right: 0;
+  }
 
-.blob {
+  .blob {
     border: 1px solid white;
     border-radius: 200px;
     filter: blur(60px);
@@ -91,56 +135,58 @@
     animation-duration: 20s;
     animation-timing-function: ease;
     animation-iteration-count: infinite;
-}
 
-.yellow {
-    background-color: #025130;
-    position: absolute;
-    top: 200px;
-    right: 50px;
-    height: 300px;
-    width: 300px;
-    animation-name: yellow;
-}
-
-.green {
-    background-color: #114d32;
+    background-color: var(--color-primary);
     position: absolute;
     top: 30px;
     right: 50px;
     height: 200px;
     width: 250px;
-    animation-name: green;
-}
+    animation-name: blob;
+  }
 
-.red {
-    background-color: #11472f;
-    position: absolute;
-    right: 0;
-    top: 300px;
-    height: 250px;
-    width: 200px;
-    animation-name: red;
-}
-
-@keyframes yellow {
-    0% {opacity: 0; top: 200px; left: 100px; transform: scale(1);}
-    30% {opacity: 1; top: 300px; left: 150px; transform: scale(1.2);}
-    60% {opacity: 1; top: 100px; left: 200px; transform: scale(1.3);}
-    100% {opacity: 0; top: 200px; left: 100px; transform: scale(1);}
-}
-
-@keyframes green {
-    0% {opacity: 0; top: 80px; right: -20px; transform: scale(1.2);}
-    30% {opacity: 1; top: 300px; right: -20px; transform: scale(1);}
-    60% {opacity: 1; top: 200px; right: 100px; transform: scale(1);}
-    100% {opacity: 0; top: 80px; right: -20px; transform: scale(1.2);}
-}
-
-@keyframes red {
-    0% {opacity: 0; top: 250px; right: 0px; transform: scale(1);}
-    30% {opacity: 1; top: 150px; right: 150px; transform: scale(1.4);}
-    60% {opacity: 1; top: 250px; right: 100px; transform: scale(1);}
-    100% {opacity: 0; top: 250px; right: 0px; transform: scale(1);}
-}
+  @keyframes blob {
+    0% {
+      opacity: 0;
+      top: 80px;
+      right: -20px;
+      transform: scale(1.2);
+    }
+    15% {
+      opacity: 0.3;
+      top: 280px;
+      right: 40px;
+      transform: scale(1);
+    }
+    30% {
+      opacity: 0.1;
+      top: 350px;
+      right: -10px;
+      transform: scale(1.1);
+    }
+    45% {
+      opacity: 0.3;
+      top: 200px;
+      right: 80px;
+      transform: scale(1);
+    }
+    60% {
+      opacity: 0.2;
+      top: 320px;
+      right: 30px;
+      transform: scale(1.1);
+    }
+    75% {
+      opacity: 0.1;
+      top: 150px;
+      right: 50px;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+      top: 80px;
+      right: -20px;
+      transform: scale(1.2);
+    }
+  }
 </style>

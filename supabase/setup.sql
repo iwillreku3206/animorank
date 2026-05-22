@@ -1,4 +1,4 @@
--- Animorank Database Setup Script
+-- AnimoRank Database Setup Script
 -- Run this in the Supabase SQL Editor to create all required tables.
 
 -- Teacher table (must be created before Problem_set due to FK)
@@ -48,6 +48,7 @@ CREATE TABLE public."Problem" (
     body text,
     problem_name text NOT NULL,
     starter_code text,
+    text_function text NOT NULL,
     language character varying NOT NULL,
     problem_set bigint NOT NULL,
     CONSTRAINT "Problem_pkey" PRIMARY KEY (id),

@@ -1,0 +1,44 @@
+import "testCase.zmodel"
+import "problemSet.zmodel"
+import "tag.zmodel"
+import "practiceSession.zmodel"
+
+enum Language {
+  C
+}
+
+model ProblemTopic {
+  problem_id String   @db.Uuid
+  problem    Problem  @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  tag_id     String   @db.Uuid
+  tag        TopicTag @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@id([problem_id, tag_id])
+}
+
+model Problem {
+  id                String            @id @default(uuid()) @db.Uuid
+  name              String
+  description       String
+  language          Language          @default(C)
+  starter_code      String            @default("")
+  visible           Boolean           @default(true)
+  uses_slots        Boolean           @default(false)
+
+  difficulty_id     String?           @db.Uuid
+  difficulty        DifficultyTag?    @relation(fields: [difficulty_id], references: [id], onDelete: SetNull)
+  subject_id        String?           @db.Uuid
+  subject           SubjectTag?       @relation(fields: [subject_id], references: [id], onDelete: SetNull)
+  topics            ProblemTopic[]
+
+  problem_set_id    String            @db.Uuid
+  problem_set       ProblemSet        @relation(fields: [problem_set_id], references: [id], onDelete: Cascade)
+
+  practice_sessions PracticeSession[]
+
+  test_cases        ProblemTestCase[]
+
+  created_at        DateTime          @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime          @updatedAt @db.Timestamptz(6)
+}
+

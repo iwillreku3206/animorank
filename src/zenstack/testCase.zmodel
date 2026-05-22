@@ -1,0 +1,65 @@
+import "problem.zmodel"
+
+enum ProblemTestCaseType {
+  FunctionOutputTestCase
+  ProgramIOTestCase
+  CustomTestCase
+}
+
+model ProblemTestCase {
+  id         String              @id @default(uuid()) @db.Uuid
+  type       ProblemTestCaseType @default(FunctionOutputTestCase)
+  public     Boolean             @default(true)
+  problem_id String              @db.Uuid
+  problem    Problem             @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  created_at DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at DateTime            @updatedAt @db.Timestamptz(6)
+
+  @@delegate(type)
+}
+
+type DataTypeWithValue {
+  type String
+  data Json
+}
+
+type Parameter {
+  type String
+  data Json
+}
+
+enum FunctionOutputTestCaseOperator {
+  EQUAL
+  NOT_EQUAL
+  LESS_THAN
+  LESS_THAN_EQUAL
+  GREATER_THAN
+  GREATER_THAN_EQUAL
+  WITHIN_RANGE
+}
+
+type Comparison {
+  type        String
+  data        Json
+  symbol      String
+  operator    FunctionOutputTestCaseOperator
+  range_value String?
+
+  @@validate(operator != WITHIN_RANGE || range_value != null, "range_value must be provided when operator is WITHIN_RANGE")
+}
+
+model FunctionOutputTestCase extends ProblemTestCase {
+  parameters    Parameter[]  @json @default("[]")
+  comparisons   Comparison[] @json @default("[]")
+  return_type   Parameter    @json @default("{\"type\":\"int\", \"data\":{\"signed\":\"none\",\"value\": \"5\",\"size\": 32}}")
+  function_name String       @default("")
+}
+
+model ProgramIOTestCase extends ProblemTestCase {
+  input  String @default("")
+  output String @default("")
+}
+
+model CustomTestCase extends ProblemTestCase {
+  test_code String @default("")
+}

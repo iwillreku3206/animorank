@@ -1,4 +1,4 @@
-# Animorank
+# AnimoRank
 
 A web-based C programming education platform where teachers create problem sets with test cases and students solve them in-browser using an integrated code editor.
 

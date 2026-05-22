@@ -1,18 +1,28 @@
+# we use trixie version (debian) since it's based on glibc which has better performance (at the cost of being slightly bigger)
+
 # For caching the dependencies
-FROM node:20-alpine AS builder
+FROM node:24-trixie AS builder
 WORKDIR /app
 COPY package*.json .
 RUN npm ci
 COPY . .
+ENV NODE_OPTIONS=--max_old_space_size=4096
+RUN npx svelte-kit sync
 RUN npm run build
 RUN npm prune --production
 
 # For building the final image
-FROM node:20-alpine
+FROM node:24-trixie
 WORKDIR /app
 COPY --from=builder /app/build build/
 COPY --from=builder /app/node_modules node_modules/
+COPY --from=builder /app/src/zenstack src/zenstack
+COPY --from=builder /app/prisma/migrations prisma/migrations
 COPY package.json .
+COPY prisma.config.ts .
+COPY docker-entrypoint.sh .
+RUN npm install -g @zenstackhq/cli
+# RUN npx zenstack generate
 EXPOSE 3000
 ENV NODE_ENV=production
-CMD ["node", "build"]
+CMD ["bash", "./docker-entrypoint.sh"]
