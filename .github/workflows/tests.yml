@@ -1,0 +1,38 @@
+name: Tests
+on:
+  - push
+  - pull_request
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    env:
+      AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
+      AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
+      APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      JUDGE0_BASE_URL: ${{ secrets.JUDGE0_BASE_URL }}
+      BASE_URL: ${{ secrets.BASE_URL }}
+      ORIGIN: ${{ secrets.ORIGIN }}
+      SSL_DEV_SERVER: ${{ secrets.SSL_DEV_SERVER }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SHADOW_DATABASE_URL: ${{ secrets.SHADOW_DATABASE_URL }}
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 24
+    - name: Install dependencies
+      run: npm i
+    - name: Install Playwright Browsers
+      run: npx playwright install --with-deps firefox
+    - name: Run tests
+      run: npm run test
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: playwright-report
+        path: playwright-report/
+        retention-days: 30
+
