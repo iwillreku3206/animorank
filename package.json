@@ -11,10 +11,11 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test:integration": "npx playwright test",
     "test:unit": "npx vitest",
-    "lint": "prettier --check . && eslint .",
+    "lint": "eslint .",
     "format": "prettier --write .",
     "knip": "knip",
-    "scripts:addDefaultTags": "npx tsx scripts/addDefaultTags.ts"
+    "scripts:addDefaultTags": "npx tsx scripts/addDefaultTags.ts",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.4",
