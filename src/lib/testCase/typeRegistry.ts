@@ -9,6 +9,7 @@ import { VoidType } from './type/void';
 import type { TypeInfo } from './type/typeInfo';
 
 export class TypeRegistry extends ServiceRegistry<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   TypeWithValue<any>,
   [JsonValue | undefined],
   {
@@ -16,7 +17,7 @@ export class TypeRegistry extends ServiceRegistry<
      * Each concrete type class defines its own TypeInfo.
      * This static property is used by the TypePicker to generate forms.
      */
-    typeInfo: TypeInfo<any>;
+    typeInfo: TypeInfo<Record<string, JsonValue>>;
   }
 > {
   private static _instance: TypeRegistry | null;
@@ -28,7 +29,7 @@ export class TypeRegistry extends ServiceRegistry<
     return TypeRegistry._instance;
   }
 
-  public getDefault(): TypeWithValue<any> {
+  public getDefault(): TypeWithValue<unknown> {
     throw new Error('Cannot get default for a type');
   }
 

@@ -3,15 +3,15 @@ export interface ISingleton<T> {
   instance(): T;
 }
 
-type Service<T, C extends any[], S> =
-  | { classObject: (new (...args: C) => T) & S; singleton: false }
+type Service<T, C extends unknown[], S> =
+  | { classObject: (new (..._args: C) => T) & S; singleton: false }
   | { classObject: ISingleton<T> & S; singleton: true };
 
 export interface ServiceRegistryOptions {
-  keyNotFoundMessage?: (serviceName: string) => string;
+  keyNotFoundMessage?: (_serviceName: string) => string;
 }
 
-export abstract class ServiceRegistry<T, C extends any[], S = {}> {
+export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
   protected _registry = new Map<string, Service<T, C, S>>();
   private options: ServiceRegistryOptions;
 
@@ -19,7 +19,7 @@ export abstract class ServiceRegistry<T, C extends any[], S = {}> {
     this.options = serviceRegistryOptions || {};
   }
 
-  private static _createSingleServiceRegistry<T, C extends any[], S>(
+  private static _createSingleServiceRegistry<T, C extends unknown[], S>(
     service: Service<T, C, S>,
     serviceRegistryOptions?: ServiceRegistryOptions
   ): ServiceRegistry<T, C, S> {
@@ -32,8 +32,8 @@ export abstract class ServiceRegistry<T, C extends any[], S = {}> {
     return new SingleServiceRegistry();
   }
 
-  public static createSingleServiceRegistry<T, C extends any[], S = {}>(
-    service: (new (...args: C) => T) & S, // FIXED: Using 'C' instead of 'any[]'
+  public static createSingleServiceRegistry<T, C extends unknown[], S = object>(
+    service: (new (..._args: C) => T) & S, // FIXED: Using 'C' instead of 'any[]'
     serviceRegistryOptions?: ServiceRegistryOptions
   ) {
     return ServiceRegistry._createSingleServiceRegistry<T, C, S>(
@@ -42,7 +42,7 @@ export abstract class ServiceRegistry<T, C extends any[], S = {}> {
     );
   }
 
-  public static createSingleSingletonServiceRegistry<T, C extends any[], S = {}>(
+  public static createSingleSingletonServiceRegistry<T, C extends unknown[], S = object>(
     service: ISingleton<T> & S,
     serviceRegistryOptions?: ServiceRegistryOptions
   ) {
@@ -59,7 +59,7 @@ export abstract class ServiceRegistry<T, C extends any[], S = {}> {
     this._registry.set(key, service);
   }
 
-  public register(key: string, value: (new (...args: C) => T) & S) {
+  public register(key: string, value: (new (..._args: C) => T) & S) {
     this._register(key, { classObject: value, singleton: false });
   }
 

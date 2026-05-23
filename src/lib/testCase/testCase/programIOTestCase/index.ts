@@ -56,7 +56,7 @@ export class ProgramIOTestCase extends TestCase<
     }
 
     const { stdout } = executionResults;
-    let success = stdout === dbTestCase.output;
+    const success = stdout === dbTestCase.output;
 
     const result = {
       hidden: false,

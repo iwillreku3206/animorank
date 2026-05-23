@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
   import type { PageProps } from './$types';
   import ProblemSetCard from './ProblemSetCard.svelte';
   import SearchIcon from '@iconify-svelte/fa6-solid/magnifying-glass';

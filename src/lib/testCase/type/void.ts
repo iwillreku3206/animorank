@@ -60,40 +60,23 @@ class CVoid extends LanguageType<Value> {
     return '';
   }
 
-  public constructPrint(symbol: string): string {
+  public constructPrint(): string {
     return `printf("(void)");`;
   }
 
-  public constructEqualityCheck(
-    resultSymbol: string,
-    symbolA: string,
-    symbolB: string
-  ): string {
+  public constructEqualityCheck(resultSymbol: string): string {
     return `int ${resultSymbol} = 0;`;
   }
 
-  public constructLessThanCheck(
-    resultSymbol: string,
-    symbolA: string,
-    symbolB: string
-  ): string {
+  public constructLessThanCheck(resultSymbol: string): string {
     return `int ${resultSymbol} = 0;`;
   }
 
-  public constructLessThanEqualCheck(
-    resultSymbol: string,
-    symbolA: string,
-    symbolB: string
-  ): string {
+  public constructLessThanEqualCheck(resultSymbol: string): string {
     return `int ${resultSymbol} = 0;`;
   }
 
-  public constructWithinRangeCheck(
-    resultSymbol: string,
-    symbol: string,
-    actualSymbol: string,
-    range: string
-  ): string {
+  public constructWithinRangeCheck(resultSymbol: string): string {
     return `int ${resultSymbol} = 0;`;
   }
 }

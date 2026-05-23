@@ -10,6 +10,7 @@
     root = true
   }: {
     type: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any;
     root?: boolean;
   } = $props();
@@ -25,7 +26,7 @@
 
       for (const k of Object.keys(merged)) {
         if (k in data) {
-          merged[k] = data[k];
+          merged[k as keyof typeof merged] = data[k];
         }
       }
 
@@ -47,7 +48,7 @@
         bind:value={type}
         class="select select-sm select-primary select-bordered w-40"
       >
-        {#each registry.getTypeList() as typeKey}
+        {#each registry.getTypeList() as typeKey (typeKey)}
           {#if registry.getStatic(typeKey).typeInfo}
             {@const typeInfo = registry.getStatic(typeKey).typeInfo}
             <option value={typeKey}><typeInfo.icon />{typeInfo.label}</option>
@@ -58,7 +59,7 @@
   {/if}
 
   <div class="flex flex-col flex-wrap gap-2 mt-2">
-    {#each fieldsArr as field}
+    {#each fieldsArr as field (field.name)}
       {#if field.type === 'type-reference'}
         <div class="flex flex-col gap-1">
           <label class="text-sm">
@@ -94,7 +95,7 @@
               class="select select-sm select-primary select-bordered w-full"
             >
               {#if field.options}
-                {#each field.options as option}
+                {#each field.options as option (option.value)}
                   <option value={option.value}>{option.label}</option>
                 {/each}
               {/if}

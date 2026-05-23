@@ -6,7 +6,7 @@
     closeModal,
     show = false
   }: {
-    closeModal: any;
+    closeModal: () => void;
     show?: boolean;
   } = $props();
   let AccessibleWithLink = $state(false);

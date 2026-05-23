@@ -60,7 +60,7 @@ type AnyTestCase = ProblemTestCase | FunctionOutputTestCase | ProgramIOTestCase 
 export async function updateTestCase(testCase: AnyTestCase): Promise<boolean> {
   let body;
   switch (testCase.type) {
-    case 'FunctionOutputTestCase':
+    case 'FunctionOutputTestCase': {
       const functionTestCase = testCase as FunctionOutputTestCase;
       body = {
         parameters: functionTestCase.parameters,
@@ -69,19 +69,22 @@ export async function updateTestCase(testCase: AnyTestCase): Promise<boolean> {
         function_name: functionTestCase.function_name
       };
       break;
-    case 'ProgramIOTestCase':
+    }
+    case 'ProgramIOTestCase': {
       const ioTestCase = testCase as ProgramIOTestCase;
       body = {
         input: ioTestCase.input,
         output: ioTestCase.output
       };
       break;
-    case 'CustomTestCase':
+    }
+    case 'CustomTestCase': {
       const customTestCase = testCase as CustomTestCase;
       body = {
         test_code: customTestCase.test_code
       };
       break;
+    }
   }
 
   const req = await fetch(`/api/test-case/${testCase.id}`, {

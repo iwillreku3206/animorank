@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import type { TypeWithValue } from '.';
 
 export abstract class LanguageType<T, TV = TypeWithValue<T>> {

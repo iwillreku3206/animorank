@@ -56,7 +56,7 @@
       }
     });
 
-    // @ts-ignore
+    // @ts-expect-error testCases is a very deep structure, so TypeScript will complain here
     lastSavedTestCases = structuredClone($state.snapshot(testCases));
     const testCasesToSave = structuredClone($state.snapshot(testCases));
 
@@ -86,7 +86,9 @@
 
   $effect(() => {
     // track these two objects
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     problemSerialized;
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     testCasesSerialized;
 
     if (untrack(() => saveLock)) {
@@ -163,7 +165,7 @@
         <h2 class="text-2xl mb-3">Edit Starter Code</h2>
         <div class="m-auto">
           <CodeEditor
-            class="min-h-[300px]"
+            class="min-h-75"
             bind:code={problem.starter_code}
             language="c"
           />
@@ -173,7 +175,7 @@
     <Pane class="pb-10 pt-5 pl-5 pr-3">
       <h2 class="text-2xl mb-6">Test Cases</h2>
       <div class="flex flex-col gap-4">
-        {#each testCases as testCase, index}
+        {#each testCases as testCase, index (index)}
           <TestCase
             bind:testCase={testCases[index]}
             order={index + 1}

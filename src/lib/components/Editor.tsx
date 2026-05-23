@@ -1,25 +1,25 @@
-import { defaultOptions, type SanitizeOptions } from '@diplodoc/transform/lib/sanitize.js';
 import {
   useMarkdownEditor,
   MarkdownEditorView,
-  wMathInlineItemData,
-  wMathBlockItemData,
   wysiwygToolbarConfigs
 } from '@gravity-ui/markdown-editor';
 import { Toaster, ToasterProvider, ThemeProvider } from '@gravity-ui/uikit';
-import { transform as transformHTML } from '@diplodoc/html-extension';
-import { Math } from '@gravity-ui/markdown-editor/extensions/additional/Math/index.js';
+import { LatexExtension } from '@gravity-ui/markdown-editor-latex-extension';
+import {
+  wLatexBlockItemData,
+  wLatexInlineItemData
+} from '@gravity-ui/markdown-editor-latex-extension/configs';
 import { Mermaid } from '@gravity-ui/markdown-editor/extensions/additional/Mermaid/index.js';
 import { YfmHtmlBlock } from '@gravity-ui/markdown-editor/extensions/additional/YfmHtmlBlock/index.js';
 import React from 'react';
 import { useYfmHtmlBlockStyles } from './useYfmHtmlBlockStyles';
-import { getSanitizeYfmHtmlBlock } from '@gravity-ui/markdown-editor/extensions/additional/YfmHtmlBlock/utils.js';
+import { htmlBlockDefaultSanitizer } from '@diplodoc/html-extension';
 
 const toaster = new Toaster();
 
 const wCommandMenuConfig = wysiwygToolbarConfigs.wCommandMenuConfig.concat(
-  wysiwygToolbarConfigs.wMathInlineItemData,
-  wysiwygToolbarConfigs.wMathBlockItemData,
+  wLatexBlockItemData,
+  wLatexInlineItemData,
   wysiwygToolbarConfigs.wMermaidItemData,
   wysiwygToolbarConfigs.wYfmHtmlBlockItemData
 );
@@ -28,7 +28,7 @@ export default function Editor({
   onChange,
   initialText
 }: {
-  onChange: (text: string) => void;
+  onChange: (_text: string) => void;
   initialText: string;
 }) {
   const editor = useMarkdownEditor({
@@ -39,7 +39,7 @@ export default function Editor({
     wysiwygConfig: {
       extensions: (builder) => {
         builder
-          .use(Math, {
+          .use(LatexExtension, {
             loadRuntimeScript: () => {
               import('@diplodoc/latex-extension/runtime');
               import(
@@ -59,7 +59,7 @@ export default function Editor({
           })
           .use(YfmHtmlBlock, {
             useConfig: useYfmHtmlBlockStyles,
-            sanitize: getSanitizeYfmHtmlBlock({ options: defaultOptions }),
+            sanitize: htmlBlockDefaultSanitizer,
             autoSave: {
               enabled: true,
               delay: 1000

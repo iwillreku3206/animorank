@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 export interface Judge0SubmissionRequest {
   source_code?: string;
   language_id: number;
@@ -79,6 +80,6 @@ export enum Judge0StatusId {
 }
 
 export enum Judge0Language {
-	C = 50,
-	MultiFile = 89
+  C = 50,
+  MultiFile = 89
 }

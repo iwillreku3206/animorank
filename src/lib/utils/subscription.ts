@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type Events = Record<string, any>;
 
 interface Subscription<T extends Events, K extends keyof T> {
   event: K;
-  handler: (payload: T[K]) => void;
+  handler: (_payload: T[K]) => void;
 }
 
 function compareSubscriptions(
@@ -30,7 +32,7 @@ export class Subscribable<T extends Events> {
     }
   }
 
-  public subscribe<K extends keyof T>(event: K, handler: (payload: T[K]) => void): () => void {
+  public subscribe<K extends keyof T>(event: K, handler: (_payload: T[K]) => void): () => void {
     this.add({ event, handler });
 
     return () => {
