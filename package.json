@@ -66,6 +66,7 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@auth/sveltekit": "^1.11.1",
+    "@chevrotain/regexp-to-ast": "^12.0.0",
     "@diplodoc/html-extension": "^2.9.2",
     "@diplodoc/latex-extension": "^1.4.1",
     "@diplodoc/mermaid-extension": "^1.4.2",
