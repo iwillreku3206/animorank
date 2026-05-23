@@ -17,6 +17,9 @@
     "scripts:addDefaultTags": "npx tsx scripts/addDefaultTags.ts",
     "prepare": "husky"
   },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,svelte,html,css}": "npm run format && npm run lint"
+  },
   "devDependencies": {
     "@eslint/compat": "^2.0.4",
     "@eslint/js": "^10.0.1",
@@ -42,6 +45,7 @@
     "eslint-plugin-svelte": "^3.17.0",
     "globals": "^17.4.0",
     "knip": "^6.4.1",
+    "lint-staged": "^17.0.5",
     "mdsvex": "^0.12.3",
     "monaco-editor": "^0.47.0",
     "postcss": "^8.4.38",
