@@ -6,17 +6,29 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: my_test_db
+          POSTGRES_PASSWORD: my_test_db_password
+        ports:
+          - 5432:5432
+        # Health check ensures Postgres is ready before tests start
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
       AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
       APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
       AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-      JUDGE0_BASE_URL: ${{ secrets.JUDGE0_BASE_URL }}
-      BASE_URL: ${{ secrets.BASE_URL }}
-      ORIGIN: ${{ secrets.ORIGIN }}
-      SSL_DEV_SERVER: ${{ secrets.SSL_DEV_SERVER }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      SHADOW_DATABASE_URL: ${{ secrets.SHADOW_DATABASE_URL }}
+      JUDGE0_BASE_URL: '' # we deal with this when we make tests for execution
+      BASE_URL: http://localhost:5173
+      ORIGIN: http://localhost:5173
+      DATABASE_URL: postgres://postgres:my_test_db_password@localhost:5432/my_test_db
 
     steps:
     - uses: actions/checkout@v4
@@ -31,6 +43,8 @@ jobs:
       run: npx svelte-kit sync
     - name: Build project
       run: npm run build
+    - name: Migrate sample database
+      run: npx zen migrate deploy
     - name: Run tests
       run: npm run test
     - uses: actions/upload-artifact@v4
