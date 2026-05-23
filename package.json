@@ -18,8 +18,7 @@
     "prepare": "npx husky"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,svelte,html,css}": "npm run format",
-    "*.{js,jsx,ts,tsx,svelte,html,css}": "npm run lint"
+    "*.{js,jsx,ts,tsx,svelte,html,css}": "npm run format"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.4",

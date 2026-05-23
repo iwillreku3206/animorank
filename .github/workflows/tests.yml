@@ -26,7 +26,7 @@ jobs:
     - name: Install dependencies
       run: npm i
     - name: Install Playwright Browsers
-      run: npx playwright install --with-deps firefox
+      run: npx playwright install --with-deps
     - name: Sync SvelteKit generated files
       run: npx svelte-kit sync
     - name: Build project
