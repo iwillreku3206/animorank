@@ -1,6 +1,12 @@
 <script lang="ts">
-  import type { TestCaseResult, Failure, CompileError, ErrorReason } from '$lib/types/codeExecution';
+  import type {
+    TestCaseResult,
+    Failure,
+    CompileError,
+    ErrorReason
+  } from '$lib/types/codeExecution';
   import { isCompileError, isRuntimeError } from '$lib/types/codeExecution';
+  import { type CustomTestCase } from '$lib/zenstack/models';
 
   interface Props {
     tests: TestCaseResult[];
@@ -15,7 +21,8 @@
   function failReasonText(test: TestCaseResult): string {
     const failure = test as TestCaseResult & Failure;
     const reason = failure.error_reason as ErrorReason;
-    if (reason.type === 'compile_error') return `Compilation Error: ${(reason as CompileError).error}`;
+    if (reason.type === 'compile_error')
+      return `Compilation Error: ${(reason as CompileError).error}`;
     if (reason.type === 'runtime_error') return 'Runtime Error';
     if (reason.type === 'unknown_error') return 'Unknown Error';
     return 'Wrong Answer';
@@ -34,7 +41,7 @@
   );
 </script>
 
-{#each sortedTests as test}
+{#each sortedTests as test, i (i)}
   <div class="border-b border-gray-700 p-3">
     <!-- Status header -->
     <div class="flex items-center justify-between mb-2">
@@ -87,7 +94,7 @@
     {#if test.test_info && test.test_info.public}
       <div class="text-xs text-gray-500 mb-1">Custom test code:</div>
       <pre class="text-xs text-gray-300 bg-[#1e1e1e] rounded p-2 overflow-x-auto">
-{test.test_info.test_code}
+{(test.test_info as CustomTestCase).test_code}
       </pre>
     {/if}
   </div>

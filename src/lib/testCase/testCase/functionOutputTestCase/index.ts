@@ -1,5 +1,5 @@
 import { db } from '$lib/zenstack';
-import type { Comparison, ProblemTestCase } from '$lib/zenstack/models';
+import type { ProblemTestCase } from '$lib/zenstack/models';
 import {
   TestCase,
   type CreateOptions,
@@ -136,9 +136,11 @@ export class FunctionOutputTestCase extends TestCase<
     await db.functionOutputTestCase.update({
       where: { id },
       data: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         comparisons: { set: result.data.comparisons as any },
         function_name: result.data.function_name,
         return_type: result.data.return_type,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         parameters: { set: result.data.parameters as any }
       }
     });

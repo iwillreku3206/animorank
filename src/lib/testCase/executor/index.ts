@@ -50,5 +50,5 @@ export type CodeExecutionResponse = (
 };
 
 export abstract class CodeExecutor {
-  public abstract executeCode(request: CodeExecutionRequest): Promise<CodeExecutionResponse>;
+  public abstract executeCode(_request: CodeExecutionRequest): Promise<CodeExecutionResponse>;
 }

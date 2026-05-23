@@ -9,12 +9,16 @@
     "test": "npm run test:integration && npm run test:unit",
     "check": "tsc --noEmit && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "test:integration": "playwright test",
-    "test:unit": "vitest",
-    "lint": "prettier --check . && eslint .",
-    "format": "prettier --write .",
-    "knip": "knip",
-    "scripts:addDefaultTags": "npx tsx scripts/addDefaultTags.ts"
+    "test:integration": "npx playwright test",
+    "test:unit": "npx vitest",
+    "lint": "npx eslint .",
+    "format": "npx prettier --write .",
+    "knip": "npx knip",
+    "scripts:addDefaultTags": "npx tsx scripts/addDefaultTags.ts",
+    "prepare": "npx husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,svelte,html,css}": "npm run format"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.4",
@@ -41,6 +45,7 @@
     "eslint-plugin-svelte": "^3.17.0",
     "globals": "^17.4.0",
     "knip": "^6.4.1",
+    "lint-staged": "^17.0.5",
     "mdsvex": "^0.12.3",
     "monaco-editor": "^0.47.0",
     "postcss": "^8.4.38",
@@ -61,12 +66,14 @@
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
     "@auth/sveltekit": "^1.11.1",
+    "@chevrotain/regexp-to-ast": "^12.0.0",
     "@diplodoc/html-extension": "^2.9.2",
     "@diplodoc/latex-extension": "^1.4.1",
     "@diplodoc/mermaid-extension": "^1.4.2",
     "@diplodoc/transform": "^4.74.1",
     "@gravity-ui/icons": "^2.12.0",
     "@gravity-ui/markdown-editor": "^15.34.5",
+    "@gravity-ui/markdown-editor-latex-extension": "^0.1.0",
     "@iconify-svelte/fa6-regular": "^1.0.0",
     "@iconify-svelte/fa6-solid": "^1.0.0",
     "@tailwindcss/postcss": "^4.2.2",

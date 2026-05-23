@@ -34,7 +34,7 @@
   );
 </script>
 
-{#each sortedTests as test}
+{#each sortedTests as test, i (i)}
   <div class="border-b border-gray-700 p-3">
     <!-- Status header -->
     <div class="flex items-center justify-between mb-2">

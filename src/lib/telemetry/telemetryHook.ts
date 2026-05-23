@@ -8,7 +8,7 @@ export type Entry<T = object> = {
   data: T;
 };
 
-export type TelemetryCallback = (entry: Entry) => void | Promise<void>;
+export type TelemetryCallback = (_entry: Entry) => void | Promise<void>;
 
 export abstract class TelemetryHook {
   callback: TelemetryCallback;
@@ -21,7 +21,7 @@ export abstract class TelemetryHook {
     this.callback(entry);
   }
 
-  public abstract monacoHook(monaco: monaco.editor.IStandaloneCodeEditor): () => void;
-  public abstract windowHook(window: Window): () => void;
-  public abstract executionHook(executionObservable: Subscribable<ExecutionEvent>): () => void;
+  public abstract monacoHook(_monaco: monaco.editor.IStandaloneCodeEditor): () => void;
+  public abstract windowHook(_window: Window): () => void;
+  public abstract executionHook(_executionObservable: Subscribable<ExecutionEvent>): () => void;
 }

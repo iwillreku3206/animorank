@@ -1,7 +1,6 @@
 import { db } from '$lib/zenstack';
 import type { ProblemTestCase, ProblemTestCaseType } from '$lib/zenstack/models';
 import type { User } from '@auth/sveltekit';
-import type { ISingleton } from '$lib/services/registry';
 import { TestCaseRegistry } from './testCaseRegistry';
 import type { TestCase } from './testCase';
 

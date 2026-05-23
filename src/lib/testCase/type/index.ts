@@ -1,6 +1,4 @@
 import type z from 'zod';
-import type { TypeInfo } from './typeInfo';
-import type { JsonValue } from '@zenstackhq/orm';
 import type { LanguageRegistry } from '../languageRegistry';
 import type { LanguageType } from './languageType';
 
