@@ -27,6 +27,8 @@ jobs:
       run: npm i
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps firefox
+    - name: Build project
+      run: npm run build
     - name: Run tests
       run: npm run test
     - uses: actions/upload-artifact@v4
