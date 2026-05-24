@@ -81,4 +81,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/iwillreku3206/animorank:${{ steps.date.outputs.date }}-${{ github.ref_name }}-amd64
+          tags: |
+            ghcr.io/iwillreku3206/animorank:${{ steps.date.outputs.date }}-${{ github.ref_name }}
+            ghcr.io/iwillreku3206/animorank:${{ github.ref_name }}
