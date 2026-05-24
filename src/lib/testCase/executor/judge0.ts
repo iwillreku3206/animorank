@@ -1,7 +1,7 @@
 import AdmZip from 'adm-zip';
 import { CodeExecutor, type CodeExecutionRequest, type CodeExecutionResponse } from '.';
 import type { Judge0SubmissionRequest, Judge0SubmissionResponse } from '$lib/types/judge0';
-import { JUDGE0_BASE_URL } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { Logger } from '$lib/logging/logger';
 
@@ -25,7 +25,7 @@ export class Judge0Executor extends CodeExecutor {
       stdin: request.stdin ? Buffer.from(request.stdin, 'utf8').toString('base64') : undefined
     };
 
-    const req = await fetch(`${JUDGE0_BASE_URL}/submissions?wait=true&base64_encoded=true`, {
+    const req = await fetch(`${env.JUDGE0_BASE_URL}/submissions?wait=true&base64_encoded=true`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(submissionParams)
