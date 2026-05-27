@@ -1,13 +1,12 @@
 import type { ExecutionEvent } from '$lib/testCase/executionHook';
 import type { Subscribable } from '$lib/utils/subscription';
-import type { editor } from 'monaco-editor';
 import { TelemetryHook } from '../telemetryHook';
 
 export class ExecutionHook extends TelemetryHook {
-  public monacoHook(_monaco: editor.IStandaloneCodeEditor): () => void {
+  public monacoHook(): () => void {
     return () => {};
   }
-  public windowHook(_window: Window): () => void {
+  public windowHook(): () => void {
     return () => {};
   }
   public executionHook(executionObservable: Subscribable<ExecutionEvent>): () => void {

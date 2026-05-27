@@ -97,7 +97,7 @@ class PointerLanguageRegistry extends LanguageRegistry<PointerValue> {
  * valid pointer target without any changes to this code.
  */
 class CPointer extends LanguageType<PointerValue> {
-  private innerLanguage: LanguageType<any>;
+  private innerLanguage: LanguageType<unknown>;
 
   constructor(typeWithValue: TypeWithValue<PointerValue>) {
     super(typeWithValue as Pointer);
@@ -112,7 +112,7 @@ class CPointer extends LanguageType<PointerValue> {
    * Dynamically resolve the inner type's C language implementation from TypeRegistry.
    * This is the key to making pointers work with ANY future type without modifying this code.
    */
-  private resolveInnerLanguage(ptr: Pointer): LanguageType<any> | null {
+  private resolveInnerLanguage(ptr: Pointer): LanguageType<unknown> | null {
     try {
       const targetType = ptr.getTargetType();
       const data = ptr.getTargetData();
@@ -120,7 +120,7 @@ class CPointer extends LanguageType<PointerValue> {
       const innerType = TypeRegistry.instance().getInstance(targetType, data);
       // Get its C language implementation
       const langImpl = innerType.getLanguage('c');
-      return langImpl as LanguageType<any>;
+      return langImpl as LanguageType<unknown>;
     } catch (e) {
       console.warn(
         `Failed to resolve inner language for pointer target: ${ptr.getTargetType()}`,

@@ -1,0 +1,86 @@
+name: Test and Build Docker
+on:
+  push:
+    branches:
+    - main
+    - develop
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: my_test_db
+          POSTGRES_PASSWORD: my_test_db_password
+        ports:
+          - 5432:5432
+        # Health check ensures Postgres is ready before tests start
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      AUTH_GOOGLE_ID: ${{ secrets.AUTH_GOOGLE_ID }}
+      AUTH_GOOGLE_SECRET: ${{ secrets.AUTH_GOOGLE_SECRET }}
+      APP_JWT_SECRET: ${{ secrets.APP_JWT_SECRET }}
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      JUDGE0_BASE_URL: '' # we deal with this when we make tests for execution
+      BASE_URL: http://localhost:5173
+      ORIGIN: http://localhost:5173
+      DATABASE_URL: postgres://postgres:my_test_db_password@localhost:5432/my_test_db
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm i
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Sync SvelteKit generated files
+        run: npx svelte-kit sync
+      - name: Build project
+        run: npm run build
+      - name: Migrate sample database
+        run: npx zen migrate deploy
+      - name: Run tests
+        run: npm run test
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    outputs:
+      upstream_branch: ${{ github.event.workflow_run.head_branch }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKER_PAT }}
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%dT%H-%M-%S')"
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/iwillreku3206/animorank:${{ steps.date.outputs.date }}-${{ github.ref_name }}
+            ghcr.io/iwillreku3206/animorank:${{ github.ref_name }}

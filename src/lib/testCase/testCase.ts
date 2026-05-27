@@ -45,6 +45,6 @@ export abstract class TestCase<T extends ProblemTestCase, TUpdate = unknown> {
     this.dbTestCase = dbTestCase;
   }
 
-  public abstract execute(studentCode: string): Promise<TestCaseResult>;
-  public abstract update(options: UpdateOptions<TUpdate>): Promise<void>;
+  public abstract execute(_studentCode: string): Promise<TestCaseResult>;
+  public abstract update(_options: UpdateOptions<TUpdate>): Promise<void>;
 }

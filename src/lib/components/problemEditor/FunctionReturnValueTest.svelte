@@ -65,6 +65,7 @@
             class="select select-xs select-primary select-bordered w-32"
           >
             <option value="return">return value</option>
+            <!--eslint-disable-next-line @typescript-eslint/no-unused-vars-->
             {#each testCase.parameters as _, j (j)}
               <option value={`${j}`}>param {j}</option>
             {/each}

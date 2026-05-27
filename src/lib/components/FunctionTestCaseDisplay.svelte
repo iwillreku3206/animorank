@@ -24,7 +24,10 @@
     if (!params || params.length === 0) return '';
     return params
       .map((p) =>
-        typeRegistry.getInstance(p.type, p.data).getLanguage('c').constructTypeExpression()
+        typeRegistry
+          .getInstance(p.type, p.data || undefined)
+          .getLanguage('c')
+          .constructTypeExpression()
       )
       .join(', ');
   }
@@ -51,7 +54,7 @@
   );
 </script>
 
-{#each sortedTests as test}
+{#each sortedTests as test, i (i)}
   <div class="border-b border-gray-700 p-3">
     <!-- Status header -->
     <div class="flex items-center justify-between mb-2">
@@ -90,7 +93,7 @@
       <div class="mb-2">
         <div class="text-xs font-medium text-red-400 mb-1">Compilation Error</div>
         <pre class="text-xs text-red-300 bg-[#2d1a1a] rounded p-2 overflow-x-auto">
-{(test as Failure).error_reason.error}
+{(test as Failure)?.error_reason?.error || 'No compilatio error returned.'}
         </pre>
       </div>
     {/if}

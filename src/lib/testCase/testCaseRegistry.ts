@@ -6,10 +6,11 @@ import { CustomTestCase } from './testCase/customTestCase';
 import { ProgramIOTestCase } from './testCase/programIOTestCase';
 
 export class TestCaseRegistry extends ServiceRegistry<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   TestCase<any>,
   [ProblemTestCase],
   {
-    create(options: CreateOptions): Promise<ProblemTestCase>;
+    create(_options: CreateOptions): Promise<ProblemTestCase>;
   }
 > {
   public constructor() {

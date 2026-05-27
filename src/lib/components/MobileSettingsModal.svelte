@@ -1,5 +1,6 @@
 <script lang="ts">
   /** @type {{openSettings: any, user: any}} */
+  // eslint-disable-next-line no-useless-assignment
   let { openSettings = $bindable(), user }: { openSettings: boolean; user: User } = $props();
   import { goto } from '$app/navigation';
   import type { User } from '@auth/sveltekit';

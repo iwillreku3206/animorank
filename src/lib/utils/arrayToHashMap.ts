@@ -1,6 +1,6 @@
 export function arrayToHashMap<T, K extends string | number | symbol>(
   array: T[],
-  keyFn: (item: T) => K
+  keyFn: (_item: T) => K
 ) {
   const map = {};
   array.forEach((item) => {

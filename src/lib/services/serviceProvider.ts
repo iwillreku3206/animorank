@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ISingleton, ServiceRegistry } from './registry';
 
-type AbstractConstructor<T = any> = (abstract new (...args: any[]) => T) | ISingleton<T>;
+type AbstractConstructor<T = any> = (abstract new (..._args: any[]) => T) | ISingleton<T>;
 
 export class ServiceProvider {
   protected _registries = new Map<AbstractConstructor<any>, ServiceRegistry<any, any[]>>();
