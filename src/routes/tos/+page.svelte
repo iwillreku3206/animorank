@@ -1,6 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
-  import Button from '$lib/components/Button.svelte';
+  import Button from '$lib/components/buttons/Button.svelte';
   import TosCard from './TosCard.svelte';
 
   let showModal = $state(false);
@@ -28,7 +28,7 @@
   <TosCard bind:checked={checked[3]}>
     By using the platform, you agree to our <a
       target="_blank"
-      href="/legal/tos"
+      href="/legal/terms-of-service"
       class="text-primary inline"
     >
       Terms of Service
