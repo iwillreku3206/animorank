@@ -15,3 +15,4 @@ vite.config.ts.timestamp-*
 /.vercel/output/static
 
 /generated/prisma
+skills-lock.json
