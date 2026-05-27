@@ -20,10 +20,10 @@
     [TagColor.TAG_COLOR_PRIMARY]: 'bg-primary text-primary-content',
     [TagColor.TAG_COLOR_SECONDARY]: 'bg-secondary text-secondary-content',
     [TagColor.TAG_COLOR_ACCENT]: 'bg-accent text-accent-content',
-    [TagColor.TAG_COLOR_RED]: 'bg-error text-primary-content',
-    [TagColor.TAG_COLOR_YELLOW]: 'bg-warning text-primary-content',
-    [TagColor.TAG_COLOR_GREEN]: 'bg-success text-primary-content',
-    [TagColor.TAG_COLOR_BLUE]: 'bg-info text-primary-content'
+    [TagColor.TAG_COLOR_RED]: 'bg-error text-error-content',
+    [TagColor.TAG_COLOR_YELLOW]: 'bg-warning text-warning-content',
+    [TagColor.TAG_COLOR_GREEN]: 'bg-success text-success-content',
+    [TagColor.TAG_COLOR_BLUE]: 'bg-info text-info-content'
   });
 </script>
 
