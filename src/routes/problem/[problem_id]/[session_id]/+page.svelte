@@ -12,7 +12,7 @@
   import { runTestCases, submit, type TestRunResponse } from './api';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import Button from '$lib/components/Button.svelte';
+  import Button from '$lib/components/buttons/Button.svelte';
   import { Subscribable } from '$lib/utils/subscription';
   import type { ExecutionEvent } from '$lib/testCase/executionHook';
   import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
