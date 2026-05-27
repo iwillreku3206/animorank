@@ -38,23 +38,34 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   if (!problemSet) throw redirect(302, '/');
 
-  const globalProblemSolves = groupBy(
-    await db.practiceSession.groupBy({
-      by: ['problem_id', 'done'],
-      _count: { _all: true }
-    }),
-    (p) => p.problem_id
-  );
+  const problemIds = problemSet.problems.map((p) => p.id);
 
-  const globalProblemAttempts = groupBy(
-    await db.$qb
-      .selectFrom('PracticeSession')
-      .groupBy('PracticeSession.problem_id')
-      .select('problem_id')
-      .select((eb) => eb.fn.count('student_id').distinct().as('attempts'))
-      .execute(),
-    (p) => p.problem_id
-  );
+  const globalProblemSolvers = problemIds.length
+    ? groupBy(
+        await db.$qb
+          .selectFrom('PracticeSession')
+          .where('done', '=', true)
+          .where('problem_id', 'in', problemIds)
+          .groupBy('PracticeSession.problem_id')
+          .select('problem_id')
+          .select((eb) => eb.fn.count('student_id').distinct().as('solvers'))
+          .execute(),
+        (p) => p.problem_id
+      )
+    : {};
+
+  const globalProblemAttempts = problemIds.length
+    ? groupBy(
+        await db.$qb
+          .selectFrom('PracticeSession')
+          .where('problem_id', 'in', problemIds)
+          .groupBy('PracticeSession.problem_id')
+          .select('problem_id')
+          .select((eb) => eb.fn.count('student_id').distinct().as('attempts'))
+          .execute(),
+        (p) => p.problem_id
+      )
+    : {};
 
   const bookmarked = !!(await db.problemSetBookmark.findUnique({
     where: { problem_set_id_user_id: { problem_set_id: params.id, user_id: session.user.id } }
@@ -85,7 +96,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
               : 'not_finished'
       }))
     },
-    globalProblemSolves,
+    globalProblemSolvers,
     globalProblemAttempts,
     bookmarked
   };
