@@ -5,7 +5,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ['DM Sans', 'Helvetica', 'sans-serif'],
-        mono: ['DM Mono', 'monospace']
+        mono: ['DM Mono', 'monospace'],
+        display: ['Space Grotesk', 'sans-serif']
       }
     }
   },
