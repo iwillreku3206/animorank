@@ -4,7 +4,9 @@
   import BookmarkIconSolid from '@iconify-svelte/fa6-solid/bookmark';
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
   import { removeBookmark, toggleBookmark } from './bookmark';
-  import type { ProblemSet } from './api';
+  import type { PageProps } from './$types';
+
+  type ProblemSet = PageProps['data']['problemSets'][number];
 
   let { problemSet = $bindable() }: { problemSet: ProblemSet } = $props();
 

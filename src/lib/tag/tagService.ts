@@ -1,9 +1,8 @@
-import type { TagModel } from './tagModel';
-import type { TagColor, TagType } from '$lib/zenstack/models';
-import { TagType as TAG_TYPE } from '$lib/zenstack/models';
+import type { TagColor, TagType, Tag as TagModel } from '$lib/zenstack/models';
 import { TagRegistry } from './tagRegistry';
 import type { Tag } from './Tag';
-import type { TagCreateOptions, TagUpdateOptions } from './tagRegistry';
+import type { TagUpdateOptions } from './tagRegistry';
+import { db } from '$lib/zenstack';
 
 export interface FindByIdOptions {
   id: string;
@@ -72,19 +71,25 @@ export class TagService {
     return this.tagRegistry.getStatic(options.type).delete(options.id);
   }
 
-  public async listByType(options: ListByTypeOptions): Promise<Tag<TagModel>[]> {
+  public async findByType(options: ListByTypeOptions): Promise<Tag<TagModel>[]> {
     const cls = this.tagRegistry.getStatic(options.type);
     const models = await cls.findAll();
     return models.map((model) => this.tagRegistry.getInstance(options.type, model));
   }
 
-  public async listAll(): Promise<Tag<TagModel>[]> {
-    const results = await Promise.all([
-      this.listByType({ type: TAG_TYPE.TAG_TOPIC }),
-      this.listByType({ type: TAG_TYPE.TAG_DIFFICULTY }),
-      this.listByType({ type: TAG_TYPE.TAG_SUBJECT })
-    ]);
+  public async findAll(): Promise<Tag<TagModel>[]> {
+    const tags = await db.tag.findMany();
+    return tags.map((tag) => {
+      return this.tagRegistry.getInstance(tag.type, tag);
+    });
+  }
 
-    return [...results[0], ...results[1], ...results[2]];
+  public async findByIds(ids: string[]): Promise<Tag<TagModel>[]> {
+    const tags = await db.tag.findMany({
+      where: { id: { in: ids } }
+    });
+    return tags.map((tag) => {
+      return this.tagRegistry.getInstance(tag.type, tag);
+    });
   }
 }

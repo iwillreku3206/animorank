@@ -1,5 +1,5 @@
 import { db } from '$lib/zenstack';
-import { TagColor, TagType as TAG_TYPE } from '$lib/zenstack/models';
+import { TagColor } from '$lib/zenstack/models';
 import type { SubjectTag as SubjectTagModel } from '$lib/zenstack/models';
 import { Tag } from './Tag';
 
@@ -18,7 +18,6 @@ export class SubjectTag extends Tag<SubjectTagModel> {
     const tag = await db.subjectTag.create({
       data: {
         label: options.label,
-        type: TAG_TYPE.TAG_SUBJECT,
         color: options.color ?? TagColor.TAG_COLOR_DEFAULT,
         order: options.order ?? 0
       }

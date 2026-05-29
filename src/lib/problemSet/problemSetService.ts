@@ -1,7 +1,17 @@
 import { db } from '$lib/zenstack';
-import type { ProblemSet as ProblemSetModel } from '$lib/zenstack/models';
+import type {
+  DifficultyTag,
+  ProblemSet as ProblemSetModel,
+  SubjectTag,
+  TopicTag,
+  Tag as TagModel
+} from '$lib/zenstack/models';
 import type { User } from '@auth/sveltekit';
 import { ProblemSet, type CollaboratorInfo, type ProblemSetSummary } from '.';
+import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { Tag, TagService } from '$lib/tag';
+import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
+import fs from 'fs/promises';
 
 export interface CreateOptions {
   title: string;
@@ -47,6 +57,12 @@ export interface ListCollaboratorsOptions {
   user: User;
 }
 
+export type FilterStatus = 'not_started' | 'in_progress' | 'complete';
+
+export type SortType = 'problems_solved' | 'problem_count' | 'completion_pct' | 'difficulty';
+
+export type SortOrder = 'asc' | 'desc';
+
 export interface FindByFilterOptions {
   user: User;
   page?: number;
@@ -54,15 +70,18 @@ export interface FindByFilterOptions {
   filters?: {
     search?: string;
     tags?: string[];
-    status?: 'not_started' | 'in_progress' | 'complete';
+    status?: FilterStatus;
     creator?: string;
     bookmarked?: boolean;
   };
   sort?: {
-    by: 'problems_solved' | 'problem_count' | 'completion_pct' | 'difficulty';
-    order: 'asc' | 'desc';
+    by: SortType;
+    order: SortOrder;
   };
+  studentProgress?: boolean;
 }
+
+export type StudentProgress = { finished: number; total: number };
 
 export class ProblemSetService {
   private static _instance: ProblemSetService | null;
@@ -258,17 +277,23 @@ export class ProblemSetService {
   /**
    * Find problem sets accessible to the user with optional filtering.
    */
-  public async findByFilter(
-    options: FindByFilterOptions
-  ): Promise<{ problemSets: ProblemSetSummary[]; total: number }> {
+  public async findByFilter<O extends FindByFilterOptions>(
+    options: O
+  ): Promise<{
+    problemSets: (ProblemSetSummary &
+      (O extends { studentProgress: true } ? { studentProgress: StudentProgress } : void))[];
+    tags: Record<string, Tag<TagModel>>;
+    total: number;
+  }> {
     const page = options.page ?? 1;
     const pageSize = options.pageSize ?? 12;
 
-    let query = db.$qb
+    let query = db.$qbRaw
       .with('topics', (db) =>
         db
           .selectFrom('ProblemSet')
           .leftJoin('ProblemSetTopic', 'ProblemSetTopic.problem_set_id', 'ProblemSet.id')
+          .groupBy('ProblemSet.id')
           .select('ProblemSet.id')
           .select((eb) =>
             eb.fn<string[]>('array_agg', ['ProblemSetTopic.topic_tag_id']).as('topic_tags')
@@ -285,9 +310,10 @@ export class ProblemSetService {
                 eb.exists((eb) =>
                   eb
                     .selectFrom('PracticeSession')
-                    .where('PracticeSession.problem_id', '=', 'Problem.id')
+                    .whereRef('PracticeSession.problem_id', '=', 'Problem.id')
                     .where('PracticeSession.student_id', '=', options.user.id || '')
                     .where('PracticeSession.done', '=', eb.lit(true))
+                    .selectAll()
                 )
               )
               .then('finished')
@@ -295,12 +321,13 @@ export class ProblemSetService {
                 eb.exists((eb) =>
                   eb
                     .selectFrom('PracticeSession')
-                    .where('PracticeSession.problem_id', '=', 'Problem.id')
+                    .whereRef('PracticeSession.problem_id', '=', 'Problem.id')
                     .where('PracticeSession.student_id', '=', options.user.id || '')
                     .where('PracticeSession.done', '=', eb.lit(false))
+                    .selectAll()
                 )
               )
-              .then('unfinshed')
+              .then('unfinished')
               .else('unstarted')
               .end()
               .as('progress')
@@ -315,7 +342,9 @@ export class ProblemSetService {
           .select('ProblemSet.id')
           .select((eb) =>
             eb.fn
-              .sum(eb.case().when('problem_progress.progress', '=', 'solved').then(1).else(0).end())
+              .sum(
+                eb.case().when('problem_progress.progress', '=', 'finished').then(1).else(0).end()
+              )
               .as('count_finished')
           )
           .select((eb) =>
@@ -338,7 +367,9 @@ export class ProblemSetService {
         db
           .selectFrom('solved_amounts')
           .select('id')
-          .select((eb) => eb('count_finished', '/', 'count_total').as('progress_pct'))
+          .select((eb) =>
+            eb(eb.ref('count_finished'), '/', eb.ref('count_total')).as('progress_pct')
+          )
       )
       .with('problem_count', (db) =>
         db
@@ -358,7 +389,7 @@ export class ProblemSetService {
           )
           .innerJoin('Teacher', 'ProblemSetCollaborator.collaborator_id', 'Teacher.id')
           .innerJoin('User', 'Teacher.id', 'User.id')
-          .select('id')
+          .select('ProblemSet.id')
           .select((eb) =>
             eb.fn.agg<string[]>('json_build_array', ['User.id', 'User.name']).as('collaborators')
           )
@@ -367,7 +398,8 @@ export class ProblemSetService {
         db
           .selectFrom('ProblemSet')
           .innerJoin('collaborators_agg', 'ProblemSet.id', 'collaborators_agg.id')
-          .select('id')
+          .groupBy('ProblemSet.id')
+          .select('ProblemSet.id')
           .select((eb) => eb.fn.jsonAgg('collaborators_agg.collaborators').as('collaborators'))
       )
       .with('bookmarked', (db) =>
@@ -375,7 +407,7 @@ export class ProblemSetService {
           .selectFrom('ProblemSet')
           .leftJoin('ProblemSetBookmark', (join) =>
             join
-              .onRef('ProblemSet.id', '=', 'ProblemSetBookmark.problem_set_id')
+              .onRef('ProblemSet.id', '=', (eb) => eb.ref('ProblemSetBookmark.problem_set_id'))
               .on('ProblemSetBookmark.user_id', '=', options.user.id || '')
           )
           .select('ProblemSet.id')
@@ -393,10 +425,9 @@ export class ProblemSetService {
         db
           .selectFrom('ProblemSet')
           .leftJoin('DifficultyTag', 'DifficultyTag.id', 'ProblemSet.difficulty_id')
-          .select('id')
-          .select((eb) =>
-            eb.fn.coalesce('DifficultyTag.order', eb.val('-99')).as('difficulty_order')
-          )
+          .leftJoin('Tag', 'Tag.id', 'DifficultyTag.id')
+          .select('ProblemSet.id')
+          .select((eb) => eb.fn.coalesce('Tag.order', eb.val('-99')).as('difficulty_order'))
       )
       .selectFrom('ProblemSet')
       .innerJoin('topics', 'ProblemSet.id', 'topics.id')
@@ -419,14 +450,20 @@ export class ProblemSetService {
       .select((eb) => eb.ref('solved_amounts.count_unstarted').as('progress_unstarted'))
       .select((eb) =>
         eb(
-          eb('solved_amounts.count_unfinished', '+', 'solved_amounts.count_finished'),
+          eb(
+            eb.ref('solved_amounts.count_unfinished'),
+            '+',
+            eb.ref('solved_amounts.count_finished')
+          ),
           '+',
-          'solved_amounts.count_unstarted'
+          eb.ref('solved_amounts.count_unstarted')
         ).as('progress_total')
       )
       .select('ProblemSet.subject_id')
       .select('ProblemSet.difficulty_id')
-      .select('topics.topic_tags');
+      .select('topics.topic_tags')
+      .select('problem_count.problem_count')
+      .select('bookmarked.bookmarked');
 
     if (options.filters?.bookmarked) {
       query = query.where((eb) => eb('bookmarked.bookmarked', '=', eb.lit(true)));
@@ -462,16 +499,13 @@ export class ProblemSetService {
 
     if (options.filters?.status === 'not_started') {
       query = query.where((eb) =>
-        eb(eb('count_unfinished', '+', 'count_finished'), '=', eb.lit(0))
+        eb(eb('count_unfinished', '+', eb.ref('count_finished')), '=', eb.lit(0))
       );
     }
 
     if (options.filters?.status === 'in_progress') {
       query = query.where((eb) =>
-        eb.and([
-          eb(eb('count_unfinished', '+', 'count_unstarted'), '<>', eb.lit(0)),
-          eb('count_unfinished', '<>', eb.lit(0))
-        ])
+        eb(eb('count_finished', '+', eb.ref('count_unfinished')), '<>', eb.lit(0))
       );
     }
 
@@ -499,20 +533,57 @@ export class ProblemSetService {
 
     const queryResult = await query.execute();
 
-    const problemSetsSummaries: ProblemSetSummary[] = queryResult.map((ps) => ({
-      id: ps.id,
-      title: ps.title,
-      description: ps.description,
-      auto_accept: ps.auto_accept,
-      is_global: ps.is_global,
-      subject: ps.subject,
-      difficulty: ps.difficulty,
-      topics: ps.topics.map((t) => t.topic_tag),
-      problemCount: ps.problems.length
-    }));
+    const tagIds = queryResult
+      .reduce((arr, problemSet) => {
+        if (problemSet.subject_id) arr.push(problemSet.subject_id);
+        if (problemSet.difficulty_id) arr.push(problemSet.difficulty_id);
+        for (const tag of problemSet.topic_tags || []) arr.push(tag);
+
+        return arr;
+      }, [] as string[])
+      .filter((tag) => !!tag);
+
+    const tagsArr = await ServerServiceProvider.instance().getService(TagService).findByIds(tagIds);
+    const tags = arrayToHashMap(tagsArr, (t) => t.id);
+
+    const problemSetsSummaries: ReturnType<typeof this.findByFilter>['summaries'] = queryResult.map(
+      (ps) => {
+        const summary = {
+          id: ps.id,
+          title: ps.title,
+          description: ps.description || undefined,
+          auto_accept: ps.auto_accept,
+          is_global: ps.is_global,
+          subject: ps.subject_id ? (tags[ps.subject_id].model as SubjectTag) : undefined,
+          difficulty: ps.difficulty_id
+            ? (tags[ps.difficulty_id].model as DifficultyTag)
+            : undefined,
+          topics: ps.topic_tags
+            .map((t: string) => tags[t]?.model as TopicTag | undefined)
+            .filter((t: string) => !!t) as TopicTag[],
+          problemCount: Number(ps.problem_count),
+          authors:
+            ps.collaborators?.map((c: [string, string]) => ({
+              id: c[0],
+              name: c[1]
+            })) || [],
+          bookmarked: ps.bookmarked
+        };
+
+        if (options.studentProgress) {
+          (summary as ProblemSetSummary & { studentProgress: StudentProgress }).studentProgress = {
+            finished: Number(ps.progress_finished),
+            total: Number(ps.progress_total)
+          };
+        }
+
+        return summary;
+      }
+    );
 
     return {
       problemSets: problemSetsSummaries,
+      tags: tags,
       total: Number(String(queryResult[0]?.total_count || '0'))
     };
   }

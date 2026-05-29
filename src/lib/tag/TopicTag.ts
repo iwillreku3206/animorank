@@ -18,7 +18,6 @@ export class TopicTag extends Tag<TopicTagModel> {
     const tag = await db.topicTag.create({
       data: {
         label: options.label,
-        type: TAG_TYPE.TAG_TOPIC,
         color: options.color ?? TagColor.TAG_COLOR_DEFAULT,
         order: options.order ?? 0
       }

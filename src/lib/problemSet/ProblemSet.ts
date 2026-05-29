@@ -9,14 +9,15 @@ export interface CollaboratorInfo {
 export interface ProblemSetSummary {
   id: string;
   title: string;
-  description: string | null;
+  description?: string;
   auto_accept: boolean;
   is_global: boolean;
-  subject: Tag | null;
-  difficulty: Tag | null;
+  subject?: Tag;
+  difficulty?: Tag;
   topics: Tag[];
   authors: { id: string; name: string }[];
   problemCount: number;
+  bookmarked?: boolean;
 }
 
 export class ProblemSet {

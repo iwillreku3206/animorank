@@ -18,7 +18,6 @@ export class DifficultyTag extends Tag<DifficultyTagModel> {
     const tag = await db.difficultyTag.create({
       data: {
         label: options.label,
-        type: TAG_TYPE.TAG_DIFFICULTY,
         color: options.color ?? TagColor.TAG_COLOR_DEFAULT,
         order: options.order ?? 0
       }

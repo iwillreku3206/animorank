@@ -57,7 +57,9 @@ export class SchemaType implements SchemaDef {
                 },
                 previous_state: {
                     name: "previous_state",
-                    type: "Json"
+                    type: "Json",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("{}") }] }] as readonly AttributeApplication[],
+                    default: "{}" as FieldDefault
                 },
                 created_at: {
                     name: "created_at",
@@ -158,7 +160,7 @@ export class SchemaType implements SchemaDef {
                     name: "tag",
                     type: "TopicTag",
                     attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("tag_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problems", fields: ["tag_id"], references: ["id"], onDelete: "Cascade" }
+                    relation: { opposite: "topic_problems", fields: ["tag_id"], references: ["id"], onDelete: "Cascade" }
                 }
             },
             attributes: [
@@ -225,7 +227,7 @@ export class SchemaType implements SchemaDef {
                     type: "DifficultyTag",
                     optional: true,
                     attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("difficulty_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problems", fields: ["difficulty_id"], references: ["id"], onDelete: "SetNull" }
+                    relation: { opposite: "difficulty_problems", fields: ["difficulty_id"], references: ["id"], onDelete: "SetNull" }
                 },
                 subject_id: {
                     name: "subject_id",
@@ -241,7 +243,7 @@ export class SchemaType implements SchemaDef {
                     type: "SubjectTag",
                     optional: true,
                     attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("subject_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problems", fields: ["subject_id"], references: ["id"], onDelete: "SetNull" }
+                    relation: { opposite: "subject_problems", fields: ["subject_id"], references: ["id"], onDelete: "SetNull" }
                 },
                 topics: {
                     name: "topics",
@@ -614,7 +616,7 @@ export class SchemaType implements SchemaDef {
                     name: "topic_tag",
                     type: "TopicTag",
                     attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("topic_tag_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problem_sets", fields: ["topic_tag_id"], references: ["id"], onDelete: "Cascade" }
+                    relation: { opposite: "topic_problem_sets", fields: ["topic_tag_id"], references: ["id"], onDelete: "Cascade" }
                 }
             },
             attributes: [
@@ -670,7 +672,7 @@ export class SchemaType implements SchemaDef {
                     type: "DifficultyTag",
                     optional: true,
                     attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("difficulty_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problem_sets", fields: ["difficulty_id"], references: ["id"], onDelete: "SetNull" }
+                    relation: { opposite: "difficulty_problem_sets", fields: ["difficulty_id"], references: ["id"], onDelete: "SetNull" }
                 },
                 subject_id: {
                     name: "subject_id",
@@ -686,7 +688,7 @@ export class SchemaType implements SchemaDef {
                     type: "SubjectTag",
                     optional: true,
                     attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("subject_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("SetNull") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "problem_sets", fields: ["subject_id"], references: ["id"], onDelete: "SetNull" }
+                    relation: { opposite: "subject_problem_sets", fields: ["subject_id"], references: ["id"], onDelete: "SetNull" }
                 },
                 topics: {
                     name: "topics",
@@ -879,8 +881,8 @@ export class SchemaType implements SchemaDef {
                 problem_set_id_student_id: { problem_set_id: { type: "String" }, student_id: { type: "String" } }
             }
         },
-        SubjectTag: {
-            name: "SubjectTag",
+        Tag: {
+            name: "Tag",
             fields: {
                 id: {
                     name: "id",
@@ -891,7 +893,8 @@ export class SchemaType implements SchemaDef {
                 },
                 type: {
                     name: "type",
-                    type: "TagType"
+                    type: "TagType",
+                    isDiscriminator: true
                 },
                 color: {
                     name: "color",
@@ -910,15 +913,65 @@ export class SchemaType implements SchemaDef {
                     type: "Int",
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(0) }] }] as readonly AttributeApplication[],
                     default: 0 as FieldDefault
+                }
+            },
+            attributes: [
+                { name: "@@delegate", args: [{ name: "discriminator", value: ExpressionUtils.field("type") }] }
+            ] as readonly AttributeApplication[],
+            idFields: ["id"],
+            uniqueFields: {
+                id: { type: "String" },
+                label: { type: "String" }
+            },
+            isDelegate: true,
+            subModels: ["SubjectTag", "DifficultyTag", "TopicTag"]
+        },
+        SubjectTag: {
+            name: "SubjectTag",
+            baseModel: "Tag",
+            fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
                 },
-                problems: {
-                    name: "problems",
+                type: {
+                    name: "type",
+                    type: "TagType",
+                    originModel: "Tag",
+                    isDiscriminator: true
+                },
+                color: {
+                    name: "color",
+                    type: "TagColor",
+                    originModel: "Tag",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("TAG_COLOR_DEFAULT") }] }] as readonly AttributeApplication[],
+                    default: "TAG_COLOR_DEFAULT" as FieldDefault
+                },
+                label: {
+                    name: "label",
+                    type: "String",
+                    unique: true,
+                    originModel: "Tag",
+                    attributes: [{ name: "@unique" }] as readonly AttributeApplication[]
+                },
+                order: {
+                    name: "order",
+                    type: "Int",
+                    originModel: "Tag",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(0) }] }] as readonly AttributeApplication[],
+                    default: 0 as FieldDefault
+                },
+                subject_problems: {
+                    name: "subject_problems",
                     type: "Problem",
                     array: true,
                     relation: { opposite: "subject" }
                 },
-                problem_sets: {
-                    name: "problem_sets",
+                subject_problem_sets: {
+                    name: "subject_problem_sets",
                     type: "ProblemSet",
                     array: true,
                     relation: { opposite: "subject" }
@@ -932,6 +985,7 @@ export class SchemaType implements SchemaDef {
         },
         DifficultyTag: {
             name: "DifficultyTag",
+            baseModel: "Tag",
             fields: {
                 id: {
                     name: "id",
@@ -942,11 +996,14 @@ export class SchemaType implements SchemaDef {
                 },
                 type: {
                     name: "type",
-                    type: "TagType"
+                    type: "TagType",
+                    originModel: "Tag",
+                    isDiscriminator: true
                 },
                 color: {
                     name: "color",
                     type: "TagColor",
+                    originModel: "Tag",
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("TAG_COLOR_DEFAULT") }] }] as readonly AttributeApplication[],
                     default: "TAG_COLOR_DEFAULT" as FieldDefault
                 },
@@ -954,22 +1011,24 @@ export class SchemaType implements SchemaDef {
                     name: "label",
                     type: "String",
                     unique: true,
+                    originModel: "Tag",
                     attributes: [{ name: "@unique" }] as readonly AttributeApplication[]
                 },
                 order: {
                     name: "order",
                     type: "Int",
+                    originModel: "Tag",
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(0) }] }] as readonly AttributeApplication[],
                     default: 0 as FieldDefault
                 },
-                problems: {
-                    name: "problems",
+                difficulty_problems: {
+                    name: "difficulty_problems",
                     type: "Problem",
                     array: true,
                     relation: { opposite: "difficulty" }
                 },
-                problem_sets: {
-                    name: "problem_sets",
+                difficulty_problem_sets: {
+                    name: "difficulty_problem_sets",
                     type: "ProblemSet",
                     array: true,
                     relation: { opposite: "difficulty" }
@@ -983,6 +1042,7 @@ export class SchemaType implements SchemaDef {
         },
         TopicTag: {
             name: "TopicTag",
+            baseModel: "Tag",
             fields: {
                 id: {
                     name: "id",
@@ -993,11 +1053,14 @@ export class SchemaType implements SchemaDef {
                 },
                 type: {
                     name: "type",
-                    type: "TagType"
+                    type: "TagType",
+                    originModel: "Tag",
+                    isDiscriminator: true
                 },
                 color: {
                     name: "color",
                     type: "TagColor",
+                    originModel: "Tag",
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("TAG_COLOR_DEFAULT") }] }] as readonly AttributeApplication[],
                     default: "TAG_COLOR_DEFAULT" as FieldDefault
                 },
@@ -1005,22 +1068,24 @@ export class SchemaType implements SchemaDef {
                     name: "label",
                     type: "String",
                     unique: true,
+                    originModel: "Tag",
                     attributes: [{ name: "@unique" }] as readonly AttributeApplication[]
                 },
                 order: {
                     name: "order",
                     type: "Int",
+                    originModel: "Tag",
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(0) }] }] as readonly AttributeApplication[],
                     default: 0 as FieldDefault
                 },
-                problems: {
-                    name: "problems",
+                topic_problems: {
+                    name: "topic_problems",
                     type: "ProblemTopic",
                     array: true,
                     relation: { opposite: "tag" }
                 },
-                problem_sets: {
-                    name: "problem_sets",
+                topic_problem_sets: {
+                    name: "topic_problem_sets",
                     type: "ProblemSetTopic",
                     array: true,
                     relation: { opposite: "topic_tag" }
@@ -1482,39 +1547,6 @@ export class SchemaType implements SchemaDef {
             attributes: [
                 { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("operator"), "!=", ExpressionUtils.literal("WITHIN_RANGE")), "||", ExpressionUtils.binary(ExpressionUtils.field("range_value"), "!=", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("range_value must be provided when operator is WITHIN_RANGE") }] }
             ] as readonly AttributeApplication[]
-        },
-        Tag: {
-            name: "Tag",
-            fields: {
-                id: {
-                    name: "id",
-                    type: "String",
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("uuid") as FieldDefault
-                },
-                type: {
-                    name: "type",
-                    type: "TagType"
-                },
-                color: {
-                    name: "color",
-                    type: "TagColor",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("TAG_COLOR_DEFAULT") }] }] as readonly AttributeApplication[],
-                    default: "TAG_COLOR_DEFAULT" as FieldDefault
-                },
-                label: {
-                    name: "label",
-                    type: "String",
-                    unique: true,
-                    attributes: [{ name: "@unique" }] as readonly AttributeApplication[]
-                },
-                order: {
-                    name: "order",
-                    type: "Int",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(0) }] }] as readonly AttributeApplication[],
-                    default: 0 as FieldDefault
-                }
-            }
         }
     } as const;
     enums = {
@@ -1558,25 +1590,25 @@ export class SchemaType implements SchemaDef {
         TagType: {
             name: "TagType",
             values: {
-                TAG_SUBJECT: "TAG_SUBJECT",
-                TAG_DIFFICULTY: "TAG_DIFFICULTY",
-                TAG_TOPIC: "TAG_TOPIC"
+                SubjectTag: "SubjectTag",
+                DifficultyTag: "DifficultyTag",
+                TopicTag: "TopicTag"
             },
             fields: {
-                TAG_SUBJECT: {
-                    name: "TAG_SUBJECT",
+                SubjectTag: {
+                    name: "SubjectTag",
                     attributes: [
                         { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("subject") }] }
                     ] as readonly AttributeApplication[]
                 },
-                TAG_DIFFICULTY: {
-                    name: "TAG_DIFFICULTY",
+                DifficultyTag: {
+                    name: "DifficultyTag",
                     attributes: [
                         { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("difficulty") }] }
                     ] as readonly AttributeApplication[]
                 },
-                TAG_TOPIC: {
-                    name: "TAG_TOPIC",
+                TopicTag: {
+                    name: "TopicTag",
                     attributes: [
                         { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("topic") }] }
                     ] as readonly AttributeApplication[]

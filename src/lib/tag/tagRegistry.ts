@@ -1,6 +1,5 @@
 import { ServiceRegistry } from '$lib/services/registry';
-import type { TagModel } from './tagModel';
-import type { TagType } from '$lib/zenstack/models';
+import type { Tag as TagModel } from '$lib/zenstack/models';
 import { Tag } from './Tag';
 import type { SubjectTagCreateOptions, SubjectTagUpdateOptions } from './SubjectTag';
 import { SubjectTag } from './SubjectTag';
@@ -31,8 +30,8 @@ export class TagRegistry extends ServiceRegistry<
 > {
   public constructor() {
     super();
-    this.register('TAG_SUBJECT', SubjectTag);
-    this.register('TAG_DIFFICULTY', DifficultyTag);
-    this.register('TAG_TOPIC', TopicTag);
+    this.register('SubjectTag', SubjectTag);
+    this.register('DifficultyTag', DifficultyTag);
+    this.register('TopicTag', TopicTag);
   }
 }
