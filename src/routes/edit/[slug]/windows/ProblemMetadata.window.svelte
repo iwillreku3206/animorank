@@ -1,6 +1,6 @@
 <script lang="ts">
   import Editor from '$lib/components/Editor.svelte';
-  import type { ProblemEditorWindowContext } from './context.svelte';
+  import type { ProblemEditorWindowContext } from '../context.svelte';
 
   let { context }: { context: ProblemEditorWindowContext } = $props();
 </script>

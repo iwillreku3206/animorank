@@ -40,11 +40,12 @@
     });
     openWindow('metadata');
     openWindow('starter_code');
-    openWindow('tags');
+    openWindow('properties');
+    openWindow('test_cases');
   });
 </script>
 
-/** eslint-disable svelte/no-unused-svelte-ignore */
+save status: {context.autosaveStatus}
 <div class="flex flex-col flex-1 relative w-full h-full">
   <div
     class="absolute top-0 bottom-0 left-0 right-0"

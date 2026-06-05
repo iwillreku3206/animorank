@@ -1,5 +1,5 @@
 import { Window } from '$lib/window';
-import type { ProblemEditorWindowContext } from './context.svelte';
+import type { ProblemEditorWindowContext } from '../context.svelte';
 import ProblemMetadata from './ProblemMetadata.window.svelte';
 
 export class ProblemMetadataWindow extends Window<ProblemEditorWindowContext> {

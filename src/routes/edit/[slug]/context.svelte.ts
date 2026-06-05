@@ -1,6 +1,6 @@
-import { AutoSave } from '$lib/utils/autosave.svelte';
+import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
 import type { Problem as ProblemModel, ProblemTestCase, Tag } from '$lib/zenstack/models';
-import { saveProblem } from './api';
+import { saveProblem, updateTestCase } from './api';
 
 export interface InitialValues {
   problem: ProblemModel;
@@ -60,7 +60,14 @@ export class ProblemEditorWindowContext {
       subject_id: problem.subject_id
     });
   }
-  private async saveTestCases() {}
+  private async saveTestCases() {
+    const testCases = $state.snapshot(this.testCases);
+    await Promise.all(
+      testCases.map((testCase) => {
+        updateTestCase(testCase);
+      })
+    );
+  }
   private async saveTopics() {
     const topics = $state.snapshot(this.topics);
     await saveProblem(this.problem.id, {
@@ -70,5 +77,14 @@ export class ProblemEditorWindowContext {
 
   public cleanup() {
     this._cleanup();
+  }
+
+  public get autosaveStatus(): AutoSaveState {
+    const autosaves = [this.topicsAutosave, this.problemAutosave, this.testCaseAutosave];
+
+    if (autosaves.some((a) => a.state === 'error')) return 'error';
+    if (autosaves.some((a) => a.state === 'hold')) return 'hold';
+    if (autosaves.some((a) => a.state === 'saving')) return 'saving';
+    return 'saved';
   }
 }

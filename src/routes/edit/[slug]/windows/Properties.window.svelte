@@ -2,7 +2,7 @@
   import Tags from 'svelte-tags-input';
   import TagSelect from '$lib/components/TagSelect.svelte';
   import { groupBy } from '$lib/utils/groupBy';
-  import type { ProblemEditorWindowContext } from './context.svelte';
+  import type { ProblemEditorWindowContext } from '../context.svelte';
   import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
 
   let { context }: { context: ProblemEditorWindowContext } = $props();
@@ -38,11 +38,21 @@
   />
 </div>
 
+<h2 class="text-2xl font-bold">Slots</h2>
+<label class="flex flex-row items-center gap-2">
+  <input
+    class="checkbox checkbox-primary rounded-xl!"
+    type="checkbox"
+    bind:checked={context.problem.uses_slots}
+  />
+  Enable slots
+</label>
+
 <style
   lang="postcss"
   is:global
 >
-  @reference "../../../app.css";
+  @reference "../../../../app.css";
   /* 1. Make the outer container look like a daisyUI bordered input */
   .daisy-tags-wrapper :global(.svelte-tags-input-layout) {
     @apply input input-primary border-primary flex h-auto min-h-[3rem] flex-wrap items-center gap-1 py-1.5 focus-within:input-primary bg-base-100;
@@ -69,10 +79,10 @@
 
   /* --- Optional: Autocomplete Dropdown --- */
   .daisy-tags-wrapper :global(.svelte-tags-input-matchs) {
-    @apply menu bg-base-200 rounded-box mt-1 w-full border border-base-300 p-2 shadow-lg;
+    @apply bg-base-200;
   }
 
   .daisy-tags-wrapper :global(.svelte-tags-input-matchs-li) {
-    @apply rounded-xl hover:bg-base-300 cursor-pointer px-3 py-2 text-base-content;
+    /* @apply rounded-xl hover:bg-base-300 cursor-pointer px-3 py-2 text-base-content; */
   }
 </style>
