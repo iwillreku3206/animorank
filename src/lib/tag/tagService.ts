@@ -78,7 +78,7 @@ export class TagService {
   }
 
   public async findAll(): Promise<Tag<TagModel>[]> {
-    const tags = await db.tag.findMany();
+    const tags = await db.tag.findMany({ orderBy: [{ order: 'asc' }, { label: 'asc' }] });
     return tags.map((tag) => {
       return this.tagRegistry.getInstance(tag.type, tag);
     });

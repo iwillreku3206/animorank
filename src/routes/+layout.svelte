@@ -4,6 +4,7 @@
   import '@gravity-ui/uikit/styles/fonts.css';
   import '@gravity-ui/uikit/styles/styles.css';
   import '@diplodoc/transform/dist/css/yfm.css';
+  import 'dockview-core/dist/styles/dockview.css';
 
   import MobileSettingsModal from '$lib/components/MobileSettingsModal.svelte';
   import type { LayoutServerData } from './$types';

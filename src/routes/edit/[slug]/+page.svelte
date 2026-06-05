@@ -1,16 +1,14 @@
 <script lang="ts">
-  import ProblemEditor from '$lib/components/problemEditor/ProblemEditor.svelte';
+  //import ProblemEditor from '$lib/components/problemEditor/ProblemEditor.svelte';
+  import ProblemEditor from './ProblemEditor.svelte';
   import type { PageProps } from './$types';
 
-  let { data }: PageProps = $props();
-
-  // svelte-ignore state_referenced_locally
-  let problem = $state(data.problem);
-  // svelte-ignore state_referenced_locally
-  let testCases = $state(data.testCases);
+  let props: PageProps = $props();
 </script>
 
-<ProblemEditor
-  bind:problem
+<main class="overflow-hidden w-full h-full flex-1 flex flex-col">
+  <ProblemEditor {...props} />
+</main>
+<!--  bind:problem
   bind:testCases
-/>
+-->
