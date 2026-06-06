@@ -34,7 +34,7 @@
   <Tags
     bind:tags={topics as []}
     onlyAutocomplete={true}
-    autoComplete={tags.TopicTag.map((t) => t.label)}
+    autoComplete={(tags.TopicTag || []).map((t) => t.label)}
   />
 </div>
 

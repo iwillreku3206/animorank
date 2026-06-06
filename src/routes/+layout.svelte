@@ -9,6 +9,7 @@
   import Footer from '$lib/components/Footer.svelte';
   import Navbar from '$lib/components/Navbar.svelte';
   import type { LayoutServerData } from './$types';
+  import { page } from '$app/state';
 
   interface Props {
     data: LayoutServerData;
@@ -21,11 +22,13 @@
 <div class="md:flex flex-col min-h-screen bg-base-300 text-white hidden">
   <Navbar user={data.user} />
 
-  <div class="flex-1">
+  <div class="flex flex-col flex-1">
     {@render children?.()}
   </div>
 
-  <Footer />
+  {#if !page.url.pathname.startsWith('/edit') && !page.url.pathname.startsWith('/problem')}
+    <Footer />
+  {/if}
 </div>
 
 <div class="flex flex-row justify-center items-center md:hidden w-full text-center h-screen">
