@@ -31,24 +31,27 @@ export const PUT: RequestHandler = async ({ locals, request, params }) => {
 
   const { topics, subject_id, difficulty_id, ...updates } = data;
 
-  await db.problem.update({
-    where: {
-      id: params.id,
-      problem_set: { collaborators: { some: { collaborator_id: session.user.id } } }
-    },
-    data: {
-      ...updates,
-      subject_id,
-      difficulty_id,
-      topics: topics
-        ? {
-            set: topics.map((topic) => ({
-              problem_id_tag_id: { problem_id: params.id, tag_id: topic }
-            }))
-          }
-        : undefined
+  db.$transaction(async (tx) => {
+    await tx.problem.update({
+      where: {
+        id: params.id,
+        problem_set: { collaborators: { some: { collaborator_id: session.user.id } } }
+      },
+      data: {
+        ...updates,
+        subject_id,
+        difficulty_id
+      }
+    });
+
+    if (topics) {
+      await tx.problemTopic.deleteMany();
+      await tx.problemTopic.createMany({
+        data: topics.map((id) => ({ problem_id: params.id, tag_id: id }))
+      });
     }
   });
+
   return successObject({ status: 'success' });
 };
 

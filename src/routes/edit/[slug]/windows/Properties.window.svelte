@@ -8,13 +8,17 @@
   let { context }: { context: ProblemEditorWindowContext } = $props();
 
   const tags = $derived(groupBy(context.tags, (t) => t.type));
-  const topicTagMap = $derived(arrayToHashMap(tags.TopicTag, (a) => a.id));
+  const idTagMap = $derived(arrayToHashMap(tags.TopicTag, (a) => a.id));
+  const labelTagMap = $derived(arrayToHashMap(tags.TopicTag, (a) => a.label));
 
-  let topics: string[] = $state([]);
+  function getTags() {
+    const x = context.topics.map((t) => idTagMap[t]?.label) as [];
+    return x;
+  }
 
-  $effect(() => {
-    context.topics = topics.map((t) => topicTagMap[t]?.id).filter((x) => !!x);
-  });
+  function setTags(v: string[]) {
+    context.topics = v.map((t) => labelTagMap[t]?.id);
+  }
 </script>
 
 <h2 class="text-2xl font-bold">Subject</h2>
@@ -32,9 +36,10 @@
 <h2 class="text-2xl font-bold">Topics</h2>
 <div class="daisy-tags-wrapper w-full">
   <Tags
-    bind:tags={topics as []}
+    bind:tags={getTags, setTags}
     onlyAutocomplete={true}
-    autoComplete={(tags.TopicTag || []).map((t) => t.label)}
+    autoComplete={tags.TopicTag?.map((t) => t.label) || []}
+    onlyUnique={true}
   />
 </div>
 
@@ -79,10 +84,11 @@
 
   /* --- Optional: Autocomplete Dropdown --- */
   .daisy-tags-wrapper :global(.svelte-tags-input-matchs) {
-    @apply bg-base-200;
+    @apply bg-base-200 z-50;
   }
 
   .daisy-tags-wrapper :global(.svelte-tags-input-matchs-li) {
     /* @apply rounded-xl hover:bg-base-300 cursor-pointer px-3 py-2 text-base-content; */
+    @apply z-50;
   }
 </style>

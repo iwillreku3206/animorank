@@ -27,6 +27,7 @@ export class ProblemEditorWindowContext {
   constructor(initialValues: InitialValues) {
     this.problem = initialValues.problem;
     this.testCases = initialValues.testCases;
+    this.topics = initialValues.topics;
     this.tags = initialValues.tags;
 
     this.problemAutosave = new AutoSave(() => this.saveProblem(), initialValues.problem);
@@ -41,6 +42,7 @@ export class ProblemEditorWindowContext {
         this.testCaseAutosave.save($state.snapshot(this.testCases));
       });
       $effect(() => {
+        console.log(this.topics);
         this.topicsAutosave.save($state.snapshot(this.topics));
       });
     });
