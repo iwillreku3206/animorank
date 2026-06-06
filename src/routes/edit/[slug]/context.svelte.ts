@@ -48,6 +48,7 @@ export class ProblemEditorWindowContext {
 
   private async saveProblem() {
     const problem = $state.snapshot(this.problem);
+    console.debug('Saving: ', problem);
     await saveProblem(problem.id, {
       name: problem.name,
       description: problem.description,
@@ -61,6 +62,7 @@ export class ProblemEditorWindowContext {
   }
   private async saveTestCases() {
     const testCases = $state.snapshot(this.testCases);
+    console.debug('Saving: ', testCases);
     const testCaseResults = await Promise.all(
       testCases.map((testCase) => {
         // @ts-expect-error This will have an error related to deep instantiation
@@ -74,6 +76,7 @@ export class ProblemEditorWindowContext {
   }
   private async saveTopics() {
     const topics = $state.snapshot(this.topics);
+    console.debug('Saving: ', topics);
     await saveProblem(this.problem.id, {
       topics: topics
     });
