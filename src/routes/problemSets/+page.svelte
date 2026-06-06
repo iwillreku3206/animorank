@@ -175,7 +175,4 @@
       <button class="join-item btn">»</button>
     </div>
   </div>
-
-
-
 </main>

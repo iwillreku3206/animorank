@@ -31,7 +31,6 @@
 </script>
 
 <div class="px-4 xl:px-32 py-12 flex flex-row gap-16 items-start justify-center">
-
   <!-- Table of contents -->
   <aside class="w-56 shrink-0 sticky top-20 h-fit">
     <h3 class="text-sm font-display font-semibold mb-4">Privacy Policy</h3>
@@ -42,8 +41,8 @@
           onclick={() => (activeSection = section.id)}
           class="text-sm block py-2 pl-4 border-l-2 transition-colors duration-250
             {activeSection === section.id
-              ? 'text-base-content border-primary'
-              : 'text-base-content/50 hover:text-base-content border-neutral'}"
+            ? 'text-base-content border-primary'
+            : 'text-base-content/50 hover:text-base-content border-neutral'}"
         >
           {section.label}
         </a>
@@ -69,7 +68,12 @@
 
       <hr class="my-8!" />
 
-      <h2 class="scroll-mt-24" id="information-we-collect">Information We Collect</h2>
+      <h2
+        class="scroll-mt-24"
+        id="information-we-collect"
+      >
+        Information We Collect
+      </h2>
       <p>
         We collect information that you provide directly and information generated through your use
         of the Services.
@@ -102,7 +106,12 @@
 
       <hr class="my-8!" />
 
-      <h2 class="scroll-mt-24" id="how-we-use">How We Use Your Information</h2>
+      <h2
+        class="scroll-mt-24"
+        id="how-we-use"
+      >
+        How We Use Your Information
+      </h2>
       <p>Your information is used exclusively for the following purposes:</p>
       <p>
         Your email address authenticates your access and links your progress across sessions. Your
@@ -133,7 +142,12 @@
 
       <hr class="my-8!" />
 
-      <h2 class="scroll-mt-24" id="data-anonymization">Data Anonymization</h2>
+      <h2
+        class="scroll-mt-24"
+        id="data-anonymization"
+      >
+        Data Anonymization
+      </h2>
       <p>
         Aggregated statistics derived from your data, such as average completion times or common
         behaviors across all users, contain no information that could identify you. Published
@@ -143,7 +157,12 @@
 
       <hr class="my-8!" />
 
-      <h2 class="scroll-mt-24" id="data-retention">Data Retention and Deletion</h2>
+      <h2
+        class="scroll-mt-24"
+        id="data-retention"
+      >
+        Data Retention and Deletion
+      </h2>
       <p>
         Active interaction logs, including your code submissions and session activity, are retained
         for two years following your last platform activity.
@@ -156,9 +175,9 @@
       <p>
         You have the right to delete your account at any time through your account settings. Upon
         deletion, all personally identifiable information, including your email address and any
-        linkage between your user ID and identity, is permanently removed within 30 days.
-        Anonymized data that has already been incorporated into aggregated research datasets cannot
-        be extracted, as it is no longer connected to your identity.
+        linkage between your user ID and identity, is permanently removed within 30 days. Anonymized
+        data that has already been incorporated into aggregated research datasets cannot be
+        extracted, as it is no longer connected to your identity.
       </p>
       <p>
         If you wish to withdraw from research participation without deleting your account, you may
@@ -168,7 +187,12 @@
 
       <hr class="my-8!" />
 
-      <h2 class="scroll-mt-24" id="changes">Changes to This Policy</h2>
+      <h2
+        class="scroll-mt-24"
+        id="changes"
+      >
+        Changes to This Policy
+      </h2>
       <p>
         We may update this Privacy Policy periodically to reflect changes in our practices, legal
         requirements, or platform features. When we make material changes, we will notify you
@@ -183,23 +207,26 @@
 
       <hr class="my-8!" />
 
-      <h2 class="scroll-mt-24" id="contact">Contact Information</h2>
+      <h2
+        class="scroll-mt-24"
+        id="contact"
+      >
+        Contact Information
+      </h2>
       <p>
         If you have questions about this Privacy Policy, wish to exercise your data rights, or need
         to contact us regarding your information, please contact us at animorank@gmail.com.
       </p>
       <p>
         For research-related concerns or questions about how your data is used in academic studies,
-        you may also contact the De La Salle University Research Ethics Committee through the
-        Office of the Vice Chancellor for Research and Innovation.
+        you may also contact the De La Salle University Research Ethics Committee through the Office
+        of the Vice Chancellor for Research and Innovation.
       </p>
       <p>
-        <strong>Your Rights:</strong> You have the right to request a copy of your data, correct
-        inaccurate information, delete your account, withdraw from research participation, and
-        understand how your information is being used. We will respond to all requests within 30
-        days.
+        <strong>Your Rights:</strong> You have the right to request a copy of your data, correct inaccurate
+        information, delete your account, withdraw from research participation, and understand how your
+        information is being used. We will respond to all requests within 30 days.
       </p>
     </div>
   </main>
-
 </div>

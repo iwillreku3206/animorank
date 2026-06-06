@@ -4,14 +4,16 @@
 
 <footer class="bg-base-200 w-full">
   <div class="px-4 xl:px-32 pt-12 pb-8">
-
     <!-- Main columns: brand + link groups -->
     <div class="flex flex-row gap-8 mb-10">
-
       <!-- Brand column -->
       <div class="flex-[3] flex flex-col gap-3">
         <div class="flex items-center gap-3">
-          <img src="/animorank-logo.svg" alt="AnimoRank logo" class="w-8 h-8" />
+          <img
+            src="/animorank-logo.svg"
+            alt="AnimoRank logo"
+            class="w-8 h-8"
+          />
           <span class="font-display text-3xl font-bold">AnimoRank</span>
         </div>
         <p class="text-sm text-base-content/70">Built by Lasallians, for Lasallians.</p>
@@ -26,17 +28,20 @@
             target="_blank"
             rel="noopener noreferrer"
             class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-          >Report a Bug</a>
+            >Report a Bug</a
+          >
           <a
             href="#"
             target="_blank"
             rel="noopener noreferrer"
             class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-          >Request a Feature</a>
+            >Request a Feature</a
+          >
           <a
             href="#"
             class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-          >FAQs</a>
+            >FAQs</a
+          >
         </nav>
       </div>
 
@@ -47,15 +52,18 @@
           <a
             href="/legal/terms-of-service"
             class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-          >Terms of Service</a>
+            >Terms of Service</a
+          >
           <a
             href="/legal/privacy-policy"
             class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-          >Privacy Policy</a>
+            >Privacy Policy</a
+          >
           <a
             href="#"
             class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-          >License</a>
+            >License</a
+          >
         </nav>
       </div>
 
@@ -66,11 +74,13 @@
           <a
             href="#"
             class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-          >Contact Us</a>
+            >Contact Us</a
+          >
           <a
             href="#"
             class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-          >Changelog</a>
+            >Changelog</a
+          >
         </nav>
       </div>
     </div>
@@ -88,10 +98,12 @@
         class="flex items-center gap-2 hover:text-base-content transition-colors duration-250"
         aria-label="AnimoRank on GitHub"
       >
-        <GithubIcon class="w-5 h-5" aria-hidden="true" />
+        <GithubIcon
+          class="w-5 h-5"
+          aria-hidden="true"
+        />
         Github
       </a>
     </div>
-
   </div>
 </footer>

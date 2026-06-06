@@ -28,15 +28,15 @@
 </script>
 
 <!-- Card container -->
-<div class="relative w-full flex flex-col gap-4 bg-base-200 hover:bg-base-100/70 rounded-lg p-6 max-h-[384px]">
-
+<div
+  class="relative w-full flex flex-col gap-4 bg-base-200 hover:bg-base-100/70 rounded-lg p-6 max-h-[384px]"
+>
   <!-- Header: breadcrumb + bookmark icon -->
   <div class="flex items-center gap-4">
-
     <!-- Subject category -->
     <div class="flex-1">
-      <p 
-        class="text-xs text-base-content/70 tracking-wide" 
+      <p
+        class="text-xs text-base-content/70 tracking-wide"
         aria-label="Problem set subject category"
       >
         Courses / {#if problemSet.subject}
@@ -63,9 +63,15 @@
       aria-pressed={problemSet.bookmarked}
     >
       {#if problemSet.bookmarked}
-        <BookmarkIconSolid class="w-4 h-4" aria-hidden="true" />
+        <BookmarkIconSolid
+          class="w-4 h-4"
+          aria-hidden="true"
+        />
       {:else}
-        <BookmarkIcon class="w-4 h-4" aria-hidden="true" />
+        <BookmarkIcon
+          class="w-4 h-4"
+          aria-hidden="true"
+        />
       {/if}
     </button>
   </div>
@@ -116,16 +122,15 @@
 
   <!-- Footer: progress row and details button -->
   <div class="flex flex-row gap-8">
-
     <div class="flex-1 flex-col gap-2">
-
       <!-- Progress text -->
       <div class="flex justify-between gap-4 text-sm text-base-content">
+        <span> Progress </span>
         <span>
-          Progress
-        </span>
-        <span>
-          {problemSet.progress.finished}/{problemSet.progress.total} problem{problemSet.progress.total === 1 ? '' : 's'}
+          {problemSet.progress.finished}/{problemSet.progress.total} problem{problemSet.progress
+            .total === 1
+            ? ''
+            : 's'}
         </span>
       </div>
 
@@ -145,7 +150,10 @@
         class="btn-square btn-primary btn-outline inline-flex items-center gap-2"
         aria-label={`Open ${problemSet.title} problem set details`}
       >
-        <ArrowRightIcon class="w-4 h-4" aria-hidden="true" />
+        <ArrowRightIcon
+          class="w-4 h-4"
+          aria-hidden="true"
+        />
       </ButtonLink>
     </div>
   </div>

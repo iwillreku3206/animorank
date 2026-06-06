@@ -28,11 +28,11 @@
 </script>
 
 <!-- List container -->
-<div class="relative w-full flex flex-row gap-8 bg-base-200 hover:bg-base-100/70 rounded-lg px-8 py-4 items-center">
-
+<div
+  class="relative w-full flex flex-row gap-8 bg-base-200 hover:bg-base-100/70 rounded-lg px-8 py-4 items-center"
+>
   <!-- Main content: subject, tags, title, author -->
   <div class="flex-1 flex flex-col gap-2">
-
     <!-- Subject breadcrumb -->
     <p
       class="text-xs text-base-content/70 tracking-wide"
@@ -86,13 +86,15 @@
 
   <!-- Right panel: progress, bookmark, details button -->
   <div class="flex flex-row items-center gap-8 w-80">
-
     <!-- Progress section -->
     <div class="flex-1 flex flex-col gap-2">
       <div class="flex justify-between gap-4 text-sm text-base-content">
         <span>Progress</span>
         <span>
-          {problemSet.progress.finished}/{problemSet.progress.total} problem{problemSet.progress.total === 1 ? '' : 's'}
+          {problemSet.progress.finished}/{problemSet.progress.total} problem{problemSet.progress
+            .total === 1
+            ? ''
+            : 's'}
         </span>
       </div>
       <progress
@@ -114,9 +116,15 @@
       aria-pressed={problemSet.bookmarked}
     >
       {#if problemSet.bookmarked}
-        <BookmarkIconSolid class="w-6 h-6" aria-hidden="true" />
+        <BookmarkIconSolid
+          class="w-6 h-6"
+          aria-hidden="true"
+        />
       {:else}
-        <BookmarkIcon class="w-6 h-6" aria-hidden="true" />
+        <BookmarkIcon
+          class="w-6 h-6"
+          aria-hidden="true"
+        />
       {/if}
     </button>
 
@@ -126,8 +134,10 @@
       class="btn-square btn-primary btn-outline z-20 inline-flex items-center"
       aria-label={`Open ${problemSet.title} problem set details`}
     >
-      <ArrowRightIcon class="w-4 h-4" aria-hidden="true" />
+      <ArrowRightIcon
+        class="w-4 h-4"
+        aria-hidden="true"
+      />
     </ButtonLink>
   </div>
-
 </div>

@@ -11,8 +11,9 @@
   let openSettings = $state(false);
 </script>
 
-<nav class="min-h-16 px-4 xl:px-32 flex flex-row items-center sticky top-0 left-0 right-0 bg-base-300 z-50">
-
+<nav
+  class="min-h-16 px-4 xl:px-32 flex flex-row items-center sticky top-0 left-0 right-0 bg-base-300 z-50"
+>
   <!-- Brand -->
   <div class="relative mr-auto">
     <h1 class="font-bold text-2xl">
@@ -22,10 +23,19 @@
 
   <!-- Navigation links -->
   <div class="flex flex-row ml-auto mr-auto">
-    <a class="px-4 text-base" href="/about">About Us</a>
+    <a
+      class="px-4 text-base"
+      href="/about">About Us</a
+    >
     {#if loggedIn}
-      <a class="px-4 text-base" href="/">Dashboard</a>
-      <a class="px-4 text-base" href="/problemSets">Problem Sets</a>
+      <a
+        class="px-4 text-base"
+        href="/">Dashboard</a
+      >
+      <a
+        class="px-4 text-base"
+        href="/problemSets">Problem Sets</a
+      >
     {/if}
   </div>
 
@@ -48,7 +58,6 @@
       <Button onclick={() => signIn('google')}>Login</Button>
     {/if}
   </div>
-
 </nav>
 
 {#if openSettings && loggedIn && user}

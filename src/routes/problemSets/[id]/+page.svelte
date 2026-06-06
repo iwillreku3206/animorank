@@ -36,13 +36,11 @@
 
 <main class="flex flex-col">
   <header class="flex flex-row gap-8 py-8 px-8 xl:px-32 border-b border-base-100">
-
     <!-- Col 1: Problem set details -->
     <div class="flex flex-[3] flex-col gap-4">
-
       <!-- Subject category breadcrumb -->
       <p
-        class="text-sm text-base-content/70 tracking-wide" 
+        class="text-sm text-base-content/70 tracking-wide"
         aria-label="Problem set subject category"
       >
         Courses / {#if problemSet.subject}
@@ -59,26 +57,21 @@
 
       <!-- Title + author-->
       <div class="flex flex-col gap-2">
-      
         <!-- Title -->
-        <h1 
-          class="font-display text-4xl font-semibold line-clamp-2 overflow-hidden"
-        >
+        <h1 class="font-display text-4xl font-semibold line-clamp-2 overflow-hidden">
           {problemSet.title}
         </h1>
 
         <!-- Author -->
         <p class="text-base-content/70">
           {#each problemSet.collaborators as collaborator, i (collaborator.id)}
-            <a 
-              href="/problemSets?creator={collaborator.id}" 
+            <a
+              href="/problemSets?creator={collaborator.id}"
               class="transition-colors duration-250 hover:text-primary"
             >
               {collaborator.name}
             </a>
-            {i === problemSet.collaborators.length - 1
-              ? ''
-              : ','}
+            {i === problemSet.collaborators.length - 1 ? '' : ','}
           {/each}
         </p>
       </div>
@@ -95,20 +88,15 @@
       <p class="text-base-content/70 line-clamp-3 overflow-hidden whitespace-pre-wrap">
         {problemSet.description}
       </p>
-
     </div>
 
     <!-- Col 2: Actions -->
     <div class="flex flex-[1] flex-col gap-4">
-    
       <!-- Progress row -->
       <div class="flex flex-col w-full gap-2">
-
         <!-- Progress text -->
         <div class="flex justify-between gap-4 text-sm text-base-content">
-          <span>
-            Progress
-          </span>
+          <span> Progress </span>
           <span>
             {progress[0]}/{progress[1]} problem{progress[1] === 1 ? '' : 's'}
           </span>
@@ -127,8 +115,8 @@
         class="btn-secondary btn-outline gap-2 w-full"
         onclick={handleBookmarkClick}
         aria-label={isBookmarked
-        ? `Remove ${problemSet.title} from bookmarks`
-        : `Add ${problemSet.title} to bookmarks`}
+          ? `Remove ${problemSet.title} from bookmarks`
+          : `Add ${problemSet.title} to bookmarks`}
       >
         {#if isBookmarked}
           <BookmarkIconSolid class="w-5 h-5" />
@@ -144,7 +132,10 @@
         href="/problem/{problemSet.problems[0].id}"
         aria-label={`Start practicing ${problemSet.title} problem set`}
       >
-        <PlayIcon class="w-5 h-5" aria-hidden="true" />
+        <PlayIcon
+          class="w-5 h-5"
+          aria-hidden="true"
+        />
         Start Practicing
       </ButtonLink>
     </div>
