@@ -7,50 +7,50 @@ async function createTag(name: string, type: TagType, color?: TagColor, order?: 
   const db = _db as ClientContract<typeof schema>;
   await db[
     {
-      [TagType.TAG_TOPIC]: 'topicTag',
-      [TagType.TAG_DIFFICULTY]: 'difficultyTag',
-      [TagType.TAG_SUBJECT]: 'subjectTag'
+      [TagType.TopicTag]: 'topicTag',
+      [TagType.DifficultyTag]: 'difficultyTag',
+      [TagType.SubjectTag]: 'subjectTag'
     }[type]
   ].upsert({
     where: { label: name },
-    create: { label: name, type, color, order },
+    create: { label: name, color, order },
     update: {}
   });
 }
 
 async function execute() {
   Promise.all([
-    createTag('I/O', TagType.TAG_TOPIC),
-    createTag('Data Types', TagType.TAG_TOPIC),
-    createTag('Arithmetic', TagType.TAG_TOPIC),
-    createTag('Loops', TagType.TAG_TOPIC),
-    createTag('Functions', TagType.TAG_TOPIC),
-    createTag('Conditions', TagType.TAG_TOPIC),
-    createTag('Strings', TagType.TAG_TOPIC),
-    createTag('Arrays', TagType.TAG_TOPIC),
-    createTag('Structs', TagType.TAG_TOPIC),
-    createTag('Files', TagType.TAG_TOPIC),
-    createTag('Sorting', TagType.TAG_TOPIC),
-    createTag('Graphs', TagType.TAG_TOPIC),
-    createTag('Search', TagType.TAG_TOPIC),
-    createTag('Trees', TagType.TAG_TOPIC),
-    createTag('Stacks', TagType.TAG_TOPIC),
-    createTag('Queues', TagType.TAG_TOPIC),
-    createTag('Algorithms', TagType.TAG_TOPIC),
-    createTag('Debugging', TagType.TAG_TOPIC),
-    createTag('Divide and Conquer', TagType.TAG_TOPIC),
-    createTag('Dynamic Programming', TagType.TAG_TOPIC),
-    createTag('Greedy Algorithms', TagType.TAG_TOPIC),
+    createTag('I/O', TagType.TopicTag),
+    createTag('Data Types', TagType.TopicTag),
+    createTag('Arithmetic', TagType.TopicTag),
+    createTag('Loops', TagType.TopicTag),
+    createTag('Functions', TagType.TopicTag),
+    createTag('Conditions', TagType.TopicTag),
+    createTag('Strings', TagType.TopicTag),
+    createTag('Arrays', TagType.TopicTag),
+    createTag('Structs', TagType.TopicTag),
+    createTag('Files', TagType.TopicTag),
+    createTag('Sorting', TagType.TopicTag),
+    createTag('Graphs', TagType.TopicTag),
+    createTag('Search', TagType.TopicTag),
+    createTag('Trees', TagType.TopicTag),
+    createTag('Stacks', TagType.TopicTag),
+    createTag('Queues', TagType.TopicTag),
+    createTag('Algorithms', TagType.TopicTag),
+    createTag('Debugging', TagType.TopicTag),
+    createTag('Divide and Conquer', TagType.TopicTag),
+    createTag('Dynamic Programming', TagType.TopicTag),
+    createTag('Greedy Algorithms', TagType.TopicTag),
 
-    createTag('CCPROG1', TagType.TAG_SUBJECT),
-    createTag('CCPROG2', TagType.TAG_SUBJECT),
-    createTag('CCPROG3', TagType.TAG_SUBJECT),
-    createTag('CSALGCM', TagType.TAG_SUBJECT),
-    createTag('CSINTSY', TagType.TAG_SUBJECT),
+    createTag('CCPROG1', TagType.SubjectTag),
+    createTag('CCPROG2', TagType.SubjectTag),
+    createTag('CCPROG3', TagType.SubjectTag),
+    createTag('CSALGCM', TagType.SubjectTag),
+    createTag('CSINTSY', TagType.SubjectTag),
 
-    createTag('Basic', TagType.TAG_DIFFICULTY, TagColor.TAG_COLOR_GREEN, 1),
-    createTag('Intermediate', TagType.TAG_DIFFICULTY, TagColor.TAG_COLOR_YELLOW, 2),
-    createTag('Advanced', TagType.TAG_DIFFICULTY, TagColor.TAG_COLOR_RED, 3)
+    createTag('Basic', TagType.DifficultyTag, TagColor.TAG_COLOR_GREEN, 1),
+    createTag('Intermediate', TagType.DifficultyTag, TagColor.TAG_COLOR_YELLOW, 2),
+    createTag('Advanced', TagType.DifficultyTag, TagColor.TAG_COLOR_RED, 3)
   ]);
 }
 

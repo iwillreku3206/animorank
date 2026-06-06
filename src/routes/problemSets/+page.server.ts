@@ -1,8 +1,9 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { db } from '$lib/zenstack';
-import type { ProblemSet } from './api';
-import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
+import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ProblemSetService } from '$lib/problemSet';
+import type { FilterStatus, SortOrder, SortType } from '$lib/problemSet/problemSetService';
+import { groupBy } from '$lib/utils/groupBy';
 
 const pageSize = 12;
 
@@ -13,104 +14,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     redirect(302, '/about');
   }
 
-  const topicTags = await db.topicTag.findMany({
-    include: {
-      _count: {
-        select: {
-          problem_sets: {
-            where: {
-              problem_set: {
-                OR: [
-                  { is_global: true },
-                  { subscriptions: { some: { student_id: session.user.id } } },
-                  { collaborators: { some: { collaborator_id: session.user.id } } }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    orderBy: [
-      { type: 'asc' },
-      { problem_sets: { _count: 'desc' } },
-      { order: 'asc' },
-      { label: 'asc' }
-    ]
-  });
-
-  const topicTagsMap = arrayToHashMap(topicTags, (t) => t.id);
-
-  const subjectTags = await db.subjectTag.findMany({
-    include: {
-      _count: {
-        select: {
-          problem_sets: {
-            where: {
-              OR: [
-                { is_global: true },
-                { subscriptions: { some: { student_id: session.user.id } } },
-                { collaborators: { some: { collaborator_id: session.user.id } } }
-              ]
-            }
-          }
-        }
-      }
-    },
-    orderBy: [
-      { type: 'asc' },
-      { problem_sets: { _count: 'desc' } },
-      { order: 'asc' },
-      { label: 'asc' }
-    ]
-  });
-
-  const subjectTagsMap = arrayToHashMap(subjectTags, (t) => t.id);
-
-  const difficultyTags = await db.difficultyTag.findMany({
-    include: {
-      _count: {
-        select: {
-          problem_sets: {
-            where: {
-              OR: [
-                { is_global: true },
-                { subscriptions: { some: { student_id: session.user.id } } },
-                { collaborators: { some: { collaborator_id: session.user.id } } }
-              ]
-            }
-          }
-        }
-      }
-    },
-    orderBy: [
-      { type: 'asc' },
-      { problem_sets: { _count: 'desc' } },
-      { order: 'asc' },
-      { label: 'asc' }
-    ]
-  });
-
-  const difficultyTagsMap = arrayToHashMap(difficultyTags, (t) => t.id);
-
-  const creators =
-    session.user.type === 'student'
-      ? await db.teacher.findMany({
-          select: { user: { select: { id: true, name: true } } },
-          where: {
-            problem_set_collaborations: {
-              some: {
-                problem_set: {
-                  OR: [
-                    { is_global: true },
-                    { subscriptions: { some: { student_id: session.user.id } } }
-                  ]
-                }
-              }
-            }
-          }
-        })
-      : [];
+  const problemSetService = ServerServiceProvider.instance().getService(ProblemSetService);
 
   const params = url.searchParams;
   let sortBy = params.get('sortBy') || '';
@@ -122,183 +26,57 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const page = parseInt(params.get('page') || '1') || 1;
 
   const selectedTags = params.getAll('tag');
-  let status = params.get('status') || '';
-  if (!['', 'not_started', 'in_progress', 'complete'].includes(status)) status = '';
+  let status = params.get('status') ?? undefined;
+  if (!['not_started', 'in_progress', 'complete'].includes(status || '')) status = undefined;
   const creator = params.get('creator') || undefined;
   const bookmarked = params.get('bookmarked') === 'true';
 
-  let problemSetQuery = db.$qb
-    .selectFrom((db) =>
-      db
-        .selectFrom('ProblemSet')
-        .innerJoin(
-          'ProblemSetCollaborator',
-          'ProblemSetCollaborator.problem_set_id',
-          'ProblemSet.id'
-        )
-        .innerJoin('Teacher', 'Teacher.id', 'ProblemSetCollaborator.collaborator_id')
-        .innerJoin('User', 'User.id', 'Teacher.id')
-        .leftJoin('ProblemSetBookmark', (join) =>
-          join
-            .onRef('ProblemSetBookmark.problem_set_id', '=', 'ProblemSet.id')
-            .on('ProblemSetBookmark.user_id', '=', session.user.id || '')
-        )
-        .leftJoin('ProblemSetTopic', 'ProblemSetTopic.problem_set_id', 'ProblemSet.id')
-        .leftJoin('TopicTag', 'TopicTag.id', 'ProblemSetTopic.topic_tag_id')
-        .leftJoin('DifficultyTag', 'DifficultyTag.id', 'ProblemSet.difficulty_id')
-        .leftJoin('Problem', 'Problem.problem_set_id', 'ProblemSet.id')
-        .leftJoin('PracticeSession', (join) =>
-          join
-            .onRef('PracticeSession.problem_id', '=', 'Problem.id')
-            .on('PracticeSession.student_id', '=', session.user.id || '')
-        )
-        .groupBy([
-          'ProblemSet.id',
-          'User.name',
-          'User.id',
-          'ProblemSetBookmark.user_id',
-          'DifficultyTag.id'
-        ])
-        .select('ProblemSet.id as id')
-        .select('ProblemSet.title as title')
-        .select('User.id as ownerId')
-        .select('User.name as ownerName')
-        .select('ProblemSet.description as description')
-        .select((eb) =>
-          eb.fn
-            .count('Problem.id')
-            .filterWhere((eb) => eb('PracticeSession.done', 'is not', null))
-            .filterWhere((eb) => eb('PracticeSession.student_id', '=', session.user.id || ''))
-            .distinct()
-            .as('progress_started')
-        )
-        .select((eb) =>
-          eb.fn
-            .count('Problem.id')
-            .filterWhere((eb) => eb('PracticeSession.done', '=', true))
-            .filterWhere((eb) => eb('PracticeSession.student_id', '=', session.user.id || ''))
-            .distinct()
-            .as('progress_finished')
-        )
-        .select((eb) => eb.fn.count('Problem.id').distinct().as('progress_total'))
-        .select((eb) =>
-          eb(
-            eb.cast<number>(
-              eb.fn
-                .count('Problem.id')
-                .filterWhere((eb) => eb('PracticeSession.done', '=', true))
-                .filterWhere((eb) => eb('PracticeSession.student_id', '=', session.user.id || ''))
-                .distinct(),
-              'float8'
-            ),
-            '/',
-            eb.cast<number>(eb.fn.count('Problem.id').distinct(), 'float8')
-          ).as('progress_pct')
-        )
-        .select((eb) => eb.fn.agg<string[]>('array_agg', ['TopicTag.id']).as('topic_tags'))
-        .select((eb) => eb.ref('ProblemSet.subject_id').as('subject_tag'))
-        .select((eb) => eb.ref('ProblemSet.difficulty_id').as('difficulty_tag'))
-        .select((eb) => eb.fn.coalesce('DifficultyTag.order', eb.val('-99')).as('difficulty_order'))
-        .select((eb) => eb.ref('ProblemSetBookmark.user_id').as('bookmark_user_id'))
-        .where('ProblemSet.title', 'like', `%${search}%`)
-        .as('queryTable')
-    )
-    .select((eb) => eb.fn.countAll().over().as('total_count'))
-    .select('id')
-    .select('title')
-    .select('ownerName')
-    .select('description')
-    .select('topic_tags')
-    .select('subject_tag')
-    .select('difficulty_tag')
-    .select('progress_finished')
-    .select('bookmark_user_id')
-    .select('progress_total');
+  const problemSetsQueryResult = await problemSetService.findByFilter({
+    user: session.user,
+    filters: {
+      bookmarked,
+      creator,
+      search,
+      status: status as FilterStatus,
+      tags: selectedTags
+    },
+    page,
+    pageSize,
+    sort: { by: sortBy as SortType, order: sortOrder as SortOrder },
+    studentProgress: true
+  });
 
-  if (bookmarked) {
-    problemSetQuery = problemSetQuery.where('bookmark_user_id', 'is not', null);
-  }
-
-  if (selectedTags.length !== 0) {
-    problemSetQuery = problemSetQuery.where((eb) =>
-      eb.or([
-        eb('topic_tags', '&&', eb.val(selectedTags)),
-        eb('difficulty_tag', '=', eb.fn.any(eb.val(selectedTags))),
-        eb('subject_tag', '=', eb.fn.any(eb.val(selectedTags)))
-      ])
-    );
-  }
-
-  if (creator && creator.length > 0) {
-    problemSetQuery = problemSetQuery.where('ownerId', '=', creator);
-  }
-
-  if (status === 'not_started') {
-    problemSetQuery = problemSetQuery.where('progress_started', '=', 0);
-  }
-
-  if (status === 'in_progress') {
-    problemSetQuery = problemSetQuery
-      .where('progress_started', '<>', 0)
-      .where('progress_pct', '<>', 1);
-  }
-
-  if (status === 'complete') {
-    problemSetQuery = problemSetQuery.where('progress_pct', '=', 1);
-  }
-
-  if (sortBy === 'problems_solved') {
-    problemSetQuery = problemSetQuery.orderBy('progress_finished', sortOrder);
-  }
-
-  if (sortBy === 'problem_count') {
-    problemSetQuery = problemSetQuery.orderBy('progress_total', sortOrder);
-  }
-
-  if (sortBy === 'completion_pct') {
-    problemSetQuery = problemSetQuery.orderBy('progress_pct', sortOrder);
-  }
-
-  if (sortBy === 'difficulty') {
-    problemSetQuery = problemSetQuery.orderBy('difficulty_order', sortOrder);
-  }
-
-  problemSetQuery = problemSetQuery.limit(pageSize).offset((page - 1) * pageSize);
-  console.log(problemSetQuery.compile().sql);
-
-  const problemSetQueryResult = await problemSetQuery.execute();
-
-  const problemSets: ProblemSet[] = problemSetQueryResult.map((ps) => ({
+  const problemSets = problemSetsQueryResult.problemSets.map((ps) => ({
     id: ps.id,
     title: ps.title,
-    ownerName: ps.ownerName || '',
+    owners: ps.authors,
     description: ps.description || '',
-    bookmarked: ps.bookmark_user_id !== null,
+    bookmarked: ps.bookmarked,
     progress: {
-      finished: parseInt(String(ps.progress_finished)),
-      total: parseInt(String(ps.progress_total))
+      finished: ps.studentProgress.finished,
+      total: ps.studentProgress.total
     },
-    subject: ps.subject_tag ? subjectTagsMap[ps.subject_tag] : undefined,
-    tags: Array.from(
-      new Set(
-        [
-          ps.difficulty_tag ? difficultyTagsMap[ps.difficulty_tag] : undefined,
-          ...ps.topic_tags.map((t) => topicTagsMap[t])
-        ].filter((x) => !!x)
-      )
-    )
+    subject: ps.subject,
+    tags: [ps.difficulty, ...ps.topics].filter((t) => !!t)
   }));
+
+  const tagGroups = groupBy(Object.values(problemSetsQueryResult.tags), (t) => t.type);
+
+  const creatorMap: Record<string, string> = {};
+  for (const p of problemSetsQueryResult.problemSets) {
+    for (const a of p.authors) {
+      creatorMap[a.id] = a.name;
+    }
+  }
 
   return {
     user: session.user,
-    topicTags,
-    difficultyTags,
-    subjectTags,
-    creators: creators.map((c) => c.user),
+    topicTags: (tagGroups['TopicTag'] ?? []).map((t) => t.model),
+    difficultyTags: (tagGroups['DifficultyTag'] ?? []).map((t) => t.model),
+    subjectTags: (tagGroups['SubjectTag'] ?? []).map((t) => t.model),
+    creators: Object.entries(creatorMap).map((c) => ({ id: c[0], name: c[1] })),
     pagination: {
-      pageCount: Math.ceil(
-        parseInt(String(problemSetQueryResult[0]?.total_count || '0')) / pageSize
-      )
+      pageCount: Math.ceil(problemSetsQueryResult.total / pageSize)
     },
     problemSets: problemSets
   };

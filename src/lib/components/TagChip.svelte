@@ -9,14 +9,12 @@
   const color = $derived(
     tag.color.startsWith('TAG_COLOR_') ? tag.color : `TAG_COLOR_${tag.color.toUpperCase()}`
   );
-  const type = $derived(tag.type.startsWith('TAG_') ? tag.type : `TAG_${tag.type.toUpperCase()}`);
-
   const colorMap: Record<string, string> = $derived({
     [TagColor.TAG_COLOR_DEFAULT]: {
-      [TagType.TAG_SUBJECT]: 'bg-secondary text-secondary-content',
-      [TagType.TAG_DIFFICULTY]: 'bg-info text-into-content',
-      [TagType.TAG_TOPIC]: 'bg-neutral text-neutral-content'
-    }[type] as string,
+      [TagType.SubjectTag]: 'bg-secondary text-secondary-content',
+      [TagType.DifficultyTag]: 'bg-info text-into-content',
+      [TagType.TopicTag]: 'bg-neutral text-neutral-content'
+    }[tag.type] as string,
     [TagColor.TAG_COLOR_PRIMARY]: 'bg-primary text-primary-content',
     [TagColor.TAG_COLOR_SECONDARY]: 'bg-secondary text-secondary-content',
     [TagColor.TAG_COLOR_ACCENT]: 'bg-accent text-accent-content',
