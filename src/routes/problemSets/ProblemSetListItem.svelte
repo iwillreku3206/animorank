@@ -6,6 +6,9 @@
   import { removeBookmark, toggleBookmark } from './bookmark';
   import type { ProblemSet } from './api';
   import ButtonLink from '$lib/components/buttons/ButtonLink.svelte';
+  import type { PageProps } from './$types';
+
+  type ProblemSet = PageProps['data']['problemSets'][number];
 
   /** The problem set data displayed in this list item. */
   let { problemSet = $bindable() }: { problemSet: ProblemSet } = $props();

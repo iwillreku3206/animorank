@@ -86,6 +86,7 @@
     "bits-ui": "^2.16.3",
     "constrained-editor-plugin": "^1.4.0",
     "deep-equal": "^2.2.3",
+    "dockview-core": "^6.6.1",
     "dotenv": "^17.3.1",
     "google-auth-library": "^9.14.1",
     "highlight.js": "^11.11.1",
@@ -98,6 +99,7 @@
     "react-dom": "^18.3.1",
     "svelte-awesome": "^3.3.4",
     "svelte-splitpanes": "^8.0.12",
+    "svelte-tags-input": "^7.0.2",
     "zod": "^4.3.6"
   },
   "zenstack": {

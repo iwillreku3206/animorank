@@ -2,8 +2,8 @@ name: Test and Build Docker
 on:
   push:
     branches:
-    - main
-    - develop
+      - main
+      - develop
 
 jobs:
   test:
@@ -84,3 +84,10 @@ jobs:
           tags: |
             ghcr.io/iwillreku3206/animorank:${{ steps.date.outputs.date }}-${{ github.ref_name }}
             ghcr.io/iwillreku3206/animorank:${{ github.ref_name }}
+      - name: Trigger Coolify deployment via webhook (prod)
+        uses: fjogeleit/http-request-action@v1
+        if: github.ref == 'refs/heads/main'
+        with:
+          url: ${{env.COOLIFY_URL}}/api/v1/deploy?uuid=${{env.COOLIFY_RESOURCE_ID}}&force=false
+          method: GET
+          bearerToken: ${{env.COOLIFY_API_TOKEN}}

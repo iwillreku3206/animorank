@@ -2,9 +2,9 @@ import "problem.zmodel"
 import "problemSet.zmodel"
 
 enum TagType {
-  TAG_SUBJECT @map('subject')
-  TAG_DIFFICULTY @map('difficulty')
-  TAG_TOPIC @map('topic')
+  SubjectTag @map('subject')
+  DifficultyTag @map('difficulty')
+  TopicTag @map('topic')
 }
 
 enum TagColor {
@@ -20,25 +20,27 @@ enum TagColor {
   TAG_COLOR_BLUE @map('blue')
 }
 
-type Tag {
+model Tag {
   id    String   @id @default(uuid()) @db.Uuid
   type  TagType
   color TagColor @default(TAG_COLOR_DEFAULT)
   label String   @unique()
   order Int      @default(0)
+
+  @@delegate(type)
 }
 
-model SubjectTag with Tag {
-  problems     Problem[]
-  problem_sets ProblemSet[]
+model SubjectTag extends Tag {
+  subject_problems     Problem[]
+  subject_problem_sets ProblemSet[]
 }
 
-model DifficultyTag with Tag {
-  problems     Problem[]
-  problem_sets ProblemSet[]
+model DifficultyTag extends Tag {
+  difficulty_problems     Problem[]
+  difficulty_problem_sets ProblemSet[]
 }
 
-model TopicTag with Tag {
-  problems     ProblemTopic[]
-  problem_sets ProblemSetTopic[]
+model TopicTag extends Tag {
+  topic_problems     ProblemTopic[]
+  topic_problem_sets ProblemSetTopic[]
 }

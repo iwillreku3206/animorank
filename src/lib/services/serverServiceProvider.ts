@@ -6,7 +6,9 @@ import { Judge0Executor } from '$lib/testCase/executor/judge0';
 import { ServiceRegistry, type ISingleton } from './registry';
 import { ServiceProvider } from './serviceProvider';
 import { ProblemService } from '$lib/problem/problemService';
+import { ProblemSetService } from '$lib/problemSet/problemSetService';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
+import { TagService } from '$lib/tag/tagService';
 
 export class ServerServiceProvider extends ServiceProvider {
   private static _instance: ServerServiceProvider | null;
@@ -24,8 +26,20 @@ export class ServerServiceProvider extends ServiceProvider {
       ServiceRegistry.createSingleSingletonServiceRegistry(ProblemService)
     );
     this._registries.set(
+      ProblemService as ISingleton<ProblemService>,
+      ServiceRegistry.createSingleSingletonServiceRegistry(ProblemService)
+    );
+    this._registries.set(
+      ProblemSetService as ISingleton<ProblemSetService>,
+      ServiceRegistry.createSingleSingletonServiceRegistry(ProblemSetService)
+    );
+    this._registries.set(
       PracticeSessionService as ISingleton<PracticeSessionService>,
       ServiceRegistry.createSingleSingletonServiceRegistry(PracticeSessionService)
+    );
+    this._registries.set(
+      TagService as ISingleton<TagService>,
+      ServiceRegistry.createSingleSingletonServiceRegistry(TagService)
     );
     this._registries.set(CodeExecutor, ServiceRegistry.createSingleServiceRegistry(Judge0Executor));
   }
