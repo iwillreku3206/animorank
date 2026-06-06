@@ -51,3 +51,18 @@ export const PUT: RequestHandler = async ({ locals, request, params }) => {
   });
   return successObject({ status: 'success' });
 };
+
+export const DELETE: RequestHandler = async ({ locals, params }) => {
+  const session = await locals.auth();
+  if (!session || !session.user.id) return error(403, 'Unauthorized');
+  if (session.user.type != 'teacher') return error(403, 'Unauthorized');
+
+  await db.problem.delete({
+    where: {
+      id: params.id,
+      problem_set: { collaborators: { some: { collaborator_id: session.user.id } } }
+    }
+  });
+
+  return successObject({ status: 'success' });
+};

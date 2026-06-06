@@ -83,7 +83,8 @@ const updateValidator = z.object({
   auto_accept: z.stringbool().optional(),
   is_global: z.stringbool().optional(),
   subjectId: z.string().uuid().nullish(),
-  difficultyId: z.string().uuid().nullish()
+  difficultyId: z.string().uuid().nullish(),
+  topicIds: z.array(z.string().uuid()).optional()
 });
 
 export const PUT: RequestHandler = async ({ locals, request, params }) => {
@@ -115,6 +116,20 @@ export const PUT: RequestHandler = async ({ locals, request, params }) => {
   });
 
   if (!updated) return error(403, 'Not authorized or not found');
+
+  // Handle topic updates separately (service doesn't support nested writes)
+  if (data.topicIds !== undefined) {
+    await db.problemSet.update({
+      where: { id: params.id },
+      data: {
+        topics: {
+          set: data.topicIds.map((topicId) => ({
+            problem_set_id_topic_tag_id: { problem_set_id: params.id, topic_tag_id: topicId }
+          }))
+        }
+      }
+    });
+  }
 
   return successObject({ status: 'success' });
 };
