@@ -1,7 +1,7 @@
-import type { TagColor, TagType } from '$lib/zenstack/models';
-import type { TagModel } from './tagModel';
+import type { TagColor, TagType, Tag as TagModel } from '$lib/zenstack/models';
 
 export abstract class Tag<T extends TagModel> {
+  // eslint-disable-next-line no-unused-vars
   constructor(public readonly model: T) {}
 
   get id(): string {

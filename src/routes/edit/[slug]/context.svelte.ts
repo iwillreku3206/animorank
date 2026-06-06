@@ -38,7 +38,6 @@ export class ProblemEditorWindowContext {
         this.problemAutosave.save($state.snapshot(this.problem));
       });
       $effect(() => {
-        // @ts-expect-error This type will cause ddeep type instantiation
         this.testCaseAutosave.save($state.snapshot(this.testCases));
       });
       $effect(() => {
@@ -62,11 +61,16 @@ export class ProblemEditorWindowContext {
   }
   private async saveTestCases() {
     const testCases = $state.snapshot(this.testCases);
-    await Promise.all(
+    const testCaseResults = await Promise.all(
       testCases.map((testCase) => {
-        updateTestCase(testCase);
+        // @ts-expect-error This will have an error related to deep instantiation
+        return updateTestCase(testCase);
       })
     );
+
+    if (testCaseResults.reduce((prev, next) => prev && next, true)) {
+      throw new Error('Unable to save test cases');
+    }
   }
   private async saveTopics() {
     const topics = $state.snapshot(this.topics);

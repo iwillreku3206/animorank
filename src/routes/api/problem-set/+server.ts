@@ -60,7 +60,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 
   const problemSetService = ServerServiceProvider.instance().getService(ProblemSetService);
 
-  const result = await problemSetService.findByUser({
+  const result = await problemSetService.findByFilter({
     user: session.user,
     search: data.search,
     page: data.page,
