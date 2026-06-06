@@ -10,7 +10,8 @@
   import type { Filters } from './api';
   import { page } from '$app/state';
   import { SvelteURLSearchParams } from 'svelte/reactivity';
-  import ButtonLink from '$lib/components/ButtonLink.svelte';
+  import ButtonLink from '$lib/components/buttons/ButtonLink.svelte';
+  // import Button from '$lib/components/buttons/Button.svelte';
 
   function buildSearchParams() {
     const params = new SvelteURLSearchParams();
@@ -158,7 +159,7 @@
       </label>
     </div>
   </div>
-  <div class="{viewMode === 'list' ? 'flex flex-col' : 'grid grid-cols-3'} gap-4">
+  <div class="{viewMode === 'list' ? 'flex flex-col' : 'grid grid-cols-4'} gap-4">
     {#each problemSets as problemSet, i (problemSet.id)}
       {#if viewMode === 'list'}
         <ProblemSetListItem bind:problemSet={problemSets[i]} />
@@ -174,4 +175,7 @@
       <button class="join-item btn">»</button>
     </div>
   </div>
+
+
+
 </main>

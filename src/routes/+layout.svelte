@@ -6,78 +6,26 @@
   import '@diplodoc/transform/dist/css/yfm.css';
   import 'dockview-core/dist/styles/dockview.css';
 
-  import MobileSettingsModal from '$lib/components/MobileSettingsModal.svelte';
+  import Footer from '$lib/components/Footer.svelte';
+  import Navbar from '$lib/components/Navbar.svelte';
   import type { LayoutServerData } from './$types';
-  import { signIn } from '@auth/sveltekit/client';
-  import Button from '$lib/components/Button.svelte';
 
-  let openSettings = $state(false);
   interface Props {
     data: LayoutServerData;
     children?: import('svelte').Snippet;
   }
 
   let { data, children }: Props = $props();
-
-  let loggedIn = $derived(!!data.user);
 </script>
 
 <div class="md:flex flex-col min-h-screen bg-base-300 text-white hidden">
-  <!--Navbar start-->
-  <div
-    class="min-h-16 px-9 flex flex-row items-center border-b border-b-neutral sticky top-0 left-0 right-0 bg-base-100 z-50"
-  >
-    <div class="relative mr-auto">
-      <h1 class="font-bold text-2xl">
-        <a href="/">AnimoRank</a>
-      </h1>
-    </div>
+  <Navbar user={data.user} />
 
-    <div class="flex flex-row ml-auto mr-auto">
-      <a
-        class="px-4 text-base"
-        href="/about">About Us</a
-      >
-      {#if loggedIn}
-        <a
-          class="px-4 text-base"
-          href="/">Dashboard</a
-        >
-        <a
-          class="px-4 text-base"
-          href="/problemSets">Problem Sets</a
-        >
-      {/if}
-    </div>
-
-    <div class="ml-auto">
-      {#if loggedIn}
-        <!--<button class="btn btn-ghost md:hidden" onclick={() => (openSettings = true)}>
-          <img src={menu} alt="menu" class="h-10 cursor-pointer" />
-        </button>-->
-        <button
-          class="btn btn-ghost hidden md:grid md:place-items-center overflow-hidden btn-circle"
-          onclick={() => (openSettings = true)}
-        >
-          <img
-            src={data.user?.image}
-            alt="profile"
-            class="h-10 w-10 object-cover rounded-full cursor-pointer"
-          />
-        </button>
-      {:else}
-        <Button onclick={() => signIn('google')}>Login</Button>
-      {/if}
-    </div>
+  <div class="flex-1">
+    {@render children?.()}
   </div>
 
-  {@render children?.()}
-  {#if openSettings && loggedIn && data.user}
-    <MobileSettingsModal
-      bind:openSettings
-      user={data.user}
-    />
-  {/if}
+  <Footer />
 </div>
 
 <div class="flex flex-row justify-center items-center md:hidden w-full text-center h-screen">

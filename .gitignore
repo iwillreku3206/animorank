@@ -15,5 +15,7 @@ vite.config.ts.timestamp-*
 /.vercel/output/static
 
 /generated/prisma
-/home/rek/animorank/.svelte-kit/output
+
+skills-lock.json
+/.svelte-kit/output
 /test-results

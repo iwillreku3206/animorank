@@ -7,6 +7,6 @@
 </script>
 
 <a
-  class="btn bg-primary text-primary-content px-4 py-3 {className}"
+  class="btn shadow-none active:shadow-none font-medium rounded {className}"
   {...rest}>{@render children?.()}</a
 >

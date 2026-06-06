@@ -1,121 +1,74 @@
-@import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap');
+
+@import "tailwindcss";
 
 @theme {
   --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
 }
 
-@plugin "daisyui" {
-  themes:
-    light --default,
-    animorank-dark --prefersdark;
-}
+@plugin "daisyui";
 
-/* TODO: Set these to light mode colors*/
-@theme {
-  --color-primary: #87f526;
-  --color-primary-focus: #67dc06;
-  --color-primary-content: #0b0908;
-  --color-secondary: #2d6d07;
-  --color-secondary-focus: #275c0b;
-  --color-secondary-content: #d4d0ce;
-  --color-accent: #ffb81c;
-  --color-accent-focus: #e69900;
-  --color-accent-content: #0b0908;
-  --color-neutral: #584e4d;
-  --color-neutral-focus: #3d3535;
-  --color-neutral-content: #e5e2e0;
-  --color-base-100: #1b1717;
-  --color-base-200: #161212;
-  --color-base-300: #110d0d;
-  --color-base-content: #d4d0ce;
-  --color-info: #00d0ef;
-  --color-info-content: #053344;
-  --color-success: #01df72;
-  --color-success-content: #022d14;
-  --color-warning: #fdc700;
-  --color-warning-content: #411e03;
-  --color-error: #ff6266;
-  --color-error-content: #440607;
-}
+@plugin "daisyui/theme" {
+  name:         "animorank-dark";
+  default:      true;
+  prefersdark:  true;
+  color-scheme: dark;
 
-@layer theme {
-  [data-theme='animorank-dark'] {
-    --color-primary: #87f526;
-    --color-primary-focus: #67dc06;
-    --color-primary-content: #0b0908;
-    --color-secondary: #2d6d07;
-    --color-secondary-focus: #275c0b;
-    --color-secondary-content: #d4d0ce;
-    --color-accent: #ffb81c;
-    --color-accent-focus: #e69900;
-    --color-accent-content: #0b0908;
-    --color-neutral: #584e4d;
-    --color-neutral-focus: #3d3535;
-    --color-neutral-content: #e5e2e0;
-    --color-base-100: #1b1717;
-    --color-base-200: #161212;
-    --color-base-300: #110d0d;
-    --color-base-content: #d4d0ce;
-    --color-info: #00d0ef;
-    --color-info-content: #053344;
-    --color-success: #01df72;
-    --color-success-content: #022d14;
-    --color-warning: #fdc700;
-    --color-warning-content: #411e03;
-    --color-error: #ff6266;
-    --color-error-content: #440607;
-  }
+  --color-primary:            oklch(87.00% 0.244 134.94);
+  --color-primary-focus:      oklch(79.42% 0.239 136.80);
+  --color-primary-content:    oklch(14.48% 0.000 0);
+  --color-secondary:          oklch(92.49% 0.000 0);
+  --color-secondary-focus:    oklch(87.61% 0.000 0);
+  --color-secondary-content:  oklch(14.48% 0.000 0);
+  --color-accent:             oklch(82.77% 0.167 79.60);
+  --color-accent-focus:       oklch(74.16% 0.158 73.33);
+  --color-accent-content:     oklch(14.48% 0.000 0);
+  --color-neutral:            oklch(28.09% 0.008 223.72);
+  --color-neutral-focus:      oklch(21.78% 0.008 223.87);
+  --color-neutral-content:    oklch(92.49% 0.000 0);
+  --color-base-100:           oklch(26.86% 0.000 0);
+  --color-base-200:           oklch(21.78% 0.000 0);
+  --color-base-300:           oklch(14.48% 0.000 0);
+  --color-base-content:       oklch(92.49% 0.000 0);
+  --color-info:               oklch(78.82% 0.138 213.46);
+  --color-info-content:       oklch(30.09% 0.055 228.67);
+  --color-success:            oklch(79.12% 0.209 151.71);
+  --color-success-content:    oklch(26.14% 0.065 152.74);
+  --color-warning:            oklch(85.35% 0.174 88.77);
+  --color-warning-content:    oklch(27.96% 0.066 53.84);
+  --color-error:              oklch(69.96% 0.191 22.03);
+  --color-error-content:      oklch(25.07% 0.092 26.23);
 }
 
 @plugin "daisyui/theme" {
-  name: 'animorank-dark';
-  default: true;
-  /* set as default */
-  prefersdark: true;
-  /* set as default dark mode (prefers-color-scheme:dark) */
-  color-scheme: dark;
-  /* color of browser-provided UI */
+  name:         "animorank-light";
+  color-scheme: light;
 
-  --color-primary: #87f526;
-  --color-primary-focus: #67dc06;
-  --color-primary-content: #0b0908;
-  --color-secondary: #2d6d07;
-  --color-secondary-focus: #275c0b;
-  --color-secondary-content: #d4d0ce;
-  --color-accent: #ffb81c;
-  --color-accent-focus: #e69900;
-  --color-accent-content: #0b0908;
-  --color-neutral: #584e4d;
-  --color-neutral-focus: #3d3535;
-  --color-neutral-content: #e5e2e0;
-  --color-base-100: #1b1717;
-  --color-base-200: #161212;
-  --color-base-300: #110d0d;
-  --color-base-content: #d4d0ce;
-  --color-info: #00d0ef;
-  --color-info-content: #053344;
-  --color-success: #01df72;
-  --color-success-content: #022d14;
-  --color-warning: #fdc700;
-  --color-warning-content: #411e03;
-  --color-error: #ff6266;
-  --color-error-content: #440607;
-
-  /* border radius */
-  --radius-selector: 1rem;
-  --radius-field: 0.25rem;
-  --radius-box: 0.5rem;
-
-  /* base sizes */
-  --size-selector: 0.25rem;
-  --size-field: 0.25rem;
-
-  /* border size */
-  --border: 1px;
-
-  /* effects */
-  --depth: 1;
-  --noise: 0;
+  --color-primary:            oklch(54.75% 0.164 137.07);
+  --color-primary-focus:      oklch(46.49% 0.133 136.31);
+  --color-primary-content:    oklch(98.51% 0.000 0);
+  --color-secondary:          oklch(37.15% 0.000 0);
+  --color-secondary-focus:    oklch(27.27% 0.000 0);
+  --color-secondary-content:  oklch(98.51% 0.000 0);
+  --color-accent:             oklch(74.16% 0.158 73.33);
+  --color-accent-focus:       oklch(65.82% 0.140 73.51);
+  --color-accent-content:     oklch(98.51% 0.000 0);
+  --color-neutral:            oklch(28.09% 0.008 223.72);
+  --color-neutral-focus:      oklch(21.78% 0.008 223.87);
+  --color-neutral-content:    oklch(98.51% 0.000 0);
+  --color-base-100:           oklch(98.51% 0.000 0);
+  --color-base-200:           oklch(92.96% 0.005 247.88);
+  --color-base-300:           oklch(86.99% 0.010 242.85);
+  --color-base-content:       oklch(14.48% 0.000 0);
+  --color-info:               oklch(78.82% 0.138 213.46);
+  --color-info-content:       oklch(30.09% 0.055 228.67);
+  --color-success:            oklch(79.12% 0.209 151.71);
+  --color-success-content:    oklch(26.14% 0.065 152.74);
+  --color-warning:            oklch(85.35% 0.174 88.77);
+  --color-warning-content:    oklch(27.96% 0.066 53.84);
+  --color-error:              oklch(69.96% 0.191 22.03);
+  --color-error-content:      oklch(25.07% 0.092 26.23);
 }
 
 @plugin "@tailwindcss/typography";
@@ -135,11 +88,14 @@
   border-left: none !important;
 }
 
-h1,
-h2,
-.font-header {
-  font-family: 'Space Grotesk', sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 700;
-  font-style: normal;
+.problemSetProgress {
+  accent-color: var(--color-primary, oklch(87.00% 0.244 134.94));
+}
+
+.problemSetProgress::-moz-progress-bar {
+  background-color: var(--color-primary, oklch(87.00% 0.244 134.94));
+}
+
+.problemSetProgress::-webkit-progress-value {
+  background-color: var(--color-primary, oklch(87.00% 0.244 134.94));
 }

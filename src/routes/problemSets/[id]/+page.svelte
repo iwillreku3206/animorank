@@ -2,13 +2,16 @@
   import TagChip from '$lib/components/TagChip.svelte';
   import BookmarkIcon from '@iconify-svelte/fa6-regular/bookmark';
   import BookmarkIconSolid from '@iconify-svelte/fa6-solid/bookmark';
+  import PlayIcon from '@iconify-svelte/fa6-solid/play';
   import type { PageProps } from './$types';
   import ProblemListItem from './ProblemListItem.svelte';
   import { removeBookmark, toggleBookmark } from '../bookmark';
+  import Button from '$lib/components/buttons/Button.svelte';
+  import ButtonLink from '$lib/components/buttons/ButtonLink.svelte';
 
   let { data }: PageProps = $props();
 
-  const { problemSet, globalProblemSolves, globalProblemAttempts } = $derived(data);
+  const { problemSet, globalProblemSolvers, globalProblemAttempts } = $derived(data);
   // svelte-ignore state_referenced_locally
   let isBookmarked = $state(data.bookmarked);
 
@@ -32,97 +35,128 @@
 </script>
 
 <main class="flex flex-col">
-  <header class="flex flex-col gap-5 border-b border-neutral py-8 px-4 xl:px-32">
-    <p>
-      Courses / {#if problemSet.subject}
-        <a
-          class="text-primary"
-          href="/problemSets?tag={problemSet.subject.id}"
+  <header class="flex flex-row gap-8 py-8 px-8 xl:px-32 border-b border-base-100">
+
+    <!-- Col 1: Problem set details -->
+    <div class="flex flex-[3] flex-col gap-4">
+
+      <!-- Subject category breadcrumb -->
+      <p
+        class="text-sm text-base-content/70 tracking-wide" 
+        aria-label="Problem set subject category"
+      >
+        Courses / {#if problemSet.subject}
+          <a
+            class="text-base-content/70 transition-colors duration-250 hover:text-primary"
+            href="/problemSets?tag={problemSet.subject.id}"
+          >
+            {problemSet.subject?.label}
+          </a>
+        {:else}
+          Other
+        {/if}
+      </p>
+
+      <!-- Title + author-->
+      <div class="flex flex-col gap-2">
+      
+        <!-- Title -->
+        <h1 
+          class="font-display text-4xl font-semibold line-clamp-2 overflow-hidden"
         >
-          {problemSet.subject?.label}
-        </a>
-      {:else}
-        Other
-      {/if}
-    </p>
+          {problemSet.title}
+        </h1>
 
-    <h1 class="text-4xl">{problemSet.title}</h1>
-    <p class="text-primary">
-      {#each problemSet.collaborators as collaborator, i (collaborator.id)}
-        <a href="/problemSets?creator={collaborator.id}">{collaborator.name}</a>{i ===
-        problemSet.collaborators.length - 1
-          ? ''
-          : ','}
-      {/each}
-    </p>
+        <!-- Author -->
+        <p class="text-base-content/70">
+          {#each problemSet.collaborators as collaborator, i (collaborator.id)}
+            <a 
+              href="/problemSets?creator={collaborator.id}" 
+              class="transition-colors duration-250 hover:text-primary"
+            >
+              {collaborator.name}
+            </a>
+            {i === problemSet.collaborators.length - 1
+              ? ''
+              : ','}
+          {/each}
+        </p>
+      </div>
 
-    <div class="flex flex-wrap flex-row gap-2">
-      {#each tags as tag (tag.id)}<TagChip
-          {tag}
-          href="/problemSets?tag={tag.id}"
-        />{/each}
+      <!-- Tags -->
+      <div class="flex flex-row flex-wrap gap-2 max-h-[3.5rem] overflow-hidden">
+        {#each tags as tag (tag.id)}<TagChip
+            {tag}
+            href="/problemSets?tag={tag.id}"
+          />{/each}
+      </div>
+
+      <!-- Description -->
+      <p class="text-base-content/70 line-clamp-3 overflow-hidden whitespace-pre-wrap">
+        {problemSet.description}
+      </p>
+
     </div>
 
-    <p class="text-base-content">{problemSet.description}</p>
-
-    <button
-      class="btn btn-outline gap-2"
-      onclick={handleBookmarkClick}
-    >
-      {#if isBookmarked}
-        <BookmarkIconSolid class="w-5 h-5" />
-        Bookmarked
-      {:else}
-        <BookmarkIcon class="w-5 h-5" />
-        Bookmark
-      {/if}
-    </button>
-
-    <div
-      class="flex flex-row gap-8"
-      style="--accent-color: hsl(
-			{(progress[0] / progress[1]) * 120}deg,
-			100%,
-			50%
-		)"
-    >
+    <!-- Col 2: Actions -->
+    <div class="flex flex-[1] flex-col gap-4">
+    
+      <!-- Progress row -->
       <div class="flex flex-col w-full gap-2">
-        <div class="flex flex-row w-full">
-          Progress
-          <div class="ml-auto">
+
+        <!-- Progress text -->
+        <div class="flex justify-between gap-4 text-sm text-base-content">
+          <span>
+            Progress
+          </span>
+          <span>
             {progress[0]}/{progress[1]} problem{progress[1] === 1 ? '' : 's'}
-          </div>
+          </span>
         </div>
+
+        <!-- Progress bar -->
         <progress
-          class="h-2 w-full bg-neutral-focus problemSetProgress rounded-sm"
+          class="progress h-2 w-full bg-neutral problemSetProgress"
           value={progress[0]}
           max={progress[1]}
+          aria-label={`${Math.round((progress[0] / progress[1]) * 100)}% progress`}
         ></progress>
       </div>
+
+      <Button
+        class="btn-secondary btn-outline gap-2 w-full"
+        onclick={handleBookmarkClick}
+        aria-label={isBookmarked
+        ? `Remove ${problemSet.title} from bookmarks`
+        : `Add ${problemSet.title} to bookmarks`}
+      >
+        {#if isBookmarked}
+          <BookmarkIconSolid class="w-5 h-5" />
+          Bookmarked
+        {:else}
+          <BookmarkIcon class="w-5 h-5" />
+          Bookmark
+        {/if}
+      </Button>
+
+      <ButtonLink
+        class="btn-primary gap-2 w-full"
+        href="/problem/{problemSet.problems[0].id}"
+        aria-label={`Start practicing ${problemSet.title} problem set`}
+      >
+        <PlayIcon class="w-5 h-5" aria-hidden="true" />
+        Start Practicing
+      </ButtonLink>
     </div>
   </header>
 
-  <div class="flex flex-col px-4 xl:px-32 gap-4 py-8">
+  <div class="flex flex-col px-8 xl:px-32 gap-4 py-8">
     {#each problemSet.problems as problem (problem.id)}
       <ProblemListItem
         {problem}
-        problemPassingRate={globalProblemSolves[problem.id]}
+        problemSolvers={globalProblemSolvers[problem.id]}
         problemAttempts={globalProblemAttempts[problem.id]}
       />
     {/each}
   </div>
 </main>
-
-<style>
-  .problemSetProgress {
-    accent-color: var(--accent-color);
-  }
-
-  .problemSetProgress::-moz-progress-bar {
-    background-color: var(--accent-color);
-  }
-
-  .problemSetProgress::-webkit-progress-value {
-    background-color: var(--accent-color);
-  }
-</style>

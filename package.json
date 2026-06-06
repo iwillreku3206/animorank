@@ -73,6 +73,7 @@
     "@diplodoc/transform": "^4.74.1",
     "@gravity-ui/icons": "^2.12.0",
     "@gravity-ui/markdown-editor": "^15.34.5",
+    "@iconify-svelte/fa6-brands": "^1.0.2",
     "@gravity-ui/markdown-editor-latex-extension": "^0.1.0",
     "@iconify-svelte/fa6-regular": "^1.0.0",
     "@iconify-svelte/fa6-solid": "^1.0.0",

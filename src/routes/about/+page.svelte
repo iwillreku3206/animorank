@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Button from '$lib/components/Button.svelte';
+  import Button from '$lib/components/buttons/Button.svelte';
   import { signIn } from '@auth/sveltekit/client';
   import BenefitCard from './BenefitCard.svelte';
   import type { PageProps } from './$types';
