@@ -80,8 +80,8 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 const updateValidator = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
-  auto_accept: z.stringbool().optional(),
-  is_global: z.stringbool().optional(),
+  auto_accept: z.union([z.stringbool(), z.boolean()]).optional(),
+  is_global: z.union([z.stringbool(), z.boolean()]).optional(),
   subjectId: z.string().uuid().nullish(),
   difficultyId: z.string().uuid().nullish(),
   topicIds: z.array(z.string().uuid()).optional()
