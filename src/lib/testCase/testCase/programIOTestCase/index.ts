@@ -14,6 +14,7 @@ import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { CodeExecutor, type CodeExecutionRequest } from '$lib/testCase/executor';
 
 const programIOTestCaseValidator = z.object({
+  public: z.boolean().optional(),
   input: z.string(),
   output: z.string()
 });

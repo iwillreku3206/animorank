@@ -62,6 +62,7 @@ export async function updateTestCase(testCase: AnyTestCase): Promise<boolean> {
     case 'FunctionOutputTestCase': {
       const functionTestCase = testCase as FunctionOutputTestCase;
       body = {
+        public: testCase.public,
         parameters: functionTestCase.parameters,
         comparisons: functionTestCase.comparisons,
         return_type: functionTestCase.return_type,
@@ -72,6 +73,7 @@ export async function updateTestCase(testCase: AnyTestCase): Promise<boolean> {
     case 'ProgramIOTestCase': {
       const ioTestCase = testCase as ProgramIOTestCase;
       body = {
+        public: testCase.public,
         input: ioTestCase.input,
         output: ioTestCase.output
       };
@@ -80,6 +82,7 @@ export async function updateTestCase(testCase: AnyTestCase): Promise<boolean> {
     case 'CustomTestCase': {
       const customTestCase = testCase as CustomTestCase;
       body = {
+        public: testCase.public,
         test_code: customTestCase.test_code
       };
       break;

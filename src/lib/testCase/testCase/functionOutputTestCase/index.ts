@@ -35,6 +35,7 @@ const comparisonSchema = z.object({
 });
 
 const functionOutputTestCaseValidator = z.object({
+  public: z.boolean().optional(),
   parameters: z.array(parameterSchema),
   comparisons: z.array(comparisonSchema),
   return_type: parameterSchema,

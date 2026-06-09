@@ -1,5 +1,7 @@
 <script lang="ts">
   import deleteIcon from '$lib/assets/delete.svg';
+  import EyeIcon from '@iconify-svelte/fa6-solid/eye';
+  import EyeSlashIcon from '@iconify-svelte/fa6-solid/eye-slash';
   import type {
     CustomTestCase,
     FunctionOutputTestCase,
@@ -21,13 +23,28 @@
     onDelete?: () => void;
     deleteDisabled: boolean;
   } = $props();
+
+  function toggleVisibility() {
+    testCase.public = !testCase.public;
+  }
 </script>
 
 <div class="w-full bg-[#212121] rounded-lg p-4">
   <div class="flex flex-col">
     <div class="flex flex-row gap-2 items-center">
       Test Case #{order}: {testCase.type}
-      <div class="ml-auto">
+      <div class="ml-auto flex gap-1">
+        <button
+          title={testCase.public ? 'Hide Test Case' : 'Show Test Case'}
+          class="btn btn-xs btn-ghost"
+          onclick={toggleVisibility}
+        >
+          {#if testCase.public}
+            <EyeIcon class="h-4 w-4" />
+          {:else}
+            <EyeSlashIcon class="h-4 w-4" />
+          {/if}
+        </button>
         <button
           title="Delete Test Case"
           class="btn btn-xs btn-ghost"
