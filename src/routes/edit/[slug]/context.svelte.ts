@@ -1,3 +1,4 @@
+import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
 import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
 import type { Problem as ProblemModel, ProblemTestCase, Tag } from '$lib/zenstack/models';
 import { saveProblem, updateTestCase } from './api';
@@ -31,7 +32,10 @@ export class ProblemEditorWindowContext {
     this.tags = initialValues.tags;
 
     this.problemAutosave = new AutoSave(() => this.saveProblem(), initialValues.problem);
-    this.testCaseAutosave = new AutoSave(() => this.saveTestCases(), initialValues.testCases);
+    this.testCaseAutosave = new AutoSave(
+      (changed) => this.saveTestCases(changed),
+      initialValues.testCases
+    );
     this.topicsAutosave = new AutoSave(() => this.saveTopics(), initialValues.topics);
 
     this._cleanup = $effect.root(() => {
@@ -42,7 +46,6 @@ export class ProblemEditorWindowContext {
         this.testCaseAutosave.save($state.snapshot(this.testCases));
       });
       $effect(() => {
-        console.log(this.topics);
         this.topicsAutosave.save($state.snapshot(this.topics));
       });
     });
@@ -62,14 +65,16 @@ export class ProblemEditorWindowContext {
       subject_id: problem.subject_id
     });
   }
-  private async saveTestCases() {
+  private async saveTestCases(changed: ProblemTestCase[]) {
+    const changedMap = arrayToHashMap(changed, (tc) => tc.id);
     const testCases = $state.snapshot(this.testCases);
-    console.debug('Saving: ', testCases);
     const testCaseResults = await Promise.all(
-      testCases.map((testCase) => {
-        // @ts-expect-error This will have an error related to deep instantiation
-        return updateTestCase(testCase);
-      })
+      // @ts-expect-error This will have an error related to deep instantiation
+      testCases
+        .filter((tc) => tc.id in changedMap)
+        .map((testCase) => {
+          return updateTestCase(testCase);
+        })
     );
 
     if (testCaseResults.reduce((prev, next) => prev && next, true)) {

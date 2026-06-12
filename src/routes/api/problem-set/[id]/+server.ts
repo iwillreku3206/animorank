@@ -82,9 +82,9 @@ const updateValidator = z.object({
   description: z.string().optional(),
   auto_accept: z.union([z.stringbool(), z.boolean()]).optional(),
   is_global: z.union([z.stringbool(), z.boolean()]).optional(),
-  subjectId: z.string().uuid().nullish(),
-  difficultyId: z.string().uuid().nullish(),
-  topicIds: z.array(z.string().uuid()).optional()
+  subject_id: z.string().uuid().nullish(),
+  difficulty_id: z.string().uuid().nullish(),
+  topic_ids: z.array(z.string().uuid()).optional()
 });
 
 export const PUT: RequestHandler = async ({ locals, request, params }) => {
@@ -110,20 +110,20 @@ export const PUT: RequestHandler = async ({ locals, request, params }) => {
       description: data.description,
       auto_accept: data.auto_accept,
       is_global: data.is_global,
-      subject_id: data.subjectId,
-      difficulty_id: data.difficultyId
+      subject_id: data.subject_id,
+      difficulty_id: data.difficulty_id
     }
   });
 
-  if (!updated) return error(403, 'Not authorized or not found');
+  if (!updated) return error(403, 'Not found');
 
   // Handle topic updates separately (service doesn't support nested writes)
-  if (data.topicIds !== undefined) {
+  if (data.topic_ids !== undefined) {
     await db.problemSet.update({
       where: { id: params.id },
       data: {
         topics: {
-          set: data.topicIds.map((topicId) => ({
+          set: data.topic_ids.map((topicId) => ({
             problem_set_id_topic_tag_id: { problem_set_id: params.id, topic_tag_id: topicId }
           }))
         }

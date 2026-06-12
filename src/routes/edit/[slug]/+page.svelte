@@ -16,6 +16,3 @@
     <ProblemEditor {...props} />
   </DesktopOnly>
 </main>
-<!--  bind:problem
-  bind:testCases
--->

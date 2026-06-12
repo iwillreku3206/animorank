@@ -29,9 +29,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
       name: 'New Problem',
       description: 'Edit this description.',
       problem_set_id: data.problemSet
-    },
-    select: { id: true }
+    }
   });
 
-  return successObject({ id: creation.id });
+  return successObject(creation);
 };
