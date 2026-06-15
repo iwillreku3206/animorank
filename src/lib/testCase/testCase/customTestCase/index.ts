@@ -18,7 +18,7 @@ const customTestCaseValidator = z.object({
   test_code: z.string()
 });
 
-const mainRegex = /\s*(int|void)\s+main\s*\([^)]*\)\s*\{[^}]*\}\s*/g;
+const mainRegex = /(int|void) main\s*\([A-Za-z0-9 ,\\*]*\)\s*\{(.|\s)*\}/g;
 
 export class CustomTestCase extends TestCase<Extract<ProblemTestCase, { type: 'CustomTestCase' }>> {
   constructor(dbTestCase: ProblemTestCase) {
@@ -35,7 +35,10 @@ export class CustomTestCase extends TestCase<Extract<ProblemTestCase, { type: 'C
       files: [
         {
           name: 'submission.c',
-          contents: Buffer.from(studentCode.replaceAll(mainRegex, ''), 'utf8')
+          contents: Buffer.from(
+            studentCode.replaceAll('\r\n', '\n').replaceAll(mainRegex, ''),
+            'utf8'
+          )
         },
         { name: 'main.c', contents: Buffer.from(dbTestCase.test_code, 'utf8') }
       ],

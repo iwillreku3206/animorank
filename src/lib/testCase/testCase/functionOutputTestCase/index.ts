@@ -17,7 +17,7 @@ import { CodeExecutor, type CodeExecutionRequest } from '$lib/testCase/executor'
 import type { JsonValue } from '@zenstackhq/orm';
 import { Logger } from '$lib/logging/logger';
 
-const mainRegex = /\s*(int|void)\s+main\s*\([^)]*\)\s*\{[^}]*\}\s*/g;
+const mainRegex = /(int|void) main\s*\([A-Za-z0-9 ,\\*]*\)\s*\{(.|\s)*\}/g;
 
 const parameterSchema = z.object({
   type: z.string(),
