@@ -6,6 +6,7 @@ import { Problem } from '$lib/problem';
 import { ProblemService } from '$lib/problem/problemService';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import type { PracticeSession as PracticeSessionModel } from '$lib/zenstack/models';
+import { arrayToHashMap } from '$lib/utils/arrayToHashMap.ts';
 
 export interface FindByOptions {
   user: User;
@@ -50,13 +51,14 @@ export class PracticeSessionService {
 
     if (!problem) return null;
 
+    const problemSlots = arrayToHashMap(problem.getDefaultSections(), (s) => s.slot.label);
     const state = problem.uses_slots
       ? problem
           .getSlots()
           .map((s) => s.label)
           .reduce(
             (prev, s) => {
-              prev[s] = '';
+              prev[s] = problemSlots[s].code;
               return prev;
             },
             {} as Record<string, string>
