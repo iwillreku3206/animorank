@@ -17,7 +17,7 @@ export class ProblemSetEditorWindowContext {
   public readonly tags: Tag[] = [];
 
   public problemSet: ProblemSet = $state() as unknown as ProblemSet;
-  public problems: Problem[] = $state() as unknown as Problem[];
+  public problems: (Problem & { topics: string[] })[] = $state() as unknown as Problem[];
   public topics: string[] = $state() as unknown as string[];
   public collaborators: string[] = $state() as unknown as string[];
   public students: string[] = $state() as unknown as string[];
@@ -37,12 +37,14 @@ export class ProblemSetEditorWindowContext {
     this.collaborators = initialValues.collaborators;
     this.students = initialValues.students;
 
+    this.tags = initialValues.tags;
+
     this.problemSetAutosave = new AutoSave<ProblemSet>(
       () => this.saveProblemSet(),
       initialValues.problemSet
     );
     this.problemsAutosave = new AutoSave<Problem[]>(
-      () => this.saveProblems(),
+      (p) => this.saveProblems(p),
       initialValues.problems
     );
     this.topicsAutosave = new AutoSave<string[]>(() => this.saveTopics(), initialValues.topics);
