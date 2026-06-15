@@ -66,7 +66,7 @@
         {/if}
       </div>
     {:else}
-      <div class="flex flex-row flex-wrap gap-2 p-4">
+      <div class="flex flex-row gap-2 p-4">
         {#each tests.results as result, i (i)}
           <div class=" bg-base-100 p-2 rounded-lg text-sm flex flex-row gap-4 items-center">
             <span class={result.success ? 'text-primary' : 'text-error'}>Case {i + 1}</span>
