@@ -4,10 +4,10 @@
 </script>
 
 <svelte:head>
-  <title>About AnimoRank — coming soon</title>
+  <title>FAQs — coming soon</title>
   <meta
     name="description"
-    content="The AnimoRank about page is under development."
+    content="The AnimoRank FAQs page is under development."
   />
 </svelte:head>
 
@@ -18,8 +18,8 @@
     </h1>
 
     <p class="mt-5 text-lg leading-relaxed text-base-content/70">
-      We're putting together a proper About page for AnimoRank. In the meantime, head back to the
-      landing page to see what the platform is about.
+      We're gathering the most common questions about AnimoRank into a proper FAQ. In the meantime,
+      head back to the landing page to see what the platform is about.
     </p>
 
     <div class="mt-9 flex justify-center">
