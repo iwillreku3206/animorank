@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { Problem, ProblemTestCase, ProblemTestCaseType } from '$lib/zenstack/models';
-  import Editor from '../Editor.svelte';
+  import Editor from '../editor/Editor.svelte';
   import { Pane, Splitpanes } from 'svelte-splitpanes';
   import TestCase from './TestCase.svelte';
   import { createTestCase, deleteTestCase, updateProblem, updateTestCase } from './api';
-  import CodeEditor from '../CodeEditor.svelte';
+  import CodeEditor from '../editor/CodeEditor.svelte';
   import { Popover } from 'bits-ui';
   import { untrack } from 'svelte';
   import deepEqual from 'deep-equal';
@@ -56,7 +56,6 @@
       }
     });
 
-    // @ts-expect-error testCases is a very deep structure, so TypeScript will complain here
     lastSavedTestCases = structuredClone($state.snapshot(testCases));
     const testCasesToSave = structuredClone($state.snapshot(testCases));
 

@@ -1,13 +1,13 @@
 <script lang="ts">
-  import TagChip from '$lib/components/TagChip.svelte';
+  import TagChip from '$lib/components/ui/TagChip.svelte';
   import BookmarkIcon from '@iconify-svelte/fa6-regular/bookmark';
   import BookmarkIconSolid from '@iconify-svelte/fa6-solid/bookmark';
   import PlayIcon from '@iconify-svelte/fa6-solid/play';
   import type { PageProps } from './$types';
   import ProblemListItem from './ProblemListItem.svelte';
   import { removeBookmark, toggleBookmark } from '../bookmark';
-  import Button from '$lib/components/buttons/Button.svelte';
-  import ButtonLink from '$lib/components/buttons/ButtonLink.svelte';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
+  import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
 
   let { data }: PageProps = $props();
 
@@ -112,7 +112,7 @@
       </div>
 
       <Button
-        class="btn-secondary btn-outline gap-2 w-full"
+        class="btn-neutral btn-outline gap-2 w-full"
         onclick={handleBookmarkClick}
         aria-label={isBookmarked
           ? `Remove ${problemSet.title} from bookmarks`

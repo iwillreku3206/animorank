@@ -19,7 +19,7 @@
     if (result.hidden) return [];
     return (result.testCaseInfo as FunctionOutputTestCase).parameters.map((p, i) => {
       const registry = TypeRegistry.instance();
-      const tv = registry.getInstance(p.type, p.data);
+      const tv = registry.getInstance(p.type, p.data ?? undefined);
       return {
         value: tv.getLanguage('c').constructExpression(),
         symbol: `param ${i + 1}`

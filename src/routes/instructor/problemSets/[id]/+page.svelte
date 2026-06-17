@@ -107,8 +107,12 @@
 
   <!-- Problem Set Fields -->
   <div class="form-control mb-8">
-    <label class="label"><span class="label-text font-bold">Title</span></label>
+    <label
+      class="label"
+      for="ps-title"><span class="label-text font-bold">Title</span></label
+    >
     <input
+      id="ps-title"
       type="text"
       bind:value={problemSet.title}
       class="input input-bordered w-full"
@@ -116,12 +120,16 @@
   </div>
 
   <div class="form-control mb-4">
-    <label class="label"><span class="label-text font-bold">Description</span></label>
+    <label
+      class="label"
+      for="ps-description"><span class="label-text font-bold">Description</span></label
+    >
     <textarea
+      id="ps-description"
       bind:value={problemSet.description}
       class="textarea textarea-bordered w-full"
       rows={3}
-    />
+    ></textarea>
   </div>
 
   <div class="form-control mb-4">
@@ -147,8 +155,12 @@
   </div>
 
   <div class="form-control mb-4">
-    <label class="label"><span class="label-text font-bold">Subject</span></label>
+    <label
+      class="label"
+      for="ps-subject"><span class="label-text font-bold">Subject</span></label
+    >
     <select
+      id="ps-subject"
       bind:value={problemSet.subject_id}
       class="select select-bordered w-full"
     >
@@ -160,8 +172,12 @@
   </div>
 
   <div class="form-control mb-4">
-    <label class="label"><span class="label-text font-bold">Difficulty</span></label>
+    <label
+      class="label"
+      for="ps-difficulty"><span class="label-text font-bold">Difficulty</span></label
+    >
     <select
+      id="ps-difficulty"
       bind:value={problemSet.difficulty_id}
       class="select select-bordered w-full"
     >
@@ -173,7 +189,7 @@
   </div>
 
   <div class="form-control mb-6">
-    <label class="label"><span class="label-text font-bold">Topics</span></label>
+    <div class="label"><span class="label-text font-bold">Topics</span></div>
     <div class="flex flex-wrap gap-2">
       {#each topicTags as tag (tag.id)}
         <button

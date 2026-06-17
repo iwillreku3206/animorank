@@ -3,7 +3,7 @@
   import { Pane, Splitpanes } from 'svelte-splitpanes';
   import type { PageProps } from './$types';
   import transform from '@diplodoc/transform';
-  import YfmStaticView from '$lib/components/YfmStaticView.svelte';
+  import YfmStaticView from '$lib/components/content/YfmStaticView.svelte';
   import { transform as latex } from '@diplodoc/latex-extension/plugin';
   import { transform as mermaid } from '@diplodoc/mermaid-extension/plugin';
   import { transform as transformHTML } from '@diplodoc/html-extension';
@@ -12,7 +12,7 @@
   import { runTestCases, submit, type TestRunResponse } from './api';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
-  import Button from '$lib/components/buttons/Button.svelte';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
   import { Subscribable } from '$lib/utils/subscription';
   import type { ExecutionEvent } from '$lib/testCase/executionHook';
   import { ClientServiceProvider } from '$lib/services/clientServiceProvider';

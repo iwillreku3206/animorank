@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { CustomTestCase } from '$lib/zenstack/models';
-  import CodeEditor from '$lib/components/CodeEditor.svelte';
+  import CodeEditor from '$lib/components/editor/CodeEditor.svelte';
 
   let { testCase = $bindable() }: { testCase: CustomTestCase } = $props();
 </script>
