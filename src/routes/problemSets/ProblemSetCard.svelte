@@ -1,17 +1,19 @@
 <script lang="ts">
-  import TagChip from '$lib/components/TagChip.svelte';
+  import TagChip from '$lib/components/ui/TagChip.svelte';
   import BookmarkIcon from '@iconify-svelte/fa6-regular/bookmark';
   import BookmarkIconSolid from '@iconify-svelte/fa6-solid/bookmark';
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
   import { removeBookmark, toggleBookmark } from './bookmark';
-  import type { ProblemSet } from './api';
-  import ButtonLink from '$lib/components/buttons/ButtonLink.svelte';
+  import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
   import type { PageProps } from './$types';
 
   type ProblemSet = PageProps['data']['problemSets'][number];
 
   /** The problem set data displayed in this card. */
   let { problemSet = $bindable() }: { problemSet: ProblemSet } = $props();
+
+  /** Display name of the problem set's author(s). */
+  const ownerName = $derived(problemSet.owners.map((o) => o.name).join(', '));
 
   /**
    * Toggle the bookmarked state for this problem set.
@@ -92,16 +94,16 @@
     <!-- Author -->
     <div
       class="text-sm text-base-content/70 line-clamp-1 overflow-hidden"
-      aria-label={`Created by ${problemSet.ownerName}`}
+      aria-label={`Created by ${ownerName}`}
     >
-      <!-- TODO: Implement creator link -->
-      <a
-        // href="/problemSets?creator={problemSet.creators.id}"
-        href="#"
-        class="transition-colors duration-250 hover:text-primary"
-      >
-        {problemSet.ownerName}
-      </a>
+      {#each problemSet.owners as owner, i (owner.id)}
+        <a
+          href="/problemSets?creator={owner.id}"
+          class="transition-colors duration-250 hover:text-primary"
+        >
+          {owner.name}
+        </a>{i === problemSet.owners.length - 1 ? '' : ', '}
+      {/each}
     </div>
   </div>
 
