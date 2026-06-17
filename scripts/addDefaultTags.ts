@@ -1,9 +1,9 @@
 import { ClientContract } from '@zenstackhq/orm';
 import { db as _db } from '../src/lib/zenstack.ts';
 import { schema } from '../src/lib/zenstack/schema.ts';
-import { TagType, TagColor } from '../src/lib/zenstack/models.ts';
+import { TagType } from '../src/lib/zenstack/models.ts';
 
-async function createTag(name: string, type: TagType, color?: TagColor, order?: number) {
+async function createTag(name: string, type: TagType, order?: number) {
   const db = _db as ClientContract<typeof schema>;
   await db[
     {
@@ -13,7 +13,7 @@ async function createTag(name: string, type: TagType, color?: TagColor, order?: 
     }[type]
   ].upsert({
     where: { label: name },
-    create: { label: name, color, order },
+    create: { label: name, order },
     update: {}
   });
 }
@@ -48,9 +48,9 @@ async function execute() {
     createTag('CSALGCM', TagType.SubjectTag),
     createTag('CSINTSY', TagType.SubjectTag),
 
-    createTag('Basic', TagType.DifficultyTag, TagColor.TAG_COLOR_GREEN, 1),
-    createTag('Intermediate', TagType.DifficultyTag, TagColor.TAG_COLOR_YELLOW, 2),
-    createTag('Advanced', TagType.DifficultyTag, TagColor.TAG_COLOR_RED, 3)
+    createTag('Basic', TagType.DifficultyTag, 1),
+    createTag('Intermediate', TagType.DifficultyTag, 2),
+    createTag('Advanced', TagType.DifficultyTag, 3)
   ]);
 }
 

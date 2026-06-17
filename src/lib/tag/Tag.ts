@@ -1,4 +1,4 @@
-import type { TagColor, TagType, Tag as TagModel } from '$lib/zenstack/models';
+import type { TagType, Tag as TagModel } from '$lib/zenstack/models';
 
 export abstract class Tag<T extends TagModel> {
   // eslint-disable-next-line no-unused-vars
@@ -10,10 +10,6 @@ export abstract class Tag<T extends TagModel> {
 
   get type(): TagType {
     return this.model.type;
-  }
-
-  get color(): TagColor {
-    return this.model.color;
   }
 
   get label(): string {
