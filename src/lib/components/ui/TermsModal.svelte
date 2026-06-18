@@ -9,7 +9,7 @@
 {#if openTerms.open}
   <div class="fixed grid place-items-center w-full h-full z-20">
     <div
-      class="bg-[#1E1E1E] shadow-xl flex flex-col justify-center items-center z-10 rounded-md relative w-96 md:w-[450px] pt-10 pb-5"
+      class="bg-[#1E1E1E] shadow-xl flex flex-col justify-center items-center z-10 rounded-md relative w-96 md:w-112.5 pt-10 pb-5"
     >
       <button
         class="btn btn-square btn-ghost absolute top-2 right-2"
