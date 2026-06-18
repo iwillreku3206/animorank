@@ -14,43 +14,22 @@
   lang="ts"
   module
 >
-  // ---- data: courses, topics, and their (loose, hand-authored) relations ----
-  type Course = { id: string; name: string };
+  import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
-  const COURSES: Course[] = [
-    { id: 'CCPROG1', name: 'Programming 1' },
-    { id: 'CCPROG2', name: 'Programming 2' },
-    { id: 'CCPROG3', name: 'Programming 3' },
-    { id: 'CSALGCM', name: 'Algorithms & Complexity' },
-    { id: 'CSINTSY', name: 'Intelligent Systems' }
-  ];
+  // ---- data: topics, subtopics, and their relations (see ./heroGraphNodes) ----
+  import { TOPICS, RELATIONS, TOPIC_ANCHORS } from './heroGraphNodes';
 
-  const RELATIONS: Record<string, string[]> = {
-    CCPROG1: ['I/O', 'Loops', 'Conditions', 'Functions'],
-    CCPROG2: ['Arrays', 'Strings', 'Structs', 'Files', 'Functions'],
-    CCPROG3: ['Structs', 'Trees', 'Stacks', 'Queues'],
-    CSALGCM: [
-      'Sorting',
-      'Search',
-      'Trees',
-      'Graphs',
-      'Divide and Conquer',
-      'Dynamic Programming',
-      'Greedy Algorithms'
-    ],
-    CSINTSY: ['Search', 'Graphs', 'Trees']
-  };
+  // flattened, de-duped list of subtopics (small nodes)
+  const SUBTOPICS = Array.from(new Set(Object.values(RELATIONS).flat()));
 
-  const TOPICS = Array.from(new Set(Object.values(RELATIONS).flat()));
-
-  // adjacency both ways: course <-> topic
-  const ADJ = new Map<string, Set<string>>();
+  // adjacency both ways: topic <-> subtopic
+  const ADJ = new SvelteMap<string, SvelteSet<string>>();
   const link = (a: string, b: string) => {
-    (ADJ.get(a) ?? ADJ.set(a, new Set()).get(a)!).add(b);
-    (ADJ.get(b) ?? ADJ.set(b, new Set()).get(b)!).add(a);
+    (ADJ.get(a) ?? ADJ.set(a, new SvelteSet()).get(a)!).add(b);
+    (ADJ.get(b) ?? ADJ.set(b, new SvelteSet()).get(b)!).add(a);
   };
-  for (const [course, topics] of Object.entries(RELATIONS)) {
-    for (const t of topics) link(course, t);
+  for (const [topic, subtopics] of Object.entries(RELATIONS)) {
+    for (const s of subtopics) link(topic, s);
   }
 
   type Kind = 'course' | 'topic';
@@ -76,16 +55,9 @@
     const rng = mulberry32(0x5eed);
     const placed: Node[] = [];
 
-    // Courses get spread anchors so the web has a good skeleton, then jitter.
-    const anchors: Record<string, [number, number]> = {
-      CCPROG1: [22, 20],
-      CCPROG2: [52, 15],
-      CCPROG3: [78, 24],
-      CSALGCM: [70, 56],
-      CSINTSY: [46, 40]
-    };
-    for (const c of COURSES) {
-      const [ax, ay] = anchors[c.id];
+    // Topics get spread anchors so the web has a good skeleton, then jitter.
+    for (const c of TOPICS) {
+      const [ax, ay] = TOPIC_ANCHORS[c.id];
       placed.push({
         id: c.id,
         label: c.id,
@@ -95,8 +67,8 @@
       });
     }
 
-    // Topics scatter by rejection sampling, avoiding the text zone and overlaps.
-    for (const t of TOPICS) {
+    // Subtopics scatter by rejection sampling, avoiding the text zone and overlaps.
+    for (const s of SUBTOPICS) {
       let x = 50;
       let y = 50;
       for (let i = 0; i < 200; i++) {
@@ -106,7 +78,7 @@
         if (tooClose(x, y, placed, 9)) continue;
         break;
       }
-      placed.push({ id: t, label: t, kind: 'topic', x, y });
+      placed.push({ id: s, label: s, kind: 'topic', x, y });
     }
     return placed;
   }
@@ -121,7 +93,6 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { coursePrograms } from './coursePrograms';
 
   let container: HTMLElement;
 
@@ -134,12 +105,7 @@
   const related = $derived(activeId ? (ADJ.get(activeId) ?? new Set<string>()) : new Set<string>());
 
   // ---- discovery cue ------------------------------------------------------
-  // The graph is interactive but gives no hint of it. Starting 2.5s after load,
-  // we cycle focus through each course (3s focused, 3s at rest) the way a hover
-  // would, with a double-ping ring at the moment each course takes focus. It
-  // teaches the affordance without a caption and stops for good the instant the
-  // user hovers a course. Skipped entirely under reduced motion.
-  const CYCLE = Object.keys(coursePrograms);
+  const CYCLE = Object.keys(RELATIONS);
   let hintId = $state<string | null>(null);
   let engaged = false;
   let cycleIndex = 0;

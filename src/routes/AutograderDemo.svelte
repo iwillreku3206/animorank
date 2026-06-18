@@ -1,24 +1,37 @@
 <script lang="ts">
   import { fade } from 'svelte/transition';
   import Button from '$lib/components/ui/buttons/Button.svelte';
-  import type { CourseProgram } from './coursePrograms';
+  import { coursePrograms } from './coursePrograms';
 
-  // A fixed-size IDE-window mock. Tabs double as the course picker; switching a
-  // tab swaps the problem and resets the run. Panes have fixed dimensions and
-  // clip overflow (no real scrolling) so the window looks like a screenshot.
   let {
-    courses,
     selected,
-    programs,
     onselect
   }: {
-    courses: { code: string; name: string }[];
     selected: string;
-    programs: Record<string, CourseProgram>;
-    onselect: (code: string) => void;
+    onselect: (_code: string) => void;
   } = $props();
 
-  const program = $derived(programs[selected]);
+  // Tab list for the demo. Codes are the keys into coursePrograms.
+  // TEMPORARY: CCPROG1 topics, mirroring ./heroGraphNodes.
+  const courses = [
+    { code: 'Variables', name: 'Variables, operators and expressions' },
+    { code: 'I/O', name: 'Input and output' },
+    { code: 'Functions', name: 'User-defined functions' },
+    { code: 'Conditionals', name: 'Conditional constructs' },
+    { code: 'Loops', name: 'Iterative constructs' }
+  ];
+
+  /* --- OLD course tabs (kept for restore) ---
+  const courses = [
+    { code: 'CCPROG1', name: 'Logic Formulation and Introductory Programming' },
+    { code: 'CCPROG2', name: 'Programming with Structured Data Types' },
+    { code: 'CCPROG3', name: 'Object-Oriented Design and Programming' },
+    { code: 'CSALGCM', name: 'Algorithms and Complexity' },
+    { code: 'CSINTSY', name: 'Introduction to Intelligent Systems' }
+  ];
+  --- end OLD course tabs --- */
+
+  const program = $derived(coursePrograms[selected]);
 
   function tokClass(t: string) {
     if (t === 'k') return 'text-accent';
@@ -143,7 +156,7 @@
 {/snippet}
 
 <div
-  class="ide flex h-[30rem] flex-col overflow-hidden rounded-xl border border-white/12 bg-base-200 shadow-2xl shadow-black/50 lg:h-[34rem]"
+  class="ide flex h-120 flex-col overflow-hidden rounded-xl border border-white/12 bg-base-200 shadow-2xl shadow-black/50 lg:h-136"
 >
   <!-- title bar -->
   <div class="flex shrink-0 items-center gap-3 border-b border-white/8 bg-base-300/70 px-4 py-2.5">
@@ -193,7 +206,7 @@
   >
     {#each courses as course (course.code)}
       {@const active = course.code === selected}
-      {@const tabExt = programs[course.code].filename.split('.').pop()}
+      {@const tabExt = coursePrograms[course.code].filename.split('.').pop()}
       <button
         role="tab"
         aria-selected={active}
@@ -273,9 +286,7 @@
       </div>
 
       <!-- results / output -->
-      <div
-        class="ide-pane flex h-[10.5rem] shrink-0 flex-col border-t border-white/8 bg-base-300/30"
-      >
+      <div class="ide-pane flex h-42 shrink-0 flex-col border-t border-white/8 bg-base-300/30">
         <div class="flex shrink-0 items-center justify-between border-b border-white/5 px-4 py-2">
           <span class="text-[11px] font-medium tracking-wide text-base-content/55 uppercase">
             Tests

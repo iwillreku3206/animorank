@@ -10,22 +10,19 @@ export type CodeLine = Token[];
 export type Example = { input: string; output: string };
 
 export type CourseProgram = {
-  /** Problem title shown in the spec pane. */
   title: string;
-  /** Editor "file name", e.g. Shapes.java — also feeds the tab extension. */
   filename: string;
-  /** One-line problem statement (rendered in the spec pane). */
   statement: string;
-  /** Worked example(s). */
   examples: Example[];
-  /** Short constraint / note. */
   note?: string;
-  /** Tokenized source lines. */
   code: CodeLine[];
-  /** Graded test-case labels (the app shows "Case N"). */
   cases: string[];
 };
 
+// TEMPORARY: the autograder demo now mirrors the CCPROG1 topics defined in
+// ./heroGraphNodes. The old multi-course programs are kept commented out below
+// so the course view can be restored later.
+/* --- OLD course programs (kept for restore) ---
 export const coursePrograms: Record<string, CourseProgram> = {
   // CCPROG1 — Logic Formulation & Intro Programming: conditionals + loops (C).
   CCPROG1: {
@@ -285,5 +282,240 @@ export const coursePrograms: Record<string, CourseProgram> = {
       'far apart',
       'origin to goal'
     ]
+  }
+};
+--- end OLD course programs --- */
+
+// CCPROG1 topic problems (keys match the topics in ./heroGraphNodes). Each shows
+// work at roughly that topic's level, all in C since CCPROG1 is a C course.
+export const coursePrograms: Record<string, CourseProgram> = {
+  // Variables — literals, assignment, arithmetic operators & precedence.
+  Variables: {
+    title: 'Total Seconds',
+    filename: 'time.c',
+    statement:
+      'Convert a time given in hours, minutes, and seconds into the total number of seconds.',
+    examples: [{ input: 'h = 1, m = 2, s = 3', output: '3723' }],
+    note: 'total = h * 3600 + m * 60 + s',
+    code: [
+      [
+        ['k', 'int '],
+        ['f', 'totalSeconds'],
+        ['p', '(int h, int m, int s) {']
+      ],
+      [
+        ['p', '  int '],
+        ['v', 'total '],
+        ['p', '= h * '],
+        ['n', '3600'],
+        ['p', ' + m * '],
+        ['n', '60'],
+        ['p', ' + s;']
+      ],
+      [
+        ['k', '  return '],
+        ['v', 'total'],
+        ['p', ';']
+      ],
+      [['p', '}']]
+    ],
+    cases: [
+      'all zero',
+      'only seconds',
+      'only minutes',
+      'one full hour',
+      'mixed h/m/s',
+      'large values'
+    ]
+  },
+
+  // I/O — printf, scanf, format specifiers, #include, main.
+  'I/O': {
+    title: 'Greet a User',
+    filename: 'greet.c',
+    statement: 'Read a name and an age from input, then print a one-line greeting using them.',
+    examples: [{ input: 'Ana 19', output: 'Hi Ana, you are 19!' }],
+    note: 'one-token name, then an int age',
+    code: [
+      [
+        ['k', '#include '],
+        ['p', '<stdio.h>']
+      ],
+      [
+        ['k', 'int '],
+        ['f', 'main'],
+        ['p', '() {']
+      ],
+      [
+        ['p', '  char '],
+        ['v', 'name'],
+        ['p', '['],
+        ['n', '32'],
+        ['p', '];']
+      ],
+      [
+        ['p', '  int '],
+        ['v', 'age'],
+        ['p', ';']
+      ],
+      [
+        ['p', '  '],
+        ['f', 'scanf'],
+        ['p', '("%s %d", name, &age);']
+      ],
+      [
+        ['p', '  '],
+        ['f', 'printf'],
+        ['p', '("Hi %s, you are %d!\\n", name, age);']
+      ],
+      [
+        ['k', '  return '],
+        ['n', '0'],
+        ['p', ';']
+      ],
+      [['p', '}']]
+    ],
+    cases: [
+      'reads the name',
+      'reads the age',
+      'formats greeting',
+      'single-letter name',
+      'age is zero',
+      'exact spacing'
+    ]
+  },
+
+  // Functions — prototype, parameters, return value.
+  Functions: {
+    title: 'Maximum of Two',
+    filename: 'max.c',
+    statement:
+      'Implement max(a, b) — a user-defined function returning the larger of two integers.',
+    examples: [{ input: 'a = 3, b = 8', output: '8' }],
+    note: 'prototype above the definition',
+    code: [
+      [
+        ['k', 'int '],
+        ['f', 'max'],
+        ['p', '(int a, int b) {']
+      ],
+      [
+        ['k', '  if '],
+        ['p', '(a > b) '],
+        ['k', 'return '],
+        ['v', 'a'],
+        ['p', ';']
+      ],
+      [
+        ['k', '  return '],
+        ['v', 'b'],
+        ['p', ';']
+      ],
+      [['p', '}']]
+    ],
+    cases: ['a greater', 'b greater', 'equal values', 'negatives', 'mixed signs', 'large values']
+  },
+
+  // Conditionals — relational/equality operators, nested if.
+  Conditionals: {
+    title: 'Leap Year',
+    filename: 'leap.c',
+    statement:
+      'Return 1 if the year is a leap year, otherwise 0 — using nested conditions on divisibility.',
+    examples: [
+      { input: 'year = 2000', output: '1' },
+      { input: 'year = 1900', output: '0' }
+    ],
+    note: 'div by 4, but centuries only when div by 400',
+    code: [
+      [
+        ['k', 'int '],
+        ['f', 'isLeap'],
+        ['p', '(int year) {']
+      ],
+      [
+        ['k', '  if '],
+        ['p', '(year % '],
+        ['n', '4'],
+        ['p', ' == '],
+        ['n', '0'],
+        ['p', ') {']
+      ],
+      [
+        ['k', '    if '],
+        ['p', '(year % '],
+        ['n', '100'],
+        ['p', ' == '],
+        ['n', '0'],
+        ['p', ') {']
+      ],
+      [
+        ['k', '      return '],
+        ['p', 'year % '],
+        ['n', '400'],
+        ['p', ' == '],
+        ['n', '0'],
+        ['p', ';']
+      ],
+      [['p', '    }']],
+      [
+        ['k', '    return '],
+        ['n', '1'],
+        ['p', ';']
+      ],
+      [['p', '  }']],
+      [
+        ['k', '  return '],
+        ['n', '0'],
+        ['p', ';']
+      ],
+      [['p', '}']]
+    ],
+    cases: [
+      'common year',
+      'divisible by 4',
+      'century non-leap',
+      '400 is leap',
+      'year 2024',
+      'year 1900'
+    ]
+  },
+
+  // Loops — for loop with an accumulator.
+  Loops: {
+    title: 'Factorial',
+    filename: 'factorial.c',
+    statement: 'Return n! — the product of all integers from 1 to n, with 0! defined as 1.',
+    examples: [{ input: 'n = 5', output: '120' }],
+    note: '0! = 1',
+    code: [
+      [
+        ['k', 'int '],
+        ['f', 'factorial'],
+        ['p', '(int n) {']
+      ],
+      [
+        ['p', '  int '],
+        ['v', 'result '],
+        ['p', '= '],
+        ['n', '1'],
+        ['p', ';']
+      ],
+      [
+        ['k', '  for '],
+        ['p', '(int i = '],
+        ['n', '2'],
+        ['p', '; i <= n; i++) {']
+      ],
+      [['p', '    result *= i;']],
+      [['p', '  }']],
+      [
+        ['k', '  return '],
+        ['v', 'result'],
+        ['p', ';']
+      ],
+      [['p', '}']]
+    ],
+    cases: ['zero', 'one', 'small n', 'n = 5', 'larger n', 'single step']
   }
 };
