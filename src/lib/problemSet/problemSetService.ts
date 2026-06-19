@@ -6,12 +6,12 @@ import type {
   TopicTag,
   Tag as TagModel
 } from '$lib/zenstack/models';
+import { TagType } from '$lib/zenstack/models';
 import type { User } from '@auth/sveltekit';
 import { ProblemSet, type CollaboratorInfo, type ProblemSetSummary } from '.';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { Tag, TagService } from '$lib/tag';
 import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
-import fs from 'fs/promises';
 
 export interface CreateOptions {
   title: string;
@@ -63,15 +63,26 @@ export type SortType = 'problems_solved' | 'problem_count' | 'completion_pct' | 
 
 export type SortOrder = 'asc' | 'desc';
 
+/** Maps each sort key to the query column it orders by. */
+const SORT_COLUMN = {
+  problems_solved: 'progress_finished',
+  problem_count: 'problem_count',
+  completion_pct: 'progress_pct',
+  difficulty: 'difficulty_order'
+} as const satisfies Record<SortType, string>;
+
 export interface FindByFilterOptions {
   user: User;
   page?: number;
   pageSize?: number;
   filters?: {
     search?: string;
-    tags?: string[];
-    status?: FilterStatus;
-    creator?: string;
+    include?: string[];
+    exclude?: string[];
+    topicMatchAll?: boolean;
+    statuses?: FilterStatus[];
+    creators?: string[];
+    creatorMatchAll?: boolean;
     bookmarked?: boolean;
   };
   sort?: {
@@ -82,6 +93,25 @@ export interface FindByFilterOptions {
 }
 
 export type StudentProgress = { finished: number; total: number };
+
+/**
+ * Prisma `where` fragment matching problem sets the user may read: global sets,
+ * sets they are subscribed to, or sets they collaborate on.
+ */
+function readableBy(userId: string) {
+  return {
+    OR: [
+      { is_global: true },
+      { subscriptions: { some: { student_id: userId } } },
+      { collaborators: { some: { collaborator_id: userId } } }
+    ]
+  };
+}
+
+/** Prisma `where` fragment matching problem sets the user collaborates on (and may edit). */
+function editableBy(userId: string) {
+  return { collaborators: { some: { collaborator_id: userId } } };
+}
 
 export class ProblemSetService {
   private static _instance: ProblemSetService | null;
@@ -136,11 +166,7 @@ export class ProblemSetService {
     const problemSet = await db.problemSet.findUnique({
       where: {
         id: options.id,
-        OR: [
-          { is_global: true },
-          { subscriptions: { some: { student_id: options.user.id || '' } } },
-          { collaborators: { some: { collaborator_id: options.user.id || '' } } }
-        ]
+        ...readableBy(options.user.id || '')
       },
       include: {
         problems: {
@@ -170,7 +196,7 @@ export class ProblemSetService {
     const existing = await db.problemSet.findUnique({
       where: {
         id: options.id,
-        collaborators: { some: { collaborator_id: options.user.id || '' } }
+        ...editableBy(options.user.id || '')
       }
     });
 
@@ -197,7 +223,7 @@ export class ProblemSetService {
       await db.problemSet.delete({
         where: {
           id: options.id,
-          collaborators: { some: { collaborator_id: options.user.id || '' } }
+          ...editableBy(options.user.id || '')
         }
       });
       return true;
@@ -213,7 +239,7 @@ export class ProblemSetService {
     const problemSet = await db.problemSet.findUnique({
       where: {
         id: options.problemSetId,
-        collaborators: { some: { collaborator_id: options.user.id || '' } }
+        ...editableBy(options.user.id || '')
       }
     });
 
@@ -255,11 +281,7 @@ export class ProblemSetService {
     const problemSet = await db.problemSet.findUnique({
       where: {
         id: options.problemSetId,
-        OR: [
-          { is_global: true },
-          { subscriptions: { some: { student_id: options.user.id || '' } } },
-          { collaborators: { some: { collaborator_id: options.user.id || '' } } }
-        ]
+        ...readableBy(options.user.id || '')
       },
       include: {
         collaborators: { include: { collaborator: { include: { user: true } } } }
@@ -275,18 +297,58 @@ export class ProblemSetService {
   }
 
   /**
+   * List the distinct creators (collaborators) of all problem sets the user can
+   * read, for the creator filter. Loaded in full and searched client-side; if the
+   * teacher catalog grows large, switch to a server-side search endpoint.
+   */
+  public async findCreators(user: User): Promise<{ id: string; name: string }[]> {
+    const teachers = await db.teacher.findMany({
+      where: {
+        problem_set_collaborations: { some: { problem_set: readableBy(user.id || '') } }
+      },
+      include: { user: { select: { id: true, name: true } } },
+      orderBy: { user: { name: 'asc' } }
+    });
+
+    return teachers.map((t) => ({ id: t.user.id, name: t.user.name ?? 'Unknown' }));
+  }
+
+  /**
    * Find problem sets accessible to the user with optional filtering.
    */
   public async findByFilter<O extends FindByFilterOptions>(
     options: O
   ): Promise<{
     problemSets: (ProblemSetSummary &
-      (O extends { studentProgress: true } ? { studentProgress: StudentProgress } : void))[];
+      (O extends { studentProgress: true } ? { studentProgress: StudentProgress } : unknown))[];
     tags: Record<string, Tag<TagModel>>;
     total: number;
   }> {
     const page = options.page ?? 1;
     const pageSize = options.pageSize ?? 12;
+
+    const includeIds = options.filters?.include ?? [];
+    const excludeIds = options.filters?.exclude ?? [];
+    const topicMatchAll = options.filters?.topicMatchAll ?? false;
+
+    // Resolve each selected tag id to its type so it can be applied to the right
+    // column (subject/difficulty are single-valued; topics are an array).
+    let tagTypeById = new Map<string, TagType>();
+    if (includeIds.length || excludeIds.length) {
+      const filterTags = await db.tag.findMany({
+        where: { id: { in: [...includeIds, ...excludeIds] } }
+      });
+      tagTypeById = new Map(filterTags.map((t) => [t.id, t.type]));
+    }
+    const ofType = (ids: string[], type: TagType) =>
+      ids.filter((id) => tagTypeById.get(id) === type);
+
+    const subjInc = ofType(includeIds, TagType.SubjectTag);
+    const subjExc = ofType(excludeIds, TagType.SubjectTag);
+    const diffInc = ofType(includeIds, TagType.DifficultyTag);
+    const diffExc = ofType(excludeIds, TagType.DifficultyTag);
+    const topicInc = ofType(includeIds, TagType.TopicTag);
+    const topicExc = ofType(excludeIds, TagType.TopicTag);
 
     let query = db.$qbRaw
       .with('topics', (db) =>
@@ -469,64 +531,87 @@ export class ProblemSetService {
       query = query.where((eb) => eb('bookmarked.bookmarked', '=', eb.lit(true)));
     }
 
-    if (
-      typeof options.filters !== 'undefined' &&
-      options.filters.tags &&
-      options.filters.tags.length !== 0
-    ) {
+    if (options.filters?.search) {
+      // NOTE: `ilike '%term%'` cannot use a btree index and will table-scan. Fine at
+      // the current catalog size; if problem sets grow large, switch to a pg_trgm
+      // GIN index or full-text search (tsvector) on title/description.
+      const term = `%${options.filters.search}%`;
       query = query.where((eb) =>
-        eb.or([
-          eb('topics.topic_tags', '&&', eb.val(options.filters!.tags)),
-          eb('difficulty_id', '=', eb.fn.any(eb.val(options.filters!.tags))),
-          eb('subject_id', '=', eb.fn.any(eb.val(options.filters!.tags)))
+        eb.or([eb('ProblemSet.title', 'ilike', term), eb('ProblemSet.description', 'ilike', term)])
+      );
+    }
+
+    const hasTagFilter =
+      subjInc.length ||
+      subjExc.length ||
+      diffInc.length ||
+      diffExc.length ||
+      topicInc.length ||
+      topicExc.length;
+
+    if (hasTagFilter) {
+      // Categories are AND-ed together; subject/difficulty includes are OR (IN),
+      // topic includes are OR (&&) or AND (@>) depending on topicMatchAll.
+      query = query.where((eb) =>
+        eb.and([
+          ...(subjInc.length ? [eb('subject_id', 'in', subjInc)] : []),
+          ...(subjExc.length
+            ? [eb.or([eb('subject_id', 'is', null), eb('subject_id', 'not in', subjExc)])]
+            : []),
+          ...(diffInc.length ? [eb('difficulty_id', 'in', diffInc)] : []),
+          ...(diffExc.length
+            ? [eb.or([eb('difficulty_id', 'is', null), eb('difficulty_id', 'not in', diffExc)])]
+            : []),
+          ...(topicInc.length
+            ? [eb('topics.topic_tags', topicMatchAll ? '@>' : '&&', eb.val(topicInc))]
+            : []),
+          ...(topicExc.length ? [eb.not(eb('topics.topic_tags', '&&', eb.val(topicExc)))] : [])
         ])
       );
     }
 
-    if (options.filters && options.filters?.creator) {
+    const creators = options.filters?.creators ?? [];
+    const creatorMatchAll = options.filters?.creatorMatchAll ?? false;
+    if (creators.length) {
+      // OR: authored by any selected creator. AND (match-all): co-authored by all.
+      query = query.where((eb) => {
+        const preds = creators.map((id) =>
+          eb.exists(
+            eb
+              .selectFrom('ProblemSetCollaborator')
+              .innerJoin('Teacher', 'Teacher.id', 'ProblemSetCollaborator.collaborator_id')
+              .innerJoin('User', 'User.id', 'Teacher.id')
+              .whereRef('ProblemSetCollaborator.problem_set_id', '=', 'ProblemSet.id')
+              .where('User.id', '=', id)
+              .select('ProblemSetCollaborator.problem_set_id')
+          )
+        );
+        return creatorMatchAll ? eb.and(preds) : eb.or(preds);
+      });
+    }
+
+    const statuses = options.filters?.statuses ?? [];
+    if (statuses.length) {
+      // Each selected status is OR-ed: a set matches if it is in any of them.
       query = query.where((eb) =>
-        eb.exists(
-          eb
-            .selectFrom('ProblemSetCollaborator')
-            .innerJoin('Teacher', 'Teacher.id', 'ProblemSetCollaborator.collaborator_id')
-            .innerJoin('User', 'User.id', 'Teacher.id')
-            .whereRef('ProblemSetCollaborator.problem_set_id', '=', 'ProblemSet.id')
-            .where('User.id', '=', options.filters!.creator!)
-            .select('ProblemSetCollaborator.problem_set_id')
+        eb.or(
+          statuses.map((status) => {
+            switch (status) {
+              case 'not_started':
+                return eb(eb('count_unfinished', '+', eb.ref('count_finished')), '=', eb.lit(0));
+              case 'in_progress':
+                return eb(eb('count_finished', '+', eb.ref('count_unfinished')), '<>', eb.lit(0));
+              case 'complete':
+                return eb('progress_pct.progress_pct', '=', '1');
+            }
+          })
         )
       );
     }
 
-    if (options.filters?.status === 'not_started') {
-      query = query.where((eb) =>
-        eb(eb('count_unfinished', '+', eb.ref('count_finished')), '=', eb.lit(0))
-      );
-    }
-
-    if (options.filters?.status === 'in_progress') {
-      query = query.where((eb) =>
-        eb(eb('count_finished', '+', eb.ref('count_unfinished')), '<>', eb.lit(0))
-      );
-    }
-
-    if (options.filters?.status === 'complete') {
-      query = query.where((eb) => eb('progress_pct.progress_pct', '=', '1'));
-    }
-
-    if (options.sort?.by === 'problems_solved') {
-      query = query.orderBy('progress_finished', options.sort?.order || 'asc');
-    }
-
-    if (options.sort?.by === 'problem_count') {
-      query = query.orderBy('problem_count', options.sort?.order || 'asc');
-    }
-
-    if (options.sort?.by === 'completion_pct') {
-      query = query.orderBy('progress_pct', options.sort?.order || 'asc');
-    }
-
-    if (options.sort?.by === 'completion_pct') {
-      query = query.orderBy('difficulty_order', options.sort?.order || 'asc');
+    const sortColumn = options.sort?.by ? SORT_COLUMN[options.sort.by] : undefined;
+    if (sortColumn) {
+      query = query.orderBy(sortColumn, options.sort?.order || 'asc');
     }
 
     query = query.limit(pageSize).offset((page - 1) * pageSize);
@@ -546,45 +631,45 @@ export class ProblemSetService {
     const tagsArr = await ServerServiceProvider.instance().getService(TagService).findByIds(tagIds);
     const tags = arrayToHashMap(tagsArr, (t) => t.id);
 
-    const problemSetsSummaries: ReturnType<typeof this.findByFilter>['summaries'] = queryResult.map(
-      (ps) => {
-        const summary = {
-          id: ps.id,
-          title: ps.title,
-          description: ps.description || undefined,
-          auto_accept: ps.auto_accept,
-          is_global: ps.is_global,
-          subject: ps.subject_id ? (tags[ps.subject_id].model as SubjectTag) : undefined,
-          difficulty: ps.difficulty_id
-            ? (tags[ps.difficulty_id].model as DifficultyTag)
-            : undefined,
-          topics: ps.topic_tags
-            .map((t: string) => tags[t]?.model as TopicTag | undefined)
-            .filter((t: string) => !!t) as TopicTag[],
-          problemCount: Number(ps.problem_count),
-          authors:
-            ps.collaborators?.map((c: [string, string]) => ({
-              id: c[0],
-              name: c[1]
-            })) || [],
-          bookmarked: ps.bookmarked
+    type Summary = ProblemSetSummary & { studentProgress?: StudentProgress };
+    const problemSetsSummaries: Summary[] = queryResult.map((ps): Summary => {
+      const summary: Summary = {
+        id: ps.id,
+        title: ps.title,
+        description: ps.description || undefined,
+        auto_accept: ps.auto_accept,
+        is_global: ps.is_global,
+        subject: ps.subject_id ? (tags[ps.subject_id].model as SubjectTag) : undefined,
+        difficulty: ps.difficulty_id ? (tags[ps.difficulty_id].model as DifficultyTag) : undefined,
+        topics: ps.topic_tags
+          .map((t: string) => tags[t]?.model as TopicTag | undefined)
+          .filter((t: TopicTag | undefined): t is TopicTag => !!t),
+        problemCount: Number(ps.problem_count),
+        authors:
+          ps.collaborators?.map((c: [string, string]) => ({
+            id: c[0],
+            name: c[1]
+          })) || [],
+        bookmarked: ps.bookmarked
+      };
+
+      if (options.studentProgress) {
+        summary.studentProgress = {
+          finished: Number(ps.progress_finished),
+          total: Number(ps.progress_total)
         };
-
-        if (options.studentProgress) {
-          (summary as ProblemSetSummary & { studentProgress: StudentProgress }).studentProgress = {
-            finished: Number(ps.progress_finished),
-            total: Number(ps.progress_total)
-          };
-        }
-
-        return summary;
       }
-    );
+
+      return summary;
+    });
 
     return {
-      problemSets: problemSetsSummaries,
+      // The generic conditional return type can only be satisfied at this boundary
+      // via a cast; studentProgress presence is guaranteed by options.studentProgress.
+      problemSets: problemSetsSummaries as (ProblemSetSummary &
+        (O extends { studentProgress: true } ? { studentProgress: StudentProgress } : unknown))[],
       tags: tags,
-      total: Number(String(queryResult[0]?.total_count || '0'))
+      total: Number(queryResult[0]?.total_count ?? 0)
     };
   }
 }

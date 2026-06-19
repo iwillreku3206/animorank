@@ -896,12 +896,6 @@ export class SchemaType implements SchemaDef {
                     type: "TagType",
                     isDiscriminator: true
                 },
-                color: {
-                    name: "color",
-                    type: "TagColor",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("TAG_COLOR_DEFAULT") }] }] as readonly AttributeApplication[],
-                    default: "TAG_COLOR_DEFAULT" as FieldDefault
-                },
                 label: {
                     name: "label",
                     type: "String",
@@ -942,13 +936,6 @@ export class SchemaType implements SchemaDef {
                     type: "TagType",
                     originModel: "Tag",
                     isDiscriminator: true
-                },
-                color: {
-                    name: "color",
-                    type: "TagColor",
-                    originModel: "Tag",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("TAG_COLOR_DEFAULT") }] }] as readonly AttributeApplication[],
-                    default: "TAG_COLOR_DEFAULT" as FieldDefault
                 },
                 label: {
                     name: "label",
@@ -1000,13 +987,6 @@ export class SchemaType implements SchemaDef {
                     originModel: "Tag",
                     isDiscriminator: true
                 },
-                color: {
-                    name: "color",
-                    type: "TagColor",
-                    originModel: "Tag",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("TAG_COLOR_DEFAULT") }] }] as readonly AttributeApplication[],
-                    default: "TAG_COLOR_DEFAULT" as FieldDefault
-                },
                 label: {
                     name: "label",
                     type: "String",
@@ -1056,13 +1036,6 @@ export class SchemaType implements SchemaDef {
                     type: "TagType",
                     originModel: "Tag",
                     isDiscriminator: true
-                },
-                color: {
-                    name: "color",
-                    type: "TagColor",
-                    originModel: "Tag",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("TAG_COLOR_DEFAULT") }] }] as readonly AttributeApplication[],
-                    default: "TAG_COLOR_DEFAULT" as FieldDefault
                 },
                 label: {
                     name: "label",
@@ -1611,69 +1584,6 @@ export class SchemaType implements SchemaDef {
                     name: "TopicTag",
                     attributes: [
                         { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("topic") }] }
-                    ] as readonly AttributeApplication[]
-                }
-            }
-        },
-        TagColor: {
-            name: "TagColor",
-            values: {
-                TAG_COLOR_DEFAULT: "TAG_COLOR_DEFAULT",
-                TAG_COLOR_PRIMARY: "TAG_COLOR_PRIMARY",
-                TAG_COLOR_SECONDARY: "TAG_COLOR_SECONDARY",
-                TAG_COLOR_ACCENT: "TAG_COLOR_ACCENT",
-                TAG_COLOR_RED: "TAG_COLOR_RED",
-                TAG_COLOR_YELLOW: "TAG_COLOR_YELLOW",
-                TAG_COLOR_GREEN: "TAG_COLOR_GREEN",
-                TAG_COLOR_BLUE: "TAG_COLOR_BLUE"
-            },
-            fields: {
-                TAG_COLOR_DEFAULT: {
-                    name: "TAG_COLOR_DEFAULT",
-                    attributes: [
-                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("default") }] }
-                    ] as readonly AttributeApplication[]
-                },
-                TAG_COLOR_PRIMARY: {
-                    name: "TAG_COLOR_PRIMARY",
-                    attributes: [
-                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("primary") }] }
-                    ] as readonly AttributeApplication[]
-                },
-                TAG_COLOR_SECONDARY: {
-                    name: "TAG_COLOR_SECONDARY",
-                    attributes: [
-                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("secondary") }] }
-                    ] as readonly AttributeApplication[]
-                },
-                TAG_COLOR_ACCENT: {
-                    name: "TAG_COLOR_ACCENT",
-                    attributes: [
-                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("accent") }] }
-                    ] as readonly AttributeApplication[]
-                },
-                TAG_COLOR_RED: {
-                    name: "TAG_COLOR_RED",
-                    attributes: [
-                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("red") }] }
-                    ] as readonly AttributeApplication[]
-                },
-                TAG_COLOR_YELLOW: {
-                    name: "TAG_COLOR_YELLOW",
-                    attributes: [
-                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("yellow") }] }
-                    ] as readonly AttributeApplication[]
-                },
-                TAG_COLOR_GREEN: {
-                    name: "TAG_COLOR_GREEN",
-                    attributes: [
-                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("green") }] }
-                    ] as readonly AttributeApplication[]
-                },
-                TAG_COLOR_BLUE: {
-                    name: "TAG_COLOR_BLUE",
-                    attributes: [
-                        { name: "@map", args: [{ name: "name", value: ExpressionUtils.literal("blue") }] }
                     ] as readonly AttributeApplication[]
                 }
             }

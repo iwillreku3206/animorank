@@ -1,5 +1,6 @@
 <script lang="ts">
   import GithubIcon from '@iconify-svelte/fa6-brands/github';
+  import Link from '$lib/components/ui/Link.svelte';
 </script>
 
 <footer class="bg-base-200 w-full">
@@ -7,7 +8,7 @@
     <!-- Main columns: brand + link groups -->
     <div class="flex flex-row gap-8 mb-10">
       <!-- Brand column -->
-      <div class="flex-[3] flex flex-col gap-3">
+      <div class="flex-[5] flex flex-col gap-3">
         <div class="flex items-center gap-3">
           <img
             src="/animorank-logo.svg"
@@ -23,24 +24,21 @@
       <div class="flex-[1] flex flex-col gap-4">
         <h3 class="font-display font-semibold text-sm tracking-wide">Support</h3>
         <nav class="flex flex-col gap-2">
-          <a
+          <Link
             href="#"
             target="_blank"
             rel="noopener noreferrer"
-            class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-            >Report a Bug</a
+            class="link-neutral link-hover text-sm w-fit">Report a Bug</Link
           >
-          <a
+          <Link
             href="#"
             target="_blank"
             rel="noopener noreferrer"
-            class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-            >Request a Feature</a
+            class="link-neutral link-hover text-sm w-fit">Request a Feature</Link
           >
-          <a
-            href="#"
-            class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-            >FAQs</a
+          <Link
+            href="/faqs"
+            class="link-neutral link-hover text-sm w-fit">FAQs</Link
           >
         </nav>
       </div>
@@ -49,20 +47,17 @@
       <div class="flex-[1] flex flex-col gap-4">
         <h3 class="font-display font-semibold text-sm tracking-wide">Legal</h3>
         <nav class="flex flex-col gap-2">
-          <a
+          <Link
             href="/legal/terms-of-service"
-            class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-            >Terms of Service</a
+            class="link-neutral link-hover text-sm w-fit">Terms of Service</Link
           >
-          <a
+          <Link
             href="/legal/privacy-policy"
-            class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-            >Privacy Policy</a
+            class="link-neutral link-hover text-sm w-fit">Privacy Policy</Link
           >
-          <a
+          <Link
             href="#"
-            class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-            >License</a
+            class="link-neutral link-hover text-sm w-fit">License</Link
           >
         </nav>
       </div>
@@ -71,15 +66,13 @@
       <div class="flex-[1] flex flex-col gap-4">
         <h3 class="font-display font-semibold text-sm tracking-wide">Community</h3>
         <nav class="flex flex-col gap-2">
-          <a
+          <Link
             href="#"
-            class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-            >Contact Us</a
+            class="link-neutral link-hover text-sm w-fit">Contact Us</Link
           >
-          <a
-            href="#"
-            class="text-sm text-base-content/70 hover:text-base-content transition-colors duration-250"
-            >Changelog</a
+          <Link
+            href="/changelog"
+            class="link-neutral link-hover text-sm w-fit">Changelog</Link
           >
         </nav>
       </div>
@@ -91,11 +84,11 @@
     <!-- Bottom bar: copyright + GitHub -->
     <div class="flex items-center justify-between pt-6 pb-2 text-sm text-base-content/70">
       <span>© AnimoRank 2026. All rights reserved.</span>
-      <a
+      <Link
         href="https://github.com/iwillreku3206/animorank"
         target="_blank"
         rel="noopener noreferrer"
-        class="flex items-center gap-2 hover:text-base-content transition-colors duration-250"
+        class="flex items-center gap-2 link-neutral text-sm w-fit"
         aria-label="AnimoRank on GitHub"
       >
         <GithubIcon
@@ -103,7 +96,7 @@
           aria-hidden="true"
         />
         Github
-      </a>
+      </Link>
     </div>
   </div>
 </footer>

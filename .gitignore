@@ -19,3 +19,9 @@ vite.config.ts.timestamp-*
 skills-lock.json
 /.svelte-kit/output
 /test-results
+/src/routes/dev
+/.agents
+/.codex
+/.github
+/.impeccable
+/.vscode

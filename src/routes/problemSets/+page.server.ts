@@ -2,8 +2,10 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { ProblemSetService } from '$lib/problemSet';
-import type { FilterStatus, SortOrder, SortType } from '$lib/problemSet/problemSetService';
+import { TagService } from '$lib/tag';
+import type { SortOrder, SortType } from '$lib/problemSet/problemSetService';
 import { groupBy } from '$lib/utils/groupBy';
+import { parseFilters, parseSort } from './filterUtils';
 
 const pageSize = 12;
 
@@ -17,32 +19,26 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const problemSetService = ServerServiceProvider.instance().getService(ProblemSetService);
 
   const params = url.searchParams;
-  let sortBy = params.get('sortBy') || '';
-  if (!['', 'problems_solved', 'problem_count', 'completion_pct', 'difficulty'].includes(sortBy))
-    sortBy = '';
-  const sortOrder = params.get('sortOrder') === 'desc' ? 'desc' : 'asc';
-
+  const filters = parseFilters(params);
+  const sort = parseSort(params);
   const search = params.get('search') || '';
   const page = parseInt(params.get('page') || '1') || 1;
-
-  const selectedTags = params.getAll('tag');
-  let status = params.get('status') ?? undefined;
-  if (!['not_started', 'in_progress', 'complete'].includes(status || '')) status = undefined;
-  const creator = params.get('creator') || undefined;
-  const bookmarked = params.get('bookmarked') === 'true';
 
   const problemSetsQueryResult = await problemSetService.findByFilter({
     user: session.user,
     filters: {
-      bookmarked,
-      creator,
-      search,
-      status: status as FilterStatus,
-      tags: selectedTags
+      include: filters.include,
+      exclude: filters.exclude,
+      topicMatchAll: filters.topicMatchAll,
+      statuses: filters.statuses,
+      creators: filters.creators,
+      creatorMatchAll: filters.creatorMatchAll,
+      bookmarked: filters.bookmarked,
+      search
     },
     page,
     pageSize,
-    sort: { by: sortBy as SortType, order: sortOrder as SortOrder },
+    sort: { by: sort.by as SortType, order: (sort.desc ? 'desc' : 'asc') as SortOrder },
     studentProgress: true
   });
 
@@ -60,21 +56,22 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     tags: [ps.difficulty, ...ps.topics].filter((t) => !!t)
   }));
 
-  const tagGroups = groupBy(Object.values(problemSetsQueryResult.tags), (t) => t.type);
+  // Load the full tag universe (not just tags present in the current results) so
+  // the filter browser always shows every available tag.
+  const tagService = ServerServiceProvider.instance().getService(TagService);
+  const allTags = await tagService.findAll();
+  const tagGroups = groupBy(allTags, (t) => t.type);
 
-  const creatorMap: Record<string, string> = {};
-  for (const p of problemSetsQueryResult.problemSets) {
-    for (const a of p.authors) {
-      creatorMap[a.id] = a.name;
-    }
-  }
+  // Full creator list (not just authors on the current page) so the creator
+  // filter is complete and searchable regardless of the active result set.
+  const creators = await problemSetService.findCreators(session.user);
 
   return {
     user: session.user,
     topicTags: (tagGroups['TopicTag'] ?? []).map((t) => t.model),
     difficultyTags: (tagGroups['DifficultyTag'] ?? []).map((t) => t.model),
     subjectTags: (tagGroups['SubjectTag'] ?? []).map((t) => t.model),
-    creators: Object.entries(creatorMap).map((c) => ({ id: c[0], name: c[1] })),
+    creators,
     pagination: {
       pageCount: Math.ceil(problemSetsQueryResult.total / pageSize)
     },

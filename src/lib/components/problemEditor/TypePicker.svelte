@@ -138,9 +138,3 @@
     {/each}
   </div>
 </div>
-
-<style>
-  .fa-solid {
-    color: #94a3b8;
-  }
-</style>

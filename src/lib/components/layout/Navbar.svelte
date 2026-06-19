@@ -1,8 +1,9 @@
 <script lang="ts">
   import { signIn } from '@auth/sveltekit/client';
   import type { User } from '@auth/sveltekit';
-  import Button from '$lib/components/buttons/Button.svelte';
-  import MobileSettingsModal from '$lib/components/MobileSettingsModal.svelte';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
+  import MobileSettingsModal from '$lib/components/settings/MobileSettingsModal.svelte';
+  import Link from '$lib/components/ui/Link.svelte';
 
   /** The authenticated user, or null/undefined if not logged in. */
   let { user }: { user: User | null | undefined } = $props();
@@ -17,24 +18,24 @@
   <!-- Brand -->
   <div class="relative mr-auto">
     <h1 class="font-bold text-2xl">
-      <a href="/">AnimoRank</a>
+      <Link href="/">AnimoRank</Link>
     </h1>
   </div>
 
   <!-- Navigation links -->
   <div class="flex flex-row ml-auto mr-auto">
-    <a
+    <Link
       class="px-4 text-base"
-      href="/about">About Us</a
+      href="/about">About Us</Link
     >
     {#if loggedIn}
-      <a
+      <Link
         class="px-4 text-base"
-        href="/">Dashboard</a
+        href="/dashboard">Dashboard</Link
       >
-      <a
+      <Link
         class="px-4 text-base"
-        href="/problemSets">Problem Sets</a
+        href="/problemSets">Problem Sets</Link
       >
     {/if}
   </div>

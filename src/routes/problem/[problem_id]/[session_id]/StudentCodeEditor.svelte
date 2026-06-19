@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CodeEditor from '$lib/components/CodeEditor.svelte';
+  import CodeEditor from '$lib/components/editor/CodeEditor.svelte';
   import type { monaco } from '$lib/monaco';
   import type { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
   import type { Problem } from '$lib/problem';

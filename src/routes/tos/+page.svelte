@@ -1,6 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
-  import Button from '$lib/components/buttons/Button.svelte';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
   import TosCard from './TosCard.svelte';
 
   let showModal = $state(false);

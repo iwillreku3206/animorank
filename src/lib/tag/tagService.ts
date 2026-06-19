@@ -1,4 +1,4 @@
-import type { TagColor, TagType, Tag as TagModel } from '$lib/zenstack/models';
+import type { TagType, Tag as TagModel } from '$lib/zenstack/models';
 import { TagRegistry } from './tagRegistry';
 import type { Tag } from './Tag';
 import type { TagUpdateOptions } from './tagRegistry';
@@ -12,7 +12,6 @@ export interface FindByIdOptions {
 export interface CreateOptions {
   type: TagType;
   label: string;
-  color?: TagColor;
   order?: number;
 }
 

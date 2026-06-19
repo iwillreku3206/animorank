@@ -45,5 +45,3 @@ export const FunctionOutputTestCaseOperator = $schema.enums.FunctionOutputTestCa
 export type FunctionOutputTestCaseOperator = (typeof FunctionOutputTestCaseOperator)[keyof typeof FunctionOutputTestCaseOperator];
 export const TagType = $schema.enums.TagType.values;
 export type TagType = (typeof TagType)[keyof typeof TagType];
-export const TagColor = $schema.enums.TagColor.values;
-export type TagColor = (typeof TagColor)[keyof typeof TagColor];

@@ -1,6 +1,6 @@
 <script lang="ts">
   import Tags from 'svelte-tags-input';
-  import TagSelect from '$lib/components/TagSelect.svelte';
+  import TagSelect from '$lib/components/ui/TagSelect.svelte';
   import { groupBy } from '$lib/utils/groupBy';
   import type { ProblemEditorWindowContext } from '../context.svelte';
   import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
@@ -25,12 +25,14 @@
 <TagSelect
   bind:selectedTagId={context.problem.subject_id}
   tags={tags.SubjectTag}
+  placeholder="Select a subject"
 />
 
 <h2 class="text-2xl font-bold">Difficulty</h2>
 <TagSelect
   bind:selectedTagId={context.problem.difficulty_id}
   tags={tags.DifficultyTag}
+  placeholder="Select a difficulty"
 />
 
 <h2 class="text-2xl font-bold">Topics</h2>

@@ -6,8 +6,8 @@
   import '@diplodoc/transform/dist/css/yfm.css';
   import 'dockview-core/dist/styles/dockview.css';
 
-  import Footer from '$lib/components/Footer.svelte';
-  import Navbar from '$lib/components/Navbar.svelte';
+  import Footer from '$lib/components/layout/Footer.svelte';
+  import Navbar from '$lib/components/layout/Navbar.svelte';
   import type { LayoutServerData } from './$types';
   import { page } from '$app/state';
 

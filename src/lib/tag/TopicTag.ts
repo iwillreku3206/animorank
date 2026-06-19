@@ -1,11 +1,9 @@
 import { db } from '$lib/zenstack';
-import { TagColor, TagType as TAG_TYPE } from '$lib/zenstack/models';
 import type { TopicTag as TopicTagModel } from '$lib/zenstack/models';
 import { Tag } from './Tag';
 
 export interface TopicTagCreateOptions {
   label: string;
-  color?: TagColor;
   order?: number;
 }
 
@@ -18,7 +16,6 @@ export class TopicTag extends Tag<TopicTagModel> {
     const tag = await db.topicTag.create({
       data: {
         label: options.label,
-        color: options.color ?? TagColor.TAG_COLOR_DEFAULT,
         order: options.order ?? 0
       }
     });

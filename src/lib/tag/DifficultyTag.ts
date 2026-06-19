@@ -1,11 +1,9 @@
 import { db } from '$lib/zenstack';
-import { TagColor, TagType as TAG_TYPE } from '$lib/zenstack/models';
 import type { DifficultyTag as DifficultyTagModel } from '$lib/zenstack/models';
 import { Tag } from './Tag';
 
 export interface DifficultyTagCreateOptions {
   label: string;
-  color?: TagColor;
   order?: number;
 }
 
@@ -18,7 +16,6 @@ export class DifficultyTag extends Tag<DifficultyTagModel> {
     const tag = await db.difficultyTag.create({
       data: {
         label: options.label,
-        color: options.color ?? TagColor.TAG_COLOR_DEFAULT,
         order: options.order ?? 0
       }
     });
