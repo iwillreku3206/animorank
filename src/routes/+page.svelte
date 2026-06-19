@@ -7,22 +7,13 @@
   import Badge from '$lib/components/ui/badges/Badge.svelte';
   import HeroGraph from './HeroGraph.svelte';
   import AutograderDemo from './AutograderDemo.svelte';
-  import { coursePrograms } from './coursePrograms';
   import { signIn } from '@auth/sveltekit/client';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
 
   // Selected course drives the live autograder demo below (tabs = picker).
-  let selectedCourse = $state('CCPROG1');
-
-  const courses = [
-    { code: 'CCPROG1', name: 'Logic Formulation and Introductory Programming' },
-    { code: 'CCPROG2', name: 'Programming with Structured Data Types' },
-    { code: 'CCPROG3', name: 'Object-Oriented Design and Programming' },
-    { code: 'CSALGCM', name: 'Algorithms and Complexity' },
-    { code: 'CSINTSY', name: 'Introduction to Intelligent Systems' }
-  ];
+  let selectedCourse = $state('Variables');
 
   // Real topic tags from the platform (scripts/addDefaultTags.ts), grouped to
   // mirror the course arc — fundamentals → data → structures → algorithms — so
@@ -70,7 +61,7 @@
   <title>AnimoRank: practice for your DLSU CS courses</title>
   <meta
     name="description"
-    content="Free, student-built practice for DLSU Computer Science courses. Problems for CCPROG, CSALGCM, CSINTSY and more, sorted by topic and difficulty, written by your instructors."
+    content="Free, student-built practice for DLSU Computer Science courses."
   />
 </svelte:head>
 
@@ -160,8 +151,8 @@
           style="--d:80ms"
           class="mt-4 text-lg text-base-content/75"
         >
-          Most practice problems are written for someone else. Practice a topic here and it is the
-          same one you are working through in class.
+          Most practice problems are written for someone else. Practice a topic here and it is
+          designed to match your course's coverage and style.
         </p>
       </div>
 
@@ -171,9 +162,7 @@
         class="w-full lg:col-span-8"
       >
         <AutograderDemo
-          {courses}
           selected={selectedCourse}
-          programs={coursePrograms}
           onselect={(code) => (selectedCourse = code)}
         />
       </div>

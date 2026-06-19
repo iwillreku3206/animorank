@@ -9,7 +9,7 @@
     /** Render as a link to this URL. */
     href?: string;
     /** Render as a button with this click handler. */
-    onclick?: (event: MouseEvent) => void;
+    onclick?: (_event: MouseEvent) => void;
     class?: string;
   };
 

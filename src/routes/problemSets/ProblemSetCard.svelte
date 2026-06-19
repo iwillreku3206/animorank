@@ -31,7 +31,7 @@
 
 <!-- Card container -->
 <div
-  class="relative w-full flex flex-col gap-4 bg-base-200 hover:bg-base-100/70 rounded-lg p-6 max-h-[384px]"
+  class="relative w-full flex flex-col gap-4 bg-base-200 hover:bg-base-100/70 rounded-lg p-6 max-h-96"
 >
   <!-- Header: breadcrumb + bookmark icon -->
   <div class="flex items-center gap-4">
@@ -108,7 +108,7 @@
   </div>
 
   <!-- Tag chips -->
-  <div class="flex flex-row flex-wrap gap-2 max-h-[3.5rem] overflow-hidden">
+  <div class="flex flex-row flex-wrap gap-2 max-h-7 overflow-hidden">
     {#each problemSet.tags as tag (tag.id)}
       <TagChip
         {tag}

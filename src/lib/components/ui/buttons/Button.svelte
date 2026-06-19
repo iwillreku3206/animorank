@@ -43,7 +43,6 @@
   @media (prefers-reduced-motion: no-preference) {
     /* Tactile press: scale down, cancel the lift, deepen the color.  */
     .btn:active:not(.btn-disabled, :disabled, [disabled]) {
-      scale: 0.97;
       --btn-bg: color-mix(in oklab, var(--btn-color, var(--color-base-200)), #000 20%);
     }
   }

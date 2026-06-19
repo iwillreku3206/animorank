@@ -8,7 +8,7 @@
     <!-- Main columns: brand + link groups -->
     <div class="flex flex-row gap-8 mb-10">
       <!-- Brand column -->
-      <div class="flex-[5] flex flex-col gap-3">
+      <div class="flex-5 flex flex-col gap-3">
         <div class="flex items-center gap-3">
           <img
             src="/animorank-logo.svg"
@@ -21,7 +21,7 @@
       </div>
 
       <!-- Support links -->
-      <div class="flex-[1] flex flex-col gap-4">
+      <div class="flex-1 flex flex-col gap-4">
         <h3 class="font-display font-semibold text-sm tracking-wide">Support</h3>
         <nav class="flex flex-col gap-2">
           <Link
@@ -44,7 +44,7 @@
       </div>
 
       <!-- Legal links -->
-      <div class="flex-[1] flex flex-col gap-4">
+      <div class="flex-1 flex flex-col gap-4">
         <h3 class="font-display font-semibold text-sm tracking-wide">Legal</h3>
         <nav class="flex flex-col gap-2">
           <Link
@@ -63,7 +63,7 @@
       </div>
 
       <!-- Community links -->
-      <div class="flex-[1] flex flex-col gap-4">
+      <div class="flex-1 flex flex-col gap-4">
         <h3 class="font-display font-semibold text-sm tracking-wide">Community</h3>
         <nav class="flex flex-col gap-2">
           <Link

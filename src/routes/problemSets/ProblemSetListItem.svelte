@@ -82,7 +82,7 @@
     </div>
 
     <!-- Tags -->
-    <div class="flex flex-row flex-wrap gap-2 max-h-[1.75rem] overflow-hidden">
+    <div class="flex flex-row flex-wrap gap-2 max-h-7 overflow-hidden">
       {#each problemSet.tags as tag (tag.id)}
         <TagChip
           {tag}

@@ -36,13 +36,7 @@
   let searchApplied = $state(page.url.searchParams.get('search') || '');
   let viewMode = $state(page.url.searchParams.get('viewMode') === 'list' ? 'list' : 'grid');
   let pageNumber = $state(parseInt(page.url.searchParams.get('page') || '1') || 1);
-
-  // svelte-ignore state_referenced_locally
-  let problemSets = $state(data.problemSets);
-  // Re-sync the displayed list whenever the server returns new results.
-  $effect(() => {
-    problemSets = data.problemSets;
-  });
+  let problemSets = $derived(data.problemSets);
 
   const currentSortLabel = $derived(SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? '');
   const allTags = $derived([...data.subjectTags, ...data.difficultyTags, ...data.topicTags]);
