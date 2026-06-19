@@ -29,10 +29,10 @@
       href="/about">About Us</Link
     >
     {#if loggedIn}
-      <Link
+      <!-- <Link
         class="px-4 text-base"
         href="/dashboard">Dashboard</Link
-      >
+      > -->
       <Link
         class="px-4 text-base"
         href="/problemSets">Problem Sets</Link
