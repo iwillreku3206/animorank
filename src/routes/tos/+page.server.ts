@@ -29,7 +29,21 @@ export const actions: Actions = {
       data: { hasAcceptedTOS: true }
     });
 
-    throw redirect(303, '/about');
+    throw redirect(303, '/problemSets');
+  },
+
+  revoke: async ({ locals }) => {
+    const session = await locals.auth();
+    if (!session?.user.id) {
+      return error(401, 'Unauthorized');
+    }
+
+    await db.user.update({
+      where: { id: session.user.id },
+      data: { hasAcceptedTOS: false }
+    });
+
+    throw redirect(303, '/tos');
   },
 
   deleteAccount: async ({ locals }) => {

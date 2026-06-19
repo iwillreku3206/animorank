@@ -3,6 +3,7 @@
   // eslint-disable-next-line no-useless-assignment
   let { openSettings = $bindable(), user }: { openSettings: boolean; user: User } = $props();
   import { goto } from '$app/navigation';
+  import { enhance } from '$app/forms';
   import type { User } from '@auth/sveltekit';
   import { signOut } from '@auth/sveltekit/client';
 
@@ -39,9 +40,21 @@
       onclick={logout}>Logout</button
     >
     <button
-      onclick={about}
-      class="mb-2 underline cursor-pointer">About</button
+      class="mb-2 underline cursor-pointer"
+      onclick={about}>About</button
     >
+    <form
+      method="POST"
+      action="/tos/?/revoke"
+      use:enhance={() => {
+        openSettings = false;
+      }}
+    >
+      <button
+        type="submit"
+        class="mb-2 underline cursor-pointer">Review TOS</button
+      >
+    </form>
     <a
       class="mb-2 underline cursor-pointer"
       href="https://forms.gle/uDpnjEoYkyjHZsWVA"
