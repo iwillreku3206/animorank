@@ -4,7 +4,7 @@
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
-  import Badge from '$lib/components/ui/badges/Badge.svelte';
+  // import Badge from '$lib/components/ui/badges/Badge.svelte';
   import HeroGraph from './HeroGraph.svelte';
   import AutograderDemo from './AutograderDemo.svelte';
   import { signIn } from '@auth/sveltekit/client';
@@ -18,21 +18,21 @@
   // Real topic tags from the platform (scripts/addDefaultTags.ts), grouped to
   // mirror the course arc — fundamentals → data → structures → algorithms — so
   // the section reads as a syllabus map instead of a wall of jargon.
-  const topicGroups = [
-    { label: 'Fundamentals', topics: ['I/O', 'Conditions', 'Loops', 'Functions'] },
-    { label: 'Working with data', topics: ['Arrays', 'Strings', 'Structs', 'Files'] },
-    { label: 'Data structures', topics: ['Stacks', 'Queues', 'Trees', 'Graphs'] },
-    {
-      label: 'Algorithms',
-      topics: [
-        'Sorting',
-        'Search',
-        'Divide and Conquer',
-        'Dynamic Programming',
-        'Greedy Algorithms'
-      ]
-    }
-  ];
+  // const topicGroups = [
+  //   { label: 'Fundamentals', topics: ['I/O', 'Conditions', 'Loops', 'Functions'] },
+  //   { label: 'Working with data', topics: ['Arrays', 'Strings', 'Structs', 'Files'] },
+  //   { label: 'Data structures', topics: ['Stacks', 'Queues', 'Trees', 'Graphs'] },
+  //   {
+  //     label: 'Algorithms',
+  //     topics: [
+  //       'Sorting',
+  //       'Search',
+  //       'Divide and Conquer',
+  //       'Dynamic Programming',
+  //       'Greedy Algorithms'
+  //     ]
+  //   }
+  // ];
 
   let root: HTMLElement;
 
@@ -171,7 +171,7 @@
 
   <!-- TOPICS + DIFFICULTY: mirrors the courses section — big visual on the left
        (2/3), copy on the right (1/3) — so the two sections alternate. -->
-  <section class="px-4 py-20 lg:py-24 xl:px-32">
+  <!-- <section class="px-4 py-20 lg:py-24 xl:px-32">
     <div class="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-center lg:gap-16">
       <div
         data-reveal="up"
@@ -220,7 +220,7 @@
         </div>
       </div>
     </div>
-  </section>
+  </section> -->
 
   <!-- CLOSING: the page's one committed brand moment — drenched green -->
   <section class="px-4 pb-28 lg:pb-36 xl:px-32">
