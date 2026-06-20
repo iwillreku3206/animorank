@@ -49,7 +49,7 @@
 save status: {context.autosaveStatus}
 <div class="relative w-full h-full flex flex-1 flex-col">
   <div
-    class="absolute top-0 bottom-0 left-0 right-0"
+    class="absolute top-2 bottom-2 left-2 right-2"
     bind:this={root}
   ></div>
 </div>
