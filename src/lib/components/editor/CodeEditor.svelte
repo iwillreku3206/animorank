@@ -3,6 +3,7 @@
   import { type monaco } from '$lib/monaco';
   import { browser } from '$app/environment';
   import constrainedEditor from 'constrained-editor-plugin';
+  import { ANIMORANK_MONACO_THEME } from './animorankMonacoTheme';
 
   let {
     // eslint-disable-next-line no-useless-assignment
@@ -46,7 +47,7 @@
         minimap: {
           enabled: false
         },
-        theme: 'vs-dark',
+        theme: ANIMORANK_MONACO_THEME,
         wordWrap: 'on',
         wordBasedSuggestions: 'currentDocument'
       });

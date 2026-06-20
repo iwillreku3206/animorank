@@ -5,6 +5,7 @@
   import '@gravity-ui/uikit/styles/styles.css';
   import '@diplodoc/transform/dist/css/yfm.css';
   import 'dockview-core/dist/styles/dockview.css';
+  import '$lib/window/animorank-theme.css';
 
   import Footer from '$lib/components/layout/Footer.svelte';
   import Navbar from '$lib/components/layout/Navbar.svelte';
