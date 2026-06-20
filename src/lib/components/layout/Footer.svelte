@@ -25,13 +25,13 @@
         <h3 class="font-display font-semibold text-sm tracking-wide">Support</h3>
         <nav class="flex flex-col gap-2">
           <Link
-            href="#"
+            href="https://github.com/iwillreku3206/animorank/issues/new?template=bug_report.md&labels=bug"
             target="_blank"
             rel="noopener noreferrer"
             class="link-neutral link-hover text-sm w-fit">Report a Bug</Link
           >
           <Link
-            href="#"
+            href="https://github.com/iwillreku3206/animorank/issues/new?template=feature_request.md&labels=enhancement"
             target="_blank"
             rel="noopener noreferrer"
             class="link-neutral link-hover text-sm w-fit">Request a Feature</Link
@@ -56,7 +56,9 @@
             class="link-neutral link-hover text-sm w-fit">Privacy Policy</Link
           >
           <Link
-            href="#"
+            href="https://github.com/iwillreku3206/animorank/blob/main/LICENSE"
+            target="_blank"
+            rel="noopener noreferrer"
             class="link-neutral link-hover text-sm w-fit">License</Link
           >
         </nav>
@@ -67,7 +69,7 @@
         <h3 class="font-display font-semibold text-sm tracking-wide">Community</h3>
         <nav class="flex flex-col gap-2">
           <Link
-            href="#"
+            href="mailto:animorank@gmail.com"
             class="link-neutral link-hover text-sm w-fit">Contact Us</Link
           >
           <Link
