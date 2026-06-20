@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { createDockview, themeAbyss, DockviewApi } from 'dockview-core';
+  import { createDockview, DockviewApi } from 'dockview-core';
   import { Window } from '$lib/window/index';
+  import { themeAnimoRank } from '$lib/window/animorankTheme';
   import { ProblemEditorWindowRegistry } from './windowRegistry';
   import { ProblemEditorWindowContext } from './context.svelte';
   import type { PageProps } from './$types';
@@ -35,7 +36,7 @@
 
   onMount(() => {
     dockview = createDockview(root!, {
-      theme: themeAbyss,
+      theme: themeAnimoRank,
       createComponent: (options) => windowMap[options.id].getRenderer()
     });
     openWindow('metadata');

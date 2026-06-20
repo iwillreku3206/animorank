@@ -1,0 +1,150 @@
+/*
+ * AnimoRank custom dockview theme.
+ *
+ * A complete, self-contained theme class: it defines every `--dv-*` variable
+ * dockview consumes, so it does not inherit from any stock theme. Color
+ * variables are bound to daisyUI `--color-*` tokens so the chrome follows the
+ * active daisyUI theme; structural variables are literal values.
+ *
+ * Paired with the `themeAnimoRank` object in `animorankTheme.ts`
+ * (className: `dockview-theme-animorank`).
+ */
+
+.dockview-theme-animorank {
+  /* ---- Surfaces -------------------------------------------------------- */
+  --dv-group-view-background-color: var(--color-base-100);
+  --dv-tabs-and-actions-container-background-color: var(--color-base-200);
+
+  /* ---- Tab backgrounds (group active/inactive × panel visible/hidden) -- */
+  --dv-activegroup-visiblepanel-tab-background-color: var(--color-base-100);
+  --dv-activegroup-hiddenpanel-tab-background-color: var(--color-base-200);
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--color-base-200);
+  --dv-inactivegroup-hiddenpanel-tab-background-color: var(--color-base-200);
+
+  /* ---- Tab text -------------------------------------------------------- */
+  --dv-activegroup-visiblepanel-tab-color: var(--color-base-content);
+  --dv-activegroup-hiddenpanel-tab-color: color-mix(
+    in oklch,
+    var(--color-base-content) 55%,
+    transparent
+  );
+  --dv-inactivegroup-visiblepanel-tab-color: color-mix(
+    in oklch,
+    var(--color-base-content) 65%,
+    transparent
+  );
+  --dv-inactivegroup-hiddenpanel-tab-color: color-mix(
+    in oklch,
+    var(--color-base-content) 40%,
+    transparent
+  );
+
+  /* ---- Dividers, separators, borders ----------------------------------- */
+  --dv-tab-divider-color: var(--color-base-300);
+  --dv-separator-border: var(--color-base-300);
+  --dv-paneview-header-border-color: var(--color-base-300);
+  --dv-paneview-active-outline-color: var(--color-primary);
+
+  /* ---- Sash (group splitters) ------------------------------------------ */
+  --dv-sash-color: transparent;
+  --dv-active-sash-color: var(--color-primary);
+  --dv-active-sash-transition-duration: 0.1s;
+  --dv-active-sash-transition-delay: 0.5s;
+
+  /* ---- Drag & drop overlay --------------------------------------------- */
+  --dv-drag-over-background-color: color-mix(in oklch, var(--color-primary) 22%, transparent);
+  --dv-drag-over-border-color: var(--color-primary);
+  --dv-drag-over-border: 2px solid var(--color-primary);
+
+  /* ---- Floating / popout groups ---------------------------------------- */
+  --dv-floating-box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.25);
+  --dv-floating-border: 1px solid color-mix(in oklch, var(--color-base-content) 12%, transparent);
+  --dv-floating-group-border: 1px solid var(--color-base-300);
+  --dv-floating-group-dragging-opacity: 0.6;
+
+  /* ---- Icons, scrollbars, menus ---------------------------------------- */
+  --dv-icon-hover-background-color: color-mix(in oklch, var(--color-base-content) 12%, transparent);
+  --dv-tabs-container-scrollbar-color: color-mix(
+    in oklch,
+    var(--color-base-content) 35%,
+    transparent
+  );
+  --dv-scrollbar-background-color: color-mix(in oklch, var(--color-base-content) 25%, transparent);
+  --dv-context-menu-background-color: var(--color-base-200);
+  --dv-context-menu-color: var(--color-base-content);
+
+  /* ---- Sizing & shape -------------------------------------------------- */
+  --dv-tabs-and-actions-container-height: 36px;
+  --dv-tabs-and-actions-container-font-size: 13px;
+  --dv-tab-font-size: inherit;
+  --dv-tab-close-icon-size: inherit;
+  --dv-tab-margin: 0;
+  --dv-spacing-padding: 0px;
+  --dv-border-radius: 6px;
+  --dv-tab-border-radius: 6px 6px 0 0;
+  --dv-sash-border-radius: 0px;
+  --dv-dropdown-border-radius: 6px;
+  --dv-overlay-z-index: 999;
+  --dv-transition-duration: 0.15s;
+
+  /* ---- Tab-group chips (colored tab grouping) -------------------------- */
+  --dv-tab-group-color-grey: #5f6368;
+  --dv-tab-group-color-blue: #1a73e8;
+  --dv-tab-group-color-red: #d93025;
+  --dv-tab-group-color-yellow: #f9ab00;
+  --dv-tab-group-color-green: #188038;
+  --dv-tab-group-color-pink: #d01884;
+  --dv-tab-group-color-purple: #a142f4;
+  --dv-tab-group-color-cyan: #007b83;
+  --dv-tab-group-color-orange: #e8710a;
+  --dv-tab-group-chip-padding: 4px 8px;
+  --dv-tab-group-chip-border-radius: 6px;
+  --dv-tab-group-chip-font-size: 11px;
+  --dv-tab-group-line-height: 2px;
+  --dv-tab-group-line-opacity: 0.6;
+}
+
+/* Active-tab indicator: a primary-colored underline on the active tab of the
+ * focused group (and a muted one when the group is inactive). */
+.dockview-theme-animorank
+  .dv-groupview.dv-active-group
+  > .dv-tabs-and-actions-container
+  .dv-tabs-container
+  > .dv-tab.dv-active-tab {
+  position: relative;
+}
+.dockview-theme-animorank
+  .dv-groupview.dv-active-group
+  > .dv-tabs-and-actions-container
+  .dv-tabs-container
+  > .dv-tab.dv-active-tab::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-primary);
+  z-index: 999;
+}
+.dockview-theme-animorank
+  .dv-groupview.dv-inactive-group
+  > .dv-tabs-and-actions-container
+  .dv-tabs-container
+  > .dv-tab.dv-active-tab {
+  position: relative;
+}
+.dockview-theme-animorank
+  .dv-groupview.dv-inactive-group
+  > .dv-tabs-and-actions-container
+  .dv-tabs-container
+  > .dv-tab.dv-active-tab::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background-color: color-mix(in oklch, var(--color-primary) 45%, transparent);
+  z-index: 999;
+}
