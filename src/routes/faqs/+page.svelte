@@ -19,12 +19,7 @@
         Frequently Asked Questions
       </h1>
       <p class="mt-4 text-md leading-relaxed text-base-content/75">
-        The short version of what AnimoRank is, how it works, and what to expect while it is in
-        beta. Still stuck?
-        <Link
-          href="mailto:animorank@gmail.com"
-          class="link-primary">Email us</Link
-        >.
+        Answers to common questions about AnimoRank.
       </p>
     </header>
 
