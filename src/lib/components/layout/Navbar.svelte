@@ -17,7 +17,7 @@
 >
   <!-- Brand -->
   <div class="relative mr-auto">
-    <h1 class="font-bold text-2xl">
+    <h1 class="font-bold font-display hover:text-primary text-2xl">
       <Link href="/">AnimoRank</Link>
     </h1>
   </div>
