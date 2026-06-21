@@ -53,9 +53,9 @@
   <!-- Main content -->
   <main class="flex-1 max-w-2xl">
     <h1 class="font-display text-4xl font-bold mb-2">Privacy Policy</h1>
-    <p class="text-sm text-base-content/50 mb-8">Last Updated: May 25, 2026</p>
+    <p class="text-md text-base-content/40 mb-8">Last Updated: May 25, 2026</p>
 
-    <div class="prose prose-headings:font-display">
+    <div class="prose prose-headings:font-display text-md text-base-content/75">
       <p>
         AnimoRank ("we," "us," or "our") provides this Privacy Policy to inform you of our policies
         and procedures regarding the collection, use, disclosure, and protection of information we
