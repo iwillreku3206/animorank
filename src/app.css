@@ -131,3 +131,7 @@
 .problemSetProgress::-webkit-progress-value {
   background-color: var(--color-primary, oklch(87% 0.244 134.94));
 }
+
+html {
+  scroll-behavior: smooth;
+}
