@@ -1,38 +1,53 @@
 <script lang="ts">
-  import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
-  import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
+  import Accordion from '$lib/components/ui/accordions/Accordion.svelte';
+  import Link from '$lib/components/ui/Link.svelte';
+  import { faqSections } from './faqs';
 </script>
 
 <svelte:head>
-  <title>FAQs — coming soon</title>
+  <title>FAQs -- AnimoRank</title>
   <meta
     name="description"
-    content="The AnimoRank FAQs page is under development."
+    content="Answers to common questions about AnimoRank."
   />
 </svelte:head>
 
-<main class="flex flex-1 items-center justify-center bg-base-300 px-4 py-24 text-base-content">
-  <div class="max-w-xl text-center">
-    <h1 class="mt-6 font-display text-3xl font-bold tracking-tight text-balance lg:text-5xl">
-      This page is still being built.
-    </h1>
+<main class="flex-1 bg-base-300 px-4 py-20 text-base-content lg:py-28">
+  <div class="mx-auto max-w-3xl">
+    <header class="mb-12">
+      <h1 class="font-display text-3xl font-bold tracking-tight text-balance lg:text-4xl">
+        Frequently Asked Questions
+      </h1>
+      <p class="mt-4 text-md leading-relaxed text-base-content/75">
+        The short version of what AnimoRank is, how it works, and what to expect while it is in
+        beta. Still stuck?
+        <Link
+          href="mailto:animorank@gmail.com"
+          class="link-primary">Email us</Link
+        >.
+      </p>
+    </header>
 
-    <p class="mt-5 text-lg leading-relaxed text-base-content/70">
-      We're gathering the most common questions about AnimoRank into a proper FAQ. In the meantime,
-      head back to the landing page to see what the platform is about.
-    </p>
-
-    <div class="mt-9 flex justify-center">
-      <ButtonLink
-        class="btn-lg group btn-primary gap-2.5 font-semibold"
-        href="/"
-      >
-        Back to home
-        <ArrowRightIcon
-          class="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-          aria-hidden="true"
-        />
-      </ButtonLink>
-    </div>
+    {#each faqSections as section (section.heading)}
+      <section class="mb-10">
+        <h2 class="mb-4 font-display text-2xl font-semibold text-base-content">
+          {section.heading}
+        </h2>
+        <div class="space-y-2">
+          {#each section.items as { q, a } (q)}
+            <Accordion titleText={q}>
+              {#each a as part, i (i)}
+                {#if typeof part === 'string'}{part}{:else}<Link
+                    href={part.href}
+                    class="link-primary"
+                    target={part.external ? '_blank' : undefined}
+                    rel={part.external ? 'noopener noreferrer' : undefined}>{part.text}</Link
+                  >{/if}
+              {/each}
+            </Accordion>
+          {/each}
+        </div>
+      </section>
+    {/each}
   </div>
 </main>
