@@ -18,6 +18,11 @@
           <span class="font-display text-3xl font-bold">AnimoRank</span>
         </div>
         <p class="text-sm text-base-content/70">Built by Lasallians, for Lasallians.</p>
+        <img
+          src="/img/pts-logo.png"
+          alt="PTS logo"
+          class="object-contain object-left h-16"
+        />
       </div>
 
       <!-- Support links -->
