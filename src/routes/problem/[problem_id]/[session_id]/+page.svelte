@@ -239,6 +239,7 @@
               registerReset={(cb) => (handleReset = cb)}
               {problem}
               {practiceSession}
+              {testSubmitted}
             />
           </div>
         </Pane>
