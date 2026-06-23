@@ -21,10 +21,8 @@ async function runTestCase(
 
   if (!testCase.dbTestCase.public) {
     result.runInfo = [];
-    if (!result.hidden) {
-      (result.testCaseInfo as ProblemTestCase | undefined) = undefined;
-      (result.hidden as boolean) = true;
-    }
+    (result.testCaseInfo as ProblemTestCase | undefined) = undefined;
+    (result.hidden as boolean) = true;
   }
 
   return result;
