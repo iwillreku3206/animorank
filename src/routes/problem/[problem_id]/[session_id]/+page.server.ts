@@ -7,7 +7,7 @@ import { PracticeSessionService } from '$lib/practiceSession/practiceSessionServ
 export const load: PageServerLoad = async ({ params, locals }) => {
   const session = await locals.auth();
 
-  if (!session || !session.user.id) redirect(302, '/about');
+  if (!session || !session.user.id) redirect(302, '/');
 
   const serviceProvider = ServerServiceProvider.instance();
   const problemService = serviceProvider.getService(ProblemService);

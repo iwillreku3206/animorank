@@ -13,7 +13,7 @@
 
   const about = () => {
     openSettings = false;
-    goto('/about');
+    goto('/');
   };
 </script>
 
