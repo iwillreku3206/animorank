@@ -21,7 +21,9 @@ async function runTestCase(
 
   if (!testCase.dbTestCase.public) {
     result.runInfo = [];
-    (result.testCaseInfo as ProblemTestCase | undefined) = undefined;
+    // For convenience, we just want to delete this field
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((result as any).testCaseInfo as ProblemTestCase | undefined) = undefined;
     (result.hidden as boolean) = true;
   }
 
