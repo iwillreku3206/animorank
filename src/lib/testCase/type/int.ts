@@ -149,7 +149,7 @@ class CInt extends LanguageType<Value> {
       printfTemplate += " (\\'%c\\')";
     }
 
-    return `printf("${printfTemplate}", ${symbol});`;
+    return `printf("${printfTemplate}", ${symbol}${value.size == 8 ? `, ${symbol}` : ''});`;
   }
 
   public constructEqualityCheck(resultSymbol: string, symbolA: string, symbolB: string): string {
