@@ -72,7 +72,21 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   console.log(practiceSession);
 
   const results = await Promise.all(
-    testCases.map((tc) => runTestCase(tc, practiceSession.previousCode.fullCode))
+    testCases.map(async (tc) => {
+      try {
+        return await runTestCase(tc, practiceSession.previousCode.fullCode);
+      } catch (error) {
+        return {
+          success: false as const,
+          runInfo: [],
+          reason: 'compile_error' as const,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          ...(tc.dbTestCase.public
+            ? { hidden: false, testCaseInfo: tc.dbTestCase }
+            : { hidden: true })
+        } satisfies TestCaseResult;
+      }
+    })
   );
 
   if (test_type === 'all') {
