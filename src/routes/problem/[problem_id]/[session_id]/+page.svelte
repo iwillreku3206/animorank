@@ -113,7 +113,7 @@
   const handleSubmit = async () => {
     disableEdit = true;
     await autosave.forceSave($state.snapshot(codeSections));
-    const results = await submit(page.params.session_id);
+    const results = await submit(page.params.session_id || '');
     executionObservable.fire('run', {
       generalTestResults: results.results.map((r) => r.success),
       publicTestResults: results.results.filter((p) => !p.hidden).map((p) => p),
