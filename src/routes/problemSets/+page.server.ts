@@ -13,7 +13,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const session = await locals.auth();
 
   if (!session || !session.user.id) {
-    redirect(302, '/about');
+    redirect(302, '/');
   }
 
   const problemSetService = ServerServiceProvider.instance().getService(ProblemSetService);

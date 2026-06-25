@@ -21,10 +21,10 @@ async function runTestCase(
 
   if (!testCase.dbTestCase.public) {
     result.runInfo = [];
-    if (!result.hidden) {
-      (result.testCaseInfo as ProblemTestCase | undefined) = undefined;
-      (result.hidden as boolean) = true;
-    }
+    // For convenience, we just want to delete this field
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ((result as any).testCaseInfo as ProblemTestCase | undefined) = undefined;
+    (result.hidden as boolean) = true;
   }
 
   return result;
@@ -72,7 +72,21 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   console.log(practiceSession);
 
   const results = await Promise.all(
-    testCases.map((tc) => runTestCase(tc, practiceSession.previousCode.fullCode))
+    testCases.map(async (tc) => {
+      try {
+        return await runTestCase(tc, practiceSession.previousCode.fullCode);
+      } catch (error) {
+        return {
+          success: false as const,
+          runInfo: [],
+          reason: 'compile_error' as const,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          ...(tc.dbTestCase.public
+            ? { hidden: false, testCaseInfo: tc.dbTestCase }
+            : { hidden: true })
+        } satisfies TestCaseResult;
+      }
+    })
   );
 
   if (test_type === 'all') {

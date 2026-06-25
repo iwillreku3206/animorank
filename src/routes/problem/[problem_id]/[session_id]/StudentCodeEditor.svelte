@@ -16,6 +16,7 @@
     practiceSession,
     problem,
     locked = $bindable(),
+    testSubmitted = false,
     registerReset
   }: {
     language: string;
@@ -24,6 +25,7 @@
     practiceSession: ClientPracticeSession;
     problem: Problem;
     locked: boolean;
+    testSubmitted?: boolean;
     registerReset?: (_cb: () => void) => void;
   } = $props();
 
@@ -119,7 +121,7 @@
     {language}
   />
 
-  {#if locked}
+  {#if locked && !testSubmitted}
     <div
       class="absolute inset-0 bg-base-200 backdrop-blur-[1px] flex items-center justify-center rounded-lg"
     >
