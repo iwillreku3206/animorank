@@ -1,0 +1,24 @@
+---
+date: 2026-06-25
+title: A fresh look and a smoother practice flow
+summary: Meet the new AnimoRank look, browse comfortably on mobile, and enjoy a more reliable code workspace.
+---
+
+**Added**
+
+- A new AnimoRank logo and favicon across the app.
+
+**Improved**
+
+- Browsing, problem sets, and the rest of the site now adapt to phones and
+  tablets. (The code editor and practice workspace still need a larger screen.)
+- The code editor and practice workspace got a redesigned theme that's easier
+  on the eyes during long sessions.
+- Clicking the logo in the navbar now takes you home.
+
+**Fixed**
+
+- The loading spinner no longer lingers after a submission goes through.
+- Test cases now run and report individually, so a single failure won't hide
+  the rest of your results.
+- Sorted out a problem with character output not printing correctly.

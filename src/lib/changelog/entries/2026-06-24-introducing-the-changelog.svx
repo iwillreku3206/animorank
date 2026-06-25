@@ -1,11 +1,12 @@
 ---
 date: 2026-06-24
 title: Introducing the changelog
-summary: A home for everything new in AnimoRank — starting with our latest improvements.
+summary: A running log of what's new in AnimoRank, starting with this week's updates.
 ---
 
-This is where we'll keep track of what's new in AnimoRank: new features, the
-improvements that make practice smoother, and the fixes worth knowing about.
+We're starting a changelog. From now on, this page is where new features, fixes,
+and improvements get written down as they ship, so you can always see what
+changed and when.
 
 **Added**
 
@@ -13,7 +14,5 @@ improvements that make practice smoother, and the fixes worth knowing about.
 
 **Improved**
 
-- Smoother in-page navigation — jumping to a section now scrolls instead of snapping.
-- A more responsive landing experience across phones and tablets.
-
-Have something you'd like to see? Reach out through the links in the footer.
+- Jumping to a section now scrolls smoothly instead of snapping into place.
+- The landing page now adapts to phones and tablets.
