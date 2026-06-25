@@ -1,0 +1,19 @@
+---
+date: 2026-06-24
+title: Introducing the changelog
+summary: A home for everything new in AnimoRank — starting with our latest improvements.
+---
+
+This is where we'll keep track of what's new in AnimoRank: new features, the
+improvements that make practice smoother, and the fixes worth knowing about.
+
+**Added**
+
+- A Frequently Asked Questions page covering accounts, problem sets, and grading.
+
+**Improved**
+
+- Smoother in-page navigation — jumping to a section now scrolls instead of snapping.
+- A more responsive landing experience across phones and tablets.
+
+Have something you'd like to see? Reach out through the links in the footer.
