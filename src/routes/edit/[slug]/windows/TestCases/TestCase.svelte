@@ -11,6 +11,7 @@
   import CustomTest from './CustomTest.svelte';
   import FunctionReturnValueTest from './FunctionReturnValueTest.svelte';
   import ProgramIOTest from './ProgramIOTest.svelte';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
 
   let {
     testCase = $bindable(),
@@ -34,9 +35,9 @@
     <div class="flex flex-row gap-2 items-center">
       Test Case #{order}: {testCase.type}
       <div class="ml-auto flex gap-1">
-        <button
+        <Button
           title={testCase.public ? 'Hide Test Case' : 'Show Test Case'}
-          class="btn btn-xs btn-ghost"
+          class="btn-xs btn-ghost"
           onclick={toggleVisibility}
         >
           {#if testCase.public}
@@ -44,10 +45,10 @@
           {:else}
             <EyeSlashIcon class="h-4 w-4" />
           {/if}
-        </button>
-        <button
+        </Button>
+        <Button
           title="Delete Test Case"
-          class="btn btn-xs btn-ghost"
+          class="btn-xs btn-ghost"
           onclick={onDelete}
           disabled={deleteDisabled}
         >
@@ -56,7 +57,7 @@
             alt="Delete Icon"
             class={`${!deleteDisabled ? 'red-svg' : 'disabled-svg'} h-full w-full`}
           />
-        </button>
+        </Button>
       </div>
     </div>
     {#if testCase.type == 'FunctionOutputTestCase'}

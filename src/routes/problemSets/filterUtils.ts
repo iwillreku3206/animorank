@@ -57,6 +57,19 @@ export function hasAnyFilter(filters: Filters): boolean {
   );
 }
 
+/** Deep-copy a Filters object so callers can mutate a draft without touching the source. */
+export function cloneFilters(f: Filters): Filters {
+  return {
+    include: [...f.include],
+    exclude: [...f.exclude],
+    topicMatchAll: f.topicMatchAll,
+    statuses: [...f.statuses],
+    creators: [...f.creators],
+    creatorMatchAll: f.creatorMatchAll,
+    bookmarked: f.bookmarked
+  };
+}
+
 export function emptyFilters(): Filters {
   return {
     include: [],
@@ -67,11 +80,6 @@ export function emptyFilters(): Filters {
     creatorMatchAll: false,
     bookmarked: false
   };
-}
-
-/** Reset a filters object in place, preserving the existing reference (so bindings stay live). */
-export function resetFilters(filters: Filters): void {
-  Object.assign(filters, emptyFilters());
 }
 
 /**

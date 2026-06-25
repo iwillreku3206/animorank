@@ -1,16 +1,32 @@
 <script lang="ts">
   import type { Tag } from '$lib/zenstack/models';
   import type { Filters } from './api';
-  import { tagState, cycleTag, toggleInclude } from './filterUtils';
+  import { tagState, cycleTag, toggleInclude, cloneFilters } from './filterUtils';
   import TagChip from '$lib/components/ui/TagChip.svelte';
+  import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
   import SearchIcon from '@iconify-svelte/fa6-solid/magnifying-glass';
 
   let {
     tags,
-    filters = $bindable(),
+    filters,
+    onChange,
     showMatchAll = false,
     excludable = false
-  }: { tags: Tag[]; filters: Filters; showMatchAll?: boolean; excludable?: boolean } = $props();
+  }: {
+    tags: Tag[];
+    filters: Filters;
+    /** Emit the next filter state; the parent reflects it into the URL. */
+    onChange: (_next: Filters) => void;
+    showMatchAll?: boolean;
+    excludable?: boolean;
+  } = $props();
+
+  /** Apply a mutation to a draft copy and emit it (filters itself is read-only). */
+  function edit(fn: (_draft: Filters) => void) {
+    const draft = cloneFilters(filters);
+    fn(draft);
+    onChange(draft);
+  }
 
   let query = $state('');
   const filtered = $derived(
@@ -24,28 +40,32 @@
   function chipClass(id: string): string {
     const state = tagState(filters, id);
     if (state === 'include') return '';
-    if (state === 'exclude') return 'badge-outline line-through opacity-70';
+    if (state === 'exclude') return 'badge-outline opacity-70';
     return 'badge-soft';
   }
 
   // Topics cycle through include/exclude; single-valued categories just toggle.
   const onChipClick = (id: string) =>
-    excludable ? cycleTag(filters, id) : toggleInclude(filters, id);
+    edit((f) => (excludable ? cycleTag(f, id) : toggleInclude(f, id)));
 </script>
 
 <div class="flex flex-col gap-3">
-  <label class="input input-sm w-full">
-    <SearchIcon class="h-[1em] opacity-50" />
-    <input
-      type="text"
-      placeholder="Filter tags"
-      bind:value={query}
-    />
-  </label>
+  <TextInput
+    class="input-sm w-full"
+    type="text"
+    placeholder="Filter tags"
+    bind:value={query}
+  >
+    {#snippet leading()}
+      <SearchIcon />
+    {/snippet}
+  </TextInput>
 
   {#if excludable}
     <p class="text-xs text-base-content/60">
-      Cycle: <span class="font-medium">include → exclude → clear</span>
+      Cycle: <span class="font-medium">
+        <span class="text-success">include</span> → <span class="text-error">exclude</span> → clear
+      </span>
     </p>
   {/if}
 
@@ -66,7 +86,8 @@
       <input
         type="checkbox"
         class="checkbox checkbox-sm checkbox-primary"
-        bind:checked={filters.topicMatchAll}
+        checked={filters.topicMatchAll}
+        onchange={(e) => edit((f) => (f.topicMatchAll = e.currentTarget.checked))}
       />
       Match all selected tags
     </label>

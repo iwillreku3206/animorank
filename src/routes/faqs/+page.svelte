@@ -1,15 +1,33 @@
 <script lang="ts">
   import Accordion from '$lib/components/ui/accordions/Accordion.svelte';
   import Link from '$lib/components/ui/Link.svelte';
-  import { faqSections } from './faqs';
+  import Seo from '$lib/components/layout/Seo.svelte';
+  import { faqSections, type AnswerPart } from './faqs';
+
+  // Flatten an answer (string + link parts) to plain text for structured data.
+  const answerText = (parts: AnswerPart[]) =>
+    parts.map((p) => (typeof p === 'string' ? p : p.text)).join('');
+
+  const faqLd = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqSections.flatMap((section) =>
+      section.items.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: answerText(item.a) }
+      }))
+    )
+  });
 </script>
 
+<Seo
+  title="FAQs"
+  description="Answers to common questions about AnimoRank."
+/>
+
 <svelte:head>
-  <title>FAQs -- AnimoRank</title>
-  <meta
-    name="description"
-    content="Answers to common questions about AnimoRank."
-  />
+  {@html `<script type="application/ld+json">${faqLd}</script>`}
 </svelte:head>
 
 <main class="flex-1 bg-base-300 px-4 py-20 text-base-content lg:py-28">
@@ -18,7 +36,7 @@
       <h1 class="font-display text-3xl font-bold tracking-tight text-balance lg:text-4xl">
         Frequently Asked Questions
       </h1>
-      <p class="mt-4 text-md leading-relaxed text-base-content/75">
+      <p class="mt-4 text-md leading-relaxed text-base-content/70">
         Answers to common questions about AnimoRank.
       </p>
     </header>

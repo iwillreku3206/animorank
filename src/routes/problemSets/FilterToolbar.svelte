@@ -1,15 +1,17 @@
 <script lang="ts">
   import type { Tag } from '$lib/zenstack/models';
-  import type { Filters } from './api';
+  import type { Filters, Status } from './api';
   import { STATUS_LABELS, STATUSES } from './api';
-  import { selectionCount, hasAnyFilter, resetFilters } from './filterUtils';
+  import { selectionCount, hasAnyFilter, emptyFilters, cloneFilters } from './filterUtils';
   import TagFilterPanel from './TagFilterPanel.svelte';
   import SelectFilterPanel from './SelectFilterPanel.svelte';
   import Button from '$lib/components/ui/buttons/Button.svelte';
+  import Badge from '$lib/components/ui/badges/Badge.svelte';
   import XIcon from '@iconify-svelte/fa6-solid/xmark';
 
   let {
-    filters = $bindable(),
+    filters,
+    onChange,
     subjectTags,
     difficultyTags,
     topicTags,
@@ -17,12 +19,21 @@
     showCreator = false
   }: {
     filters: Filters;
+    /** Emit the next filter state; the parent reflects it into the URL. */
+    onChange: (_next: Filters) => void;
     subjectTags: Tag[];
     difficultyTags: Tag[];
     topicTags: Tag[];
     creators: { id: string; name: string }[];
     showCreator?: boolean;
   } = $props();
+
+  /** Apply a mutation to a draft copy and emit it (filters itself is read-only). */
+  function edit(fn: (_draft: Filters) => void) {
+    const draft = cloneFilters(filters);
+    fn(draft);
+    onChange(draft);
+  }
 
   type PanelId = 'subject' | 'difficulty' | 'topic' | 'status' | 'creator';
   let openPanel = $state<PanelId | null>(null);
@@ -55,7 +66,7 @@
   const creatorOptions = $derived(creators.map((c) => ({ id: c.id, label: c.name })));
 
   function clearAll() {
-    resetFilters(filters);
+    onChange(emptyFilters());
     openPanel = null;
   }
 </script>
@@ -67,7 +78,7 @@
   >
     {label}
     {#if count > 0}
-      <span class="badge badge-xs badge-neutral">{count}</span>
+      <Badge class="badge-xs badge-neutral">{count}</Badge>
     {/if}
   </Button>
 {/snippet}
@@ -83,7 +94,7 @@
     {/if}
     <Button
       class="btn-sm {filters.bookmarked ? 'btn-primary' : 'btn-ghost'}"
-      onclick={() => (filters.bookmarked = !filters.bookmarked)}
+      onclick={() => edit((f) => (f.bookmarked = !f.bookmarked))}
     >
       Bookmarked
     </Button>
@@ -103,30 +114,36 @@
       {#if openPanel === 'subject'}
         <TagFilterPanel
           tags={subjectTags}
-          bind:filters
+          {filters}
+          {onChange}
         />
       {:else if openPanel === 'difficulty'}
         <TagFilterPanel
           tags={difficultyTags}
-          bind:filters
+          {filters}
+          {onChange}
         />
       {:else if openPanel === 'topic'}
         <TagFilterPanel
           tags={topicTags}
-          bind:filters
+          {filters}
+          {onChange}
           showMatchAll
           excludable
         />
       {:else if openPanel === 'status'}
         <SelectFilterPanel
           options={statusOptions}
-          bind:selected={filters.statuses}
+          selected={filters.statuses}
+          onSelectedChange={(next) => edit((f) => (f.statuses = next as Status[]))}
         />
       {:else if openPanel === 'creator'}
         <SelectFilterPanel
           options={creatorOptions}
-          bind:selected={filters.creators}
-          bind:matchAll={filters.creatorMatchAll}
+          selected={filters.creators}
+          onSelectedChange={(next) => edit((f) => (f.creators = next))}
+          matchAll={filters.creatorMatchAll}
+          onMatchAllChange={(v) => edit((f) => (f.creatorMatchAll = v))}
           searchable
           searchPlaceholder="Search creators"
           showMatchAll

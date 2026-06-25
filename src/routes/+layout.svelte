@@ -20,7 +20,7 @@
   let { data, children }: Props = $props();
 </script>
 
-<div class="md:flex flex-col min-h-screen bg-base-300 text-white hidden">
+<div class="flex flex-col min-h-screen bg-base-300 text-base-content">
   <Navbar user={data.user} />
 
   <div class="flex flex-col flex-1">
@@ -30,9 +30,4 @@
   {#if !page.url.pathname.startsWith('/edit') && !page.url.pathname.startsWith('/problem')}
     <Footer />
   {/if}
-</div>
-
-<div class="flex flex-row justify-center items-center md:hidden w-full text-center h-screen">
-  AnimoRank is not yet supported on mobile. If you are on desktop, kindly increase the size of the
-  AnimoRank tab.
 </div>

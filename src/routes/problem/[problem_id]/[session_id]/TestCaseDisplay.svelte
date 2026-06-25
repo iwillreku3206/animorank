@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { TestRunResponse } from './api';
   import TestCaseCard from './TestCaseCard.svelte';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
 
   interface Props {
     tests: TestRunResponse;
@@ -35,12 +36,12 @@
       <h2 class="text-2xl font-bold text-success">All test cases passed!</h2>
       <p class="text-gray-400">Congratulations! You've solved this problem.</p>
       {#if handleReturn}
-        <button
-          class="btn btn-primary btn-sm"
+        <Button
+          class="btn-primary btn-sm"
           onclick={handleReturn}
         >
           Return to Problem Set
-        </button>
+        </Button>
       {/if}
     </div>
   {:else}

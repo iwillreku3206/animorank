@@ -2,12 +2,18 @@
   import { enhance } from '$app/forms';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import TosCard from './TosCard.svelte';
+  import Seo from '$lib/components/layout/Seo.svelte';
 
   let showModal = $state(false);
   let isConfirmed = $state(false);
 
   let checked = $state(Array(4).fill(false));
 </script>
+
+<Seo
+  title="Accept the Terms of Service"
+  noindex
+/>
 
 <div class="w-full max-w-2xl mx-auto p-6 flex flex-col gap-2">
   <div class="flex flex-col gap-4 py-8">

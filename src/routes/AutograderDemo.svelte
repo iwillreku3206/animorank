@@ -198,9 +198,10 @@
     </div>
   </div>
 
-  <!-- tabs = course picker -->
+  <!-- tabs = course picker (horizontal scroll on narrow screens so no tab is
+       clipped out of reach) -->
   <div
-    class="flex shrink-0 overflow-hidden border-b border-white/8 bg-base-300/40"
+    class="flex shrink-0 overflow-x-auto border-b border-white/8 bg-base-300/40"
     role="tablist"
     aria-label="Choose a course"
   >

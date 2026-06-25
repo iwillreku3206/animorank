@@ -3,6 +3,8 @@
   import DeleteIcon from '$lib/assets/delete.svg';
   import TypePicker from './TypePicker.svelte';
   import { TypeRegistry } from '$lib/testCase/typeRegistry';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
+  import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
 
   let { testCase = $bindable() }: { testCase: FunctionOutputTestCase } = $props();
 
@@ -39,9 +41,9 @@
 </script>
 
 <div class="flex flex-col flex-wrap gap-2">
-  <input
+  <TextInput
     type="text"
-    class="input input-sm input-primary input-bordered w-full"
+    class="input-sm input-primary input-bordered w-full"
     placeholder="Function Name (Case-sensitive)"
     bind:value={testCase.function_name}
   />
@@ -117,17 +119,17 @@
         <div class="flex flex-col gap-1">
           <label class="text-xs text-gray-400">
             Range
-            <input
+            <TextInput
               type="text"
-              class="input input-xs input-primary input-bordered w-24"
+              class="input-xs input-primary input-bordered w-24"
               placeholder="Range"
               bind:value={comp.range_value}
             />
           </label>
         </div>
       {/if}
-      <button
-        class="btn btn-xs btn-ghost self-end"
+      <Button
+        class="btn-xs btn-ghost self-end"
         onclick={deleteComparison(i)}
       >
         <img
@@ -135,12 +137,12 @@
           class="svg-red w-full h-full"
           alt="delete comparison"
         />
-      </button>
+      </Button>
     </div>
   {/each}
-  <button
-    class="btn btn-success w-full btn-sm"
-    onclick={addComparison}>Add Comparison</button
+  <Button
+    class="btn-success w-full btn-sm"
+    onclick={addComparison}>Add Comparison</Button
   >
   Input Parameters:
   {#each testCase.parameters as param, i (i)}
@@ -169,8 +171,8 @@
           />
         </label>
       </div>
-      <button
-        class="btn btn-xs btn-ghost"
+      <Button
+        class="btn-xs btn-ghost"
         onclick={deleteParameter(i)}
       >
         <img
@@ -178,25 +180,21 @@
           class="svg-red w-full h-full"
           alt="delete test case"
         />
-      </button>
+      </Button>
     </div>
   {/each}
-  <button
-    class="btn btn-success w-full btn-sm"
+  <Button
+    class="btn-success w-full btn-sm"
     onclick={addParameter}
   >
     Add Parameter
-  </button>
+  </Button>
 </div>
 
 <style>
   .svg-red {
     filter: brightness(0) saturate(100%) invert(13%) sepia(87%) saturate(7148%) hue-rotate(357deg)
       brightness(90%) contrast(126%);
-  }
-
-  .input-primary {
-    --tw-border-color: oklch(0.636 0.293 279.44);
   }
 
   .select-primary {

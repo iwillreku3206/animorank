@@ -5,6 +5,7 @@
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
   import { removeBookmark, toggleBookmark } from './bookmark';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
   import type { PageProps } from './$types';
 
   type ProblemSet = PageProps['data']['problemSets'][number];
@@ -55,9 +56,9 @@
     </div>
 
     <!-- Bookmark button -->
-    <button
+    <Button
       type="button"
-      class="btn btn-ghost btn-square p-0 w-4 h-4"
+      class="btn-ghost btn-square p-0 w-4 h-4"
       onclick={handleBookmarkClick}
       aria-label={problemSet.bookmarked
         ? `Remove ${problemSet.title} from bookmarks`
@@ -75,7 +76,7 @@
           aria-hidden="true"
         />
       {/if}
-    </button>
+    </Button>
   </div>
 
   <!-- Title + author -->

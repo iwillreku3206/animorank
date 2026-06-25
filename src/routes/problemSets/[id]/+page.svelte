@@ -35,7 +35,7 @@
 </script>
 
 <main class="flex flex-col">
-  <header class="flex flex-row gap-8 py-8 px-8 xl:px-32 border-b border-base-100">
+  <header class="flex flex-col gap-8 py-8 app-gutter border-b border-base-100 lg:flex-row">
     <!-- Col 1: Problem set details -->
     <div class="flex flex-[3] flex-col gap-4">
       <!-- Subject category breadcrumb -->
@@ -58,7 +58,9 @@
       <!-- Title + author-->
       <div class="flex flex-col gap-2">
         <!-- Title -->
-        <h1 class="font-display text-4xl font-semibold line-clamp-2 overflow-hidden">
+        <h1
+          class="font-display text-3xl sm:text-4xl font-semibold line-clamp-2 overflow-hidden break-words"
+        >
           {problemSet.title}
         </h1>
 
@@ -141,7 +143,7 @@
     </div>
   </header>
 
-  <div class="flex flex-col px-8 xl:px-32 gap-4 py-8">
+  <div class="flex flex-col app-gutter gap-4 py-8">
     {#each problemSet.problems as problem (problem.id)}
       <ProblemListItem
         {problem}
