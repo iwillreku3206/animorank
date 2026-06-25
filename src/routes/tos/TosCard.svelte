@@ -4,13 +4,15 @@
   let { checked = $bindable(), children }: { checked: boolean; children: Snippet } = $props();
 </script>
 
-<label class="p-8 flex flex-row items-center gap-4 bg-base-100 rounded-lg">
+<label
+  class="flex flex-row items-start gap-4 p-5 cursor-pointer transition-colors hover:bg-base-content/[0.03] has-checked:bg-primary/[0.06]"
+>
   <input
     type="checkbox"
-    class="checkbox checkbox-primary rounded-lg"
+    class="checkbox checkbox-primary mt-0.5 shrink-0"
     bind:checked
   />
-  <p>
+  <p class="leading-relaxed">
     {@render children()}
   </p>
 </label>
