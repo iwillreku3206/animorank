@@ -8,7 +8,6 @@
   import MenuIcon from '@iconify-svelte/fa6-solid/bars';
   import XIcon from '@iconify-svelte/fa6-solid/xmark';
 
-  /** The authenticated user, or null/undefined if not logged in. */
   let { user }: { user: User | null | undefined } = $props();
 
   let loggedIn = $derived(!!user);
@@ -22,9 +21,6 @@
   const FOCUSABLE =
     'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-  // Lock body scroll while the drawer is open, but pad the body by the width of
-  // the now-missing scrollbar so the page behind keeps its place instead of
-  // widening (the "autoadjust" jump).
   $effect(() => {
     if (!openDrawer) return;
     const { body } = document;
@@ -39,10 +35,6 @@
     };
   });
 
-  // Treat the open drawer as a modal dialog: move focus into the panel on open
-  // and return it to the hamburger on close. Tab is trapped inside the panel by
-  // `trapFocus`, so keyboard users can't wander onto the page behind the
-  // backdrop while it's dimmed.
   $effect(() => {
     if (!openDrawer) return;
     tick().then(() => drawerEl?.focus());
@@ -72,9 +64,6 @@
   }}
 />
 
-<!-- Three-cell grid: left | center | right. Equal 1fr side columns keep the
-     center cell optically centered in the viewport regardless of how wide the
-     edge controls are, so the mobile logo can never collide with them. -->
 <nav
   class="app-gutter safe-top sticky top-0 z-30 grid min-h-16 grid-cols-[1fr_auto_1fr] items-center bg-base-300"
 >
@@ -144,10 +133,7 @@
   </div>
 </nav>
 
-<!-- Mobile nav drawer. Backdrop + panel stay in the DOM so they animate both
-     ways; `inert` keeps the closed panel out of tab order. Slides in from the
-     left to match the hamburger's edge. The backdrop is mouse-only (tabindex
-     -1); keyboard users dismiss via Esc or the close button. -->
+<!-- Mobile nav drawer. -->
 <button
   class="drawer-anim fixed inset-0 z-40 bg-black/60 md:hidden"
   class:pointer-events-none={!openDrawer}
@@ -169,7 +155,9 @@
   tabindex="-1"
   onkeydown={trapFocus}
 >
-  <div class="safe-top flex items-center justify-between border-b border-base-content/10 px-5 py-4">
+  <div
+    class="safe-top flex min-h-16 items-center justify-between border-b border-base-content/10 px-5"
+  >
     <a
       href="/"
       onclick={closeDrawer}
