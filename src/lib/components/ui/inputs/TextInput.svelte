@@ -7,8 +7,9 @@
 
   // Shared prop type so callers (and any future wrapper) can inherit it verbatim.
   export type TextInputProps = HTMLInputAttributes & {
-    /** Two-way bound value. */
-    value?: string | number;
+    /** Two-way bound value. `null` is accepted so callers can bind nullable
+     * model fields directly, as a native `<input>` already tolerates. */
+    value?: string | number | null;
     /** Content rendered before the field — typically a leading icon. */
     leading?: Snippet;
     /** Content rendered after the field — a trailing icon, kbd hint, etc. */

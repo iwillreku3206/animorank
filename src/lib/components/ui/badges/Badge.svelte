@@ -3,11 +3,8 @@
   import type { HTMLAttributes } from 'svelte/elements';
 
   type Props = HTMLAttributes<HTMLElement> & {
-    /** Which element to render. Defaults to a non-interactive span. */
     as?: 'span' | 'a' | 'button';
-    /** Only applied when `as="a"`. */
     href?: string;
-    /** Only applied when `as="button"`; defaults to "button". */
     type?: 'button' | 'submit' | 'reset';
     class?: string;
     children?: Snippet;

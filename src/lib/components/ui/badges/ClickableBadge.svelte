@@ -12,8 +12,6 @@
 
   let { href, class: className, children, ...rest }: Props = $props();
 
-  // A real <a>/<button> gives us keyboard activation and focus for free, unlike
-  // a <span role="button">.
   const as = $derived<'a' | 'button'>(typeof href === 'string' ? 'a' : 'button');
 </script>
 

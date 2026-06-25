@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Button from '$lib/components/ui/buttons/Button.svelte';
+
   /** @type {{show?: boolean, closeModal: any, children?: import('svelte').Snippet}} */
   let { show = false, closeModal, children } = $props();
 </script>
@@ -12,8 +14,8 @@
     class="card shadow-xl w-96 flex flex-col justify-center items-center z-10 bg-[#1E1E1E] relative"
   >
     <div class="flex justify-end w-full p-1">
-      <button
-        class="btn btn-square btn-ghost"
+      <Button
+        class="btn-square btn-ghost"
         onclick={closeModal}
         aria-label="Close"
       >
@@ -31,7 +33,7 @@
             d="M6 18L18 6M6 6l12 12"
           />
         </svg>
-      </button>
+      </Button>
     </div>
     <div class="px-8 mb-5 w-full mt-2">
       {@render children?.()}
