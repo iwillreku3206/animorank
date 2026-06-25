@@ -21,12 +21,50 @@
 
     <link
       rel="icon"
-      href="%sveltekit.assets%/favicon.png"
+      type="image/svg+xml"
+      href="%sveltekit.assets%/brand/favicon/favicon.svg"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="96x96"
+      href="%sveltekit.assets%/brand/favicon/favicon-96x96.png"
+    />
+    <link
+      rel="shortcut icon"
+      href="%sveltekit.assets%/brand/favicon/favicon.ico"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="%sveltekit.assets%/brand/favicon/apple-touch-icon.png"
+    />
+    <link
+      rel="manifest"
+      href="%sveltekit.assets%/brand/favicon/site.webmanifest"
+    />
+    <meta
+      name="theme-color"
+      content="#141414"
     />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
+
+    <!-- Apply the saved light/dark theme before first paint to avoid a flash.
+         Mirrors $lib/theme.svelte.ts; keep the storage key and values in sync. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (t !== 'light' && t !== 'dark') return;
+          document.documentElement.setAttribute('data-theme', 'animorank-' + t);
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', t === 'light' ? '#d4dde4' : '#141414');
+        } catch (e) {}
+      })();
+    </script>
 
     %sveltekit.head%
   </head>
