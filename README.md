@@ -6,24 +6,25 @@ A web-based C programming education platform where teachers create problem sets 
 
 - **Problem Sets** — Teachers create and manage collections of C programming problems
 - **In-Browser Code Editor** — Monaco editor with syntax highlighting and edit history
-- **Automated Testing** — Student code is compiled and tested against teacher-defined test cases via the Piston API
-- **Role-Based Access** — Google OAuth2 login with automatic teacher/student role assignment
+- **Automated Testing** — Student code is compiled and tested against teacher-defined test cases via a self-hosted [Judge0](https://judge0.com/) instance
+- **Role-Based Access** — Google sign-in with automatic teacher/student role assignment
 - **Session Persistence** — Code progress auto-saves locally and syncs to the database
 
 ## Tech Stack
 
 - **Frontend**: SvelteKit 2, Svelte 5, TypeScript
-- **Styling**: Tailwind CSS, DaisyUI
-- **Database**: Supabase (PostgreSQL)
-- **Auth**: Google OAuth2 with JWT
-- **Code Execution**: [Piston API](https://github.com/engineer-man/piston)
-- **Editors**: Monaco (code), Tiptap (rich text)
-- **Deployment**: Vercel
+- **Styling**: Tailwind CSS v4, DaisyUI
+- **Database**: PostgreSQL, accessed through [Prisma](https://www.prisma.io/) + [ZenStack](https://zenstack.dev/) (ORM and access policies)
+- **Auth**: [Auth.js](https://authjs.dev/) (`@auth/sveltekit`) — Google OAuth provider, Prisma adapter, database-backed sessions
+- **Code Execution**: self-hosted [Judge0](https://judge0.com/)
+- **Editors**: Monaco (code), Gravity UI Markdown editor (rich text)
+- **Deployment**: Docker image built with the SvelteKit Node adapter
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18+)
-- A [Supabase](https://supabase.com/) project
+- [Node.js](https://nodejs.org/) (v20+; the Docker image uses Node 24)
+- A **PostgreSQL** database (self-hosted or managed). A second, empty database is needed as a [shadow database](https://www.prisma.io/docs/orm/prisma-migrate/understanding-prisma-migrate/shadow-database) for running migrations during development.
+- A reachable **Judge0** instance ([self-hosting guide](https://github.com/judge0/judge0))
 - A [Google Cloud](https://console.cloud.google.com/) project with OAuth2 credentials
 
 ## Setup
@@ -38,48 +39,61 @@ npm install
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/) > APIs & Services > Credentials
 2. Create an **OAuth 2.0 Client ID** (application type: Web application)
-3. Add an **Authorized redirect URI**:
-   - Local development: `http://localhost:5173/oath`
-   - Production: `https://yourdomain.com/oath`
+3. Add an **Authorized redirect URI** (Auth.js handles the callback at `/auth/callback/google`):
+   - Local development: `http://localhost:5173/auth/callback/google`
+   - Production: `https://yourdomain.com/auth/callback/google`
 4. Note down the **Client ID** and **Client Secret**
 
-### 3. Configure Supabase
-
-1. Create a new project at [supabase.com](https://supabase.com/)
-2. Run the setup script in the Supabase SQL Editor (Dashboard > SQL Editor > New query):
-   - Copy and paste the contents of [`supabase/setup.sql`](supabase/setup.sql) and run it
-   - This creates all required tables with correct columns, primary keys, and foreign key relationships
-3. Get your **Project URL** and **service_role key** from Settings > API
-
-### 4. Set up environment variables
+### 3. Set up environment variables
 
 Create a `.env` file in the project root:
 
 ```env
-SUPABASE_URL=https://your-project.supabase.co
-SERVICE_KEY=your-supabase-service-role-key
-SECRET_CLIENT_ID=your-google-oauth-client-id
-SECRET_CLIENT_SECRET=your-google-oauth-client-secret
-APP_JWT_SECRET=your-jwt-secret
-isPROD=false
+# PostgreSQL
+DATABASE_URL="postgresql://user:password@host:5432/animorank?schema=public"
+# Empty database used by `zen migrate dev` to detect schema drift (dev only)
+SHADOW_DATABASE_URL="postgresql://user:password@host:5432/animorank_shadow?schema=public"
+
+# Auth.js — read automatically by @auth/sveltekit
+AUTH_SECRET=your-auth-secret
+AUTH_GOOGLE_ID=your-google-oauth-client-id
+AUTH_GOOGLE_SECRET=your-google-oauth-client-secret
+
+# Judge0 base URL (no trailing slash)
+JUDGE0_BASE_URL=http://your-judge0-host:2358
+
+# Use mkcert to serve the dev server over HTTPS (optional)
+SSL_DEV_SERVER=true
+
+# Production only: public origin used by the Node adapter for CSRF/redirects
+# ORIGIN=https://yourdomain.com
 ```
 
-Generate a JWT secret:
+Generate an `AUTH_SECRET`:
 
 ```bash
-openssl rand -base64 32
+npx auth secret
+# or: openssl rand -base64 33
 ```
 
-### 5. Update OAuth redirect URL for local development
+### 4. Generate the client and apply migrations
 
-The OAuth redirect URL is hardcoded in two files. For local development, update them to `http://localhost:5173/oath`:
+The ZenStack/Prisma client is generated from [`src/zenstack/schema.zmodel`](src/zenstack/schema.zmodel) into `src/lib/zenstack`, and the schema lives as migrations under [`prisma/migrations`](prisma/migrations).
 
-- `src/routes/oath/+server.js` (line 9)
-- `src/routes/+page.server.js` (line 38)
+```bash
+npx zen generate          # generate the ORM client from the .zmodel schema
+npx zen migrate dev       # create/apply migrations against DATABASE_URL (uses the shadow DB)
+```
 
-### 6. Add teachers
+In production, apply existing migrations without generating new ones:
 
-Insert email addresses into the `Teacher_list` table in Supabase. Users who log in with a matching email will be assigned the teacher role; all others become students.
+```bash
+npx zen migrate deploy
+```
+
+### 5. Add teachers
+
+Insert email addresses into the `TeacherList` table (model `TeacherList { email }`). On first sign-in, a user whose email matches a row is assigned the **teacher** role; everyone else becomes a **student**.
 
 ## Development
 
@@ -87,4 +101,15 @@ Insert email addresses into the `Teacher_list` table in Supabase. Users who log 
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`.
+The app is served at `http://localhost:5173` (or `https://localhost:5173` when `SSL_DEV_SERVER=true`).
+
+## Docker
+
+The repository ships a production [`Dockerfile`](Dockerfile) (SvelteKit Node adapter) and [`docker-entrypoint.sh`](docker-entrypoint.sh), which runs `zen migrate deploy` and then starts the server with `node build` on port `3000`.
+
+```bash
+docker build -t animorank .
+docker run --env-file .env -p 3000:3000 animorank
+```
+
+Set `ORIGIN` to the public URL the app is served from so the Node adapter accepts form submissions and OAuth redirects.
