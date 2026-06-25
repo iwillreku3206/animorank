@@ -6,12 +6,7 @@
   export const DEFAULT_TITLE = 'AnimoRank: practice for your DLSU CS courses';
   export const DEFAULT_DESCRIPTION =
     'Free, student-built practice for DLSU Computer Science courses.';
-  // Interim: the brand logo on the light variant survives the white background
-  // most platforms composite transparent PNGs onto. TODO: swap for a
-  // purpose-built, flat 1200x630 image for proper summary_large_image framing.
-  export const DEFAULT_OG_IMAGE = '/brand/stacked/animorank_stacked_primary_light.png';
-  // Logo for Organization structured data — the light variant reads on Google's
-  // white knowledge surfaces.
+  export const DEFAULT_OG_IMAGE = '/brand/og/og-image.png';
   const ORG_LOGO = '/brand/icon/animorank_icon_primary_light.png';
   const GITHUB_URL = 'https://github.com/iwillreku3206/animorank';
 </script>
@@ -20,8 +15,6 @@
   import { page } from '$app/state';
 
   interface Props {
-    /** Page title without the brand suffix. Omit on the landing page to use the
-     *  full default title verbatim. */
     title?: string;
     description?: string;
     /** Absolute URL or root-relative path (e.g. "/og/faqs.png"). */
