@@ -1,10 +1,12 @@
 <script lang="ts">
   import type { User } from '@auth/sveltekit';
   import { signOut } from '@auth/sveltekit/client';
-  import { theme, type Theme } from '$lib/theme.svelte';
+  // TODO: add theme toggle back in once we have a light mode design.
+  // import { theme, type Theme } from '$lib/theme.svelte';
   import Button from '$lib/components/ui/buttons/Button.svelte';
-  import SunIcon from '@iconify-svelte/fa6-solid/sun';
-  import MoonIcon from '@iconify-svelte/fa6-solid/moon';
+  // TODO: add theme toggle back in once we have a light mode design.
+  // import SunIcon from '@iconify-svelte/fa6-solid/sun';
+  // import MoonIcon from '@iconify-svelte/fa6-solid/moon';
   import ContractIcon from '@iconify-svelte/fa6-solid/file-contract';
   import LogoutIcon from '@iconify-svelte/fa6-solid/arrow-right-from-bracket';
 
@@ -53,9 +55,10 @@
     };
   });
 
-  function setTheme(next: Theme) {
-    theme.set(next);
-  }
+  // TODO: add theme toggle back in once we have a light mode design.
+  // function setTheme(next: Theme) {
+  //   theme.set(next);
+  // }
 
   function logout() {
     close();
@@ -79,8 +82,7 @@
   />
 </Button>
 
-<!-- Transparent click-away layer; stays in the DOM so the panel can animate out.
-     No dim — this is a menu, not a modal. -->
+<!-- Transparent click-away layer; stays in the DOM so the panel can animate out. -->
 <button
   type="button"
   class="fixed inset-0 z-40 cursor-default"
@@ -118,7 +120,9 @@
 
   <div class="p-1.5">
     <!-- Theme selector -->
-    <div class="flex items-center justify-between gap-2 px-2.5 py-1.5">
+
+    <!-- TODO: add theme toggle back in once we have a light mode design. -->
+    <!-- <div class="flex items-center justify-between gap-2 px-2.5 py-1.5">
       <span class="text-sm text-base-content/80">Theme</span>
       <div
         class="inline-flex rounded-full bg-base-300 p-0.5"
@@ -146,7 +150,7 @@
           <MoonIcon class="h-3.5 w-3.5" />
         </button>
       </div>
-    </div>
+    </div> -->
 
     <!-- Review TOS: server form (revokes consent, redirects to /tos). -->
     <form
@@ -219,7 +223,9 @@
   }
 
   /* Theme segmented control. */
-  .seg {
+
+  /* TODO: add theme toggle back in once we have a light mode design. */
+  /* .seg {
     display: grid;
     place-items: center;
     height: 1.5rem;
@@ -238,13 +244,16 @@
   .seg:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 1px;
-  }
+  } */
 
   @media (prefers-reduced-motion: reduce) {
     .menu-anim,
-    .item,
-    .seg {
+    .item {
       transition: none;
     }
+    /* TODO: add theme toggle back in once we have a light mode design. */
+    /* .seg {
+      transition: none;
+    } */
   }
 </style>
