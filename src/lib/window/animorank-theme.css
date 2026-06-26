@@ -57,7 +57,7 @@
   --dv-paneview-active-outline-color: red;
 
   /* ---- Sash (group splitters) ------------------------------------------ */
-  --dv-sash-color: var(--color-base-300);
+  --dv-sash-color: transparent;
   --dv-active-sash-color: var(--color-primary);
   --dv-active-sash-transition-duration: 0.1s;
   --dv-active-sash-transition-delay: 0.2s;
