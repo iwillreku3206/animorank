@@ -1,3 +1,4 @@
+import { Feed } from 'feed';
 import type { RequestHandler } from './$types';
 import { entries } from '$lib/changelog';
 
@@ -5,50 +6,36 @@ import { entries } from '$lib/changelog';
 // staging, and production without hardcoding a domain.
 export const prerender = false;
 
-const escapeXml = (s: string) =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-const rfc822 = (iso: string) => new Date(`${iso}T00:00:00Z`).toUTCString();
+// Entry dates are YYYY-MM-DD; pin to UTC midnight so toUTCString() is stable
+// regardless of the server's local timezone.
+const toDate = (iso: string) => new Date(`${iso}T00:00:00Z`);
 
 export const GET: RequestHandler = ({ url }) => {
   const origin = url.origin;
 
-  const items = entries
-    .map(
-      (e) => `    <item>
-      <title>${escapeXml(e.title)}</title>
-      <link>${origin}/changelog#${e.slug}</link>
-      <guid isPermaLink="false">${e.slug}</guid>
-      <pubDate>${rfc822(e.date)}</pubDate>
-      <description>${escapeXml(e.summary)}</description>
-    </item>`
-    )
-    .join('\n');
+  const feed = new Feed({
+    title: 'AnimoRank changelog',
+    description: 'New features, improvements, and fixes in AnimoRank.',
+    id: `${origin}/changelog`,
+    link: `${origin}/changelog`,
+    language: 'en',
+    feedLinks: { rss: `${origin}/changelog/rss.xml` },
+    // Drives <lastBuildDate>; entries are newest-first.
+    updated: entries[0] ? toDate(entries[0].date) : new Date()
+  });
 
-  const lastBuild = entries[0] ? rfc822(entries[0].date) : new Date().toUTCString();
+  for (const e of entries) {
+    feed.addItem({
+      title: e.title,
+      // Rendered as <guid isPermaLink="false">slug</guid>.
+      id: e.slug,
+      link: `${origin}/changelog#${e.slug}`,
+      date: toDate(e.date),
+      description: e.summary
+    });
+  }
 
-  const body = `<?xml version="1.0" encoding="UTF-8"?>
-<rss
-  version="2.0"
-  xmlns:atom="http://www.w3.org/2005/Atom"
->
-  <channel>
-    <title>AnimoRank changelog</title>
-    <link>${origin}/changelog</link>
-    <atom:link
-      href="${origin}/changelog/rss.xml"
-      rel="self"
-      type="application/rss+xml"
-    />
-    <description>New features, improvements, and fixes in AnimoRank.</description>
-    <language>en</language>
-    <lastBuildDate>${lastBuild}</lastBuildDate>
-${items}
-  </channel>
-</rss>
-`;
-
-  return new Response(body, {
+  return new Response(feed.rss2(), {
     headers: {
       'content-type': 'application/xml',
       'cache-control': 'public, max-age=3600'

@@ -59,15 +59,7 @@ export function hasAnyFilter(filters: Filters): boolean {
 
 /** Deep-copy a Filters object so callers can mutate a draft without touching the source. */
 export function cloneFilters(f: Filters): Filters {
-  return {
-    include: [...f.include],
-    exclude: [...f.exclude],
-    topicMatchAll: f.topicMatchAll,
-    statuses: [...f.statuses],
-    creators: [...f.creators],
-    creatorMatchAll: f.creatorMatchAll,
-    bookmarked: f.bookmarked
-  };
+  return structuredClone(f);
 }
 
 export function emptyFilters(): Filters {
