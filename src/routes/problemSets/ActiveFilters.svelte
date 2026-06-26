@@ -2,16 +2,30 @@
   import type { Tag } from '$lib/zenstack/models';
   import type { Filters, Status } from './api';
   import { STATUS_LABELS, STATUSES } from './api';
-  import { removeTag, toggleValue } from './filterUtils';
+  import { removeTag, toggleValue, cloneFilters } from './filterUtils';
   import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
   import ClickableBadge from '$lib/components/ui/badges/ClickableBadge.svelte';
   import XIcon from '@iconify-svelte/fa6-solid/xmark';
 
   let {
-    filters = $bindable(),
+    filters,
+    onChange,
     allTags,
     creators = []
-  }: { filters: Filters; allTags: Tag[]; creators?: { id: string; name: string }[] } = $props();
+  }: {
+    filters: Filters;
+    /** Emit the next filter state; the parent reflects it into the URL. */
+    onChange: (_next: Filters) => void;
+    allTags: Tag[];
+    creators?: { id: string; name: string }[];
+  } = $props();
+
+  /** Apply a mutation to a draft copy and emit it (filters itself is read-only). */
+  function edit(fn: (_draft: Filters) => void) {
+    const draft = cloneFilters(filters);
+    fn(draft);
+    onChange(draft);
+  }
 
   const byId = $derived(arrayToHashMap(allTags, (t) => t.id));
 
@@ -59,7 +73,7 @@
       category: TYPE_LABEL[tag.type] ?? '',
       value: tag.label,
       exclude: state === 'exclude',
-      remove: () => removeTag(filters, id)
+      remove: () => edit((f) => removeTag(f, id))
     })),
 
     // Statuses in canonical order; creators in the (alphabetical) load order.
@@ -67,7 +81,7 @@
       key: `status:${status}`,
       category: 'Status',
       value: STATUS_LABELS[status],
-      remove: () => (filters.statuses = toggleValue(filters.statuses, status) as Status[])
+      remove: () => edit((f) => (f.statuses = toggleValue(f.statuses, status) as Status[]))
     })),
 
     ...creators
@@ -76,7 +90,7 @@
         key: `creator:${creator.id}`,
         category: 'Creator',
         value: creator.name,
-        remove: () => (filters.creators = toggleValue(filters.creators, creator.id))
+        remove: () => edit((f) => (f.creators = toggleValue(f.creators, creator.id)))
       })),
 
     ...(filters.bookmarked
@@ -85,7 +99,7 @@
             key: 'bookmarked',
             category: '',
             value: 'Bookmarked',
-            remove: () => (filters.bookmarked = false)
+            remove: () => edit((f) => (f.bookmarked = false))
           }
         ]
       : [])

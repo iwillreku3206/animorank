@@ -5,6 +5,7 @@
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
   import { removeBookmark, toggleBookmark } from './bookmark';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
   import type { PageProps } from './$types';
 
   type ProblemSet = PageProps['data']['problemSets'][number];
@@ -31,7 +32,7 @@
 
 <!-- List container -->
 <div
-  class="relative w-full flex flex-row gap-8 bg-base-200 hover:bg-base-100/70 rounded-lg px-8 py-4 items-center"
+  class="relative w-full flex flex-col gap-4 bg-base-200 hover:bg-base-100/70 rounded-lg px-4 py-4 sm:px-6 md:flex-row md:gap-8 md:items-center"
 >
   <!-- Main content: subject, tags, title, author -->
   <div class="flex-1 flex flex-col gap-2">
@@ -94,7 +95,7 @@
   </div>
 
   <!-- Right panel: progress, bookmark, details button -->
-  <div class="flex flex-row items-center gap-8 w-80">
+  <div class="flex flex-row items-center gap-6 w-full md:w-80 md:gap-8">
     <!-- Progress section -->
     <div class="flex-1 flex flex-col gap-2">
       <div class="flex justify-between gap-4 text-sm text-base-content">
@@ -115,9 +116,9 @@
     </div>
 
     <!-- Bookmark button -->
-    <button
+    <Button
       type="button"
-      class="btn btn-ghost btn-square p-0 w-6 h-6 z-20"
+      class="btn-ghost btn-square p-0 w-6 h-6 z-20"
       onclick={handleBookmarkClick}
       aria-label={problemSet.bookmarked
         ? `Remove ${problemSet.title} from bookmarks`
@@ -135,7 +136,7 @@
           aria-hidden="true"
         />
       {/if}
-    </button>
+    </Button>
 
     <!-- Details button -->
     <ButtonLink

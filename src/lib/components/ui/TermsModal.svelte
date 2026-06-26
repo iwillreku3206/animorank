@@ -1,5 +1,6 @@
 <script lang="ts">
   import { openTerms } from '$lib/state/terms.svelte';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
 
   const closeModal = () => {
     openTerms.open = false;
@@ -11,8 +12,8 @@
     <div
       class="bg-[#1E1E1E] shadow-xl flex flex-col justify-center items-center z-10 rounded-md relative w-96 md:w-112.5 pt-10 pb-5"
     >
-      <button
-        class="btn btn-square btn-ghost absolute top-2 right-2"
+      <Button
+        class="btn-square btn-ghost absolute top-2 right-2"
         onclick={closeModal}
         aria-label="Close"
       >
@@ -30,7 +31,7 @@
             d="M6 18L18 6M6 6l12 12"
           />
         </svg>
-      </button>
+      </Button>
       <div class="card-body mt3 w-full max-h-[60vh] overflow-y-auto px-4">
         <h3 class="font-bold mb-2">Terms and Conditions</h3>
         <div class="text-gray-400">

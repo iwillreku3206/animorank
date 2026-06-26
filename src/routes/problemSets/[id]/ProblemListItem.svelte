@@ -30,7 +30,7 @@
   aria-label={`View details for ${problem.title}`}
 >
   <div
-    class="w-full flex flex-row gap-8 bg-base-200 px-8 py-4 rounded-lg hover:bg-base-100/70"
+    class="w-full flex flex-col gap-4 bg-base-200 px-4 py-4 sm:px-6 rounded-lg hover:bg-base-100/70 md:flex-row md:gap-8 md:items-center"
     aria-label={`View details for ${problem.title}`}
   >
     <!-- Problem details -->

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import Seo from '$lib/components/layout/Seo.svelte';
 
   const sections = [
     { id: 'information-we-collect', label: 'Information We Collect' },
@@ -30,9 +31,14 @@
   });
 </script>
 
-<div class="px-4 xl:px-32 py-12 flex flex-row gap-16 items-start justify-center">
-  <!-- Table of contents -->
-  <aside class="w-56 shrink-0 sticky top-20 h-fit">
+<Seo
+  title="Privacy Policy"
+  description="How AnimoRank collects, uses, anonymizes, and retains your data."
+/>
+
+<div class="app-gutter py-12 flex flex-col gap-10 items-start justify-center lg:flex-row lg:gap-16">
+  <!-- Table of contents (rail nav; hidden on mobile where readers just scroll) -->
+  <aside class="hidden lg:block lg:w-56 lg:shrink-0 lg:sticky lg:top-20 lg:h-fit">
     <h3 class="text-sm font-display font-semibold mb-4">Privacy Policy</h3>
     <nav class="flex flex-col">
       {#each sections as section (section.id)}
@@ -42,7 +48,7 @@
           class="text-sm block py-2 pl-4 border-l-2 transition-colors duration-250
             {activeSection === section.id
             ? 'text-base-content border-primary'
-            : 'text-base-content/50 hover:text-base-content border-neutral'}"
+            : 'text-base-content/60 hover:text-base-content border-neutral'}"
         >
           {section.label}
         </a>
@@ -53,9 +59,9 @@
   <!-- Main content -->
   <main class="flex-1 max-w-2xl">
     <h1 class="font-display text-4xl font-bold mb-2">Privacy Policy</h1>
-    <p class="text-sm text-base-content/50 mb-8">Last Updated: May 25, 2026</p>
+    <p class="text-md text-base-content/60 mb-8">Last Updated: May 25, 2026</p>
 
-    <div class="prose prose-headings:font-display">
+    <div class="prose prose-headings:font-display text-md text-base-content/70">
       <p>
         AnimoRank ("we," "us," or "our") provides this Privacy Policy to inform you of our policies
         and procedures regarding the collection, use, disclosure, and protection of information we

@@ -6,20 +6,23 @@
 
   // Shared prop type so ButtonLink can inherit it verbatim. Omit the anchor's
   // `type` (a MIME hint) so it doesn't clash with the button's `type`
-  // ("submit" | "reset" | "button") in the intersection.
-  export type ButtonProps = HTMLButtonAttributes & Omit<HTMLAnchorAttributes, 'type'>;
+  // ("submit" | "reset" | "button") in the intersection. `ref` exposes the
+  // underlying DOM node (`bind:ref`) for callers that need it — e.g. focus
+  // management — since `bind:this` on a component yields the instance, not the
+  // element.
+  export type ButtonProps = HTMLButtonAttributes &
+    Omit<HTMLAnchorAttributes, 'type'> & { ref?: HTMLElement | null };
 </script>
 
 <script lang="ts">
   // Polymorphic: renders an <a> when `href` is set, otherwise a <button>. This
   // is the single source of truth for button styling — ButtonLink delegates here.
-  let props: ButtonProps = $props();
-
-  let { class: className, children, href, ...rest } = $derived(props);
+  let { class: className, children, href, ref = $bindable(null), ...rest }: ButtonProps = $props();
 </script>
 
 <svelte:element
   this={href != null ? 'a' : 'button'}
+  bind:this={ref}
   {href}
   class="btn shadow-none font-medium rounded {className}"
   {...rest}>{@render children?.()}</svelte:element
@@ -33,15 +36,12 @@
   }
 
   @media (hover: hover) {
-    /* Prominent hover color shift. daisyUI only darkens --btn-bg by 7%, which
-      is invisible on the theme's bright mint/gold buttons — push it to 14%. */
     .btn:hover {
       --btn-bg: color-mix(in oklab, var(--btn-color, var(--color-base-200)), #000 14%);
     }
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    /* Tactile press: scale down, cancel the lift, deepen the color.  */
     .btn:active:not(.btn-disabled, :disabled, [disabled]) {
       --btn-bg: color-mix(in oklab, var(--btn-color, var(--color-base-200)), #000 20%);
     }

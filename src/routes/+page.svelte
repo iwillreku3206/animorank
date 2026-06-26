@@ -8,6 +8,7 @@
   import HeroGraph from './HeroGraph.svelte';
   import AutograderDemo from './AutograderDemo.svelte';
   import { signIn } from '@auth/sveltekit/client';
+  import Seo from '$lib/components/layout/Seo.svelte';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
@@ -57,13 +58,7 @@
   });
 </script>
 
-<svelte:head>
-  <title>AnimoRank: practice for your DLSU CS courses</title>
-  <meta
-    name="description"
-    content="Free, student-built practice for DLSU Computer Science courses."
-  />
-</svelte:head>
+<Seo />
 
 {#snippet primaryCta(label: string, onGreen?: boolean)}
   {#if data.user}
@@ -100,7 +95,7 @@
     <HeroGraph />
 
     <div
-      class="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-4 pb-16 text-left lg:pb-20 xl:px-32"
+      class="pointer-events-none absolute inset-x-0 bottom-0 z-10 app-gutter pb-16 text-left lg:pb-20"
     >
       <div class="pointer-events-auto max-w-2xl">
         <h1
@@ -137,7 +132,7 @@
   </section>
 
   <!-- COURSES + LIVE PROOF: pick a course (left), run it in the editor (right) -->
-  <section class="px-4 py-20 lg:py-24 xl:px-32">
+  <section class="app-gutter py-20 lg:py-24">
     <div class="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-center lg:gap-16">
       <div class="max-w-2xl lg:col-span-4">
         <h2
@@ -223,7 +218,7 @@
   </section> -->
 
   <!-- CLOSING: the page's one committed brand moment — drenched green -->
-  <section class="px-4 pb-28 lg:pb-36 xl:px-32">
+  <section class="app-gutter pb-28 lg:pb-36">
     <div
       data-reveal="up"
       class="relative overflow-hidden rounded-3xl bg-primary px-7 py-16 text-primary-content lg:px-16 lg:py-24"

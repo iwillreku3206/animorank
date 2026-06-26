@@ -1,15 +1,14 @@
 <script lang="ts">
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
+  import Seo from '$lib/components/layout/Seo.svelte';
 </script>
 
-<svelte:head>
-  <title>About AnimoRank — coming soon</title>
-  <meta
-    name="description"
-    content="The AnimoRank about page is under development."
-  />
-</svelte:head>
+<Seo
+  title="About — coming soon"
+  description="The AnimoRank about page is under development."
+  noindex
+/>
 
 <main class="flex flex-1 items-center justify-center bg-base-300 px-4 py-24 text-base-content">
   <div class="max-w-xl text-center">

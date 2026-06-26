@@ -3,6 +3,7 @@
   import { createTestCase, deleteTestCase } from '../api';
   import type { ProblemEditorWindowContext } from '../context.svelte';
   import TestCase from './TestCases/TestCase.svelte';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
   import type { ProblemTestCaseType } from '$lib/zenstack/models';
 
   let { context }: { context: ProblemEditorWindowContext } = $props();
@@ -60,27 +61,27 @@
         <Popover.Close />
         <Popover.Arrow />
         <div class="bg-neutral-800 rounded-lg flex flex-col gap-2 p-4">
-          <button
+          <Button
             onclick={addTestCase('FunctionOutputTestCase')}
             disabled={disableAddTestCase}
-            class="btn btn-success btn-sm"
+            class="btn-success btn-sm"
           >
             Function Output Test Case
-          </button>
-          <button
+          </Button>
+          <Button
             onclick={addTestCase('ProgramIOTestCase')}
             disabled={disableAddTestCase}
-            class="btn btn-success btn-sm"
+            class="btn-success btn-sm"
           >
             Program I/O Test Case
-          </button>
-          <button
+          </Button>
+          <Button
             onclick={addTestCase('CustomTestCase')}
             disabled={disableAddTestCase}
-            class="btn btn-success btn-sm"
+            class="btn-success btn-sm"
           >
             Custom Test Case
-          </button>
+          </Button>
         </div>
       </Popover.Content>
     </Popover.Portal>

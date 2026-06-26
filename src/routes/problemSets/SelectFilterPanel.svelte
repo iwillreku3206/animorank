@@ -1,6 +1,7 @@
 <script lang="ts">
   import { toggleValue } from './filterUtils';
   import ClickableBadge from '$lib/components/ui/badges/ClickableBadge.svelte';
+  import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
   import SearchIcon from '@iconify-svelte/fa6-solid/magnifying-glass';
 
   // A tag-style multi-select panel for non-tag categories (status, creators).
@@ -8,19 +9,24 @@
   // visual language as TagFilterPanel, but over plain {id,label} options.
   let {
     options,
-    selected = $bindable(),
+    selected,
+    onSelectedChange,
     searchable = false,
     searchPlaceholder = 'Filter',
     showMatchAll = false,
-    matchAll = $bindable(false),
+    matchAll = false,
+    onMatchAllChange,
     matchAllLabel = 'Match all selected'
   }: {
     options: { id: string; label: string }[];
     selected: string[];
+    /** Emit the next selection; the parent owns the underlying state. */
+    onSelectedChange: (__next: string[]) => void;
     searchable?: boolean;
     searchPlaceholder?: string;
     showMatchAll?: boolean;
     matchAll?: boolean;
+    onMatchAllChange?: (_next: boolean) => void;
     matchAllLabel?: string;
   } = $props();
 
@@ -34,14 +40,16 @@
 
 <div class="flex flex-col gap-3">
   {#if searchable}
-    <label class="input input-sm w-full">
-      <SearchIcon class="h-[1em] opacity-50" />
-      <input
-        type="text"
-        placeholder={searchPlaceholder}
-        bind:value={query}
-      />
-    </label>
+    <TextInput
+      class="input-sm w-full"
+      type="text"
+      placeholder={searchPlaceholder}
+      bind:value={query}
+    >
+      {#snippet leading()}
+        <SearchIcon />
+      {/snippet}
+    </TextInput>
   {/if}
 
   <div class="flex flex-wrap gap-2 overflow-y-auto max-h-64 pr-1">
@@ -49,7 +57,7 @@
       <ClickableBadge
         class={selected.includes(opt.id) ? 'badge-primary' : 'badge-soft'}
         aria-pressed={selected.includes(opt.id)}
-        onclick={() => (selected = toggleValue(selected, opt.id))}
+        onclick={() => onSelectedChange(toggleValue(selected, opt.id))}
       >
         {opt.label}
       </ClickableBadge>
@@ -63,7 +71,8 @@
       <input
         type="checkbox"
         class="checkbox checkbox-sm checkbox-primary"
-        bind:checked={matchAll}
+        checked={matchAll}
+        onchange={(e) => onMatchAllChange?.(e.currentTarget.checked)}
       />
       {matchAllLabel}
     </label>

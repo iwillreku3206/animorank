@@ -1,5 +1,8 @@
 <script lang="ts">
   import type { PageProps } from './$types';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
+  import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
+  import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
 
   let { data }: PageProps = $props();
 
@@ -43,19 +46,19 @@
   <h1 class="text-2xl font-bold mb-4">Instructor — Problem Sets</h1>
 
   <div class="flex gap-2 mb-6">
-    <input
+    <TextInput
       type="text"
       placeholder="New problem set title"
       bind:value={newTitle}
-      class="input w-64"
+      class="w-64"
     />
-    <button
-      class="btn btn-primary"
+    <Button
+      class="btn-primary"
       onclick={createProblemSet}
       disabled={creating}
     >
       {creating ? 'Creating...' : 'Create'}
-    </button>
+    </Button>
   </div>
 
   {#if error}
@@ -65,43 +68,45 @@
   {#if problemSets.length === 0}
     <p>No problem sets found.</p>
   {:else}
-    <table class="table w-full">
-      <thead>
-        <tr>
-          <th>Title</th>
-          <th>Problems</th>
-          <th>Global</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each problemSets as ps (ps.id)}
+    <div class="overflow-x-auto">
+      <table class="table w-full min-w-[32rem]">
+        <thead>
           <tr>
-            <td>
-              <a
-                class="link link-primary"
-                href="/instructor/problemSets/{ps.id}"
-              >
-                {ps.title}
-              </a>
-            </td>
-            <td>{ps.problemCount}</td>
-            <td>{ps.is_global ? 'Yes' : 'No'}</td>
-            <td class="flex gap-2">
-              <a
-                class="btn btn-sm"
-                href="/instructor/problemSets/{ps.id}">Manage</a
-              >
-              <button
-                class="btn btn-sm btn-error"
-                onclick={() => deleteProblemSet(ps.id)}
-              >
-                Delete
-              </button>
-            </td>
+            <th>Title</th>
+            <th>Problems</th>
+            <th>Global</th>
+            <th>Actions</th>
           </tr>
-        {/each}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {#each problemSets as ps (ps.id)}
+            <tr>
+              <td>
+                <a
+                  class="link link-primary"
+                  href="/instructor/problemSets/{ps.id}"
+                >
+                  {ps.title}
+                </a>
+              </td>
+              <td>{ps.problemCount}</td>
+              <td>{ps.is_global ? 'Yes' : 'No'}</td>
+              <td class="flex gap-2">
+                <ButtonLink
+                  class="btn-sm"
+                  href="/instructor/problemSets/{ps.id}">Manage</ButtonLink
+                >
+                <Button
+                  class="btn-sm btn-error"
+                  onclick={() => deleteProblemSet(ps.id)}
+                >
+                  Delete
+                </Button>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
   {/if}
 </div>

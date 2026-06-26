@@ -105,6 +105,23 @@
 
 @plugin "@tailwindcss/typography";
 
+/* Map Tailwind Typography (`prose`) onto daisyUI theme tokens so rendered
+   Markdown (e.g. the changelog) adapts to the active light/dark theme instead
+   of using the plugin's fixed gray palette. */
+.prose-daisy {
+  --tw-prose-body: var(--color-base-content);
+  --tw-prose-headings: var(--color-base-content);
+  --tw-prose-lead: var(--color-base-content);
+  --tw-prose-bold: var(--color-base-content);
+  --tw-prose-counters: var(--color-base-content);
+  --tw-prose-quotes: var(--color-base-content);
+  --tw-prose-code: var(--color-base-content);
+  --tw-prose-links: var(--color-primary);
+  --tw-prose-bullets: color-mix(in oklch, var(--color-base-content) 40%, transparent);
+  --tw-prose-hr: color-mix(in oklch, var(--color-base-content) 15%, transparent);
+  --tw-prose-quote-borders: color-mix(in oklch, var(--color-base-content) 20%, transparent);
+}
+
 .splitpanes-nobg .splitpanes {
   background-color: inherit !important;
 }
@@ -130,4 +147,56 @@
 
 .problemSetProgress::-webkit-progress-value {
   background-color: var(--color-primary, oklch(87% 0.244 134.94));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Shared responsive primitives ───────────────────────────────────────────
+   One horizontal gutter scale, consumed by the navbar, footer, and every
+   content/listing surface. Pages set their vertical rhythm and max-width
+   themselves; this only owns the left/right edge so alignment is identical
+   across pages at every width. Insets fold in safe-area (landscape notch) via
+   max(), so .app-gutter doubles as the safe-x helper. */
+.app-gutter {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+@media (min-width: 40rem) {
+  .app-gutter {
+    padding-left: max(1.5rem, env(safe-area-inset-left));
+    padding-right: max(1.5rem, env(safe-area-inset-right));
+  }
+}
+@media (min-width: 64rem) {
+  .app-gutter {
+    padding-left: max(3rem, env(safe-area-inset-left));
+    padding-right: max(3rem, env(safe-area-inset-right));
+  }
+}
+@media (min-width: 80rem) {
+  .app-gutter {
+    padding-left: max(8rem, env(safe-area-inset-left));
+    padding-right: max(8rem, env(safe-area-inset-right));
+  }
+}
+
+/* Notch / status-bar inset for sticky top chrome (the navbar). */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Home-indicator inset for full-height chrome (the mobile nav drawer). */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Touch ergonomics: on coarse pointers (phones/tablets) guarantee a 44px hit
+   target for default-size controls. Intentionally dense controls opt out with
+   btn-sm / btn-xs, so the desktop toolbars are untouched. */
+@media (pointer: coarse) {
+  .btn:not(.btn-sm, .btn-xs, .btn-lg) {
+    min-height: 2.75rem;
+  }
 }

@@ -1,5 +1,9 @@
 <script lang="ts">
   import type { PageProps } from './$types';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
+  import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
+  import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
+  import ClickableBadge from '$lib/components/ui/badges/ClickableBadge.svelte';
 
   let { data }: PageProps = $props();
 
@@ -111,11 +115,11 @@
       class="label"
       for="ps-title"><span class="label-text font-bold">Title</span></label
     >
-    <input
+    <TextInput
       id="ps-title"
       type="text"
       bind:value={problemSet.title}
-      class="input input-bordered w-full"
+      class="input-bordered w-full"
     />
   </div>
 
@@ -192,24 +196,24 @@
     <div class="label"><span class="label-text font-bold">Topics</span></div>
     <div class="flex flex-wrap gap-2">
       {#each topicTags as tag (tag.id)}
-        <button
-          class="badge {problemSet.topic_ids.includes(tag.id) ? 'badge-primary' : 'badge-ghost'}"
+        <ClickableBadge
+          class={problemSet.topic_ids.includes(tag.id) ? 'badge-primary' : 'badge-ghost'}
           onclick={() => toggleTopic(tag.id)}
         >
           {tag.label}
-        </button>
+        </ClickableBadge>
       {/each}
     </div>
   </div>
 
   <div class="mb-8">
-    <button
-      class="btn btn-primary"
+    <Button
+      class="btn-primary"
       onclick={saveProblemSet}
       disabled={saving}
     >
       {saving ? 'Saving...' : 'Save Changes'}
-    </button>
+    </Button>
     {#if saveMessage}
       <span class="ml-4 text-sm">{saveMessage}</span>
     {/if}
@@ -218,13 +222,13 @@
   <!-- Problems -->
   <div class="mb-4 flex items-center justify-between">
     <h2 class="text-xl font-bold">Problems</h2>
-    <button
-      class="btn btn-sm btn-primary"
+    <Button
+      class="btn-sm btn-primary"
       onclick={addProblem}
       disabled={addingProblem}
     >
       + Add Problem
-    </button>
+    </Button>
   </div>
 
   {#if problemSet.problems.length === 0}
@@ -260,16 +264,16 @@
               </label>
             </td>
             <td class="flex gap-2">
-              <a
-                class="btn btn-sm"
-                href="/edit/{problem.id}">Edit</a
+              <ButtonLink
+                class="btn-sm"
+                href="/edit/{problem.id}">Edit</ButtonLink
               >
-              <button
-                class="btn btn-sm btn-error"
+              <Button
+                class="btn-sm btn-error"
                 onclick={() => deleteProblem(problem.id)}
               >
                 Delete
-              </button>
+              </Button>
             </td>
           </tr>
         {/each}

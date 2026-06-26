@@ -1,6 +1,7 @@
 <script lang="ts">
   import { TypeRegistry } from '$lib/testCase/typeRegistry';
   import TypePicker from './TypePicker.svelte';
+  import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
 
   const registry = TypeRegistry.instance();
 
@@ -107,9 +108,9 @@
         <div class="flex flex-col gap-1">
           <label class="text-sm">
             {field.label}
-            <input
+            <TextInput
               type="number"
-              class="input input-sm input-primary input-bordered w-full"
+              class="input-sm input-primary input-bordered w-full"
               value={data[field.name] !== undefined && data[field.name] !== null
                 ? String(data[field.name])
                 : String(field.defaultValue ?? '')}
@@ -126,9 +127,9 @@
         <div class="flex flex-col gap-1">
           <label class="text-sm">
             {field.label}
-            <input
+            <TextInput
               type="text"
-              class="input input-sm input-primary input-bordered w-full"
+              class="input-sm input-primary input-bordered w-full"
               bind:value={data[field.name]}
               placeholder={String(field.defaultValue ?? '')}
             />

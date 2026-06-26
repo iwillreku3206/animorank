@@ -3,6 +3,7 @@
   import { type monaco } from '$lib/monaco';
   import { browser } from '$app/environment';
   import constrainedEditor from 'constrained-editor-plugin';
+  import { DEFAULT_MONACO_THEME } from './themes';
 
   let {
     // eslint-disable-next-line no-useless-assignment
@@ -46,7 +47,7 @@
         minimap: {
           enabled: false
         },
-        theme: 'vs-dark',
+        theme: DEFAULT_MONACO_THEME,
         wordWrap: 'on',
         wordBasedSuggestions: 'currentDocument'
       });
