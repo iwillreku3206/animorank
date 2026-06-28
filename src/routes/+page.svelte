@@ -5,8 +5,8 @@
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
   // import Badge from '$lib/components/ui/badges/Badge.svelte';
-  import HeroGraph from './HeroGraph.svelte';
-  import AutograderDemo from './AutograderDemo.svelte';
+  import HeroGraph from '$lib/components/landing/HeroGraph.svelte';
+  import AutograderDemo from '$lib/components/landing/AutograderDemo.svelte';
   import { signIn } from '@auth/sveltekit/client';
   import Seo from '$lib/components/layout/Seo.svelte';
   import type { PageProps } from './$types';
