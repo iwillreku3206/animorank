@@ -52,20 +52,6 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
 
-    <!-- Apply the saved light/dark theme before first paint to avoid a flash.
-         Mirrors $lib/theme.svelte.ts; keep the storage key and values in sync. -->
-    <script>
-      (function () {
-        try {
-          var t = localStorage.getItem('theme');
-          if (t !== 'light' && t !== 'dark') return;
-          document.documentElement.setAttribute('data-theme', 'animorank-' + t);
-          var m = document.querySelector('meta[name="theme-color"]');
-          if (m) m.setAttribute('content', t === 'light' ? '#d4dde4' : '#141414');
-        } catch (e) {}
-      })();
-    </script>
-
     %sveltekit.head%
   </head>
 

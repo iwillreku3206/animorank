@@ -1,12 +1,7 @@
 <script lang="ts">
   import type { User } from '@auth/sveltekit';
   import { signOut } from '@auth/sveltekit/client';
-  // TODO: add theme toggle back in once we have a light mode design.
-  // import { theme, type Theme } from '$lib/theme.svelte';
   import Button from '$lib/components/ui/buttons/Button.svelte';
-  // TODO: add theme toggle back in once we have a light mode design.
-  // import SunIcon from '@iconify-svelte/fa6-solid/sun';
-  // import MoonIcon from '@iconify-svelte/fa6-solid/moon';
   import ContractIcon from '@iconify-svelte/fa6-solid/file-contract';
   import LogoutIcon from '@iconify-svelte/fa6-solid/arrow-right-from-bracket';
 
@@ -54,11 +49,6 @@
       window.removeEventListener('scroll', reposition, true);
     };
   });
-
-  // TODO: add theme toggle back in once we have a light mode design.
-  // function setTheme(next: Theme) {
-  //   theme.set(next);
-  // }
 
   function logout() {
     close();
@@ -119,39 +109,6 @@
   <div class="border-t border-base-content/10"></div>
 
   <div class="p-1.5">
-    <!-- Theme selector -->
-
-    <!-- TODO: add theme toggle back in once we have a light mode design. -->
-    <!-- <div class="flex items-center justify-between gap-2 px-2.5 py-1.5">
-      <span class="text-sm text-base-content/80">Theme</span>
-      <div
-        class="inline-flex rounded-full bg-base-300 p-0.5"
-        role="group"
-        aria-label="Color theme"
-      >
-        <button
-          type="button"
-          class="seg"
-          class:seg-active={theme.current === 'light'}
-          onclick={() => setTheme('light')}
-          aria-pressed={theme.current === 'light'}
-          aria-label="Light theme"
-        >
-          <SunIcon class="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          class="seg"
-          class:seg-active={theme.current === 'dark'}
-          onclick={() => setTheme('dark')}
-          aria-pressed={theme.current === 'dark'}
-          aria-label="Dark theme"
-        >
-          <MoonIcon class="h-3.5 w-3.5" />
-        </button>
-      </div>
-    </div> -->
-
     <!-- Review TOS: server form (revokes consent, redirects to /tos). -->
     <form
       method="POST"
@@ -222,38 +179,10 @@
     outline-offset: -2px;
   }
 
-  /* Theme segmented control. */
-
-  /* TODO: add theme toggle back in once we have a light mode design. */
-  /* .seg {
-    display: grid;
-    place-items: center;
-    height: 1.5rem;
-    width: 1.875rem;
-    border-radius: 9999px;
-    color: color-mix(in oklab, var(--color-base-content) 55%, transparent);
-    transition:
-      background-color 150ms ease,
-      color 150ms ease;
-  }
-  .seg-active {
-    background-color: var(--color-base-100);
-    color: var(--color-primary);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
-  }
-  .seg:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 1px;
-  } */
-
   @media (prefers-reduced-motion: reduce) {
     .menu-anim,
     .item {
       transition: none;
     }
-    /* TODO: add theme toggle back in once we have a light mode design. */
-    /* .seg {
-      transition: none;
-    } */
   }
 </style>

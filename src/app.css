@@ -74,36 +74,6 @@
   --color-error-content: oklch(25.07% 0.092 26.23);
 }
 
-@plugin "daisyui/theme" {
-  name: 'animorank-light';
-  color-scheme: light;
-
-  --color-primary: oklch(54.75% 0.164 137.07);
-  --color-primary-focus: oklch(46.49% 0.133 136.31);
-  --color-primary-content: oklch(98.51% 0 0);
-  --color-secondary: oklch(37.15% 0 0);
-  --color-secondary-focus: oklch(27.27% 0 0);
-  --color-secondary-content: oklch(98.51% 0 0);
-  --color-accent: oklch(74.16% 0.158 73.33);
-  --color-accent-focus: oklch(65.82% 0.14 73.51);
-  --color-accent-content: oklch(98.51% 0 0);
-  --color-neutral: oklch(28.09% 0.008 223.72);
-  --color-neutral-focus: oklch(21.78% 0.008 223.87);
-  --color-neutral-content: oklch(98.51% 0 0);
-  --color-base-100: oklch(98.51% 0 0);
-  --color-base-200: oklch(92.96% 0.005 247.88);
-  --color-base-300: oklch(86.99% 0.01 242.85);
-  --color-base-content: oklch(14.48% 0 0);
-  --color-info: oklch(78.82% 0.138 213.46);
-  --color-info-content: oklch(30.09% 0.055 228.67);
-  --color-success: oklch(79.12% 0.209 151.71);
-  --color-success-content: oklch(26.14% 0.065 152.74);
-  --color-warning: oklch(85.35% 0.174 88.77);
-  --color-warning-content: oklch(27.96% 0.066 53.84);
-  --color-error: oklch(69.96% 0.191 22.03);
-  --color-error-content: oklch(25.07% 0.092 26.23);
-}
-
 @plugin "@tailwindcss/typography";
 
 /* Map Tailwind Typography (`prose`) onto daisyUI theme tokens so rendered
