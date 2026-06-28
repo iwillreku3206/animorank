@@ -152,10 +152,10 @@
       </div>
     </div> -->
 
-    <!-- Review TOS: server form (revokes consent, redirects to /tos). -->
+    <!-- Review TOS: server form (revokes consent, redirects to /accept-terms). -->
     <form
       method="POST"
-      action="/tos/?/revoke"
+      action="/accept-terms/?/revoke"
     >
       <button
         type="submit"

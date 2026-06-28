@@ -8,9 +8,9 @@ export const load: LayoutServerLoad = async ({ url, locals }) => {
     if (
       session?.user &&
       !session.user.hasAcceptedTOS &&
-      !(url.pathname.startsWith('/tos') || url.pathname.startsWith('/legal'))
+      !(url.pathname.startsWith('/accept-terms') || url.pathname.startsWith('/legal'))
     ) {
-      throw redirect(303, '/tos');
+      throw redirect(303, '/accept-terms');
     }
   }
 
