@@ -6,7 +6,7 @@
  * variables are bound to daisyUI `--color-*` tokens so the chrome follows the
  * active daisyUI theme; structural variables are literal values.
  *
- * Paired with the `themeAnimoRank` object in `animorankTheme.ts`
+ * Paired with the `themeAnimoRank` object in `animorank-theme.ts`
  * (className: `dockview-theme-animorank`).
  */
 
@@ -36,11 +36,6 @@
     var(--color-primary) 75%,
     transparent
   );
-  --dv-inactivegroup-visiblepanel-tab-color: color-mix(
-    in oklch,
-    var(--color-primary) 75%,
-    transparent
-  );
   --dv-inactivegroup-hiddenpanel-tab-color: color-mix(
     in oklch,
     var(--color-base-content) 40%,
@@ -49,12 +44,12 @@
 
   /* ---- Dividers, separators, borders ----------------------------------- */
   --dv-tab-divider-color: transparent;
-  --dv-separator-border: var(--color-base-300);
+  --dv-separator-border: transparent;
 
   /* end-users cannot create panels from the current ui, 
   but these are kept here for completeness and future-proofing. */
-  --dv-paneview-header-border-color: red;
-  --dv-paneview-active-outline-color: red;
+  --dv-paneview-header-border-color: transparent;
+  --dv-paneview-active-outline-color: transparent;
 
   /* ---- Sash (group splitters) ------------------------------------------ */
   --dv-sash-color: transparent;
@@ -74,7 +69,7 @@
   --dv-floating-group-dragging-opacity: 0.75;
 
   /* *-spaced themes only read this variable, but it is kept for completeness */
-  --dv-floating-group-border: 1px solid red;
+  --dv-floating-group-border: 1px solid transparent;
 
   /* ---- Icons, scrollbars, menus ---------------------------------------- */
   --dv-icon-hover-background-color: color-mix(in oklch, var(--color-base-content) 15%, transparent);
@@ -153,12 +148,6 @@
 .dockview-theme-animorank .dv-content-container {
   border: 1px solid var(--color-base-100);
   border-radius: 0 0 var(--dv-border-radius) var(--dv-border-radius);
-}
-
-/* Remove the separator border that hides the borders of panels
- * It breaks the visual continuity once margins are applied to panels. */
-.dockview-theme-animorank {
-  --dv-separator-border: transparent;
 }
 
 /* Add margins to panels consistent to its content */

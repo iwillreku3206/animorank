@@ -11,7 +11,6 @@ import { animorankDark } from './animorank-dark';
  */
 export const MONACO_THEMES = {
   'animorank-dark': animorankDark
-  // future: 'animorank-light': animorankLight
 } satisfies Record<string, monaco.editor.IStandaloneThemeData>;
 
 export type MonacoThemeId = keyof typeof MONACO_THEMES;
