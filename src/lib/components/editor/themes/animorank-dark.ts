@@ -1,6 +1,28 @@
 import type { monaco } from '$lib/monaco';
 
-/** AnimoRank's default dark editor theme. Fully static — edit colors directly here. */
+/**
+ * AnimoRank's default dark editor theme. Fully static — edit colors directly here.
+ *
+ * Monaco cannot read CSS custom properties, so these hexes are a hand-maintained
+ * mirror of the `animorank-dark` daisyUI palette in `src/app.css`. They do NOT
+ * track the palette at runtime: if you change the daisyUI tokens there, update the
+ * matching values here. Mapping (daisyUI token → hex used below):
+ *
+ *   --color-primary      #77de3d   keywords, cursor, selection, focus, brackets
+ *   --color-secondary    #4dba89   strings (also feeds the `type` blend)
+ *   --color-accent       #e0a838   numbers, constants
+ *   --color-error        #e0584f   error foreground
+ *   --color-base-content #e6e6e6   default editor foreground / variables
+ *   --color-base-100     #262626   editor + gutter background
+ *   --color-base-200     #1a1a1a   hover / suggest / widget backgrounds
+ *   --color-base-300     #0a0a0a   widget borders (deepest neutral)
+ *
+ * Syntax colors derived from the palette (not direct daisyUI tokens):
+ *   comment  #7c7c7c   muted base-content
+ *   type     #83c9aa   secondary blended toward base-content
+ *   function #a9e289   primary blended toward base-content
+ *   operator #b6b6b6   neutral punctuation
+ */
 export const animorankDark: monaco.editor.IStandaloneThemeData = {
   base: 'vs-dark',
   inherit: true,
