@@ -12,7 +12,7 @@ Disallow: /problem/
 Disallow: /edit/
 Disallow: /instructor/
 Disallow: /dashboard
-Disallow: /tos
+Disallow: /accept-terms
 Disallow: /dev/
 
 Sitemap: ${url.origin}/sitemap.xml
