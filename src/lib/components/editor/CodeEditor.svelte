@@ -42,7 +42,7 @@
         },
         value: code,
         automaticLayout: true,
-        fontFamily: 'JetBrains Mono',
+        fontFamily: 'DM Mono',
         language,
         minimap: {
           enabled: false

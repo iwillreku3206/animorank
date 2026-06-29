@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { createDockview, DockviewApi } from 'dockview-core';
   import { Window } from '$lib/window/index';
-  import { themeAnimoRank } from '$lib/window/animorankTheme';
+  import { themeAnimoRank } from '$lib/window/animorank-theme';
   import { ProblemEditorWindowRegistry } from './windowRegistry';
   import { ProblemEditorWindowContext } from './context.svelte';
   import type { PageProps } from './$types';
