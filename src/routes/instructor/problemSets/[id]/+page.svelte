@@ -69,15 +69,9 @@
           >
         </div>
         <h1 class="text-4xl font-bold mb-2">{context.problemSet.title}</h1>
-        <div class="flex items-center gap-2 mb-3">
-          <span class="badge badge-ghost badge-outline">+ Add Tags</span>
-        </div>
 
         <YfmStaticView text={context.problemSet.description || ''} />
       </div>
-      <button class="btn btn-ghost btn-sm btn-circle">
-        <BookmarkIcon />
-      </button>
     </div>
 
     <!-- Tabs -->

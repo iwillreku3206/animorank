@@ -10,6 +10,7 @@ const pageSize = 12;
 export const load: PageServerLoad = async ({ locals, url }) => {
   const session = await locals.auth();
   if (!session || !session.user.id) return redirect(302, '/');
+  if (session.user?.type !== 'teacher') return redirect(302, '/');
 
   const serviceProvider = ServerServiceProvider.instance();
   const problemSetService = serviceProvider.getService(ProblemSetService);
