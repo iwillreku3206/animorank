@@ -1,5 +1,5 @@
 <script lang="ts">
-  import TagChip from '$lib/components/TagChip.svelte';
+  import TagChip from '$lib/components/ui/TagChip.svelte';
   import { groupBy } from '$lib/utils/groupBy';
   import { flip } from 'svelte/animate';
   const FLIP_DURATION = 30;

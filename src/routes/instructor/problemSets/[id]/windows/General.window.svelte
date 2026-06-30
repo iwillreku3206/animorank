@@ -2,7 +2,7 @@
   import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
   import SearchIcon from '@iconify-svelte/fa6-solid/magnifying-glass';
   import type { ProblemSetEditorWindowContext } from '../context.svelte';
-  import Editor from '$lib/components/Editor.svelte';
+  import Editor from '$lib/components/editor/Editor.svelte';
 
   let { context }: { context: ProblemSetEditorWindowContext } = $props();
 

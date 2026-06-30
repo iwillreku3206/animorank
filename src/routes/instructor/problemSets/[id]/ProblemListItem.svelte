@@ -1,8 +1,6 @@
 <script lang="ts">
-  import TagChip from '$lib/components/TagChip.svelte';
+  import TagChip from '$lib/components/ui/TagChip.svelte';
   import type { PageProps } from './$types';
-  import CheckIcon from '@iconify-svelte/fa6-solid/circle-check';
-  import ButtonLink from '$lib/components/buttons/ButtonLink.svelte';
   import type { Tag } from '$lib/zenstack/models';
 
   let {

@@ -1,18 +1,13 @@
 <script lang="ts">
   import type { PageProps } from './$types';
-  import Button from '$lib/components/ui/buttons/Button.svelte';
-  import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
-  import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
-  import ClickableBadge from '$lib/components/ui/badges/ClickableBadge.svelte';
   import { ProblemSetEditorWindowContext } from './context.svelte';
   import ProblemListItem from './ProblemListItem.svelte';
-  import BookmarkIcon from '@iconify-svelte/fa6-regular/bookmark';
   import type { ProblemSet, Problem, Tag } from '$lib/zenstack/models';
   import { onMount } from 'svelte';
   import { ProblemSetEditorWindowRegistry } from './windowRegistry';
   import type { Window } from '$lib/window';
   import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
-  import YfmStaticView from '$lib/components/YfmStaticView.svelte';
+  import YfmStaticView from '$lib/components/content/YfmStaticView.svelte';
 
   let { data }: PageProps = $props();
 

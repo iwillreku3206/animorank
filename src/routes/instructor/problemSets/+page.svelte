@@ -1,8 +1,6 @@
 <script lang="ts">
   import type { PageProps } from './$types';
-  import Button from '$lib/components/ui/buttons/Button.svelte';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
-  import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
   import ProblemSetCard from './ProblemSetCard.svelte';
   import SearchIcon from '@iconify-svelte/fa6-solid/magnifying-glass';
   import DownArrowIcon from '@iconify-svelte/fa6-solid/arrow-down';
@@ -12,7 +10,6 @@
   import ProblemSetListItem from './ProblemSetListItem.svelte';
   import { page } from '$app/state';
   import { SvelteURLSearchParams } from 'svelte/reactivity';
-  import ButtonLink from '$lib/components/buttons/ButtonLink.svelte';
   import type { Filters } from '../../problemSets/api';
   // import Button from '$lib/components/buttons/Button.svelte';
 

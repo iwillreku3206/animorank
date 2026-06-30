@@ -1,7 +1,7 @@
 <script lang="ts">
-  import TagChip from '$lib/components/TagChip.svelte';
+  import TagChip from '$lib/components/ui/TagChip.svelte';
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
-  import ButtonLink from '$lib/components/buttons/ButtonLink.svelte';
+  import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
   import type { PageProps } from './$types';
 
   type ProblemSet = PageProps['data']['problemSets'][number];
