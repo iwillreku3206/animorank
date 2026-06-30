@@ -12,6 +12,7 @@
   import { ProblemSetEditorWindowRegistry } from './windowRegistry';
   import type { Window } from '$lib/window';
   import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
+  import YfmStaticView from '$lib/components/YfmStaticView.svelte';
 
   let { data }: PageProps = $props();
 
@@ -51,8 +52,6 @@
     // default open window
     openWindow('general');
   });
-
-  console.log(context.tags);
 </script>
 
 <main class="w-full h-full flex gap-4 p-4 overflow-hidden">
@@ -73,9 +72,8 @@
         <div class="flex items-center gap-2 mb-3">
           <span class="badge badge-ghost badge-outline">+ Add Tags</span>
         </div>
-        <p class="text-base-content/70">
-          {context.problemSet.description}
-        </p>
+
+        <YfmStaticView text={context.problemSet.description || ''} />
       </div>
       <button class="btn btn-ghost btn-sm btn-circle">
         <BookmarkIcon />
