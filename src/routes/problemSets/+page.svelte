@@ -13,8 +13,9 @@
   import SortDescIcon from '@iconify-svelte/fa6-solid/arrow-down-wide-short';
   import GridIcon from '@iconify-svelte/fa6-solid/grip';
   import ListIcon from '@iconify-svelte/fa6-solid/list';
-  import { goto, replaceState } from '$app/navigation';
+  import { afterNavigate, goto, replaceState } from '$app/navigation';
   import { page } from '$app/state';
+  import { onDestroy } from 'svelte';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
   import Seo from '$lib/components/layout/Seo.svelte';
@@ -29,13 +30,22 @@
   ];
 
   /**
-   * The URL is the single source of truth for all query state.
-   * Everything the toolbar, chips, sort and pagination show is derived from
-   * page.url; every change is written back through goto/replaceState. This
-   * keeps the UI in sync even when the URL changes from outside (e.g. a tag
-   * link on a card, or the browser back/forward buttons
+   * The URL is the source of truth for committed query state: sort, search,
+   * pagination and view mode are derived straight from page.url and written
+   * back through goto/replaceState.
+   *
+   * Filters are the exception. The toolbar and chips render from a local
+   * `draft` so rapid multi-selects feel instant, and the draft is committed to
+   * the URL on a short trailing debounce — one navigation per burst instead of
+   * one per click. The draft is resynced from the URL on every navigation, so
+   * back/forward and tag links on cards (external changes) always win over any
+   * uncommitted local edits.
    */
-  const filters: Filters = $derived(parseFilters(page.url.searchParams));
+  let draft = $state.raw(parseFilters(page.url.searchParams));
+  afterNavigate(() => {
+    draft = parseFilters(page.url.searchParams);
+  });
+
   const sort = $derived(parseSort(page.url.searchParams));
   const sortBy = $derived(sort.by);
   const sortDesc = $derived(sort.desc);
@@ -53,32 +63,74 @@
   const currentSortLabel = $derived(SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? '');
   const allTags = $derived([...data.subjectTags, ...data.difficultyTags, ...data.topicTags]);
 
-  /** Current query state as a plain object, for spreading into a partial update. */
+  /**
+   * Current query state as a plain object, for spreading into a partial update.
+   * `filters` comes from the live `draft`, not the URL, so every navigation
+   * carries the latest (possibly uncommitted) filter edits — an immediate
+   * sort/search/page change can't drop a pending multi-select.
+   */
   function current(): QueryState {
-    return { filters, search: searchApplied, sortBy, sortDesc, viewMode, pageNumber };
+    return { filters: draft, search: searchApplied, sortBy, sortDesc, viewMode, pageNumber };
   }
 
   /** Navigate to a new query state (re-runs the server load). */
-  function navigate(next: QueryState) {
+  function navigate(next: QueryState, replace = false) {
     const qs = serializeQuery(next);
-    goto(qs ? `?${qs}` : page.url.pathname, { keepFocus: true, noScroll: true });
+    goto(qs ? `?${qs}` : page.url.pathname, {
+      keepFocus: true,
+      noScroll: true,
+      replaceState: replace
+    });
   }
 
-  // Filter/sort/search changes reset to the first page; pagination doesn't.
-  function applyFilters(next: Filters) {
-    navigate({ ...current(), filters: next, pageNumber: 1 });
+  // Filter commits are debounced so a burst of multi-select clicks produces a
+  // single navigation. They replace history (rather than push) to avoid spam.
+  // Immediate commits (sort/search/pagination/bookmarked/clear) cancel any
+  // pending filter commit first — they already carry the latest draft.
+  const COMMIT_DELAY_MS = 300;
+  let commitTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function cancelCommit() {
+    if (commitTimer !== null) {
+      clearTimeout(commitTimer);
+      commitTimer = null;
+    }
+  }
+
+  onDestroy(cancelCommit);
+
+  /** Stage a filter edit for instant UI, then commit it to the URL after a pause. */
+  function stageFilters(next: Filters) {
+    draft = next;
+    cancelCommit();
+    commitTimer = setTimeout(() => {
+      commitTimer = null;
+      // Fire-time capture: current() reads the latest draft and the current
+      // URL-derived sort/search, so a concurrent immediate change isn't clobbered.
+      navigate({ ...current(), pageNumber: 1 }, true);
+    }, COMMIT_DELAY_MS);
+  }
+
+  /** Commit a filter edit to the URL right away (no debounce). */
+  function commitFiltersNow(next: Filters) {
+    draft = next;
+    cancelCommit();
+    navigate({ ...current(), pageNumber: 1 }, true);
   }
 
   function setSort(by: SortBy, desc: boolean) {
+    cancelCommit();
     navigate({ ...current(), sortBy: by, sortDesc: desc, pageNumber: 1 });
   }
 
   function commitSearch() {
+    cancelCommit();
     navigate({ ...current(), search: searchInput, pageNumber: 1 });
   }
 
   function goToPage(n: number) {
     if (n < 1 || n > data.pagination.pageCount) return;
+    cancelCommit();
     navigate({ ...current(), pageNumber: n });
   }
 
@@ -212,8 +264,9 @@
 
   <!-- Filter toolbar -->
   <FilterToolbar
-    {filters}
-    onChange={applyFilters}
+    filters={draft}
+    onChange={stageFilters}
+    onCommit={commitFiltersNow}
     subjectTags={data.subjectTags}
     difficultyTags={data.difficultyTags}
     topicTags={data.topicTags}
@@ -223,8 +276,8 @@
 
   <!-- Active filter chips -->
   <ActiveFilters
-    {filters}
-    onChange={applyFilters}
+    filters={draft}
+    onChange={stageFilters}
     {allTags}
     creators={data.creators}
   />

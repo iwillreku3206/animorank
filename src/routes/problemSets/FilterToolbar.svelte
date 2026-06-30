@@ -12,6 +12,7 @@
   let {
     filters,
     onChange,
+    onCommit = onChange,
     subjectTags,
     difficultyTags,
     topicTags,
@@ -19,8 +20,10 @@
     showCreator = false
   }: {
     filters: Filters;
-    /** Emit the next filter state; the parent reflects it into the URL. */
+    /** Emit the next filter state for a debounced commit (bursty multi-selects). */
     onChange: (_next: Filters) => void;
+    /** Emit the next filter state for an immediate commit (single, deliberate actions). */
+    onCommit?: (_next: Filters) => void;
     subjectTags: Tag[];
     difficultyTags: Tag[];
     topicTags: Tag[];
@@ -28,11 +31,18 @@
     showCreator?: boolean;
   } = $props();
 
-  /** Apply a mutation to a draft copy and emit it (filters itself is read-only). */
+  /** Apply a mutation to a draft copy and emit it for a debounced commit. */
   function edit(fn: (_draft: Filters) => void) {
     const draft = cloneFilters(filters);
     fn(draft);
     onChange(draft);
+  }
+
+  /** Apply a mutation to a draft copy and emit it for an immediate commit. */
+  function editNow(fn: (_draft: Filters) => void) {
+    const draft = cloneFilters(filters);
+    fn(draft);
+    onCommit(draft);
   }
 
   type PanelId = 'subject' | 'difficulty' | 'topic' | 'status' | 'creator';
@@ -66,7 +76,7 @@
   const creatorOptions = $derived(creators.map((c) => ({ id: c.id, label: c.name })));
 
   function clearAll() {
-    onChange(emptyFilters());
+    onCommit(emptyFilters());
     openPanel = null;
   }
 </script>
@@ -94,7 +104,7 @@
     {/if}
     <Button
       class="btn-sm {filters.bookmarked ? 'btn-primary' : 'btn-ghost'}"
-      onclick={() => edit((f) => (f.bookmarked = !f.bookmarked))}
+      onclick={() => editNow((f) => (f.bookmarked = !f.bookmarked))}
     >
       Bookmarked
     </Button>
