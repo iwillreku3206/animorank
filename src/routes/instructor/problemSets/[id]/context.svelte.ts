@@ -1,7 +1,7 @@
 import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
 import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
 import type { Problem, ProblemSet, Tag } from '$lib/zenstack/models';
-import { addProblem, saveProblem, saveProblemSet } from './api';
+import { addProblem, deleteProblem as deleteProblemApi, saveProblem, saveProblemSet } from './api';
 
 export interface InitialValues {
   problemSet: ProblemSet;
@@ -89,7 +89,13 @@ export class ProblemSetEditorWindowContext {
     });
   }
   public async addProblem() {
-    this.problems.push(await addProblem(this.problemSet.id));
+    const problem = await addProblem(this.problemSet.id);
+    this.problems.push({ ...problem, topics: [] });
+  }
+  public async deleteProblem(problemId: string) {
+    await deleteProblemApi(problemId);
+    this.problems = this.problems.filter((p) => p.id !== problemId);
+    this.problems = this.problems;
   }
   private async saveProblems(changed: Problem[]) {
     const changedMap = arrayToHashMap(changed, (p) => p.id);

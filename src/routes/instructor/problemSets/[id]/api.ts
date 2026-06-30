@@ -25,7 +25,7 @@ export async function saveProblemSet(problemSet: SaveProblemSetDto) {
 
 export async function addProblem(problemSetId: string) {
   const res = await fetch(`/api/problem`, {
-    method: 'PUT',
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       problemSet: problemSetId
@@ -55,5 +55,11 @@ export async function saveProblem(updates: UpdatePayload) {
     headers: {
       'Content-Type': 'application/json'
     }
+  });
+}
+
+export async function deleteProblem(id: string) {
+  await fetch(`/api/problem/${id}`, {
+    method: 'DELETE'
   });
 }

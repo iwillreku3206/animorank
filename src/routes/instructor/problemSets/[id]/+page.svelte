@@ -100,11 +100,17 @@
         problemSolvers={data.globalProblemSolvers[problem.id]}
         problemAttempts={data.globalProblemAttempts[problem.id]}
         tagMap={tagsMap}
+        onDelete={() => context.deleteProblem(problem.id)}
       />
     {:else}
       <div class="text-center text-base-content/50 py-8">No problems yet</div>
     {/each}
 
-    <button class="btn btn-outline btn-secondary w-full mt-2"> + Add New Problem </button>
+    <button
+      class="btn btn-outline btn-secondary w-full mt-2"
+      onclick={() => context.addProblem()}
+    >
+      + Add New Problem
+    </button>
   </div>
 </main>
