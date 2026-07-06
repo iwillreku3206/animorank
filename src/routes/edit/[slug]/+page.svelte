@@ -1,5 +1,4 @@
 <script lang="ts">
-  //import ProblemEditor from '$lib/components/problemEditor/ProblemEditor.svelte';
   import ProblemEditor from './ProblemEditor.svelte';
   import DesktopOnly from '$lib/components/layout/DesktopOnly.svelte';
   import type { PageProps } from './$types';

@@ -43,7 +43,7 @@ export const actions: Actions = {
       data: { hasAcceptedTOS: false }
     });
 
-    throw redirect(303, '/tos');
+    throw redirect(303, '/accept-terms');
   },
 
   deleteAccount: async ({ locals }) => {
