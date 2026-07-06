@@ -37,7 +37,9 @@
    * updates (like back/forward navigation or tag clicks) to ensure external actions always win.
    */
   let draft = $state.raw(parseFilters(page.url.searchParams));
-  afterNavigate(() => {
+  afterNavigate((navigation) => {
+    if (navigation.type === 'goto') return;
+    cancelCommit();
     draft = parseFilters(page.url.searchParams);
   });
 
