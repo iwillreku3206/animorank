@@ -430,7 +430,9 @@ export class ProblemSetService {
           .selectFrom('solved_amounts')
           .select('id')
           .select((eb) =>
-            eb(eb.ref('count_finished'), '/', eb.ref('count_total')).as('progress_pct')
+            eb(eb.cast(eb.ref('count_finished'), 'real'), '/', eb.ref('count_total')).as(
+              'progress_pct'
+            )
           )
       )
       .with('problem_count', (db) =>
@@ -527,6 +529,28 @@ export class ProblemSetService {
       .select('problem_count.problem_count')
       .select('bookmarked.bookmarked');
 
+    // Restrict to problem sets the user may read: global, subscribed to, or
+    // collaborating on.
+    query = query.where((eb) =>
+      eb.or([
+        eb('ProblemSet.is_global', '=', eb.lit(true)),
+        eb.exists(
+          eb
+            .selectFrom('Subscription')
+            .whereRef('Subscription.problem_set_id', '=', 'ProblemSet.id')
+            .where('Subscription.student_id', '=', options.user.id || '')
+            .select('Subscription.problem_set_id')
+        ),
+        eb.exists(
+          eb
+            .selectFrom('ProblemSetCollaborator')
+            .whereRef('ProblemSetCollaborator.problem_set_id', '=', 'ProblemSet.id')
+            .where('ProblemSetCollaborator.collaborator_id', '=', options.user.id || '')
+            .select('ProblemSetCollaborator.problem_set_id')
+        )
+      ])
+    );
+
     if (options.filters?.bookmarked) {
       query = query.where((eb) => eb('bookmarked.bookmarked', '=', eb.lit(true)));
     }
@@ -535,7 +559,10 @@ export class ProblemSetService {
       // NOTE: `ilike '%term%'` cannot use a btree index and will table-scan. Fine at
       // the current catalog size; if problem sets grow large, switch to a pg_trgm
       // GIN index or full-text search (tsvector) on title/description.
-      const term = `%${options.filters.search}%`;
+      // Escape LIKE metacharacters so a literal % or _ in the query matches
+      // literally instead of acting as a wildcard (\ is ilike's default escape).
+      const escaped = options.filters.search.replace(/[\\%_]/g, (c) => `\\${c}`);
+      const term = `%${escaped}%`;
       query = query.where((eb) =>
         eb.or([eb('ProblemSet.title', 'ilike', term), eb('ProblemSet.description', 'ilike', term)])
       );
@@ -600,9 +627,12 @@ export class ProblemSetService {
               case 'not_started':
                 return eb(eb('count_unfinished', '+', eb.ref('count_finished')), '=', eb.lit(0));
               case 'in_progress':
-                return eb(eb('count_finished', '+', eb.ref('count_unfinished')), '<>', eb.lit(0));
+                return eb.and([
+                  eb(eb('count_finished', '+', eb.ref('count_unfinished')), '<>', eb.lit(0)),
+                  eb('count_finished', '<>', eb.ref('solved_amounts.count_total'))
+                ]);
               case 'complete':
-                return eb('progress_pct.progress_pct', '=', '1');
+                return eb('count_finished', '=', eb.ref('solved_amounts.count_total'));
             }
           })
         )
