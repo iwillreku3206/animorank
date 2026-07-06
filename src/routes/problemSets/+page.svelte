@@ -30,16 +30,11 @@
   ];
 
   /**
-   * The URL is the source of truth for committed query state: sort, search,
-   * pagination and view mode are derived straight from page.url and written
-   * back through goto/replaceState.
+   * The URL is the single source of truth for all state (sort, search, pagination, view).
    *
-   * Filters are the exception. The toolbar and chips render from a local
-   * `draft` so rapid multi-selects feel instant, and the draft is committed to
-   * the URL on a short trailing debounce — one navigation per burst instead of
-   * one per click. The draft is resynced from the URL on every navigation, so
-   * back/forward and tag links on cards (external changes) always win over any
-   * uncommitted local edits.
+   * Exception: Filters use a local `draft` state to keep rapid multi-selects feeling instant.
+   * This draft debounces changes back to the URL, but is immediately overwritten by URL
+   * updates (like back/forward navigation or tag clicks) to ensure external actions always win.
    */
   let draft = $state.raw(parseFilters(page.url.searchParams));
   afterNavigate(() => {
