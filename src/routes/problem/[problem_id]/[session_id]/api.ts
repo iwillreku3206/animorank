@@ -33,3 +33,26 @@ export async function submit(session_id: string): Promise<TestRunResponse> {
 
   return res;
 }
+
+export type CustomRunResponse = {
+  success: boolean;
+  stdout: string;
+  stderr: string;
+  error?: string;
+};
+
+export async function runCustomInput(
+  session_id: string,
+  stdin: string
+): Promise<CustomRunResponse> {
+  const req = await fetch(`/api/practice-session/${session_id}/custom-run`, {
+    method: 'POST',
+    body: JSON.stringify({ stdin }),
+    headers: {
+      'content-type': 'application/json'
+    }
+  });
+
+  const res = await req.json();
+  return res as CustomRunResponse;
+}

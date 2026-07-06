@@ -9,7 +9,13 @@
   import { transform as transformHTML } from '@diplodoc/html-extension';
   import { browser } from '$app/environment';
   import { onMount, untrack } from 'svelte';
-  import { runTestCases, submit, type TestRunResponse } from './api';
+  import {
+    runTestCases,
+    submit,
+    type TestRunResponse,
+    runCustomInput,
+    type CustomRunResponse
+  } from './api';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import Button from '$lib/components/ui/buttons/Button.svelte';
@@ -24,6 +30,7 @@
   import { Problem } from '$lib/problem';
   import { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
   import StudentCodeEditor from './StudentCodeEditor.svelte';
+  import CustomInputPanel from './CustomInputPanel.svelte';
   import DesktopOnly from '$lib/components/layout/DesktopOnly.svelte';
 
   if (browser) {
@@ -37,7 +44,7 @@
 
   let handleReset = $state(() => {});
 
-  let toggleTestResults = $state(false);
+  let panelState: '' | 'test_cases' | 'custom_input' = $state('');
   let testSubmitted = $state(false);
 
   let testCaseResults = $state<TestRunResponse>({ results: [] });
@@ -50,6 +57,9 @@
   let selectedTest = $state(-1);
 
   let lastTestType: 'run' | 'submit' = $state('run');
+
+  let customRunLoading = $state(false);
+  let customRunResult = $state<CustomRunResponse | null>(null);
 
   let codeSections: Record<string, string> = $state(
     Object.fromEntries(
@@ -109,7 +119,7 @@
     lastTestType = 'run';
     selectedTest = testCaseResults.results.length > 0 ? 0 : -1;
     disableEdit = false;
-    toggleTestResults = true;
+    panelState = 'test_cases';
   };
 
   const handleSubmit = async () => {
@@ -124,7 +134,7 @@
     });
     lastTestType = 'submit';
     testCaseResults = results;
-    toggleTestResults = true;
+    panelState = 'test_cases';
 
     const allSuccess = results.results.every((x) => x.success);
     if (allSuccess) {
@@ -133,6 +143,15 @@
       selectedTest = testCaseResults.results.length > 0 ? 0 : -1;
       disableEdit = false;
     }
+  };
+
+  const handleCustomRun = async (stdin: string) => {
+    customRunLoading = true;
+    customRunResult = null;
+    await autosave.forceSave($state.snapshot(codeSections));
+    const result = await runCustomInput(page.params.session_id || '', stdin);
+    customRunResult = result;
+    customRunLoading = false;
   };
 
   const handleReturn = () => {
@@ -207,9 +226,9 @@
                 <div class="flex flex-row gap-2 ml-auto">
                   <Button
                     class="btn-sm"
-                    onclick={() => (toggleTestResults = !toggleTestResults)}
+                    onclick={() => (panelState = panelState === 'test_cases' ? '' : 'test_cases')}
                   >
-                    {toggleTestResults ? 'Hide' : 'Show'} Test Results
+                    {panelState ? 'Hide' : 'Show'} Test Results
                     {#if testPassed.length > 0 || testFailed.length > 0}
                       <Badge
                         class="badge-sm {testFailed.length > 0 ? 'badge-error' : 'badge-success'}"
@@ -217,6 +236,13 @@
                         {testPassed.length + testFailed.length}
                       </Badge>
                     {/if}
+                  </Button>
+                  <Button
+                    class="btn-sm"
+                    onclick={() =>
+                      (panelState = panelState === 'custom_input' ? '' : 'custom_input')}
+                  >
+                    Custom Input
                   </Button>
                   <Button
                     class="btn-sm"
@@ -249,16 +275,55 @@
               />
             </div>
           </Pane>
-          {#if toggleTestResults}
+          {#if panelState !== ''}
             <Pane minSize={20}>
-              <TestCaseDisplay
-                tests={testCaseResults}
-                bind:selectedTest
-                {toggleTestResults}
-                {testSubmitted}
-                {handleReturn}
-                {lastTestType}
-              />
+              <div class="flex flex-col h-full">
+                <div
+                  role="tablist"
+                  class="tabs tabs-bordered px-4 pt-2"
+                >
+                  <button
+                    role="tab"
+                    class="tab {panelState === 'test_cases' ? 'tab-active' : ''}"
+                    onclick={() => (panelState = 'test_cases')}
+                  >
+                    Test Cases
+                    {#if testPassed.length > 0 || testFailed.length > 0}
+                      <Badge
+                        class="badge-sm ml-1 {testFailed.length > 0
+                          ? 'badge-error'
+                          : 'badge-success'}"
+                      >
+                        {testPassed.length + testFailed.length}
+                      </Badge>
+                    {/if}
+                  </button>
+                  <button
+                    role="tab"
+                    class="tab {panelState === 'custom_input' ? 'tab-active' : ''}"
+                    onclick={() => (panelState = 'custom_input')}
+                  >
+                    Custom Input
+                  </button>
+                </div>
+                <div class="flex-1 overflow-hidden">
+                  {#if panelState === 'test_cases'}
+                    <TestCaseDisplay
+                      tests={testCaseResults}
+                      bind:selectedTest
+                      {testSubmitted}
+                      {handleReturn}
+                      {lastTestType}
+                    />
+                  {:else if panelState === 'custom_input'}
+                    <CustomInputPanel
+                      loading={customRunLoading}
+                      result={customRunResult}
+                      onRun={handleCustomRun}
+                    />
+                  {/if}
+                </div>
+              </div>
             </Pane>
           {/if}
         </Splitpanes>

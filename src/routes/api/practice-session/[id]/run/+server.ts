@@ -68,9 +68,6 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   const testCases =
     test_type === 'public' ? testCasesRaw.filter((tc) => tc.dbTestCase.public) : testCasesRaw;
 
-  console.log(practiceSession.previousCode.fullCode);
-  console.log(practiceSession);
-
   const results = await Promise.all(
     testCases.map(async (tc) => {
       try {
