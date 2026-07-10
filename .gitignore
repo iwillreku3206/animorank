@@ -27,3 +27,5 @@ skills-lock.json
 /.vscode
 /.idea
 backups/
+*storybook.log
+storybook-static
