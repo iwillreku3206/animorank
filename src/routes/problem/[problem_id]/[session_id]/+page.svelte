@@ -306,7 +306,7 @@
                     Custom Input
                   </button>
                 </div>
-                <div class="flex-1 overflow-hidden">
+                <div class="flex-1 overflow-scroll">
                   {#if panelState === 'test_cases'}
                     <TestCaseDisplay
                       tests={testCaseResults}

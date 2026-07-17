@@ -53,7 +53,7 @@
           </li>
         {/each}
       </ul>
-      <div class="p-4 w-full h-full">
+      <div class="p-4 w-full h-full overflow-scroll">
         <TestCaseCard result={publicTests[selectedTest]} />
       </div>
     {:else}
