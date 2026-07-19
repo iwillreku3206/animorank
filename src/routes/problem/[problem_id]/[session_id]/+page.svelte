@@ -33,10 +33,6 @@
   import CustomInputPanel from './CustomInputPanel.svelte';
   import DesktopOnly from '$lib/components/layout/DesktopOnly.svelte';
 
-  if (browser) {
-    import('@diplodoc/latex-extension/runtime');
-  }
-
   let { data }: PageProps = $props();
   let problem = $derived(new Problem(data.problem));
   // svelte-ignore state_referenced_locally
@@ -181,28 +177,7 @@
       >
         <h2 class="text-2xl">{data.problem.name}</h2>
         <div style="filter: invert(100%) hue-rotate(180deg);">
-          <YfmStaticView
-            html={transform(data.problem.description, {
-              allowHTML: true,
-              plugins: [
-                latex({
-                  bundle: false,
-                  runtime: 'extension:latex'
-                }),
-
-                mermaid({
-                  bundle: false,
-                  runtime: 'extension:mermaid'
-                }),
-
-                transformHTML({
-                  bundle: false,
-                  runtimeJsPath: 'extension:html'
-                }),
-                ...defaultPlugins
-              ]
-            }).result.html}
-          />
+          <YfmStaticView text={data.problem.description} />
         </div>
       </Pane>
       <Pane>

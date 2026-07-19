@@ -3,34 +3,43 @@
   import { onMount } from 'svelte';
   import ReactDOM from 'react-dom/client';
   import { jsx } from 'react/jsx-runtime';
-  import type { YfmStaticViewProps } from '@gravity-ui/markdown-editor';
   import React from 'react';
 
-  let editor = $state<HTMLDivElement>();
+  if (browser) {
+    import('@diplodoc/latex-extension/runtime');
+  }
+
+  let { text }: { text: string } = $props();
+
+  let viewer = $state<HTMLDivElement>();
   let root = $state<ReactDOM.Root>();
-  let props: YfmStaticViewProps = $props();
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let setTextCallback = $state((_text: string) => {});
+  $effect(() => {
+    setTextCallback(text);
+  });
 
   onMount(() => {
-    Promise.all([
-      import('@gravity-ui/markdown-editor'),
-      import('@diplodoc/latex-extension/react')
-    ]).then((modules) => {
-      if (browser && editor) {
-        root = ReactDOM.createRoot(editor);
-        root.render(
-          jsx(React.Fragment, {
-            children: [jsx(modules[0].YfmStaticView, props), jsx(modules[1].LatexRuntime, {})]
-          })
-        );
+    Promise.all([import('./YfmStaticView.tsx')]).then((modules) => {
+      if (browser && viewer) {
+        const element = jsx(React.Fragment, {
+          children: [
+            jsx(modules[0].default, {
+              initialText: text,
+              setTextCallback: (cb: (_: string) => void) => (setTextCallback = cb)
+            })
+          ]
+        });
+        root = ReactDOM.createRoot(viewer);
+        root.render(element);
       }
     });
     return () => root?.unmount();
   });
-
-  export const getContent = () => {};
 </script>
 
-<div bind:this={editor}>Loading Markdown...</div>
+<div bind:this={viewer}>Loading Markdown...</div>
 
 <style>
 </style>

@@ -1,5 +1,6 @@
 import { mount, unmount, type Component } from 'svelte';
-import { type GroupPanelPartInitParameters, type IContentRenderer } from 'dockview-core';
+import { type IContentRenderer } from 'dockview-core';
+import type { Attachment } from 'svelte/attachments';
 
 export interface WindowInitOptions<T> {
   title: string;
@@ -51,6 +52,20 @@ export abstract class Window<T> {
           rendererElement.removeChild(rendererElement.firstChild);
         }
       }
+    };
+  }
+
+  public getAttachment(): Attachment {
+    if (this.rendererElement.childElementCount === 0) {
+      this.rendererElement.appendChild(this._element);
+    }
+    return (el) => {
+      el.append(this.rendererElement);
+      return () => {
+        while (this.rendererElement.firstChild) {
+          this.rendererElement.removeChild(this.rendererElement.firstChild);
+        }
+      };
     };
   }
 

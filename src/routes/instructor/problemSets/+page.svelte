@@ -1,112 +1,178 @@
 <script lang="ts">
   import type { PageProps } from './$types';
-  import Button from '$lib/components/ui/buttons/Button.svelte';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
-  import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
+  import ProblemSetCard from './ProblemSetCard.svelte';
+  import SearchIcon from '@iconify-svelte/fa6-solid/magnifying-glass';
+  import DownArrowIcon from '@iconify-svelte/fa6-solid/arrow-down';
+  import GridIcon from '@iconify-svelte/fa6-solid/grip';
+  import ListIcon from '@iconify-svelte/fa6-solid/list';
+  import FilterBox from './FilterBox.svelte';
+  import ProblemSetListItem from './ProblemSetListItem.svelte';
+  import { page } from '$app/state';
+  import { SvelteURLSearchParams } from 'svelte/reactivity';
+  import type { Filters } from '../../problemSets/api';
+  // import Button from '$lib/components/buttons/Button.svelte';
+
+  function buildSearchParams() {
+    const params = new SvelteURLSearchParams();
+    for (const tag of filters.tags) params.append('tag', tag);
+    if (filters.status !== '') params.set('status', filters.status);
+    if (filters.creator !== '' && filters.creator !== undefined)
+      params.set('creator', filters.creator);
+    if (filters.bookmarked) params.set('bookmarked', 'true');
+    if (search) params.set('search', search);
+    if (sortBy) params.set('sortBy', sortBy);
+    if (sortDesc) params.set('sortOrder', 'desc');
+    if (viewMode === 'list') params.set('viewMode', 'list');
+    if (pageNumber !== 1) params.set('page', String(pageNumber));
+
+    return params.toString();
+  }
 
   let { data }: PageProps = $props();
 
+  // svelte-ignore state_referenced_locally
   let problemSets = $state(data.problemSets);
-  let creating = $state(false);
-  let newTitle = $state('');
-  let error = $state('');
 
-  async function createProblemSet() {
-    if (!newTitle.trim()) return;
-    error = '';
-    creating = true;
+  function initialFilters(): Filters {
+    const params = page.url.searchParams;
+    const tags = params.getAll('tag');
+    let status = params.get('status') || '';
+    if (['', 'not_started', 'in_progress', 'complete'].includes(status)) status = '';
+    const creator = params.get('creator') || undefined;
+    const bookmarked = params.get('bookmarked') === 'true';
 
-    const res = await fetch('/api/problem-set', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: newTitle.trim() })
-    });
-
-    if (res.ok) {
-      const json = await res.json();
-      window.location.href = `/instructor/problemSets/${json.id}`;
-    } else {
-      error = await res.text();
-    }
-
-    creating = false;
+    return {
+      tags,
+      status: status as Filters['status'],
+      creator,
+      bookmarked
+    };
   }
 
-  async function deleteProblemSet(id: string) {
-    if (!confirm('Delete this problem set?')) return;
+  function initialSort() {
+    const params = page.url.searchParams;
+    let by = params.get('sortBy') || '';
+    if (['', 'problems_solved', 'problem_count', 'completion_pct', 'difficulty'].includes(by))
+      by = '';
 
-    const res = await fetch(`/api/problem-set/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      problemSets = problemSets.filter((ps) => ps.id !== id);
-    }
+    const order = params.get('sortOrder') === 'desc' ? 'desc' : 'asc';
+    return [by, order];
   }
+
+  function initialSearch() {
+    const params = page.url.searchParams;
+
+    return params.get('search') || '';
+  }
+
+  function initialViewMode() {
+    const params = page.url.searchParams;
+
+    return params.get('viewMode') === 'list' ? 'list' : 'grid';
+  }
+
+  function initialPage() {
+    const params = page.url.searchParams;
+
+    return parseInt(params.get('page') || '1') || 1;
+  }
+
+  let filters: Filters = $state(initialFilters());
+
+  const [initialSortBy, initialSortOrder] = initialSort();
+  let sortBy = $state(initialSortBy);
+  let sortDesc = $state(initialSortOrder === 'desc');
+  let search = $state(initialSearch());
+  let viewMode = $state(initialViewMode());
+  let pageNumber = $state(initialPage());
 </script>
 
-<div class="p-4">
-  <h1 class="text-2xl font-bold mb-4">Instructor — Problem Sets</h1>
-
-  <div class="flex gap-2 mb-6">
-    <TextInput
-      type="text"
-      placeholder="New problem set title"
-      bind:value={newTitle}
-      class="w-64"
-    />
-    <Button
-      class="btn-primary"
-      onclick={createProblemSet}
-      disabled={creating}
+<main class="px-4 xl:px-32 pt-4 flex flex-col gap-8">
+  <div class="flex flex-row gap-2">
+    <label
+      for="search"
+      class="input w-full"
     >
-      {creating ? 'Creating...' : 'Create'}
-    </Button>
-  </div>
-
-  {#if error}
-    <p class="text-error mb-4">{error}</p>
-  {/if}
-
-  {#if problemSets.length === 0}
-    <p>No problem sets found.</p>
-  {:else}
-    <div class="overflow-x-auto">
-      <table class="table w-full min-w-[32rem]">
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Problems</th>
-            <th>Global</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each problemSets as ps (ps.id)}
-            <tr>
-              <td>
-                <a
-                  class="link link-primary"
-                  href="/instructor/problemSets/{ps.id}"
-                >
-                  {ps.title}
-                </a>
-              </td>
-              <td>{ps.problemCount}</td>
-              <td>{ps.is_global ? 'Yes' : 'No'}</td>
-              <td class="flex gap-2">
-                <ButtonLink
-                  class="btn-sm"
-                  href="/instructor/problemSets/{ps.id}">Manage</ButtonLink
-                >
-                <Button
-                  class="btn-sm btn-error"
-                  onclick={() => deleteProblemSet(ps.id)}
-                >
-                  Delete
-                </Button>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
+      <SearchIcon class="h-[1em] opacity-50" />
+      <input
+        id="search"
+        type="text"
+        bind:value={search}
+      />
+    </label>
+    <button
+      class="{sortDesc ? '' : 'rotate-180'} transition-all duration-75 disabled:text-neutral"
+      onclick={() => (sortDesc = !sortDesc)}
+      disabled={sortBy === ''}
+    >
+      <DownArrowIcon class="w-4 h-4" />
+    </button>
+    <select
+      class="select"
+      bind:value={sortBy}
+    >
+      <option
+        value=""
+        disabled
+        selected
+      >
+        Sort
+      </option>
+      <option value="problems_solved">Sort: Problems Solved</option>
+      <option value="problem_count">Sort: Problem Count</option>
+      <option value="completion_pct">Sort: Completion %</option>
+      <option value="difficulty">Sort: Difficulty</option>
+    </select>
+    <FilterBox
+      {data}
+      bind:filters
+    />
+    <ButtonLink
+      href="?{buildSearchParams()}"
+      data-sveltekit-reload>Apply Filters</ButtonLink
+    >
+    <div class="join">
+      <label
+        class="join-item has-checked:btn-primary has-checked:bg-primary has-checked:text-primary-content text-base-content btn bg-base-100"
+      >
+        <input
+          class="w-0 h-0 absolute"
+          type="radio"
+          name="view_mode"
+          value="grid"
+          bind:group={viewMode}
+        />
+        <GridIcon class="w-6 h-6" />
+      </label>
+      <label
+        class="join-item has-checked:btn-primary has-checked:bg-primary has-checked:text-primary-content text-base-content btn bg-base-100"
+      >
+        <input
+          class="w-0 h-0 absolute"
+          type="radio"
+          name="view_mode"
+          value="list"
+          bind:group={viewMode}
+        />
+        <ListIcon class="w-6 h-6" />
+      </label>
     </div>
-  {/if}
-</div>
+  </div>
+  <div class="{viewMode === 'list' ? 'flex flex-col' : 'grid grid-cols-4'} gap-4">
+    {#each problemSets as problemSet, i (problemSet.id)}
+      {#if viewMode === 'list'}
+        <ProblemSetListItem bind:problemSet={problemSets[i]} />
+      {:else}
+        <ProblemSetCard bind:problemSet={problemSets[i]} />
+      {/if}
+    {/each}
+  </div>
+  <div class="flex flex-row w-full items-center justify-center">
+    <div class="join">
+      <button class="join-item btn">«</button>
+      <button class="join-item btn">Page {pageNumber}/{data.pagination.pageCount}</button>
+      <button class="join-item btn">»</button>
+    </div>
+  </div>
+</main>
