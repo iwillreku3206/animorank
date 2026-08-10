@@ -1,7 +1,4 @@
-export function arrayToHashMap<T, K extends string | number | symbol>(
-  array: T[],
-  keyFn: (_item: T) => K
-) {
+export function arrayToHashMap<T, K extends string | number | symbol>(array: T[], keyFn: (_item: T) => K) {
   const map = {};
   array.forEach((item) => {
     // We know that this is an empty hashmap that we will fill up with keys

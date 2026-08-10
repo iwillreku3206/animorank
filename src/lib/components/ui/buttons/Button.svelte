@@ -10,8 +10,7 @@
   // underlying DOM node (`bind:ref`) for callers that need it — e.g. focus
   // management — since `bind:this` on a component yields the instance, not the
   // element.
-  export type ButtonProps = HTMLButtonAttributes &
-    Omit<HTMLAnchorAttributes, 'type'> & { ref?: HTMLElement | null };
+  export type ButtonProps = HTMLButtonAttributes & Omit<HTMLAnchorAttributes, 'type'> & { ref?: HTMLElement | null };
 </script>
 
 <script lang="ts">

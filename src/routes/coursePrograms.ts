@@ -293,8 +293,7 @@ export const coursePrograms: Record<string, CourseProgram> = {
   Variables: {
     title: 'Total Seconds',
     filename: 'time.c',
-    statement:
-      'Convert a time given in hours, minutes, and seconds into the total number of seconds.',
+    statement: 'Convert a time given in hours, minutes, and seconds into the total number of seconds.',
     examples: [{ input: 'h = 1, m = 2, s = 3', output: '3723' }],
     note: 'total = h * 3600 + m * 60 + s',
     code: [
@@ -319,14 +318,7 @@ export const coursePrograms: Record<string, CourseProgram> = {
       ],
       [['p', '}']]
     ],
-    cases: [
-      'all zero',
-      'only seconds',
-      'only minutes',
-      'one full hour',
-      'mixed h/m/s',
-      'large values'
-    ]
+    cases: ['all zero', 'only seconds', 'only minutes', 'one full hour', 'mixed h/m/s', 'large values']
   },
 
   // I/O — printf, scanf, format specifiers, #include, main.
@@ -375,22 +367,14 @@ export const coursePrograms: Record<string, CourseProgram> = {
       ],
       [['p', '}']]
     ],
-    cases: [
-      'reads the name',
-      'reads the age',
-      'formats greeting',
-      'single-letter name',
-      'age is zero',
-      'exact spacing'
-    ]
+    cases: ['reads the name', 'reads the age', 'formats greeting', 'single-letter name', 'age is zero', 'exact spacing']
   },
 
   // Functions — prototype, parameters, return value.
   Functions: {
     title: 'Maximum of Two',
     filename: 'max.c',
-    statement:
-      'Implement max(a, b) — a user-defined function returning the larger of two integers.',
+    statement: 'Implement max(a, b) — a user-defined function returning the larger of two integers.',
     examples: [{ input: 'a = 3, b = 8', output: '8' }],
     note: 'prototype above the definition',
     code: [
@@ -420,8 +404,7 @@ export const coursePrograms: Record<string, CourseProgram> = {
   Conditionals: {
     title: 'Leap Year',
     filename: 'leap.c',
-    statement:
-      'Return 1 if the year is a leap year, otherwise 0 — using nested conditions on divisibility.',
+    statement: 'Return 1 if the year is a leap year, otherwise 0 — using nested conditions on divisibility.',
     examples: [
       { input: 'year = 2000', output: '1' },
       { input: 'year = 1900', output: '0' }
@@ -471,14 +454,7 @@ export const coursePrograms: Record<string, CourseProgram> = {
       ],
       [['p', '}']]
     ],
-    cases: [
-      'common year',
-      'divisible by 4',
-      'century non-leap',
-      '400 is leap',
-      'year 2024',
-      'year 1900'
-    ]
+    cases: ['common year', 'divisible by 4', 'century non-leap', '400 is leap', 'year 2024', 'year 1900']
   },
 
   // Loops — for loop with an accumulator.

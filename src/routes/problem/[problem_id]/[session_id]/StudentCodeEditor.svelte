@@ -54,17 +54,11 @@
     monacoInstance?.setModel(newModel);
     monacoModel?.dispose();
     monacoModel = newModel;
-    registerConstrained(
-      problem.getSlots().map((slot) => ({ label: slot.label, range: slot.initialRange }))
-    );
-    codeSections = Object.fromEntries(
-      problem.getDefaultSections().map((s) => [s.slot.label, s.code])
-    );
+    registerConstrained(problem.getSlots().map((slot) => ({ label: slot.label, range: slot.initialRange })));
+    codeSections = Object.fromEntries(problem.getDefaultSections().map((s) => [s.slot.label, s.code]));
   }
 
-  function registerConstrained(
-    ranges: { range: [number, number, number, number]; label: string }[]
-  ) {
+  function registerConstrained(ranges: { range: [number, number, number, number]; label: string }[]) {
     if (useSlots && monacoInstance && constrainedInstance && monacoModel) {
       constrainedInstance.initializeIn(monacoInstance);
       const model = monacoInstance.getModel();
@@ -122,9 +116,7 @@
   />
 
   {#if locked && !testSubmitted}
-    <div
-      class="absolute inset-0 bg-base-200 backdrop-blur-[1px] flex items-center justify-center rounded-lg"
-    >
+    <div class="absolute inset-0 bg-base-200 backdrop-blur-[1px] flex items-center justify-center rounded-lg">
       <Spinner class="w-10 h-10 text-base-content animate-spin" />
     </div>
   {/if}

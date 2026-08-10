@@ -17,9 +17,7 @@ export class ProblemEditorWindowContext {
   public topics: string[] = $state([]);
 
   private problemAutosave: AutoSave<ProblemModel> = $state() as unknown as AutoSave<ProblemModel>;
-  private testCaseAutosave: AutoSave<ProblemTestCase[]> = $state() as unknown as AutoSave<
-    ProblemTestCase[]
-  >;
+  private testCaseAutosave: AutoSave<ProblemTestCase[]> = $state() as unknown as AutoSave<ProblemTestCase[]>;
   private topicsAutosave: AutoSave<string[]> = $state() as unknown as AutoSave<string[]>;
 
   private _cleanup: () => void;

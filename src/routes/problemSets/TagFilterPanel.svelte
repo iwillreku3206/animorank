@@ -30,9 +30,7 @@
 
   let query = $state('');
   const filtered = $derived(
-    query.trim()
-      ? tags.filter((t) => t.label.toLowerCase().includes(query.trim().toLowerCase()))
-      : tags
+    query.trim() ? tags.filter((t) => t.label.toLowerCase().includes(query.trim().toLowerCase())) : tags
   );
 
   // Base variant color comes from the tag itself (TagChip); state is overlaid:
@@ -45,8 +43,7 @@
   }
 
   // Topics cycle through include/exclude; single-valued categories just toggle.
-  const onChipClick = (id: string) =>
-    edit((f) => (excludable ? cycleTag(f, id) : toggleInclude(f, id)));
+  const onChipClick = (id: string) => edit((f) => (excludable ? cycleTag(f, id) : toggleInclude(f, id)));
 </script>
 
 <div class="flex flex-col gap-3">

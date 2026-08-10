@@ -101,10 +101,7 @@
       <div class="flex justify-between gap-4 text-sm text-base-content">
         <span>Progress</span>
         <span>
-          {problemSet.progress.finished}/{problemSet.progress.total} problem{problemSet.progress
-            .total === 1
-            ? ''
-            : 's'}
+          {problemSet.progress.finished}/{problemSet.progress.total} problem{problemSet.progress.total === 1 ? '' : 's'}
         </span>
       </div>
       <progress

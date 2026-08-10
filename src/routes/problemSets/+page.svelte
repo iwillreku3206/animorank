@@ -280,11 +280,7 @@
   />
 
   <!-- Results -->
-  <div
-    class="{viewMode === 'list'
-      ? 'flex flex-col'
-      : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'} gap-4"
-  >
+  <div class="{viewMode === 'list' ? 'flex flex-col' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'} gap-4">
     {#each problemSets as problemSet, i (problemSet.id)}
       {#if viewMode === 'list'}
         <ProblemSetListItem bind:problemSet={problemSets[i]} />

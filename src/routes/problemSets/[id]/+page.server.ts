@@ -76,9 +76,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
       id: params.id,
       title: problemSet.title,
       description: problemSet.description,
-      collaborators: problemSet.collaborators
-        .map((c) => c.collaborator.user)
-        .map((c) => ({ id: c.id, name: c.name })),
+      collaborators: problemSet.collaborators.map((c) => c.collaborator.user).map((c) => ({ id: c.id, name: c.name })),
       subject: problemSet.subject,
       difficulty: problemSet.difficulty,
       topics: problemSet.topics.map((t) => t.topic_tag),

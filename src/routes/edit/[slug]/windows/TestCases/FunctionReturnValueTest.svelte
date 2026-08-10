@@ -99,9 +99,7 @@
             class="select select-xs select-primary select-bordered w-32"
           >
             {#each registry.getTypeList() as typeKey (typeKey)}
-              <option value={typeKey}
-                >{registry.getStatic(typeKey)?.typeInfo.label || typeKey}</option
-              >
+              <option value={typeKey}>{registry.getStatic(typeKey)?.typeInfo.label || typeKey}</option>
             {/each}
           </select>
         </label>
@@ -155,9 +153,7 @@
             class="select select-xs select-primary select-bordered w-32"
           >
             {#each registry.getTypeList() as typeKey (typeKey)}
-              <option value={typeKey}
-                >{registry.getStatic(typeKey).typeInfo.label || typeKey}</option
-              >
+              <option value={typeKey}>{registry.getStatic(typeKey).typeInfo.label || typeKey}</option>
             {/each}
           </select>
         </label>
@@ -193,8 +189,8 @@
 
 <style>
   .svg-red {
-    filter: brightness(0) saturate(100%) invert(13%) sepia(87%) saturate(7148%) hue-rotate(357deg)
-      brightness(90%) contrast(126%);
+    filter: brightness(0) saturate(100%) invert(13%) sepia(87%) saturate(7148%) hue-rotate(357deg) brightness(90%)
+      contrast(126%);
   }
 
   .select-primary {

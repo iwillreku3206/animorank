@@ -13,10 +13,7 @@ const runValidator = z.object({
   test_type: z.enum(['public', 'all']).default('public')
 });
 
-async function runTestCase(
-  testCase: TestCase<ProblemTestCase>,
-  code: string
-): Promise<TestCaseResult> {
+async function runTestCase(testCase: TestCase<ProblemTestCase>, code: string): Promise<TestCaseResult> {
   const result = await testCase.execute(code);
 
   if (!testCase.dbTestCase.public) {
@@ -65,8 +62,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   });
 
   const { test_type } = parsedData;
-  const testCases =
-    test_type === 'public' ? testCasesRaw.filter((tc) => tc.dbTestCase.public) : testCasesRaw;
+  const testCases = test_type === 'public' ? testCasesRaw.filter((tc) => tc.dbTestCase.public) : testCasesRaw;
 
   const results = await Promise.all(
     testCases.map(async (tc) => {
@@ -78,9 +74,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
           runInfo: [],
           reason: 'compile_error' as const,
           error: error instanceof Error ? error.message : 'Unknown error',
-          ...(tc.dbTestCase.public
-            ? { hidden: false, testCaseInfo: tc.dbTestCase }
-            : { hidden: true })
+          ...(tc.dbTestCase.public ? { hidden: false, testCaseInfo: tc.dbTestCase } : { hidden: true })
         } satisfies TestCaseResult;
       }
     })

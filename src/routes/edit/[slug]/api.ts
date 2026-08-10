@@ -35,10 +35,7 @@ export async function deleteTestCase(testCaseId: string) {
   });
 }
 
-export async function createTestCase(
-  problem: string,
-  type: ProblemTestCaseType
-): Promise<ProblemTestCase | undefined> {
+export async function createTestCase(problem: string, type: ProblemTestCaseType): Promise<ProblemTestCase | undefined> {
   const req = await fetch('/api/test-case', {
     method: 'POST',
     body: JSON.stringify({

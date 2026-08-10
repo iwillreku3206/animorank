@@ -4,8 +4,7 @@
 >
   export const SITE_NAME = 'AnimoRank';
   export const DEFAULT_TITLE = 'AnimoRank: practice for your DLSU CS courses';
-  export const DEFAULT_DESCRIPTION =
-    'Free, student-built practice for DLSU Computer Science courses.';
+  export const DEFAULT_DESCRIPTION = 'Free, student-built practice for DLSU Computer Science courses.';
   export const DEFAULT_OG_IMAGE = '/brand/og/og-image.png';
   const ORG_LOGO = '/brand/icon/animorank_icon_primary_light.png';
   const GITHUB_URL = 'https://github.com/iwillreku3206/animorank';
@@ -38,9 +37,7 @@
   let origin = $derived(page.url.origin);
   // Canonical drops query strings and the trailing slash so variants collapse to
   // one URL.
-  let canonicalUrl = $derived(
-    canonical ?? `${origin}${page.url.pathname.replace(/\/$/, '') || '/'}`
-  );
+  let canonicalUrl = $derived(canonical ?? `${origin}${page.url.pathname.replace(/\/$/, '') || '/'}`);
   let absoluteImage = $derived(/^https?:\/\//.test(image) ? image : `${origin}${image}`);
 
   // Sitewide Organization + WebSite graph. Emitted on every page; search engines

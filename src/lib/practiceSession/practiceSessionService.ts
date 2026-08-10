@@ -95,12 +95,7 @@ export class PracticeSessionService {
     });
 
     return sessions.map(
-      (s) =>
-        new ServerPracticeSession(
-          s,
-          new Problem(s.problem as unknown as ProblemModel),
-          options.user
-        )
+      (s) => new ServerPracticeSession(s, new Problem(s.problem as unknown as ProblemModel), options.user)
     );
   }
 
@@ -128,9 +123,7 @@ export class PracticeSessionService {
    * Get the latest non-done practice session for a user and problem.
    * If no such session exists, create a new one.
    */
-  public async findLatestNonDoneOrCreate(
-    options: FindLatestNonDoneOptions
-  ): Promise<ServerPracticeSession | null> {
+  public async findLatestNonDoneOrCreate(options: FindLatestNonDoneOptions): Promise<ServerPracticeSession | null> {
     const practiceSession = await db.practiceSession.findFirst({
       where: {
         student_id: options.user.id,
@@ -149,9 +142,7 @@ export class PracticeSessionService {
       });
 
       if (!problem) {
-        throw new Error(
-          `Problem ${practiceSession.problem_id} not found for session ${practiceSession.id}`
-        );
+        throw new Error(`Problem ${practiceSession.problem_id} not found for session ${practiceSession.id}`);
       }
 
       return new ServerPracticeSession(practiceSession, problem, options.user);
@@ -190,10 +181,7 @@ export class PracticeSessionService {
   /**
    * Mark a practice session as done, verifying ownership.
    */
-  public async markAsDone(options: {
-    id: string;
-    user: User;
-  }): Promise<ServerPracticeSession | null> {
+  public async markAsDone(options: { id: string; user: User }): Promise<ServerPracticeSession | null> {
     return this.update({
       ...options,
       newState: { done: true }

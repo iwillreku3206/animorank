@@ -19,8 +19,7 @@ interface EntryModule {
   default: Component;
 }
 
-const toIsoDate = (d: string | Date): string =>
-  (d instanceof Date ? d.toISOString() : d).slice(0, 10);
+const toIsoDate = (d: string | Date): string => (d instanceof Date ? d.toISOString() : d).slice(0, 10);
 
 // Eagerly bundle every entry. Content lives in src/lib (not src/routes) so the
 // `.svx` files are never treated as standalone pages.

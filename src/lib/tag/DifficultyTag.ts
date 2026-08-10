@@ -26,10 +26,7 @@ export class DifficultyTag extends Tag<DifficultyTagModel> {
     return db.difficultyTag.findUnique({ where: { id } });
   }
 
-  static async update(
-    id: string,
-    options: DifficultyTagUpdateOptions
-  ): Promise<DifficultyTagModel | null> {
+  static async update(id: string, options: DifficultyTagUpdateOptions): Promise<DifficultyTagModel | null> {
     const existing = await db.difficultyTag.findUnique({ where: { id } });
     if (!existing) return null;
 

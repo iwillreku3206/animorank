@@ -72,12 +72,12 @@
 
 <style>
   .red-svg {
-    filter: brightness(0) saturate(100%) invert(17%) sepia(80%) saturate(5957%) hue-rotate(6deg)
-      brightness(107%) contrast(134%);
+    filter: brightness(0) saturate(100%) invert(17%) sepia(80%) saturate(5957%) hue-rotate(6deg) brightness(107%)
+      contrast(134%);
   }
 
   .disabled-svg {
-    filter: brightness(0) saturate(100%) invert(25%) sepia(7%) saturate(0%) hue-rotate(158deg)
-      brightness(92%) contrast(87%);
+    filter: brightness(0) saturate(100%) invert(25%) sepia(7%) saturate(0%) hue-rotate(158deg) brightness(92%)
+      contrast(87%);
   }
 </style>

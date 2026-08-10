@@ -26,21 +26,9 @@
 
   /* ---- Tab text -------------------------------------------------------- */
   --dv-activegroup-visiblepanel-tab-color: var(--color-primary);
-  --dv-activegroup-hiddenpanel-tab-color: color-mix(
-    in oklch,
-    var(--color-base-content) 75%,
-    transparent
-  );
-  --dv-inactivegroup-visiblepanel-tab-color: color-mix(
-    in oklch,
-    var(--color-primary) 75%,
-    transparent
-  );
-  --dv-inactivegroup-hiddenpanel-tab-color: color-mix(
-    in oklch,
-    var(--color-base-content) 40%,
-    transparent
-  );
+  --dv-activegroup-hiddenpanel-tab-color: color-mix(in oklch, var(--color-base-content) 75%, transparent);
+  --dv-inactivegroup-visiblepanel-tab-color: color-mix(in oklch, var(--color-primary) 75%, transparent);
+  --dv-inactivegroup-hiddenpanel-tab-color: color-mix(in oklch, var(--color-base-content) 40%, transparent);
 
   /* ---- Dividers, separators, borders ----------------------------------- */
   --dv-tab-divider-color: transparent;
@@ -73,11 +61,7 @@
 
   /* ---- Icons, scrollbars, menus ---------------------------------------- */
   --dv-icon-hover-background-color: color-mix(in oklch, var(--color-base-content) 15%, transparent);
-  --dv-tabs-container-scrollbar-color: color-mix(
-    in oklch,
-    var(--color-base-content) 40%,
-    transparent
-  );
+  --dv-tabs-container-scrollbar-color: color-mix(in oklch, var(--color-base-content) 40%, transparent);
   --dv-scrollbar-background-color: color-mix(in oklch, var(--color-base-content) 40%, transparent);
   --dv-context-menu-background-color: var(--color-base-200);
   --dv-context-menu-color: var(--color-base-content);

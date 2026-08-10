@@ -16,9 +16,7 @@
 
   let tags = $derived([problem.difficulty, ...problem.topics].filter((x) => !!x));
 
-  let totalAttempts = $derived(
-    parseInt((problemAttempts || [])[0]?.attempts.toString() || '0') || 0
-  );
+  let totalAttempts = $derived(parseInt((problemAttempts || [])[0]?.attempts.toString() || '0') || 0);
 
   let totalSolvers = $derived(parseInt((problemSolvers || [])[0]?.solvers.toString() || '0') || 0);
 
@@ -46,9 +44,7 @@
       </div>
 
       <!-- Title + status -->
-      <h2
-        class="text-xl font-display font-semibold line-clamp-2 overflow-hidden flex flex-row items-center gap-4"
-      >
+      <h2 class="text-xl font-display font-semibold line-clamp-2 overflow-hidden flex flex-row items-center gap-4">
         {#if problem.status === 'done'}
           <span class="text-primary">{problem.title}</span>
           <CheckIcon class="w-6 h-6 text-primary" />
@@ -61,9 +57,7 @@
       <div class="flex flex-col gap-2 text-base-content/70 text-sm sm:flex-row sm:items-center">
         <!-- Passing rate -->
         <div class="w-full sm:w-48">
-          Passing Rate: <span class="font-bold text-base-content"
-            >{(passRate * 100).toFixed(2)}%</span
-          >
+          Passing Rate: <span class="font-bold text-base-content">{(passRate * 100).toFixed(2)}%</span>
         </div>
 
         <!-- Total attempts -->
@@ -79,9 +73,7 @@
     <!-- Action buttons -->
     <div class="flex-[1] flex flex-row gap-4 items-center">
       <ButtonLink
-        class={`gap-2 w-full ${
-          problem.status === 'done' ? 'btn-secondary btn-outline' : 'btn-primary btn-outline'
-        }`}
+        class={`gap-2 w-full ${problem.status === 'done' ? 'btn-secondary btn-outline' : 'btn-primary btn-outline'}`}
         href="/problem/{problem.id}"
       >
         {#if problem.status === 'not_started'}

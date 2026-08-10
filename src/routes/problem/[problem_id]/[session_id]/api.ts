@@ -41,10 +41,7 @@ export type CustomRunResponse = {
   error?: string;
 };
 
-export async function runCustomInput(
-  session_id: string,
-  stdin: string
-): Promise<CustomRunResponse> {
+export async function runCustomInput(session_id: string, stdin: string): Promise<CustomRunResponse> {
   const req = await fetch(`/api/practice-session/${session_id}/custom-run`, {
     method: 'POST',
     body: JSON.stringify({ stdin }),

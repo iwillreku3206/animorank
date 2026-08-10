@@ -25,9 +25,7 @@ export class FileLogger extends Logger {
 
     await fs.appendFile(
       process.env.FILE_LOGGER_FILE || '/tmp/animorank.log',
-      Buffer.from(
-        `[${LogLevelNames[message.level]}] [${formatted}] [${this.module}] ${message.message}\n`
-      ),
+      Buffer.from(`[${LogLevelNames[message.level]}] [${formatted}] [${this.module}] ${message.message}\n`),
       'utf8'
     );
   }

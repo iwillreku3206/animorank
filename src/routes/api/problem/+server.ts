@@ -12,11 +12,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
   if (!session || !session.user.id) return error(403, 'Unauthorized');
   if (session.user.type != 'teacher') return error(403, 'Unauthorized');
 
-  const {
-    success,
-    data,
-    error: zodError
-  } = await postValidator.safeParseAsync(await request.json());
+  const { success, data, error: zodError } = await postValidator.safeParseAsync(await request.json());
   if (!success) return error(400, zodError);
 
   const problemSet = await db.problemSet.findUnique({

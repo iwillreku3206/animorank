@@ -18,8 +18,7 @@
 
   const closeDrawer = () => (openDrawer = false);
 
-  const FOCUSABLE =
-    'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
   $effect(() => {
     if (!openDrawer) return;
@@ -64,9 +63,7 @@
   }}
 />
 
-<nav
-  class="app-gutter safe-top sticky top-0 z-30 grid min-h-16 grid-cols-[1fr_auto_1fr] items-center bg-base-300"
->
+<nav class="app-gutter safe-top sticky top-0 z-30 grid min-h-16 grid-cols-[1fr_auto_1fr] items-center bg-base-300">
   <!-- Left: hamburger (mobile) / brand wordmark (desktop) -->
   <div class="flex items-center justify-self-start">
     <Button
@@ -155,9 +152,7 @@
   tabindex="-1"
   onkeydown={trapFocus}
 >
-  <div
-    class="safe-top flex min-h-16 items-center justify-between border-b border-base-content/10 px-5"
-  >
+  <div class="safe-top flex min-h-16 items-center justify-between border-b border-base-content/10 px-5">
     <a
       href="/"
       onclick={closeDrawer}

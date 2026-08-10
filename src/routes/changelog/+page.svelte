@@ -58,9 +58,7 @@
 </svelte:head>
 
 <main class="flex-1 bg-base-300 text-base-content">
-  <div
-    class="app-gutter flex flex-col items-start gap-10 py-12 justify-center lg:flex-row lg:gap-16"
-  >
+  <div class="app-gutter flex flex-col items-start gap-10 py-12 justify-center lg:flex-row lg:gap-16">
     <!-- Entry rail (scroll-spy TOC; hidden on mobile where readers just scroll). -->
     {#if entries.length > 0}
       <aside class="hidden lg:sticky lg:top-20 lg:block lg:h-fit lg:w-56">
@@ -88,9 +86,7 @@
     <!-- Entries -->
     <div class="w-full max-w-2xl">
       <header class="mb-12">
-        <h1 class="font-display text-3xl font-bold tracking-tight text-balance lg:text-4xl">
-          Changelog
-        </h1>
+        <h1 class="font-display text-3xl font-bold tracking-tight text-balance lg:text-4xl">Changelog</h1>
         <p class="mt-4 text-base leading-relaxed text-base-content/70">
           New features, improvements, and fixes in AnimoRank.
           <a
@@ -122,9 +118,7 @@
                 >
                   {formatDate(entry.date)}
                 </time>
-                <h2
-                  class="mt-1 font-display text-2xl font-semibold text-base-content group-hover:text-primary"
-                >
+                <h2 class="mt-1 font-display text-2xl font-semibold text-base-content group-hover:text-primary">
                   {entry.title}<span
                     aria-hidden="true"
                     class="ml-2 text-primary opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none"

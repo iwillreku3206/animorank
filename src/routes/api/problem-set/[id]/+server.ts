@@ -92,11 +92,7 @@ export const PUT: RequestHandler = async ({ locals, request, params }) => {
 
   if (!session || !session.user.id) return error(403, 'Unauthorized');
 
-  const {
-    success,
-    data,
-    error: zodError
-  } = await updateValidator.safeParseAsync(await request.json());
+  const { success, data, error: zodError } = await updateValidator.safeParseAsync(await request.json());
 
   if (!success) return error(400, zodError);
 

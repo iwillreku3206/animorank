@@ -31,9 +31,7 @@
 </script>
 
 <!-- Card container -->
-<div
-  class="relative w-full flex flex-col gap-4 bg-base-200 hover:bg-base-100/70 rounded-lg p-6 max-h-96"
->
+<div class="relative w-full flex flex-col gap-4 bg-base-200 hover:bg-base-100/70 rounded-lg p-6 max-h-96">
   <!-- Header: breadcrumb + bookmark icon -->
   <div class="flex items-center gap-4">
     <!-- Subject category -->
@@ -130,10 +128,7 @@
       <div class="flex justify-between gap-4 text-sm text-base-content">
         <span> Progress </span>
         <span>
-          {problemSet.progress.finished}/{problemSet.progress.total} problem{problemSet.progress
-            .total === 1
-            ? ''
-            : 's'}
+          {problemSet.progress.finished}/{problemSet.progress.total} problem{problemSet.progress.total === 1 ? '' : 's'}
         </span>
       </div>
 

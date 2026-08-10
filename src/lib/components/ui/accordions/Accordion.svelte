@@ -38,9 +38,7 @@
   // A shared `name` turns the panels into a radio group (exclusive); otherwise
   // a checkbox lets each panel toggle independently.
   const inputType = $derived(name != null ? 'radio' : 'checkbox');
-  const iconClass = $derived(
-    icon === 'arrow' ? 'collapse-arrow' : icon === 'plus' ? 'collapse-plus' : ''
-  );
+  const iconClass = $derived(icon === 'arrow' ? 'collapse-arrow' : icon === 'plus' ? 'collapse-plus' : '');
 </script>
 
 <div

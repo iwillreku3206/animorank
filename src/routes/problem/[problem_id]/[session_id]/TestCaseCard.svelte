@@ -65,10 +65,7 @@
     if (result.hidden) return { inputs: [], outputs: [] };
     const getters = (
       {
-        [ProblemTestCaseType.FunctionOutputTestCase]: [
-          getFunctionOutputInput,
-          getFunctionOutputOutput
-        ],
+        [ProblemTestCaseType.FunctionOutputTestCase]: [getFunctionOutputInput, getFunctionOutputOutput],
         [ProblemTestCaseType.ProgramIOTestCase]: [getProgramIOInput, getProgramIOOutput],
         [ProblemTestCaseType.CustomTestCase]: [getCustomInput, getCustomOutput]
       } as Record<ProblemTestCaseType, [InputGetter, OutputGetter]>

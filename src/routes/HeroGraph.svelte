@@ -86,9 +86,7 @@
   const NODES = buildNodes();
 
   // unique edges (course -> topic)
-  const EDGES = Object.entries(RELATIONS).flatMap(([course, topics]) =>
-    topics.map((t) => ({ a: course, b: t }))
-  );
+  const EDGES = Object.entries(RELATIONS).flatMap(([course, topics]) => topics.map((t) => ({ a: course, b: t })));
 </script>
 
 <script lang="ts">

@@ -7,10 +7,7 @@ interface Subscription<T extends Events, K extends keyof T> {
   handler: (_payload: T[K]) => void;
 }
 
-function compareSubscriptions(
-  a: { event: any; handler: Function },
-  b: { event: any; handler: Function }
-): boolean {
+function compareSubscriptions(a: { event: any; handler: Function }, b: { event: any; handler: Function }): boolean {
   return a.event === b.event && a.handler === b.handler;
 }
 

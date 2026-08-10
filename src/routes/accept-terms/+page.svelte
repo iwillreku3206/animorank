@@ -40,8 +40,8 @@
       This platform is an optional practice tool and is not a hard requirement for any course.
     </TosCard>
     <TosCard bind:checked={checked[1]}>
-      This platform collects interaction data, including coding logs and session interactions, for
-      the purposes of improving the platform and for academic research.
+      This platform collects interaction data, including coding logs and session interactions, for the purposes of
+      improving the platform and for academic research.
     </TosCard>
     <TosCard bind:checked={checked[2]}>
       Such data, when collected, will always be anonymized prior to any kind of analysis.
@@ -135,8 +135,8 @@
             id="decline-desc"
             class="text-sm leading-relaxed text-base-content"
           >
-            AnimoRank can only be used once you accept the Terms of Service. If you decline, your
-            account and its data will be permanently deleted. This can't be undone.
+            AnimoRank can only be used once you accept the Terms of Service. If you decline, your account and its data
+            will be permanently deleted. This can't be undone.
           </p>
         </div>
       </div>
@@ -149,9 +149,7 @@
           bind:checked={isConfirmed}
           class="checkbox checkbox-error shrink-0"
         />
-        <span class="text-sm text-base-content">
-          I understand this will permanently delete my account.
-        </span>
+        <span class="text-sm text-base-content"> I understand this will permanently delete my account. </span>
       </label>
 
       <div class="mt-6 flex items-center justify-between gap-3">

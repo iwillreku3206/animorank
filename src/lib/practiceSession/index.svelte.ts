@@ -46,8 +46,7 @@ export abstract class PracticeSession {
                   1,
                   1,
                   1,
-                  (this.getCodeSection('body') || '').replaceAll('\r\n', '\n').split('\n').at(-1)
-                    ?.length || 0
+                  (this.getCodeSection('body') || '').replaceAll('\r\n', '\n').split('\n').at(-1)?.length || 0
                 ],
                 label: 'body'
               }

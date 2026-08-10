@@ -27,10 +27,7 @@
 
   let tags = $derived([problemSet.difficulty, ...problemSet.topics].filter((x) => !!x));
   let progress = $derived(
-    problemSet.problems.reduce(
-      (prev, next) => [prev[0] + (next.status === 'done' ? 1 : 0), prev[1] + 1],
-      [0, 0]
-    )
+    problemSet.problems.reduce((prev, next) => [prev[0] + (next.status === 'done' ? 1 : 0), prev[1] + 1], [0, 0])
   );
 </script>
 
@@ -58,9 +55,7 @@
       <!-- Title + author-->
       <div class="flex flex-col gap-2">
         <!-- Title -->
-        <h1
-          class="font-display text-3xl sm:text-4xl font-semibold line-clamp-2 overflow-hidden break-words"
-        >
+        <h1 class="font-display text-3xl sm:text-4xl font-semibold line-clamp-2 overflow-hidden break-words">
           {problemSet.title}
         </h1>
 
@@ -116,9 +111,7 @@
       <Button
         class="btn-neutral btn-outline gap-2 w-full"
         onclick={handleBookmarkClick}
-        aria-label={isBookmarked
-          ? `Remove ${problemSet.title} from bookmarks`
-          : `Add ${problemSet.title} to bookmarks`}
+        aria-label={isBookmarked ? `Remove ${problemSet.title} from bookmarks` : `Add ${problemSet.title} to bookmarks`}
       >
         {#if isBookmarked}
           <BookmarkIconSolid class="w-5 h-5" />

@@ -55,12 +55,8 @@
   // Tags: included then excluded, sorted across categories then by intra-category order.
   const activeTags = $derived(
     [
-      ...filters.include
-        .filter((id) => byId[id])
-        .map((id) => ({ id, tag: byId[id], state: 'include' as const })),
-      ...filters.exclude
-        .filter((id) => byId[id])
-        .map((id) => ({ id, tag: byId[id], state: 'exclude' as const }))
+      ...filters.include.filter((id) => byId[id]).map((id) => ({ id, tag: byId[id], state: 'include' as const })),
+      ...filters.exclude.filter((id) => byId[id]).map((id) => ({ id, tag: byId[id], state: 'exclude' as const }))
     ].sort((a, b) => {
       const rank = (TYPE_RANK[a.tag.type] ?? 99) - (TYPE_RANK[b.tag.type] ?? 99);
       return rank !== 0 ? rank : (a.tag.order ?? 0) - (b.tag.order ?? 0);

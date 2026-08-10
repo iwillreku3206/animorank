@@ -43,8 +43,7 @@
       {#if result.success}
         <div class="flex flex-col gap-2">
           <h3 class="text-sm font-medium text-success">Output (stdout)</h3>
-          <pre
-            class="bg-base-200 p-3 rounded-lg font-mono text-sm whitespace-pre-wrap break-words">{result.stdout ||
+          <pre class="bg-base-200 p-3 rounded-lg font-mono text-sm whitespace-pre-wrap break-words">{result.stdout ||
               '(no output)'}</pre>
         </div>
         {#if result.stderr}

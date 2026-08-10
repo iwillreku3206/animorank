@@ -94,9 +94,7 @@
   <section class="relative min-h-[90vh] overflow-hidden">
     <HeroGraph />
 
-    <div
-      class="pointer-events-none absolute inset-x-0 bottom-0 z-10 app-gutter pb-16 text-left lg:pb-20"
-    >
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 z-10 app-gutter pb-16 text-left lg:pb-20">
       <div class="pointer-events-auto max-w-2xl">
         <h1
           data-reveal="up"
@@ -111,8 +109,8 @@
           style="--d:150ms"
           class="mt-6 max-w-[56ch] text-md leading-snug text-base-content/75 lg:text-lg"
         >
-          Problems for the DLSU CS courses, organized by the topics your course covers. Currently
-          CCPROG1, but with more on the way.
+          Problems for the DLSU CS courses, organized by the topics your course covers. Currently CCPROG1, but with more
+          on the way.
         </p>
 
         <div
@@ -122,9 +120,7 @@
         >
           {@render primaryCta('Start practicing')}
           {#if !data.user}
-            <span class="text-sm text-base-content/55">
-              Sign in with your DLSU Google account.
-            </span>
+            <span class="text-sm text-base-content/55"> Sign in with your DLSU Google account. </span>
           {/if}
         </div>
       </div>
@@ -146,8 +142,8 @@
           style="--d:80ms"
           class="mt-4 text-lg text-base-content/75"
         >
-          Most practice problems are written for someone else. Practice a topic here and it is
-          designed to match your course's coverage and style.
+          Most practice problems are written for someone else. Practice a topic here and it is designed to match your
+          course's coverage and style.
         </p>
       </div>
 
@@ -228,9 +224,7 @@
         aria-hidden="true"
       ></div>
       <div class="relative max-w-2xl">
-        <h2 class="font-display text-4xl font-bold tracking-tight text-balance lg:text-6xl">
-          Practice now.
-        </h2>
+        <h2 class="font-display text-4xl font-bold tracking-tight text-balance lg:text-6xl">Practice now.</h2>
         <p class="mt-6 max-w-[46ch] text-lg leading-relaxed text-primary-content/80">
           Log in with your DLSU account to access your problem sets and start practicing.
         </p>

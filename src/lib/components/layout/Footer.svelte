@@ -22,9 +22,7 @@
 
         <!-- Partnership credit (temporary home until the About page ships) -->
         <div class="flex flex-col gap-2 mt-2">
-          <span class="text-xs font-medium uppercase tracking-wide text-base-content/60"
-            >In partnership with</span
-          >
+          <span class="text-xs font-medium uppercase tracking-wide text-base-content/60">In partnership with</span>
           <a
             href="https://dlsupts.vercel.app"
             target="_blank"

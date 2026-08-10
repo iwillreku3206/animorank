@@ -11,13 +11,7 @@
     lastTestType: 'run' | 'submit';
   }
 
-  let {
-    tests,
-    testSubmitted = false,
-    selectedTest = $bindable(-1),
-    handleReturn,
-    lastTestType
-  }: Props = $props();
+  let { tests, testSubmitted = false, selectedTest = $bindable(-1), handleReturn, lastTestType }: Props = $props();
 
   let publicTests = $derived(tests.results.filter((x) => !x.hidden));
 
@@ -57,9 +51,7 @@
         <TestCaseCard result={publicTests[selectedTest]} />
       </div>
     {:else}
-      <div class="p-4 w-full h-full items-center justify-center">
-        No test results yet. Click "Run" to run tests.
-      </div>
+      <div class="p-4 w-full h-full items-center justify-center">No test results yet. Click "Run" to run tests.</div>
     {/if}
   </div>
 {:else}

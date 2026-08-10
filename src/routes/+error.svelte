@@ -21,9 +21,7 @@
 
   const heading = $derived(is404 ? "We couldn't find that page." : 'Something went wrong.');
   const message = $derived(
-    is404
-      ? 'The link may be old, or the page may have moved.'
-      : 'An unexpected error stopped this page from loading.'
+    is404 ? 'The link may be old, or the page may have moved.' : 'An unexpected error stopped this page from loading.'
   );
 
   // Reveal enhances an already-visible default: content renders fully on the
