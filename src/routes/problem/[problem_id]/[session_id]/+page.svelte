@@ -9,19 +9,13 @@
   import { transform as transformHTML } from '@diplodoc/html-extension';
   import { browser } from '$app/environment';
   import { onMount, untrack } from 'svelte';
-  import {
-    runTestCases,
-    submit,
-    type TestRunResponse,
-    runCustomInput,
-    type CustomRunResponse
-  } from './api';
+  import { runTestCases, submit, type TestRunResponse, runCustomInput, type CustomRunResponse } from './api';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import Badge from '$lib/components/ui/badges/Badge.svelte';
   import { Subscribable } from '$lib/utils/subscription';
-  import type { ExecutionEvent } from '$lib/testCase/executionHook';
+  //import type { ExecutionEvent } from '$lib/testCase/executionHook';
   import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
   import { TelemetryService } from '$lib/telemetry/telemetryService';
   import { AutoSave } from '$lib/utils/autosave.svelte.ts';
@@ -53,7 +47,7 @@
 
   let disableEdit = $state(false);
 
-  let executionObservable = new Subscribable<ExecutionEvent>();
+  //let executionObservable = new Subscribable<ExecutionEvent>();
   let selectedTest = $state(-1);
 
   let lastTestType: 'run' | 'submit' = $state('run');
@@ -62,9 +56,7 @@
   let customRunResult = $state<CustomRunResponse | null>(null);
 
   let codeSections: Record<string, string> = $state(
-    Object.fromEntries(
-      practiceSession.previousCode.sections.map((section) => [section.slot.label, section.code])
-    )
+    Object.fromEntries(practiceSession.previousCode.sections.map((section) => [section.slot.label, section.code]))
   );
 
   // svelte-ignore state_referenced_locally
@@ -72,7 +64,7 @@
 
   onMount(() => {
     const telemetry = ClientServiceProvider.instance().getService(TelemetryService);
-    telemetry.attachExecution(executionObservable);
+    //telemetry.attachExecution(executionObservable);
 
     // Warn before unloading if there are unsaved changes
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -109,12 +101,12 @@
     disableEdit = true;
     await autosave.forceSave($state.snapshot(codeSections));
     const results = await runTestCases(page.params.session_id || '');
-    executionObservable.fire('run', {
-      generalTestResults: results.results.map((r) => r.success),
-      publicTestResults: results.results.filter((p) => !p.hidden).map((p) => p),
-      runType: 'run',
-      submittedCode: practiceSession.previousCode.fullCode
-    });
+    //executionObservable.fire('run', {
+    //  generalTestResults: results.results.map((r) => r.success),
+    //  publicTestResults: results.results.filter((p) => !p.hidden).map((p) => p),
+    //  runType: 'run',
+    //  submittedCode: practiceSession.previousCode.fullCode
+    //});
     testCaseResults = results as TestRunResponse;
     lastTestType = 'run';
     selectedTest = testCaseResults.results.length > 0 ? 0 : -1;
@@ -126,12 +118,12 @@
     disableEdit = true;
     await autosave.forceSave($state.snapshot(codeSections));
     const results = await submit(page.params.session_id || '');
-    executionObservable.fire('run', {
-      generalTestResults: results.results.map((r) => r.success),
-      publicTestResults: results.results.filter((p) => !p.hidden).map((p) => p),
-      runType: 'submit',
-      submittedCode: practiceSession.previousCode.fullCode
-    });
+    //executionObservable.fire('run', {
+    //  generalTestResults: results.results.map((r) => r.success),
+    //  publicTestResults: results.results.filter((p) => !p.hidden).map((p) => p),
+    //  runType: 'submit',
+    //  submittedCode: practiceSession.previousCode.fullCode
+    //});
     lastTestType = 'submit';
     testCaseResults = results;
     panelState = 'test_cases';
@@ -166,9 +158,7 @@
 
 <DesktopOnly
   action="practice"
-  backHref={data.problem.problem_set_id
-    ? `/problemSets/${data.problem.problem_set_id}`
-    : '/problemSets'}
+  backHref={data.problem.problem_set_id ? `/problemSets/${data.problem.problem_set_id}` : '/problemSets'}
 >
   <div class="splitpanes-nobg">
     <Splitpanes
@@ -230,24 +220,20 @@
                   >
                     {panelState ? 'Hide' : 'Show'} Test Results
                     {#if testPassed.length > 0 || testFailed.length > 0}
-                      <Badge
-                        class="badge-sm {testFailed.length > 0 ? 'badge-error' : 'badge-success'}"
-                      >
+                      <Badge class="badge-sm {testFailed.length > 0 ? 'badge-error' : 'badge-success'}">
                         {testPassed.length + testFailed.length}
                       </Badge>
                     {/if}
                   </Button>
                   <Button
                     class="btn-sm"
-                    onclick={() =>
-                      (panelState = panelState === 'custom_input' ? '' : 'custom_input')}
+                    onclick={() => (panelState = panelState === 'custom_input' ? '' : 'custom_input')}
                   >
                     Custom Input
                   </Button>
                   <Button
                     class="btn-sm"
-                    onclick={() =>
-                      confirm('Reset code? This action cannot be undone.') && handleReset()}
+                    onclick={() => confirm('Reset code? This action cannot be undone.') && handleReset()}
                     >Reset Code</Button
                   >
                   <Button
@@ -289,11 +275,7 @@
                   >
                     Test Cases
                     {#if testPassed.length > 0 || testFailed.length > 0}
-                      <Badge
-                        class="badge-sm ml-1 {testFailed.length > 0
-                          ? 'badge-error'
-                          : 'badge-success'}"
-                      >
+                      <Badge class="badge-sm ml-1 {testFailed.length > 0 ? 'badge-error' : 'badge-success'}">
                         {testPassed.length + testFailed.length}
                       </Badge>
                     {/if}

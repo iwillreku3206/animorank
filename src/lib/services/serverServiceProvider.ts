@@ -1,14 +1,16 @@
 import { Logger } from '$lib/logging/logger';
 import { LoggerRegistry } from '$lib/logging/loggerRegistry';
-import { TestCaseService } from '$lib/testCase/testCaseService';
-import { CodeExecutor } from '$lib/testCase/executor';
-import { Judge0Executor } from '$lib/testCase/executor/judge0';
+//import { TestCaseService } from '$lib/testCase/testCaseService';
+//import { CodeExecutor } from '$lib/testCase/executor';
+//import { Judge0Executor } from '$lib/testCase/executor/judge0';
 import { ServiceRegistry, type ISingleton } from './registry';
 import { ServiceProvider } from './serviceProvider';
 import { ProblemService } from '$lib/problem/problemService';
 import { ProblemSetService } from '$lib/problemSet/problemSetService';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
 import { TagService } from '$lib/tag/tagService';
+import { CodeExecutor } from '$lib/executor';
+import { CodeExecutorRegistry } from '$lib/executor/codeExecutorRegistry';
 
 export class ServerServiceProvider extends ServiceProvider {
   private static _instance: ServerServiceProvider | null;
@@ -17,10 +19,11 @@ export class ServerServiceProvider extends ServiceProvider {
     super();
     // Import any service registries here
     this._registries.set(Logger, new LoggerRegistry());
-    this._registries.set(
-      TestCaseService as ISingleton<TestCaseService>,
-      ServiceRegistry.createSingleSingletonServiceRegistry(TestCaseService)
-    );
+    this._registries.set(CodeExecutor, new CodeExecutorRegistry());
+    //this._registries.set(
+    //  TestCaseService as ISingleton<TestCaseService>,
+    //  ServiceRegistry.createSingleSingletonServiceRegistry(TestCaseService)
+    //);
     this._registries.set(
       ProblemService as ISingleton<ProblemService>,
       ServiceRegistry.createSingleSingletonServiceRegistry(ProblemService)
@@ -41,7 +44,7 @@ export class ServerServiceProvider extends ServiceProvider {
       TagService as ISingleton<TagService>,
       ServiceRegistry.createSingleSingletonServiceRegistry(TagService)
     );
-    this._registries.set(CodeExecutor, ServiceRegistry.createSingleServiceRegistry(Judge0Executor));
+    //this._registries.set(CodeExecutor, ServiceRegistry.createSingleServiceRegistry(Judge0Executor));
   }
 
   public static instance(): ServiceProvider {

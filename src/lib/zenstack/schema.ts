@@ -251,6 +251,12 @@ export class SchemaType implements SchemaDef {
                     array: true,
                     relation: { opposite: "problem" }
                 },
+                extension_data: {
+                    name: "extension_data",
+                    type: "Json",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("{}") }] }] as readonly AttributeApplication[],
+                    default: "{}" as FieldDefault
+                },
                 problem_set_id: {
                     name: "problem_set_id",
                     type: "String",
@@ -307,16 +313,17 @@ export class SchemaType implements SchemaDef {
                 },
                 type: {
                     name: "type",
-                    type: "ProblemTestCaseType",
-                    isDiscriminator: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
-                    default: "FunctionOutputTestCase" as FieldDefault
+                    type: "String"
                 },
                 public: {
                     name: "public",
                     type: "Boolean",
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
                     default: true as FieldDefault
+                },
+                data: {
+                    name: "data",
+                    type: "Json"
                 },
                 problem_id: {
                     name: "problem_id",
@@ -343,241 +350,6 @@ export class SchemaType implements SchemaDef {
                     type: "DateTime",
                     updatedAt: true,
                     attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
-                }
-            },
-            attributes: [
-                { name: "@@delegate", args: [{ name: "discriminator", value: ExpressionUtils.field("type") }] }
-            ] as readonly AttributeApplication[],
-            idFields: ["id"],
-            uniqueFields: {
-                id: { type: "String" }
-            },
-            isDelegate: true,
-            subModels: ["FunctionOutputTestCase", "ProgramIOTestCase", "CustomTestCase"]
-        },
-        FunctionOutputTestCase: {
-            name: "FunctionOutputTestCase",
-            baseModel: "ProblemTestCase",
-            fields: {
-                id: {
-                    name: "id",
-                    type: "String",
-                    id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("uuid") as FieldDefault
-                },
-                type: {
-                    name: "type",
-                    type: "ProblemTestCaseType",
-                    originModel: "ProblemTestCase",
-                    isDiscriminator: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
-                    default: "FunctionOutputTestCase" as FieldDefault
-                },
-                public: {
-                    name: "public",
-                    type: "Boolean",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
-                    default: true as FieldDefault
-                },
-                problem_id: {
-                    name: "problem_id",
-                    type: "String",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    foreignKeyFor: [
-                        "problem"
-                    ] as readonly string[]
-                },
-                problem: {
-                    name: "problem",
-                    type: "Problem",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "test_cases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
-                },
-                created_at: {
-                    name: "created_at",
-                    type: "DateTime",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("now") as FieldDefault
-                },
-                updated_at: {
-                    name: "updated_at",
-                    type: "DateTime",
-                    updatedAt: true,
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
-                },
-                parameters: {
-                    name: "parameters",
-                    type: "Parameter",
-                    array: true,
-                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("[]") }] }] as readonly AttributeApplication[],
-                    default: "[]" as FieldDefault
-                },
-                comparisons: {
-                    name: "comparisons",
-                    type: "Comparison",
-                    array: true,
-                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("[]") }] }] as readonly AttributeApplication[],
-                    default: "[]" as FieldDefault
-                },
-                return_type: {
-                    name: "return_type",
-                    type: "Parameter",
-                    attributes: [{ name: "@json" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("{\"type\":\"int\", \"data\":{\"signed\":\"none\",\"value\": \"5\",\"size\": 32}}") }] }] as readonly AttributeApplication[],
-                    default: "{\"type\":\"int\", \"data\":{\"signed\":\"none\",\"value\": \"5\",\"size\": 32}}" as FieldDefault
-                },
-                function_name: {
-                    name: "function_name",
-                    type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
-                    default: "" as FieldDefault
-                }
-            },
-            idFields: ["id"],
-            uniqueFields: {
-                id: { type: "String" }
-            }
-        },
-        ProgramIOTestCase: {
-            name: "ProgramIOTestCase",
-            baseModel: "ProblemTestCase",
-            fields: {
-                id: {
-                    name: "id",
-                    type: "String",
-                    id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("uuid") as FieldDefault
-                },
-                type: {
-                    name: "type",
-                    type: "ProblemTestCaseType",
-                    originModel: "ProblemTestCase",
-                    isDiscriminator: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
-                    default: "FunctionOutputTestCase" as FieldDefault
-                },
-                public: {
-                    name: "public",
-                    type: "Boolean",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
-                    default: true as FieldDefault
-                },
-                problem_id: {
-                    name: "problem_id",
-                    type: "String",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    foreignKeyFor: [
-                        "problem"
-                    ] as readonly string[]
-                },
-                problem: {
-                    name: "problem",
-                    type: "Problem",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "test_cases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
-                },
-                created_at: {
-                    name: "created_at",
-                    type: "DateTime",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("now") as FieldDefault
-                },
-                updated_at: {
-                    name: "updated_at",
-                    type: "DateTime",
-                    updatedAt: true,
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
-                },
-                input: {
-                    name: "input",
-                    type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
-                    default: "" as FieldDefault
-                },
-                output: {
-                    name: "output",
-                    type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
-                    default: "" as FieldDefault
-                }
-            },
-            idFields: ["id"],
-            uniqueFields: {
-                id: { type: "String" }
-            }
-        },
-        CustomTestCase: {
-            name: "CustomTestCase",
-            baseModel: "ProblemTestCase",
-            fields: {
-                id: {
-                    name: "id",
-                    type: "String",
-                    id: true,
-                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("uuid") as FieldDefault
-                },
-                type: {
-                    name: "type",
-                    type: "ProblemTestCaseType",
-                    originModel: "ProblemTestCase",
-                    isDiscriminator: true,
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("FunctionOutputTestCase") }] }] as readonly AttributeApplication[],
-                    default: "FunctionOutputTestCase" as FieldDefault
-                },
-                public: {
-                    name: "public",
-                    type: "Boolean",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(true) }] }] as readonly AttributeApplication[],
-                    default: true as FieldDefault
-                },
-                problem_id: {
-                    name: "problem_id",
-                    type: "String",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
-                    foreignKeyFor: [
-                        "problem"
-                    ] as readonly string[]
-                },
-                problem: {
-                    name: "problem",
-                    type: "Problem",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
-                    relation: { opposite: "test_cases", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
-                },
-                created_at: {
-                    name: "created_at",
-                    type: "DateTime",
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
-                    default: ExpressionUtils.call("now") as FieldDefault
-                },
-                updated_at: {
-                    name: "updated_at",
-                    type: "DateTime",
-                    updatedAt: true,
-                    originModel: "ProblemTestCase",
-                    attributes: [{ name: "@updatedAt" }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[]
-                },
-                test_code: {
-                    name: "test_code",
-                    type: "String",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("") }] }] as readonly AttributeApplication[],
-                    default: "" as FieldDefault
                 }
             },
             idFields: ["id"],
@@ -1465,63 +1237,6 @@ export class SchemaType implements SchemaDef {
             }
         }
     } as const;
-    typeDefs = {
-        DataTypeWithValue: {
-            name: "DataTypeWithValue",
-            fields: {
-                type: {
-                    name: "type",
-                    type: "String"
-                },
-                data: {
-                    name: "data",
-                    type: "Json"
-                }
-            }
-        },
-        Parameter: {
-            name: "Parameter",
-            fields: {
-                type: {
-                    name: "type",
-                    type: "String"
-                },
-                data: {
-                    name: "data",
-                    type: "Json"
-                }
-            }
-        },
-        Comparison: {
-            name: "Comparison",
-            fields: {
-                type: {
-                    name: "type",
-                    type: "String"
-                },
-                data: {
-                    name: "data",
-                    type: "Json"
-                },
-                symbol: {
-                    name: "symbol",
-                    type: "String"
-                },
-                operator: {
-                    name: "operator",
-                    type: "FunctionOutputTestCaseOperator"
-                },
-                range_value: {
-                    name: "range_value",
-                    type: "String",
-                    optional: true
-                }
-            },
-            attributes: [
-                { name: "@@validate", args: [{ name: "value", value: ExpressionUtils.binary(ExpressionUtils.binary(ExpressionUtils.field("operator"), "!=", ExpressionUtils.literal("WITHIN_RANGE")), "||", ExpressionUtils.binary(ExpressionUtils.field("range_value"), "!=", ExpressionUtils._null())) }, { name: "message", value: ExpressionUtils.literal("range_value must be provided when operator is WITHIN_RANGE") }] }
-            ] as readonly AttributeApplication[]
-        }
-    } as const;
     enums = {
         HistoryEntryType: {
             name: "HistoryEntryType",
@@ -1538,26 +1253,6 @@ export class SchemaType implements SchemaDef {
             name: "Language",
             values: {
                 C: "C"
-            }
-        },
-        ProblemTestCaseType: {
-            name: "ProblemTestCaseType",
-            values: {
-                FunctionOutputTestCase: "FunctionOutputTestCase",
-                ProgramIOTestCase: "ProgramIOTestCase",
-                CustomTestCase: "CustomTestCase"
-            }
-        },
-        FunctionOutputTestCaseOperator: {
-            name: "FunctionOutputTestCaseOperator",
-            values: {
-                EQUAL: "EQUAL",
-                NOT_EQUAL: "NOT_EQUAL",
-                LESS_THAN: "LESS_THAN",
-                LESS_THAN_EQUAL: "LESS_THAN_EQUAL",
-                GREATER_THAN: "GREATER_THAN",
-                GREATER_THAN_EQUAL: "GREATER_THAN_EQUAL",
-                WITHIN_RANGE: "WITHIN_RANGE"
             }
         },
         TagType: {

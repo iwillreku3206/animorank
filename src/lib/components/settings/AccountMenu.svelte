@@ -109,7 +109,6 @@
   <div class="border-t border-base-content/10"></div>
 
   <div class="p-1.5">
-
     <!-- Review TOS: server form (revokes consent, redirects to /accept-terms). -->
     <form
       method="POST"

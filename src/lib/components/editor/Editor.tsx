@@ -1,14 +1,7 @@
-import {
-  useMarkdownEditor,
-  MarkdownEditorView,
-  wysiwygToolbarConfigs
-} from '@gravity-ui/markdown-editor';
+import { useMarkdownEditor, MarkdownEditorView, wysiwygToolbarConfigs } from '@gravity-ui/markdown-editor';
 import { Toaster, ToasterProvider, ThemeProvider } from '@gravity-ui/uikit';
 import { LatexExtension } from '@gravity-ui/markdown-editor-latex-extension';
-import {
-  wLatexBlockItemData,
-  wLatexInlineItemData
-} from '@gravity-ui/markdown-editor-latex-extension/configs';
+import { wLatexBlockItemData, wLatexInlineItemData } from '@gravity-ui/markdown-editor-latex-extension/configs';
 import { Mermaid } from '@gravity-ui/markdown-editor/extensions/additional/Mermaid/index.js';
 import { YfmHtmlBlock } from '@gravity-ui/markdown-editor/extensions/additional/YfmHtmlBlock/index.js';
 import React from 'react';
@@ -24,13 +17,7 @@ const wCommandMenuConfig = wysiwygToolbarConfigs.wCommandMenuConfig.concat(
   wysiwygToolbarConfigs.wYfmHtmlBlockItemData
 );
 
-export default function Editor({
-  onChange,
-  initialText
-}: {
-  onChange: (_text: string) => void;
-  initialText: string;
-}) {
+export default function Editor({ onChange, initialText }: { onChange: (_text: string) => void; initialText: string }) {
   const editor = useMarkdownEditor({
     preset: 'full',
     initial: {
@@ -93,7 +80,7 @@ export default function Editor({
   }, [onChange]);
 
   return (
-    <ThemeProvider>
+    <ThemeProvider theme="dark">
       <ToasterProvider toaster={toaster}>
         <MarkdownEditorView
           stickyToolbar

@@ -43,17 +43,8 @@ export class ProblemService {
    * Create a new problem.
    */
   public async create(options: CreateOptions): Promise<Problem | null> {
-    const {
-      name,
-      description,
-      problemSetId,
-      usesSlots,
-      starterCode,
-      language,
-      subjectId,
-      difficultyId,
-      visible
-    } = options;
+    const { name, description, problemSetId, usesSlots, starterCode, language, subjectId, difficultyId, visible } =
+      options;
 
     const problem = await db.problem.create({
       data: {
@@ -65,9 +56,7 @@ export class ProblemService {
         language: language ?? Language.C,
         visible: visible ?? true,
         ...((subjectId ? { subject_id: subjectId } : {}) as Partial<Record<string, unknown>>),
-        ...((difficultyId ? { difficulty_id: difficultyId } : {}) as Partial<
-          Record<string, unknown>
-        >)
+        ...((difficultyId ? { difficulty_id: difficultyId } : {}) as Partial<Record<string, unknown>>)
       }
     });
 
@@ -82,10 +71,7 @@ export class ProblemService {
       where: {
         problem_set: {
           id: options.problemSetId,
-          OR: [
-            { is_global: true },
-            { collaborators: { some: { collaborator_id: options.user.id || '' } } }
-          ]
+          OR: [{ is_global: true }, { collaborators: { some: { collaborator_id: options.user.id || '' } } }]
         }
       }
     });
@@ -101,10 +87,7 @@ export class ProblemService {
       where: {
         id: options.id,
         problem_set: {
-          OR: [
-            { is_global: true },
-            { collaborators: { some: { collaborator_id: options.user.id || '' } } }
-          ]
+          OR: [{ is_global: true }, { collaborators: { some: { collaborator_id: options.user.id || '' } } }]
         }
       }
     });

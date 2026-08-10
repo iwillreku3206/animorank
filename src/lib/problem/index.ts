@@ -1,6 +1,7 @@
 import type { PreviousCodeSection } from '$lib/practiceSession/index.svelte';
 import { parseSlots } from '$lib/utils/parseSlots';
 import type { Problem as ProblemModel } from '$lib/zenstack/models';
+import type { JsonValue } from '@zenstackhq/orm';
 
 export interface Slot {
   label: string;
@@ -68,5 +69,13 @@ export class Problem {
 
   get subject_id(): string | null {
     return this.model.subject_id;
+  }
+
+  get extension_data(): JsonValue {
+    return this.model.extension_data || {};
+  }
+
+  set extension_data(value: JsonValue) {
+    this.model.extension_data = value;
   }
 }

@@ -1,5 +1,6 @@
 <script lang="ts">
   import '../app.css';
+  import '../yfm.css';
   import 'katex/dist/katex.min.css';
   import '@gravity-ui/uikit/styles/fonts.css';
   import '@gravity-ui/uikit/styles/styles.css';

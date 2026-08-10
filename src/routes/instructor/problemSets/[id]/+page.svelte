@@ -4,6 +4,7 @@
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
   import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
   import ClickableBadge from '$lib/components/ui/badges/ClickableBadge.svelte';
+  import Editor from '$lib/components/editor/Editor.svelte';
 
   let { data }: PageProps = $props();
 
@@ -128,6 +129,7 @@
       class="label"
       for="ps-description"><span class="label-text font-bold">Description</span></label
     >
+    <Editor bind:text={problemSet.description} />
     <textarea
       id="ps-description"
       bind:value={problemSet.description}
