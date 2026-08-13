@@ -10,19 +10,19 @@ export class ServerFunctionTestCase extends ServerTestCase<FunctionTestCaseData,
   public get languageRegistry(): TestCaseLanguageRegistry {
     return this._languageRegistry;
   }
-  private constructor(model: TestCaseModel, problem: Problem) {
+  public constructor(model: TestCaseModel, problem: Problem) {
     super(new FunctionTestCase(model, problem));
   }
   public static id() {
     return 'function';
   }
 
-  public async create(problem: Problem): Promise<ServerTestCase> {
+  public static async create(problem: Problem): Promise<ServerTestCase> {
     const data: FunctionTestCaseData = {
       function: '',
       comparisons: [],
       parameters: []
     };
-    return new ServerFunctionTestCase(await ServerTestCase.create('function', problem, data), problem);
+    return new ServerFunctionTestCase(await ServerTestCase.createModel('function', problem, data), problem);
   }
 }

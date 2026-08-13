@@ -19,7 +19,7 @@ type Parameter = {
   /**
    * @description Type of the parameter
    */
-  type: Type;
+  type: Type | null;
 };
 
 export const ParameterSchema = z.object({
@@ -28,7 +28,7 @@ export const ParameterSchema = z.object({
     .nullable()
     .transform((str) => str ?? undefined)
     .optional(),
-  type: TypeSchema
+  type: TypeSchema.nullable()
 });
 
 /**
@@ -55,14 +55,14 @@ export type Function = {
    * @description Return value(s) of the function
    * In languages that do not support multiple return types, this will only use the first type.
    */
-  returnType: Type[];
+  returnType: (Type | null)[];
 };
 
 export const FunctionSchema = z.object({
   name: z.string(),
   symbol: z.string().optional(),
   parameters: z.array(ParameterSchema),
-  returnType: z.array(TypeSchema)
+  returnType: z.array(TypeSchema.nullable())
 });
 
 /**
@@ -128,29 +128,54 @@ export type FunctionTestCaseProblemData = {
   functions: Record<string, Function>;
 };
 
-const FunctionTestCaseProblemDataSchema = z.object({
+export const FunctionTestCaseProblemDataSchema = z.object({
   functions: z.record(z.string(), FunctionSchema)
 });
 
-export function loadExtensionData(problem: Problem): FunctionTestCaseProblemData {
-  const parsedData = FunctionTestCaseProblemDataSchema.parse(
-    (problem.extension_data as JsonObject)['builtin_testCase_function']
-  );
+export function parseExtensionData(problem: Problem): FunctionTestCaseProblemData {
+  const {
+    data: parsedData,
+    error,
+    success
+  } = FunctionTestCaseProblemDataSchema.safeParse((problem.extension_data as JsonObject)['builtin_testCase_function']);
+
+  if (!success) {
+    console.warn('Invalid extension data detected for problem ' + problem.id + ': ' + JSON.stringify(error));
+    return { functions: {} };
+  }
+
   const data: FunctionTestCaseProblemData = { functions: {} };
 
   for (const [key, fn] of Object.entries(parsedData.functions)) {
     data.functions[key] = {
       name: fn.name,
       symbol: fn.symbol,
-      parameters: fn.parameters.map((p) => {
-        return {
-          name: p.name,
-          type: TypeRegistry.instance().from(p.type)
-        };
-      }),
-      returnType: fn.returnType.map(TypeRegistry.instance().from)
+      parameters: fn.parameters.map((p) => ({
+        name: p.name,
+        type: p.type ? TypeRegistry.instance().from(p.type) : null
+      })),
+      returnType: fn.returnType.map((t) => (t ? TypeRegistry.instance().from(t) : null))
     };
   }
 
   return data;
+}
+
+export function serializeExtensionData(data: FunctionTestCaseProblemData): JsonObject {
+  return {
+    functions: Object.fromEntries(
+      Object.entries(data.functions).map(([id, fn]) => [
+        id,
+        {
+          name: fn.name,
+          ...(fn.symbol ? { symbol: fn.symbol } : {}),
+          parameters: fn.parameters.map((p) => ({
+            ...(p.name ? { name: p.name } : {}),
+            type: p.type ? (p.type.toJSON() as JsonObject) : null
+          })),
+          returnType: fn.returnType.map((t) => (t ? (t.toJSON() as JsonObject) : null))
+        }
+      ])
+    )
+  };
 }

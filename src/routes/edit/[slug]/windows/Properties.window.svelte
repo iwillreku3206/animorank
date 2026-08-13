@@ -23,14 +23,14 @@
 
 <h2 class="text-2xl font-bold">Subject</h2>
 <TagSelect
-  bind:selectedTagId={context.problem.subject_id}
+  bind:selectedTagId={context.problem.model.subject_id}
   tags={tags.SubjectTag}
   placeholder="Select a subject"
 />
 
 <h2 class="text-2xl font-bold">Difficulty</h2>
 <TagSelect
-  bind:selectedTagId={context.problem.difficulty_id}
+  bind:selectedTagId={context.problem.model.difficulty_id}
   tags={tags.DifficultyTag}
   placeholder="Select a difficulty"
 />
@@ -50,7 +50,7 @@
   <input
     class="checkbox checkbox-primary rounded-xl!"
     type="checkbox"
-    bind:checked={context.problem.uses_slots}
+    bind:checked={context.problem.model.uses_slots}
   />
   Enable slots
 </label>

@@ -6,7 +6,7 @@ import type { TypeRegistry } from './typeRegistry';
 
 export abstract class OperatorTypeRegistry<Op extends Operator> extends ServiceRegistry<
   OperatorType,
-  [Op['options'], Type['options']]
+  [Op['options'], any]
 > {
   constructor() {
     super();

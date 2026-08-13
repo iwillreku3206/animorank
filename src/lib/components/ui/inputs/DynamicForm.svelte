@@ -233,9 +233,9 @@
     {/if}
 
     {#if field.type === 'segmented'}
-      <fieldset class="fieldset">
+      <fieldset class="fieldset min-w-min">
         <span class="fieldset-legend">{field.label}</span>
-        <div class="join">
+        <div class="join min-w-min w-full">
           {#each field.options as opt, i (i)}
             {@const rid = `${fid}-${i}`}
             {@const optData = typeof opt === 'string' ? { label: opt, value: opt } : opt}

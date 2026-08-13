@@ -1,13 +1,14 @@
+import FunctionTestCaseEditor from './FunctionTestCaseEditor.svelte';
 import { TestCase } from '$lib/testCase/testCase.svelte';
 import type { TestCaseEditor, TestCaseDisplay } from '$lib/testCase/types';
 import z from 'zod';
 import { Comparison, ComparisonSchema } from './comparison.svelte';
-import { loadExtensionData, ParameterValueSchema, parseSymbol, type ParameterValue, type Symbol } from './types';
+import { ParameterValueSchema, parseSymbol, type ParameterValue, type Symbol } from './types';
 import { type ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 import { OperatorRegistry } from './operatorRegistry';
+import { TypeRegistry } from './typeRegistry';
 import { TypeValue } from './typeValue.svelte';
 import type { Problem } from '$lib/problem';
-import { ServerTestCase } from '$lib/testCase/testCase.server';
 
 export type FunctionTestCaseData = {
   function: string;
@@ -35,35 +36,36 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
   }
 
   static async create(problem: Problem) {
-    const baseTestCase = await ServerTestCase.create(this.id(), problem, {
-      comparisons: [],
-      parameters: [],
-      function: ''
-    } satisfies FunctionTestCaseData);
-    return new FunctionTestCase(baseTestCase, problem);
+    const res = await fetch('/api/test-case', {
+      method: 'POST',
+      body: JSON.stringify({ problem: problem.id, type: this.id() }),
+      headers: { 'content-type': 'application/json' }
+    });
+    const model = await res.json();
+    return new FunctionTestCase(model, problem);
   }
 
   constructor(model: TestCaseModel, problem: Problem) {
     const parsed = FunctionTestCaseDataSchema.parse(model.data);
     const opRegistry = OperatorRegistry.instance();
-
-    const problemData = loadExtensionData(problem);
+    const typeRegistry = TypeRegistry.instance();
+    const problemData = problem.functionData;
 
     const data: FunctionTestCaseData = {
       function: parsed.function,
       comparisons: parsed.comparisons.map((comparison) =>
         Comparison.from({
           symbol: parseSymbol(comparison.symbol),
-          operator: opRegistry.getInstance(comparison.operator.type, comparison.operator.options),
-          value: comparison.value
+          operator: opRegistry.from(comparison.operator),
+          value: new TypeValue(typeRegistry.from(comparison.value), comparison.value.data)
         })
       ),
       parameters: parsed.parameters.map((parameter, i) => {
-        const type = problemData.functions[this.data.function].parameters[i].type;
+        const type = problemData.functions[parsed.function].parameters[i].type!;
 
         return {
           name: parameter.name,
-          value: new TypeValue(type, parameter.value)
+          value: new TypeValue(type, parameter.value.data)
         };
       })
     };
@@ -71,7 +73,7 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
   }
 
   get editor(): TestCaseEditor {
-    throw new Error('Method not implemented.');
+    return FunctionTestCaseEditor as unknown as TestCaseEditor;
   }
 
   get display(): TestCaseDisplay<FunctionTestCaseRunInfo> {

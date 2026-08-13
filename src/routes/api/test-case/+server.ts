@@ -2,11 +2,10 @@ import { error, successObject } from '$lib/response';
 import z from 'zod';
 import type { RequestHandler } from './$types';
 import { TestCaseService } from '$lib/testCase/testCaseService';
-import { ProblemTestCaseType } from '$lib/zenstack/models';
 
 const postValidator = z.object({
-  problem: z.uuid(),
-  type: z.enum(Object.values(ProblemTestCaseType))
+  problem: z.string().uuid(),
+  type: z.string()
 });
 
 export const POST: RequestHandler = async ({ locals, request }) => {
@@ -16,11 +15,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
   const { success, data, error: zodError } = await postValidator.safeParseAsync(await request.json());
   if (!success) return error(400, zodError);
 
-  const testCaseService = TestCaseService.instance();
-
-  const newTestCase = await testCaseService.create({
-    type: data.type,
+  const newTestCase = await TestCaseService.instance().create({
     problemId: data.problem,
+    type: data.type,
     user: session.user
   });
 

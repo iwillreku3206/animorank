@@ -1,0 +1,164 @@
+<script lang="ts">
+  import { untrack } from 'svelte';
+  import { getProblemEditorContext } from '../../../../routes/edit/[slug]/context.svelte';
+  import { serializeExtensionData } from './types';
+  import type { Function as FuncDef } from './types';
+  import TypeEditor from './TypeEditor.svelte';
+  import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
+  import { TypeRegistry } from './typeRegistry';
+
+  const context = getProblemEditorContext();
+  const problem = $derived(context.problem);
+
+  // Local deserialized copy of the function list, synced back to extension_data on change.
+  // svelte-ignore state_referenced_locally
+  let data = $state(problem.functionData);
+
+  $effect(() => {
+    const prev = untrack(() => problem.extension_data as Record<string, unknown>);
+    problem.extension_data = {
+      ...prev,
+      builtin_testCase_function: serializeExtensionData(data)
+    };
+  });
+
+  const typeRegistry = TypeRegistry.instance();
+  const availableTypes = $derived([...typeRegistry.keys()]);
+
+  function addFunction() {
+    const id = crypto.randomUUID();
+    data.functions[id] = { name: '', parameters: [], returnType: [] };
+  }
+
+  function removeFunction(id: string) {
+    delete data.functions[id];
+  }
+
+  function addParameter(fn: FuncDef) {
+    fn.parameters = [...(fn.parameters ?? []), { name: '', type: null }];
+  }
+
+  function removeParameter(fn: FuncDef, index: number) {
+    fn.parameters = fn.parameters.filter((_, i) => i !== index);
+  }
+
+  function addReturnType(fn: FuncDef) {
+    fn.returnType = [...(fn.returnType ?? []), null];
+  }
+
+  function removeReturnType(fn: FuncDef, index: number) {
+    fn.returnType = fn.returnType.filter((_, i) => i !== index);
+  }
+</script>
+
+<section class="flex flex-col gap-4 p-4 overflow-y-auto h-full">
+  <div class="flex items-center justify-between">
+    <h2 class="text-lg font-bold">Functions</h2>
+    <Button onclick={addFunction}>Add Function</Button>
+  </div>
+
+  {#if Object.keys(data.functions).length === 0}
+    <p class="text-base-content/50 text-sm">
+      No functions defined. Click "Add Function" to define function signatures for test cases.
+    </p>
+  {/if}
+
+  {#each Object.entries(data.functions) as [id, fn] (id)}
+    <details
+      class="bg-base-300 border border-base-100 rounded"
+      open
+    >
+      <summary class="font-medium p-3 cursor-pointer select-none">
+        {fn.name || 'Unnamed function'}
+      </summary>
+      <div class="flex flex-col gap-3 py-2 px-3">
+        <!-- Name -->
+        <label class="form-control w-full">
+          <span class="label-text text-xs font-medium pb-1">Name</span>
+          <TextInput
+            class="input-sm input-primary w-full"
+            placeholder="e.g. add"
+            bind:value={fn.name}
+          />
+        </label>
+
+        <!-- Symbol -->
+        <label class="form-control w-full">
+          <span class="label-text text-xs font-medium pb-1">Symbol (optional)</span>
+          <TextInput
+            class="input-sm input-primary w-full"
+            placeholder="e.g. add"
+            bind:value={() => fn.symbol ?? '', (v) => (fn.symbol = v || undefined)}
+          />
+        </label>
+
+        <!-- Parameters -->
+        <fieldset class="flex flex-col gap-2">
+          <legend class="text-xs font-medium pb-1">Parameters</legend>
+          {#each fn.parameters as param, i (i)}
+            <div class="flex items-center gap-2">
+              <TextInput
+                class="input-xs input-primary flex-1"
+                placeholder="param name"
+                bind:value={() => param.name ?? '', (v) => (param.name = v || undefined)}
+              />
+              <TypeEditor
+                bind:type={fn.parameters[i].type}
+                {availableTypes}
+              />
+              <Button
+                class="btn-xs btn-ghost btn-square text-error"
+                onclick={() => removeParameter(fn, i)}
+              >
+                &times;
+              </Button>
+            </div>
+          {/each}
+          <Button
+            onclick={() => addParameter(fn)}
+            class="btn-xs btn-ghost"
+          >
+            + Add parameter
+          </Button>
+        </fieldset>
+
+        <!-- Return Types -->
+        <fieldset class="flex flex-col gap-2">
+          <legend class="text-xs font-medium pb-1">Return Types</legend>
+          {#each fn.returnType as _rt, i (i)}
+            <div class="flex items-center gap-2">
+              <TypeEditor
+                bind:type={fn.returnType[i]}
+                {availableTypes}
+                dropdownAlign="start"
+              />
+              <Button
+                class="btn-xs btn-ghost btn-square text-error"
+                onclick={() => removeReturnType(fn, i)}
+              >
+                &times;
+              </Button>
+            </div>
+          {/each}
+          <Button
+            onclick={() => addReturnType(fn)}
+            class="btn-xs btn-ghost"
+          >
+            + Add return type
+          </Button>
+        </fieldset>
+
+        <!-- Remove function -->
+        <div class="flex justify-end pt-2 border-t border-base-300">
+          <Button
+            class="btn-xs btn-error btn-outline"
+            onclick={() => removeFunction(id)}
+          >
+            Remove function
+          </Button>
+        </div>
+      </div>
+    </details>
+  {/each}
+</section>

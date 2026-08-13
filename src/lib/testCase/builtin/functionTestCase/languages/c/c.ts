@@ -9,7 +9,7 @@ import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
 import { parseSlots } from '$lib/utils/parseSlots';
 import type { ServerFunctionTestCase } from '../../functionTestCase.server';
 import type { FunctionTestCaseRunInfo } from '../../functionTestCase.svelte';
-import { loadExtensionData } from '../../types';
+import { loadExtensionData } from '../../types.server';
 import { CExecutionContext } from './executionContext';
 import { CTypeRegistry } from './typeRegistry';
 
@@ -37,13 +37,13 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
 
     // get definitions
     fn.returnType.forEach((type) => {
-      const languageType = this.typeRegistry.getInstance(type.id, this, type);
+      const languageType = this.typeRegistry.getInstance(type!.id, this, type!);
       languageType.pushPreDefinitions(context);
     });
 
     fn.parameters.forEach((parameter) => {
       const { type } = parameter;
-      const languageType = this.typeRegistry.getInstance(type.id, this, type);
+      const languageType = this.typeRegistry.getInstance(type!.id, this, type!);
       languageType.pushPreDefinitions(context);
     });
 
@@ -70,7 +70,7 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
     // prepare return value
     let returnTypeSymbol: string | undefined;
     if (fn.returnType.length !== 0) {
-      const type = fn.returnType[0];
+      const type = fn.returnType[0]!;
       const languageType = this.typeRegistry.getInstance(type.id, this, type);
       returnTypeSymbol = context.getNewSymbol();
       languageType.pushDeclaration(context, returnTypeSymbol);
@@ -99,7 +99,7 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
     }
 
     if (returnTypeSymbol) {
-      const type = fn.returnType[0];
+      const type = fn.returnType[0]!;
       const languageType = this.typeRegistry.getInstance(type.id, this, type);
       const fileHandle = context.getNewSymbol();
       fileHandleSymbols.push(fileHandle);

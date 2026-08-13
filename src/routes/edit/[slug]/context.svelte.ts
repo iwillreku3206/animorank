@@ -1,6 +1,10 @@
 import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
 import type { Problem as ProblemModel, ProblemTestCase, Tag } from '$lib/zenstack/models';
+import { Problem } from '$lib/problem';
+import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
+import type { TestCase } from '$lib/testCase/testCase.svelte';
 import { saveProblem, updateTestCase } from './api';
+import { getContext, setContext } from 'svelte';
 
 export interface InitialValues {
   problem: ProblemModel;
@@ -12,8 +16,8 @@ export interface InitialValues {
 export class ProblemEditorWindowContext {
   public readonly tags: Tag[] = [];
 
-  public problem: ProblemModel = $state() as unknown as ProblemModel;
-  public testCases: ProblemTestCase[] = $state([]);
+  public problem: Problem = $state() as unknown as Problem;
+  public testCases: TestCase[] = $state([]);
   public topics: string[] = $state([]);
 
   private problemAutosave: AutoSave<ProblemModel> = $state() as unknown as AutoSave<ProblemModel>;
@@ -23,8 +27,16 @@ export class ProblemEditorWindowContext {
   private _cleanup: () => void;
 
   constructor(initialValues: InitialValues) {
-    this.problem = initialValues.problem;
-    this.testCases = initialValues.testCases;
+    this.problem = new Problem(initialValues.problem);
+    this.testCases = initialValues.testCases
+      .map((model) => {
+        try {
+          return TestCaseRegistry.instance().from(model, this.problem);
+        } catch {
+          return null;
+        }
+      })
+      .filter((tc): tc is TestCase => tc !== null);
     this.topics = initialValues.topics;
     this.tags = initialValues.tags;
 
@@ -34,20 +46,19 @@ export class ProblemEditorWindowContext {
 
     this._cleanup = $effect.root(() => {
       $effect(() => {
-        this.problemAutosave.save($state.snapshot(this.problem));
+        this.problemAutosave.save($state.snapshot(this.problem.model));
       });
       $effect(() => {
-        this.testCaseAutosave.save($state.snapshot(this.testCases));
+        this.testCaseAutosave.save($state.snapshot(this.testCases.map((tc) => tc.model)));
       });
       $effect(() => {
-        console.log(this.topics);
         this.topicsAutosave.save($state.snapshot(this.topics));
       });
     });
   }
 
   private async saveProblem() {
-    const problem = $state.snapshot(this.problem);
+    const problem = $state.snapshot(this.problem.model);
     console.debug('Saving: ', problem);
     await saveProblem(problem.id, {
       name: problem.name,
@@ -57,27 +68,27 @@ export class ProblemEditorWindowContext {
       uses_slots: problem.uses_slots,
       language: problem.language,
       difficulty_id: problem.difficulty_id,
-      subject_id: problem.subject_id
+      subject_id: problem.subject_id,
+      extension_data: this.problem.extension_data
     });
   }
+
   private async saveTestCases() {
-    const testCases = $state.snapshot(this.testCases);
-    console.debug('Saving: ', testCases);
+    const testCases = $state.snapshot(this.testCases.map((tc) => tc.model));
     const testCaseResults = await Promise.all(
-      testCases.map((testCase) => {
-        // @ts-expect-error This will have an error related to deep instantiation
+      testCases.map((testCase: ProblemTestCase) => {
         return updateTestCase(testCase);
       })
     );
 
-    if (testCaseResults.reduce((prev, next) => prev && next, true)) {
+    if (!testCaseResults.every((save) => save)) {
       throw new Error('Unable to save test cases');
     }
   }
+
   private async saveTopics() {
     const topics = $state.snapshot(this.topics);
-    console.debug('Saving: ', topics);
-    await saveProblem(this.problem.id, {
+    await saveProblem(this.problem.model.id, {
       topics: topics
     });
   }
@@ -94,4 +105,14 @@ export class ProblemEditorWindowContext {
     if (autosaves.some((a) => a.state === 'saving')) return 'saving';
     return 'saved';
   }
+}
+
+const problemEditorContextKey = Symbol('problem-editor-context');
+
+export function setProblemEditorContext(context: ProblemEditorWindowContext): void {
+  setContext(problemEditorContextKey, context);
+}
+
+export function getProblemEditorContext(): ProblemEditorWindowContext {
+  return getContext<ProblemEditorWindowContext>(problemEditorContextKey);
 }

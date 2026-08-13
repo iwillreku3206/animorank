@@ -1,11 +1,12 @@
 import type { Problem } from '$lib/problem';
 import { ServiceRegistry, type ClassServiceOf } from '$lib/services/registry';
+import { ServerFunctionTestCase } from './builtin/functionTestCase/functionTestCase.server';
 import type { ServerTestCase } from './testCase.server';
-import type { TestCase } from './testCase.svelte';
+import type { ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 
 export class ServerTestCaseRegistry extends ServiceRegistry<
   ServerTestCase,
-  [TestCase],
+  [TestCaseModel, Problem],
   {
     id(): string;
     // eslint-disable-next-line no-unused-vars
@@ -14,6 +15,7 @@ export class ServerTestCaseRegistry extends ServiceRegistry<
 > {
   constructor() {
     super();
+    this.registerTest(ServerFunctionTestCase);
   }
 
   public registerTest(value: ClassServiceOf<this>): void {

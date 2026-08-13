@@ -6,6 +6,6 @@
 </script>
 
 <CodeEditor
-  bind:code={context.problem.starter_code}
-  language={context.problem.language.toLowerCase()}
+  bind:code={context.problem.model.starter_code}
+  language={context.problem.model.language.toLowerCase()}
 />

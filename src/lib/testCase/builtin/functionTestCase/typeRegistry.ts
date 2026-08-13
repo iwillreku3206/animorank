@@ -1,7 +1,8 @@
 import type { IntoJsonValue } from '$lib/types/utils';
-import type { Type, TypeSchema } from './type.svelte';
+import { TypeSchema, type Type } from './type.svelte';
 import { ServiceRegistry, type ClassServiceOf } from '$lib/services/registry';
 import type z from 'zod';
+import { Integer } from './types/int';
 
 export class TypeRegistry extends ServiceRegistry<Type, [IntoJsonValue], { create(): Type; id(): string }> {
   private static _instance: TypeRegistry | null;
@@ -15,6 +16,7 @@ export class TypeRegistry extends ServiceRegistry<Type, [IntoJsonValue], { creat
 
   private constructor() {
     super();
+    this.registerType(Integer);
   }
 
   public registerType(type: ClassServiceOf<this>): void {

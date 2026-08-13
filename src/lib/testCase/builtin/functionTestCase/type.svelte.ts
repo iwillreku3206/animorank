@@ -48,6 +48,8 @@ export abstract class Type<
 
   public abstract defaultValue(): TypeValue<this>;
 
+  abstract get displayName(): string;
+
   abstract get optionsForm(): OptionsForm;
   // Allowed because the specific implementations of `Type` are expected to expect the same type
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

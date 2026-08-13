@@ -39,10 +39,9 @@
       theme: themeAnimoRank,
       createComponent: (options) => windowMap[options.id].getRenderer()
     });
-    openWindow('metadata');
-    openWindow('starter_code');
-    openWindow('properties');
-    openWindow('test_cases');
+    for (const key of windowRegistry.keys()) {
+      openWindow(key);
+    }
   });
 </script>
 

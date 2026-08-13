@@ -2,7 +2,7 @@ import type { JsonValue } from '@zenstackhq/orm';
 import { OperatorSchema, type Operator } from './operator.svelte';
 import type { Type } from './type.svelte';
 import { SymbolSchema, type Symbol } from './types';
-import type { TypeValue } from './typeValue.svelte';
+import { TypeValueSchema, type TypeValue } from './typeValue.svelte';
 import z from 'zod';
 
 export type ComparisonDefinition = {
@@ -30,7 +30,7 @@ export type ComparisonDefinition = {
 export const ComparisonSchema = z.object({
   symbol: SymbolSchema,
   operator: OperatorSchema,
-  value: z.any()
+  value: TypeValueSchema
 });
 
 /**

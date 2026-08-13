@@ -4,6 +4,7 @@ import { db } from '$lib/zenstack';
 import { error } from '@sveltejs/kit';
 import { successObject } from '$lib/response';
 import { Language } from '$lib/zenstack/models';
+import type { JsonValue } from '@zenstackhq/orm';
 
 const updateValidator = z.object({
   name: z.string().optional(),
@@ -14,7 +15,11 @@ const updateValidator = z.object({
   language: z.enum(Language).optional(),
   difficulty_id: z.uuid().optional().nullable(),
   subject_id: z.uuid().optional().nullable(),
-  topics: z.array(z.uuid()).optional()
+  topics: z.array(z.uuid()).optional(),
+  extension_data: z
+    .unknown()
+    .transform((d) => d as JsonValue)
+    .optional()
 });
 
 export const PUT: RequestHandler = async ({ locals, request, params }) => {

@@ -13,7 +13,7 @@ export abstract class ServerTestCase<Data extends IntoJsonValue = any, RunInfo e
 
   public abstract get languageRegistry(): TestCaseLanguageRegistry<this>;
 
-  static async create(type: string, problem: Problem, data: IntoJsonValue) {
+  static async createModel(type: string, problem: Problem, data: IntoJsonValue) {
     const model = db.problemTestCase.create({
       data: {
         type,

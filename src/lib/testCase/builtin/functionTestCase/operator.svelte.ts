@@ -21,11 +21,17 @@ export abstract class Operator<Options extends IntoJsonValue = any> {
     this.options = options;
   }
 
+  public get id(): string {
+    return (this.constructor as ClassServiceOf<OperatorRegistry>).id();
+  }
+
   public abstract get operatorTypeRegistry(): OperatorTypeRegistry<Operator<Options>>;
+
+  abstract get displayName(): string;
 
   public toJSON() {
     return {
-      type: (this.constructor as ClassServiceOf<OperatorRegistry>).id(),
+      type: this.id,
       options: toJsonValue(this.options)
     };
   }

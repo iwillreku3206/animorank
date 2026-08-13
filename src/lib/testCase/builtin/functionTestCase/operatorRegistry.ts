@@ -1,10 +1,11 @@
 import { ServiceRegistry } from '$lib/services/registry';
-import type { IntoJsonValue } from '$lib/types/utils';
-import type { Operator } from './operator.svelte';
+import { OperatorSchema, type Operator } from './operator.svelte';
+import { LessThanOperator } from './operators/lessThan';
+import type z from 'zod';
 
 export class OperatorRegistry extends ServiceRegistry<
   Operator,
-  [IntoJsonValue],
+  [any],
   {
     id(): string;
     create(): Operator;
@@ -21,5 +22,10 @@ export class OperatorRegistry extends ServiceRegistry<
 
   private constructor() {
     super();
+    this.register('lessThan', LessThanOperator);
+  }
+
+  public from(serialized: z.infer<typeof OperatorSchema>) {
+    return this.getInstance(serialized.type, serialized.options);
   }
 }

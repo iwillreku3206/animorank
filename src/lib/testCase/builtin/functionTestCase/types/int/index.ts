@@ -6,6 +6,7 @@ import type { ValueDisplay, ValueEditor } from '../../types';
 import { TypeValue } from '../../typeValue.svelte';
 import { SerializableBigInt } from '$lib/types/serializableBigInt';
 import IntegerDisplay from './IntegerDisplay.svelte';
+import IntegerEditor from './IntegerEditor.svelte';
 import type { IntoJsonValue } from '$lib/types/utils';
 
 const integerOptions = {
@@ -90,6 +91,13 @@ export class Integer extends Type<Value, typeof integerOptions> {
     return new TypeValue(this, { value: '0' });
   }
 
+  get displayName(): string {
+    const { size, signed } = this.options;
+    if (signed === false) return `uint${size}`;
+    if (signed === true) return `signed int${size}`;
+    return `int${size}`;
+  }
+
   get optionsForm() {
     return integerOptions;
   }
@@ -99,6 +107,6 @@ export class Integer extends Type<Value, typeof integerOptions> {
   }
 
   get valueForm(): ValueEditor<this> {
-    throw new Error('Method not implemented.');
+    return IntegerEditor as unknown as ValueEditor<this>;
   }
 }

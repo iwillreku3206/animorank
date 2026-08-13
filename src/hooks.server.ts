@@ -1,4 +1,4 @@
-import type { Handle } from '@sveltejs/kit';
+import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { handle as authHandle } from '$lib/auth';
 import { Logger } from '$lib/logging/logger';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
@@ -12,4 +12,12 @@ export const handle: Handle = async ({ event, resolve }) => {
   logger.debug(`${event.request.method} ${event.url.pathname}`);
 
   return response;
+};
+
+export const handleError: HandleServerError = ({ error, event }) => {
+  const serviceProvider = ServerServiceProvider.instance();
+  const logger = serviceProvider.getService(Logger, 'webserver');
+  logger.error('CRASH ERROR: ' + JSON.stringify(error));
+
+  return error;
 };
