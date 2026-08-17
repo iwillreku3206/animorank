@@ -29,9 +29,9 @@ export function loadExtensionData(problem: Problem): FunctionTestCaseProblemData
   for (const [key, fn] of Object.entries(parsedData.functions)) {
     data.functions[key] = {
       name: fn.name,
-      symbol: fn.symbol,
+      symbol: fn.symbol ?? '',
       parameters: fn.parameters.map((p) => ({
-        name: p.name,
+        name: p.name ?? '',
         type: p.type ? TypeRegistry.instance().from(p.type) : null
       })),
       returnType: fn.returnType.map((t) => (t ? TypeRegistry.instance().from(t) : null))

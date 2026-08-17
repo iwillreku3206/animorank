@@ -26,7 +26,7 @@
   <div
     tabindex="0"
     role="button"
-    class="select select-primary w-full items-center"
+    class="select select-xs select-primary w-full items-center"
   >
     {#if selectedTag}
       <TagChip tag={selectedTag} />

@@ -20,7 +20,7 @@
 </script>
 
 <TextInput
-  class="font-mono"
+  class="font-mono input-xs"
   bind:value={localValue}
 />
 

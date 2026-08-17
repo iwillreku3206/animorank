@@ -17,7 +17,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 export const handleError: HandleServerError = ({ error, event }) => {
   const serviceProvider = ServerServiceProvider.instance();
   const logger = serviceProvider.getService(Logger, 'webserver');
-  logger.error('CRASH ERROR: ' + JSON.stringify(error));
+  logger.error('CRASH ERROR: ' + JSON.stringify(error).replaceAll('\\n', '\n'));
 
   return error;
 };

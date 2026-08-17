@@ -75,7 +75,7 @@ export class SchemaType implements SchemaDef {
                 },
                 practice_history_entries: {
                     name: "practice_history_entries",
-                    type: "PracticeHistoryEntry",
+                    type: "SessionHistoryEntry",
                     array: true,
                     relation: { opposite: "practice_session" }
                 }
@@ -85,8 +85,8 @@ export class SchemaType implements SchemaDef {
                 id: { type: "String" }
             }
         },
-        PracticeHistoryEntry: {
-            name: "PracticeHistoryEntry",
+        SessionHistoryEntry: {
+            name: "SessionHistoryEntry",
             fields: {
                 id: {
                     name: "id",
@@ -103,7 +103,7 @@ export class SchemaType implements SchemaDef {
                 },
                 type: {
                     name: "type",
-                    type: "HistoryEntryType"
+                    type: "String"
                 },
                 data: {
                     name: "data",
@@ -486,6 +486,12 @@ export class SchemaType implements SchemaDef {
                     array: true,
                     relation: { opposite: "problem_set" }
                 },
+                extensions: {
+                    name: "extensions",
+                    type: "ProblemSetExtension",
+                    array: true,
+                    relation: { opposite: "problem_set" }
+                },
                 collaborators: {
                     name: "collaborators",
                     type: "ProblemSetCollaborator",
@@ -508,6 +514,42 @@ export class SchemaType implements SchemaDef {
             idFields: ["id"],
             uniqueFields: {
                 id: { type: "String" }
+            }
+        },
+        ProblemSetExtension: {
+            name: "ProblemSetExtension",
+            fields: {
+                problem_set_id: {
+                    name: "problem_set_id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "problem_set"
+                    ] as readonly string[]
+                },
+                problem_set: {
+                    name: "problem_set",
+                    type: "ProblemSet",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_set_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "extensions", fields: ["problem_set_id"], references: ["id"] }
+                },
+                extension_id: {
+                    name: "extension_id",
+                    type: "String",
+                    id: true
+                },
+                data: {
+                    name: "data",
+                    type: "Json"
+                }
+            },
+            attributes: [
+                { name: "@@id", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_set_id"), ExpressionUtils.field("extension_id")]) }] }
+            ] as readonly AttributeApplication[],
+            idFields: ["problem_set_id", "extension_id"],
+            uniqueFields: {
+                problem_set_id_extension_id: { problem_set_id: { type: "String" }, extension_id: { type: "String" } }
             }
         },
         ProblemSetBookmark: {
@@ -1238,17 +1280,6 @@ export class SchemaType implements SchemaDef {
         }
     } as const;
     enums = {
-        HistoryEntryType: {
-            name: "HistoryEntryType",
-            values: {
-                TEXT_MODIFIED: "TEXT_MODIFIED",
-                PAGE_OPENED: "PAGE_OPENED",
-                PAGE_FOCUS: "PAGE_FOCUS",
-                RUN_ATTEMPT: "RUN_ATTEMPT",
-                PING: "PING",
-                OTHER: "OTHER"
-            }
-        },
         Language: {
             name: "Language",
             values: {

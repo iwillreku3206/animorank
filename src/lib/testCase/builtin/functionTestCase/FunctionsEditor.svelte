@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
   import { getProblemEditorContext } from '../../../../routes/edit/[slug]/context.svelte';
-  import { serializeExtensionData } from './types';
   import type { Function as FuncDef } from './types';
   import TypeEditor from './TypeEditor.svelte';
   import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
@@ -9,31 +7,10 @@
   import { TypeRegistry } from './typeRegistry';
 
   const context = getProblemEditorContext();
-  const problem = $derived(context.problem);
-
-  // Local deserialized copy of the function list, synced back to extension_data on change.
-  // svelte-ignore state_referenced_locally
-  let data = $state(problem.functionData);
-
-  $effect(() => {
-    const prev = untrack(() => problem.extension_data as Record<string, unknown>);
-    problem.extension_data = {
-      ...prev,
-      builtin_testCase_function: serializeExtensionData(data)
-    };
-  });
+  const data = $derived(context.functionData);
 
   const typeRegistry = TypeRegistry.instance();
   const availableTypes = $derived([...typeRegistry.keys()]);
-
-  function addFunction() {
-    const id = crypto.randomUUID();
-    data.functions[id] = { name: '', parameters: [], returnType: [] };
-  }
-
-  function removeFunction(id: string) {
-    delete data.functions[id];
-  }
 
   function addParameter(fn: FuncDef) {
     fn.parameters = [...(fn.parameters ?? []), { name: '', type: null }];
@@ -55,7 +32,10 @@
 <section class="flex flex-col gap-4 p-4 overflow-y-auto h-full">
   <div class="flex items-center justify-between">
     <h2 class="text-lg font-bold">Functions</h2>
-    <Button onclick={addFunction}>Add Function</Button>
+    <Button
+      class="btn-primary btn-xs"
+      onclick={() => context.addFunction()}>Add Function</Button
+    >
   </div>
 
   {#if Object.keys(data.functions).length === 0}
@@ -77,7 +57,7 @@
         <label class="form-control w-full">
           <span class="label-text text-xs font-medium pb-1">Name</span>
           <TextInput
-            class="input-sm input-primary w-full"
+            class="input-xs input-primary w-full"
             placeholder="e.g. add"
             bind:value={fn.name}
           />
@@ -87,9 +67,9 @@
         <label class="form-control w-full">
           <span class="label-text text-xs font-medium pb-1">Symbol (optional)</span>
           <TextInput
-            class="input-sm input-primary w-full"
+            class="input-xs input-primary w-full"
             placeholder="e.g. add"
-            bind:value={() => fn.symbol ?? '', (v) => (fn.symbol = v || undefined)}
+            bind:value={fn.symbol}
           />
         </label>
 
@@ -101,8 +81,9 @@
               <TextInput
                 class="input-xs input-primary flex-1"
                 placeholder="param name"
-                bind:value={() => param.name ?? '', (v) => (param.name = v || undefined)}
+                bind:value={param.name}
               />
+
               <TypeEditor
                 bind:type={fn.parameters[i].type}
                 {availableTypes}
@@ -153,7 +134,7 @@
         <div class="flex justify-end pt-2 border-t border-base-300">
           <Button
             class="btn-xs btn-error btn-outline"
-            onclick={() => removeFunction(id)}
+            onclick={() => context.removeFunction(id)}
           >
             Remove function
           </Button>

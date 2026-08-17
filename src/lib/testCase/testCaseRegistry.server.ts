@@ -13,6 +13,15 @@ export class ServerTestCaseRegistry extends ServiceRegistry<
     create(problem: Problem): Promise<ServerTestCase>;
   }
 > {
+  private static _instance: ServerTestCaseRegistry | null;
+
+  public static instance(): ServerTestCaseRegistry {
+    if (!ServerTestCaseRegistry._instance) {
+      ServerTestCaseRegistry._instance = new ServerTestCaseRegistry();
+    }
+    return ServerTestCaseRegistry._instance;
+  }
+
   constructor() {
     super();
     this.registerTest(ServerFunctionTestCase);
@@ -20,5 +29,9 @@ export class ServerTestCaseRegistry extends ServiceRegistry<
 
   public registerTest(value: ClassServiceOf<this>): void {
     super.register(value.id(), value);
+  }
+
+  public from(model: TestCaseModel, problem: Problem) {
+    return this.getInstance(model.type, model, problem);
   }
 }

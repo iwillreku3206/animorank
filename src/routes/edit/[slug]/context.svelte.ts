@@ -3,8 +3,11 @@ import type { Problem as ProblemModel, ProblemTestCase, Tag } from '$lib/zenstac
 import { Problem } from '$lib/problem';
 import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
 import type { TestCase } from '$lib/testCase/testCase.svelte';
+import { FunctionTestCase } from '$lib/testCase/builtin/functionTestCase/functionTestCase.svelte';
+import { serializeExtensionData, type FunctionTestCaseProblemData } from '$lib/testCase/builtin/functionTestCase/types';
 import { saveProblem, updateTestCase } from './api';
-import { getContext, setContext } from 'svelte';
+import { getContext, setContext, untrack } from 'svelte';
+import { toJsonValue } from '$lib/types/utils';
 
 export interface InitialValues {
   problem: ProblemModel;
@@ -17,6 +20,7 @@ export class ProblemEditorWindowContext {
   public readonly tags: Tag[] = [];
 
   public problem: Problem = $state() as unknown as Problem;
+  public functionData: FunctionTestCaseProblemData = $state() as unknown as FunctionTestCaseProblemData;
   public testCases: TestCase[] = $state([]);
   public topics: string[] = $state([]);
 
@@ -28,6 +32,7 @@ export class ProblemEditorWindowContext {
 
   constructor(initialValues: InitialValues) {
     this.problem = new Problem(initialValues.problem);
+    this.functionData = this.problem.functionData;
     this.testCases = initialValues.testCases
       .map((model) => {
         try {
@@ -46,15 +51,44 @@ export class ProblemEditorWindowContext {
 
     this._cleanup = $effect.root(() => {
       $effect(() => {
-        this.problemAutosave.save($state.snapshot(this.problem.model));
+        this.problemAutosave.save($state.snapshot(this.problem.model) as unknown as ProblemModel);
       });
       $effect(() => {
-        this.testCaseAutosave.save($state.snapshot(this.testCases.map((tc) => tc.model)));
+        this.testCaseAutosave.save(this.testCases.map((tc) => this.serializeTestCase(tc)));
       });
       $effect(() => {
         this.topicsAutosave.save($state.snapshot(this.topics));
       });
+      // Keep the serialized extension_data in sync with the function data state.
+      $effect(() => {
+        const prev = untrack(() => this.problem.extension_data as Record<string, unknown>);
+        this.problem.extension_data = {
+          ...prev,
+          builtin_testCase_function: serializeExtensionData(this.functionData)
+        };
+      });
+      // Fill in default values for parameters added to function definitions.
+      $effect(() => {
+        for (const testCase of this.testCases) {
+          if (testCase instanceof FunctionTestCase) {
+            testCase.syncParameters(this.functionData);
+          }
+        }
+      });
     });
+  }
+
+  /**
+   * Add an empty function definition keyed by uuid. The details (name,
+   * symbol, parameters, return types) are filled in through the editor binds.
+   */
+  public addFunction(): void {
+    const key = crypto.randomUUID();
+    this.functionData.functions[key] = { name: '', symbol: '', parameters: [], returnType: [] };
+  }
+
+  public removeFunction(id: string): void {
+    delete this.functionData.functions[id];
   }
 
   private async saveProblem() {
@@ -73,12 +107,20 @@ export class ProblemEditorWindowContext {
     });
   }
 
+  /**
+   * Serialize a test case for persistence: the model with `data` converted
+   * from the hydrated form (class instances) to the stored JSON shape.
+   */
+  private serializeTestCase(testCase: TestCase): ProblemTestCase {
+    return {
+      ...(testCase.model as ProblemTestCase),
+      data: toJsonValue(testCase.data)
+    };
+  }
+
   private async saveTestCases() {
-    const testCases = $state.snapshot(this.testCases.map((tc) => tc.model));
     const testCaseResults = await Promise.all(
-      testCases.map((testCase: ProblemTestCase) => {
-        return updateTestCase(testCase);
-      })
+      this.testCases.map((testCase) => updateTestCase(this.serializeTestCase(testCase)))
     );
 
     if (!testCaseResults.every((save) => save)) {

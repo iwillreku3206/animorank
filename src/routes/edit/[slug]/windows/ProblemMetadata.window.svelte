@@ -10,7 +10,7 @@
   <TextInput
     type="text"
     name="Problem Name"
-    class="input-primary w-full"
+    class="input-xs input-primary w-full"
     bind:value={context.problem.model.name}
   />
 

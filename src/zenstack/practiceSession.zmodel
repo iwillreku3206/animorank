@@ -4,34 +4,25 @@ import "./user.zmodel"
 
 
 model PracticeSession {
-  id                       String                 @id @default(uuid()) @db.Uuid
-  problem_id               String                 @db.Uuid
-  problem                  Problem                @relation(fields: [problem_id], references: [id], onDelete: Cascade)
-  student_id               String                 @db.Uuid
-  student                  Student                @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  done                     Boolean                @default(false)
-  previous_state           Json                   @default("{}")
+  id                       String                @id @default(uuid()) @db.Uuid
+  problem_id               String                @db.Uuid
+  problem                  Problem               @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+  student_id               String                @db.Uuid
+  student                  Student               @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  done                     Boolean               @default(false)
+  previous_state           Json                  @default("{}")
 
-  created_at               DateTime               @default(now()) @db.Timestamptz(6)
-  updated_at               DateTime               @updatedAt @db.Timestamptz(6)
+  created_at               DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at               DateTime              @updatedAt @db.Timestamptz(6)
 
-  practice_history_entries PracticeHistoryEntry[]
+  practice_history_entries SessionHistoryEntry[]
 }
 
-enum HistoryEntryType {
-  TEXT_MODIFIED
-  PAGE_OPENED
-  PAGE_FOCUS
-  RUN_ATTEMPT
-  PING
-  OTHER
-}
-
-model PracticeHistoryEntry {
-  id                  String           @id @default(uuid()) @db.Uuid
-  timestamp           DateTime         @default(now()) @db.Timestamptz(6)
-  type                HistoryEntryType
+model SessionHistoryEntry {
+  id                  String          @id @default(uuid()) @db.Uuid
+  timestamp           DateTime        @default(now()) @db.Timestamptz(6)
+  type                String
   data                Json
-  practice_session_id String           @db.Uuid
-  practice_session    PracticeSession  @relation(fields: [practice_session_id], references: [id], onDelete: Cascade)
+  practice_session_id String          @db.Uuid
+  practice_session    PracticeSession @relation(fields: [practice_session_id], references: [id], onDelete: Cascade)
 }

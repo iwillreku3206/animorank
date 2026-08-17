@@ -1,6 +1,6 @@
 import { type ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 import type { JsonValue } from '@zenstackhq/orm';
-import { toJsonValue, type IntoJsonValue } from '$lib/types/utils';
+import type { IntoJsonValue } from '$lib/types/utils';
 import type { TestCaseDisplay, TestCaseEditor } from './types';
 import type { Problem } from '$lib/problem';
 
@@ -21,8 +21,13 @@ export abstract class TestCase<
    */
   public problem: Problem;
 
+  /**
+   * @description The hydrated test case data, backed by class instances (e.g.
+   * TypeValue). Stored as-is so state can be mutated directly; convert with
+   * `toJsonValue` at serialization boundaries (load functions, saves).
+   */
   set data(data: Data) {
-    this.model.data = toJsonValue(data) as JsonValue;
+    this.model.data = data as JsonValue;
   }
 
   get data(): Data {

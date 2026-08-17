@@ -14,7 +14,7 @@ type Parameter = {
    * @description Name (or symbol) of the parameter.
    * Only used if the language supports named parameters
    */
-  name?: string;
+  name: string;
 
   /**
    * @description Type of the parameter
@@ -44,7 +44,7 @@ export type Function = {
    * @description Symbol Name
    * If not specified, the function name is used. Used for either function overloading or more readable labels
    */
-  symbol?: string;
+  symbol: string;
 
   /**
    * @description Function input parameters
@@ -112,11 +112,11 @@ export type Symbol = 'return' | `return${number}` | `param${number}`;
  * @throws {Error} - Throws an error if the symbol is invalid
  */
 export function parseSymbol(symbol: string): Symbol {
-  if (!symbol.match(/return\d*|param\d+/)) {
-    return symbol as Symbol;
+  if (!symbol.match(/^(?:return\d*|param\d+)$/)) {
+    throw new Error(`Invalid symbol: ${symbol}`);
   }
 
-  throw new Error(`Invalid symbol: ${symbol}`);
+  return symbol as Symbol;
 }
 
 /**
@@ -149,9 +149,9 @@ export function parseExtensionData(problem: Problem): FunctionTestCaseProblemDat
   for (const [key, fn] of Object.entries(parsedData.functions)) {
     data.functions[key] = {
       name: fn.name,
-      symbol: fn.symbol,
+      symbol: fn.symbol ?? '',
       parameters: fn.parameters.map((p) => ({
-        name: p.name,
+        name: p.name ?? '',
         type: p.type ? TypeRegistry.instance().from(p.type) : null
       })),
       returnType: fn.returnType.map((t) => (t ? TypeRegistry.instance().from(t) : null))

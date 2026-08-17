@@ -20,15 +20,15 @@ export class CInteger extends CType<Integer> {
     const { signed, size } = this.type.options;
     let printfTemplate = '%';
 
-    if (size == 64) {
+    if (size === 64) {
       printfTemplate += 'll';
     }
 
-    if (size == 16) {
+    if (size === 16) {
       printfTemplate += 'h';
     }
 
-    if (size == 8) {
+    if (size === 8) {
       printfTemplate += 'hh';
     }
 

@@ -27,11 +27,22 @@ model ProblemSet {
   problems      Problem[]
   subscriptions Subscription[]
   bookmarks     ProblemSetBookmark[]
+  extensions    ProblemSetExtension[]
 
   collaborators ProblemSetCollaborator[]
 
   created_at    DateTime                 @default(now()) @db.Timestamptz(6)
   updated_at    DateTime                 @updatedAt @db.Timestamptz(6)
+}
+
+model ProblemSetExtension {
+  problem_set_id String     @db.Uuid
+  problem_set    ProblemSet @relation(fields: [problem_set_id], references: [id])
+
+  extension_id   String
+  data           Json
+
+  @@id([problem_set_id, extension_id])
 }
 
 model ProblemSetBookmark {

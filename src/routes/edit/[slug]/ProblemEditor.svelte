@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { createDockview, DockviewApi } from 'dockview-core';
   import { Window } from '$lib/window/index';
   import { themeAnimoRank } from '$lib/window/animorank-theme';
@@ -42,6 +42,10 @@
     for (const key of windowRegistry.keys()) {
       openWindow(key);
     }
+  });
+
+  onDestroy(() => {
+    context.cleanup();
   });
 </script>
 

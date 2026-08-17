@@ -28,6 +28,18 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
 
     const fn = functions[functionName];
 
+    // TODO: if return type is null, set return type to VOID
+    const rawReturnType = fn.returnType[0];
+    if (!rawReturnType) {
+      throw new Error('Cannot generate code: function has no return type');
+    }
+    const returnType = this.typeRegistry.getInstance(rawReturnType.id, this, rawReturnType);
+
+    const fnParameters = fn.parameters.map((parameter) => {
+      const { type } = parameter;
+      return this.typeRegistry.getInstance(type!.id, this, type!);
+    });
+
     const context = new CExecutionContext();
 
     context.pushHeader('stdio.h', true);
@@ -41,11 +53,17 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
       languageType.pushPreDefinitions(context);
     });
 
-    fn.parameters.forEach((parameter) => {
-      const { type } = parameter;
-      const languageType = this.typeRegistry.getInstance(type!.id, this, type!);
-      languageType.pushPreDefinitions(context);
+    fnParameters.forEach((parameter) => {
+      parameter.pushPreDefinitions(context);
     });
+
+    // declare function
+    context.declareFunction(
+      fn.symbol || fn.name,
+
+      returnType.generateReturnType(),
+      fnParameters.map((p) => p.generateReturnType()).join(', ')
+    );
 
     // start building main
     context.beginFunction('main', 'int', '');
@@ -64,16 +82,14 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
       const symbol = context.getNewSymbol();
       parameterSymbols.push(symbol);
       const languageType = this.typeRegistry.getInstance(parameter.value.type.id, this, parameter.value.type);
-      languageType.pushDeclaration(context, symbol, parameter.value.value);
+      languageType.pushDeclaration(context, symbol, parameter.value);
     }
 
     // prepare return value
     let returnTypeSymbol: string | undefined;
     if (fn.returnType.length !== 0) {
-      const type = fn.returnType[0]!;
-      const languageType = this.typeRegistry.getInstance(type.id, this, type);
       returnTypeSymbol = context.getNewSymbol();
-      languageType.pushDeclaration(context, returnTypeSymbol);
+      returnType.pushDeclaration(context, returnTypeSymbol);
     }
 
     // execute the function
@@ -81,7 +97,7 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
       context.pushCodeRaw(`${returnTypeSymbol} = `);
     }
 
-    context.pushCode(`${fn.symbol ?? fn.name}(${parameterSymbols.join(', ')});`);
+    context.pushCode(`${fn.symbol || fn.name}(${parameterSymbols.join(', ')});`);
 
     const fileHandleSymbols = [];
     const fileNames = [];
@@ -104,7 +120,7 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
       const fileHandle = context.getNewSymbol();
       fileHandleSymbols.push(fileHandle);
       fileNames.push('__ar_test_return');
-      context.pushCode(`FILE* ${fileHandle} = fopen("__ar_test_return_value.txt", "w");`);
+      context.pushCode(`FILE* ${fileHandle} = fopen("__ar_test_return", "w");`);
       languageType.pushPrint(context, returnTypeSymbol, fileHandle);
     }
 

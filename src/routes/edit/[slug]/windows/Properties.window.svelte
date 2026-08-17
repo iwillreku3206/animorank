@@ -48,7 +48,7 @@
 <h2 class="text-2xl font-bold">Slots</h2>
 <label class="flex flex-row items-center gap-2">
   <input
-    class="checkbox checkbox-primary rounded-xl!"
+    class="checkbox checkbox-xs checkbox-primary rounded-xl!"
     type="checkbox"
     bind:checked={context.problem.model.uses_slots}
   />
@@ -62,7 +62,7 @@
   @reference "../../../../app.css";
   /* 1. Make the outer container look like a daisyUI bordered input */
   .daisy-tags-wrapper :global(.svelte-tags-input-layout) {
-    @apply input input-primary border-primary flex h-auto min-h-[3rem] flex-wrap items-center gap-1 py-1.5 focus-within:input-primary bg-base-100;
+    @apply input input-xs input-primary border-primary flex h-auto min-h-[3rem] flex-wrap items-center gap-1 py-1.5 focus-within:input-primary bg-base-100;
   }
 
   .daisy-tags-wrapper :global(.svelte-tags-input-layout):hover {

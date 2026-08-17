@@ -10,8 +10,12 @@ export class CExecutionContext {
     this.currentCode += `#include ${system ? '<' : '"'}${name}${system ? '>' : '"'}\n`;
   }
 
-  public beginFunction(name: string, returnType: string, parameters: string) {
+  public declareFunction(name: string, returnType: string, parameters: string) {
     this.currentCode += `${returnType} ${name}(${parameters});\n`;
+  }
+
+  public beginFunction(name: string, returnType: string, parameters: string) {
+    this.currentCode += `${returnType} ${name}(${parameters}) {\n`;
   }
 
   public endFunction() {
@@ -24,6 +28,6 @@ export class CExecutionContext {
   }
 
   public pushCodeRaw(code: string) {
-    this.currentCode += code + '\n';
+    this.currentCode += code;
   }
 }

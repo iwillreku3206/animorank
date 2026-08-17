@@ -52,7 +52,7 @@
           for={fid}>{field.label}</label
         >
         <input
-          class="input input-primary"
+          class="input input-xs input-primary"
           type="text"
           id={fid}
           pattern={field.regex?.toString()}
@@ -68,7 +68,7 @@
           for={fid}>{field.label}</label
         >
         <input
-          class="input input-primary"
+          class="input input-xs input-primary"
           type="url"
           id={fid}
           pattern={field.regex?.toString()}
@@ -84,7 +84,7 @@
           for={fid}>{field.label}</label
         >
         <input
-          class="input input-primary"
+          class="input input-xs input-primary"
           type="number"
           id={fid}
           min={field.min}
@@ -103,7 +103,7 @@
         >
         <div class="flex flex-row gap-2">
           <input
-            class="range range-primary"
+            class="range range-xs range-primary"
             type="range"
             id={fid}
             min={field.min ?? 0}
@@ -123,7 +123,7 @@
           for={fid}
         >
           <input
-            class="checkbox checkbox-primary"
+            class="checkbox checkbox-xs checkbox-primary"
             type="checkbox"
             id={fid}
             bind:checked={value[id] as boolean}
@@ -149,7 +149,7 @@
             <div
               tabindex="0"
               role="button"
-              class="select select-primary w-full justify-between"
+              class="select select-xs select-primary w-full justify-between"
             >
               <span class="flex items-center gap-2">
                 {#if selectedOpt?.icon}
@@ -190,7 +190,7 @@
             for={fid}>{field.label}</label
           >
           <select
-            class="select select-primary"
+            class="select select-xs select-primary"
             id={fid}
             bind:value={value[id]}
           >
@@ -207,17 +207,22 @@
         <span class="fieldset-legend">{field.label}</span>
         {#each field.options as opt, i (i)}
           {@const rid = `${fid}-${i}`}
-          {@const optData = typeof opt === 'string' ? { label: opt, value: opt } : opt}
+          {@const optData =
+            typeof opt === 'string'
+              ? { label: opt, value: opt }
+              : typeof opt === 'number'
+                ? { label: String(opt), value: opt }
+                : opt}
           <label
             class="label cursor-pointer gap-3"
             for={rid}
           >
             <input
-              class="radio radio-primary"
+              class="radio radio-xs radio-primary"
               type="radio"
               name={id}
               id={rid}
-              value={String(optData.value)}
+              value={optData.value}
               bind:group={(value as FormValue<Form>)[id]}
             />
             <span class="flex items-center gap-2">
@@ -238,7 +243,12 @@
         <div class="join min-w-min w-full">
           {#each field.options as opt, i (i)}
             {@const rid = `${fid}-${i}`}
-            {@const optData = typeof opt === 'string' ? { label: opt, value: opt } : opt}
+            {@const optData =
+              typeof opt === 'string'
+                ? { label: opt, value: opt }
+                : typeof opt === 'number'
+                  ? { label: String(opt), value: opt }
+                  : opt}
             <label
               class="join-item btn has-checked:btn-primary"
               for={rid}
@@ -248,7 +258,7 @@
                 type="radio"
                 name={id}
                 id={rid}
-                value={String(optData.value)}
+                value={optData.value}
                 bind:group={(value as FormValue<Form>)[id]}
               />
               {#if 'icon' in optData && optData.icon}
@@ -269,7 +279,7 @@
           for={fid}>{field.label}</label
         >
         <input
-          class="input input-primary"
+          class="input input-xs input-primary"
           type={field.type === 'datetime' ? 'datetime-local' : field.type}
           id={fid}
           min={field.earliest?.toString()}
