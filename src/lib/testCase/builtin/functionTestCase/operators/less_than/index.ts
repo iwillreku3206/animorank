@@ -4,7 +4,7 @@ import { LessThanOperatorTypeRegistry } from './registry';
 
 export class LessThanOperator extends Operator<null> {
   static id(): string {
-    return 'lessThan';
+    return 'less_than';
   }
 
   static create(): LessThanOperator {

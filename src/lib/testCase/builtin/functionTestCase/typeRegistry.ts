@@ -3,6 +3,10 @@ import { TypeSchema, type Type } from './type.svelte';
 import { ServiceRegistry, type ClassServiceOf } from '$lib/services/registry';
 import type z from 'zod';
 import { Integer } from './types/int';
+import { Float } from './types/float';
+import { StringType } from './types/string';
+import { Pointer } from './types/pointer';
+import { VoidType } from './types/void';
 
 export class TypeRegistry extends ServiceRegistry<Type, [IntoJsonValue], { create(): Type; id(): string }> {
   private static _instance: TypeRegistry | null;
@@ -17,6 +21,10 @@ export class TypeRegistry extends ServiceRegistry<Type, [IntoJsonValue], { creat
   private constructor() {
     super();
     this.registerType(Integer);
+    this.registerType(Float);
+    this.registerType(StringType);
+    this.registerType(Pointer);
+    this.registerType(VoidType);
   }
 
   public registerType(type: ClassServiceOf<this>): void {

@@ -83,8 +83,8 @@ export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
     this._register(key, { classObject: value, singleton: true });
   }
 
-  public keys(): IterableIterator<string> {
-    return this._registry.keys();
+  public keys(): string[] {
+    return [...this._registry.keys()];
   }
 
   public getStatic(key: string): S {

@@ -1,6 +1,7 @@
 import type { Component } from 'svelte';
 import { match } from 'ts-pattern';
 import { z } from 'zod';
+import type { Type } from '$lib/testCase/builtin/functionTestCase/type.svelte';
 import type { IntoJsonValue } from './types/utils';
 
 export type FormFieldType =
@@ -9,6 +10,7 @@ export type FormFieldType =
   | 'select'
   | 'code'
   | 'markdown'
+  | 'typeEditor'
   | 'checkbox'
   | 'radio'
   | 'segmented'
@@ -50,7 +52,8 @@ type FieldConfigLookup = {
   select: SelectionExtra;
   radio: SelectionExtra;
   segmented: SelectionExtra;
-  checkbox: Record<string, never>;
+  typeEditor: object;
+  checkbox: object;
 };
 
 export type FormFieldDefinition = {
@@ -77,7 +80,9 @@ export type InferValueType<T extends FormFieldType> = T extends 'number' | 'rang
             ? V
             : O
           : IntoJsonValue
-        : string;
+        : T extends 'typeEditor'
+          ? Type
+          : string;
 
 export type ExtractExactValue<F> = F extends { type: 'number' | 'range' }
   ? number
@@ -89,7 +94,9 @@ export type ExtractExactValue<F> = F extends { type: 'number' | 'range' }
         ? O extends { value: infer V }
           ? V
           : O
-        : string;
+        : F extends { type: 'typeEditor' }
+          ? Type
+          : string;
 
 export type FormValue<T extends Form> = {
   [K in keyof T['fields']]: ExtractExactValue<T['fields'][K]>;
@@ -134,10 +141,15 @@ function buildFieldSchema(field: FormFieldDefinition): z.ZodTypeAny {
       if (field.isInteger) s = s.int();
       return field.default !== undefined ? s.default(field.default) : s;
     }
+    case 'typeEditor': {
+      const s = z.any();
+      return field.default !== undefined ? s.default(field.default) : s;
+    }
     case 'checkbox': {
       const s = z.boolean();
       return field.default !== undefined ? s.default(field.default) : s;
     }
+
     case 'date':
     case 'time':
     case 'datetime': {

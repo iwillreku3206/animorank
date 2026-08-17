@@ -2,7 +2,8 @@
   lang="ts"
   generics="T extends Form"
 >
-  import CodeEditor from '$lib/components/editor/CodeEditor.svelte';
+  import TypeEditorField from './TypeEditorField.svelte';
+
   import Editor from '$lib/components/editor/Editor.svelte';
 
   import type { Component } from 'svelte';
@@ -27,6 +28,7 @@
     time: '',
     datetime: '',
     range: 0,
+    typeEditor: '',
     url: ''
   };
 
@@ -310,6 +312,12 @@
           language="c"
           class="w-full min-h-32 resize-y overflow-auto"
         />
+      </fieldset>
+    {/if}
+    {#if field.type === 'typeEditor'}
+      <fieldset class="fieldset">
+        <span class="label">{field.label}</span>
+        <TypeEditorField bind:type={(value as FormValue<Form>)[id]} />
       </fieldset>
     {/if}
   {/each}

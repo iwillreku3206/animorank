@@ -14,7 +14,7 @@ import { CExecutionContext } from './executionContext';
 import { CTypeRegistry } from './typeRegistry';
 
 export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> {
-  private readonly typeRegistry = new CTypeRegistry();
+  readonly typeRegistry = new CTypeRegistry();
 
   private generateCode(): [string, string[]] {
     const { function: functionName, parameters } = this.testCase.testCase.data;
@@ -87,7 +87,7 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
 
     // prepare return value
     let returnTypeSymbol: string | undefined;
-    if (fn.returnType.length !== 0) {
+    if (fn.returnType.length !== 0 && rawReturnType.id !== 'void') {
       returnTypeSymbol = context.getNewSymbol();
       returnType.pushDeclaration(context, returnTypeSymbol);
     }

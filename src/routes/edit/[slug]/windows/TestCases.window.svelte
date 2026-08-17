@@ -49,11 +49,10 @@
     }
   }
 
-  let availableTypes = $derived(TestCaseRegistry.instance().keys());
+  const availableTypes = $derived(TestCaseRegistry.instance().keys());
 </script>
 
 <div class="flex flex-col gap-2 overflow-scroll h-full">
-  {context.testCases.length}
   {#each context.testCases as testCase, i (testCase.model.id)}
     <div class="w-full bg-[#212121] rounded-lg p-4">
       <div class="flex flex-col">
@@ -98,7 +97,7 @@
         <Popover.Close />
         <Popover.Arrow />
         <div class="bg-neutral-800 rounded-lg flex flex-col gap-2 p-4">
-          {#each availableTypes as type}
+          {#each availableTypes as type (type)}
             <Button
               onclick={() => addTestCase(type)}
               disabled={disableAddTestCase}
