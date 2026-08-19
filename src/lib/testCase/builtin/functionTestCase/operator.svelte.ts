@@ -1,4 +1,5 @@
 import { toJsonValue, type IntoJsonValue } from '$lib/types/utils';
+import type { Form } from '$lib/form';
 import type { Type } from './type.svelte';
 import type { TypeValue } from './typeValue.svelte';
 import type { ClassServiceOf } from '$lib/services/registry';
@@ -28,6 +29,14 @@ export abstract class Operator<Options extends IntoJsonValue = any> {
   public abstract get operatorTypeRegistry(): OperatorTypeRegistry<Operator<Options>>;
 
   abstract get displayName(): string;
+
+  /**
+   * @description The form to edit this operator's options, or null when the
+   * operator has no configurable options.
+   */
+  get optionsForm(): Form | null {
+    return null;
+  }
 
   public toJSON() {
     return {

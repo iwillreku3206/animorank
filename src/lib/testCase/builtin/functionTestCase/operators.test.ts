@@ -89,4 +89,24 @@ describe('operators', () => {
     expect(op.compare(string('ab'), string('abcde'))).toBe(false);
     expect(op.compare(pointer('4'), pointer('5'))).toBe(true);
   });
+
+  it('exposes an options form only for operators with settings', () => {
+    expect(new WithinRangeOperator({ range: '2' }).optionsForm).not.toBeNull();
+    expect(EqualOperator.create().optionsForm).toBeNull();
+    expect(LessThanOperator.create().optionsForm).toBeNull();
+  });
+
+  it('normalizes within_range options to the default range when missing', () => {
+    expect(new WithinRangeOperator({ range: '3' }).options).toEqual({ range: '3' });
+    expect(new WithinRangeOperator(null).options).toEqual({ range: '0' });
+    expect(new WithinRangeOperator({}).options).toEqual({ range: '0' });
+  });
+
+  it('round-trips operator options through the registry', () => {
+    const op = new WithinRangeOperator({ range: '3' });
+    const hydrated = OperatorRegistry.instance().from(op.toJSON());
+    expect(hydrated.options).toEqual({ range: '3' });
+    expect(hydrated.compare(int('4'), int('5'))).toBe(true);
+    expect(hydrated.compare(int('4'), int('8'))).toBe(false);
+  });
 });

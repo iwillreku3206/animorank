@@ -15,7 +15,7 @@
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import Badge from '$lib/components/ui/badges/Badge.svelte';
   import { Subscribable } from '$lib/utils/subscription';
-  //import type { ExecutionEvent } from '$lib/testCase/executionHook';
+  import type { ExecutionEvent } from '$lib/testCase/executionHook';
   import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
   import { TelemetryService } from '$lib/telemetry/telemetryService';
   import { AutoSave } from '$lib/utils/autosave.svelte.ts';
@@ -32,7 +32,9 @@
   }
 
   let { data }: PageProps = $props();
-  let problem = $derived(new Problem(data.problem));
+  // load data is stable for the page's lifetime; constructing a $state-backed
+  // Problem inside a $derived would trigger state_unsafe_mutation
+  const problem = new Problem(data.problem);
   // svelte-ignore state_referenced_locally
   let practiceSession = new ClientPracticeSession(data.practiceSession, problem, data.user);
 
@@ -41,13 +43,13 @@
   let panelState: '' | 'test_cases' | 'custom_input' = $state('');
   let testSubmitted = $state(false);
 
-  let testCaseResults = $state<TestRunResponse>({ results: [] });
+  let testCaseResults = $state<TestRunResponse>({ results: [], success: false });
   let testPassed = $derived(testCaseResults.results.filter((x) => x.success));
   let testFailed = $derived(testCaseResults.results.filter((x) => !x.success));
 
   let disableEdit = $state(false);
 
-  //let executionObservable = new Subscribable<ExecutionEvent>();
+  let executionObservable = new Subscribable<ExecutionEvent>();
   let selectedTest = $state(-1);
 
   let lastTestType: 'run' | 'submit' = $state('run');
@@ -64,7 +66,7 @@
 
   onMount(() => {
     const telemetry = ClientServiceProvider.instance().getService(TelemetryService);
-    //telemetry.attachExecution(executionObservable);
+    telemetry.attachExecution(executionObservable);
 
     // Warn before unloading if there are unsaved changes
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -100,13 +102,13 @@
   const handleRun = async () => {
     disableEdit = true;
     await autosave.forceSave($state.snapshot(codeSections));
-    const results = await runTestCases(page.params.session_id || '');
-    //executionObservable.fire('run', {
-    //  generalTestResults: results.results.map((r) => r.success),
-    //  publicTestResults: results.results.filter((p) => !p.hidden).map((p) => p),
-    //  runType: 'run',
-    //  submittedCode: practiceSession.previousCode.fullCode
-    //});
+    const results = await runTestCases(page.params.session_id || '', problem);
+    executionObservable.fire('run', {
+      generalTestResults: results.results.map((r) => r.success),
+      publicTestResults: results.results,
+      runType: 'run',
+      submittedCode: practiceSession.previousCode.fullCode
+    });
     testCaseResults = results as TestRunResponse;
     lastTestType = 'run';
     selectedTest = testCaseResults.results.length > 0 ? 0 : -1;
@@ -117,19 +119,19 @@
   const handleSubmit = async () => {
     disableEdit = true;
     await autosave.forceSave($state.snapshot(codeSections));
-    const results = await submit(page.params.session_id || '');
-    //executionObservable.fire('run', {
-    //  generalTestResults: results.results.map((r) => r.success),
-    //  publicTestResults: results.results.filter((p) => !p.hidden).map((p) => p),
-    //  runType: 'submit',
-    //  submittedCode: practiceSession.previousCode.fullCode
-    //});
+    const results = await submit(page.params.session_id || '', problem);
+    executionObservable.fire('run', {
+      generalTestResults: results.results.map((r) => r.success),
+      publicTestResults: results.results,
+      runType: 'submit',
+      submittedCode: practiceSession.previousCode.fullCode
+    });
     lastTestType = 'submit';
     testCaseResults = results;
     panelState = 'test_cases';
 
-    const allSuccess = results.results.every((x) => x.success);
-    if (allSuccess) {
+    // success is computed server-side over all tests, including hidden ones
+    if (results.success) {
       testSubmitted = true;
     } else {
       selectedTest = testCaseResults.results.length > 0 ? 0 : -1;

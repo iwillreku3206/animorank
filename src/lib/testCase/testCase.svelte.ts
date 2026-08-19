@@ -42,4 +42,14 @@ export abstract class TestCase<
 
   abstract get editor(): TestCaseEditor;
   abstract get display(): TestCaseDisplay<RunInfo>;
+
+  /**
+   * Convert a raw runInfo (as received over the wire) into display-ready form,
+   * e.g. re-hydrating class-backed values. Called at the API boundary, outside
+   * reactive contexts, so implementations may construct `$state`-backed
+   * objects freely.
+   */
+  public hydrateRunInfo(runInfo: RunInfo): RunInfo {
+    return runInfo;
+  }
 }

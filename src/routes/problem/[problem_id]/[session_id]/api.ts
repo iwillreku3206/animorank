@@ -1,8 +1,32 @@
-import type { TestCaseResult } from '$lib/testCase/testCase';
+import type { TestCaseResult } from '$lib/testCase/types';
+import type { FunctionTestCaseRunInfo } from '$lib/testCase/builtin/functionTestCase/functionTestCase.svelte';
+import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
+import type { TestCase } from '$lib/testCase/testCase.svelte';
+import type { Problem } from '$lib/problem';
+import type { ProblemTestCase } from '$lib/zenstack/models';
 
-export type TestRunResponse = { results: TestCaseResult[] };
+export type TestRunResponse = {
+  results: (TestCaseResult<FunctionTestCaseRunInfo> & { testCase?: TestCase })[];
+  success: boolean;
+};
 
-export async function runTestCases(session_id: string): Promise<TestRunResponse> {
+function hydrateResults(
+  raw: TestCaseResult<FunctionTestCaseRunInfo>[],
+  problem: Problem
+): (TestCaseResult<FunctionTestCaseRunInfo> & { testCase?: TestCase })[] {
+  const registry = TestCaseRegistry.instance();
+  return raw.map((r) => {
+    try {
+      // public results carry the full model as testCaseInfo
+      const testCase = registry.from(r.testCaseInfo as ProblemTestCase, problem);
+      return 'runInfo' in r ? { ...r, testCase, runInfo: testCase.hydrateRunInfo(r.runInfo) } : { ...r, testCase };
+    } catch {
+      return r;
+    }
+  });
+}
+
+export async function runTestCases(session_id: string, problem: Problem): Promise<TestRunResponse> {
   const req = await fetch(`/api/practice-session/${session_id}/run`, {
     method: 'POST',
     body: JSON.stringify({
@@ -15,10 +39,13 @@ export async function runTestCases(session_id: string): Promise<TestRunResponse>
 
   const res = await req.json();
 
-  return res as TestRunResponse;
+  return {
+    success: res.success,
+    results: hydrateResults(res.results, problem)
+  };
 }
 
-export async function submit(session_id: string): Promise<TestRunResponse> {
+export async function submit(session_id: string, problem: Problem): Promise<TestRunResponse> {
   const req = await fetch(`/api/practice-session/${session_id}/run`, {
     method: 'POST',
     body: JSON.stringify({
@@ -31,7 +58,10 @@ export async function submit(session_id: string): Promise<TestRunResponse> {
 
   const res = (await req.json()) as TestRunResponse;
 
-  return res;
+  return {
+    success: res.success,
+    results: hydrateResults(res.results, problem)
+  };
 }
 
 export type CustomRunResponse = {

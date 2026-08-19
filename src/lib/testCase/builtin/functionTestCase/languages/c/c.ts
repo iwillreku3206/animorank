@@ -141,8 +141,8 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
     const { problem, data } = this.testCase.testCase;
     const { comparisons } = data;
     const previousCode = problem.uses_slots
-      ? codeState.sections['code']
-      : parseSlots(problem.starter_code, codeState.sections).fullCode;
+      ? parseSlots(problem.starter_code, codeState.sections).fullCode
+      : (codeState.sections['body'] ?? '');
 
     const [generatedCode, fileNames] = this.generateCode();
 
@@ -160,9 +160,12 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
       files,
       processes: [
         {
+          // main.c includes submission.c (see generateCode), so compiling both
+          // files would define every function twice and fail to link.
           command: 'gcc',
-          args: ['-Wall', '-Werror', '-o', '__ar_test_main', 'submission.c', 'main.c', '-lm']
-        }
+          args: ['-Wall', '-Werror', '-o', '__ar_test_main', 'main.c', '-lm']
+        },
+        { command: './__ar_test_main', args: [] }
       ],
       exportFiles: fileNames
     });

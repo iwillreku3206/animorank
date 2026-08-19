@@ -1,4 +1,5 @@
 import FunctionTestCaseEditor from './FunctionTestCaseEditor.svelte';
+import FunctionTestCaseDisplay from './FunctionTestCaseDisplay.svelte';
 import { TestCase } from '$lib/testCase/testCase.svelte';
 import type { TestCaseEditor, TestCaseDisplay } from '$lib/testCase/types';
 import z from 'zod';
@@ -11,6 +12,7 @@ import {
   type Symbol
 } from './types';
 import { type ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
+import type { JsonValue } from '@zenstackhq/orm';
 import { OperatorRegistry } from './operatorRegistry';
 import { TypeRegistry } from './typeRegistry';
 import { TypeValue } from './typeValue.svelte';
@@ -28,6 +30,7 @@ export type FunctionTestCaseRunInfo = {
     symbol: Symbol;
     expected: TypeValue;
     actual: TypeValue;
+    result: boolean;
   }[];
 };
 
@@ -157,6 +160,27 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
   }
 
   get display(): TestCaseDisplay<FunctionTestCaseRunInfo> {
-    throw new Error('Method not implemented.');
+    return FunctionTestCaseDisplay as unknown as TestCaseDisplay<FunctionTestCaseRunInfo>;
+  }
+
+  /**
+   * The runInfo arrives over the wire as plain JSON; re-hydrate the comparison
+   * values into TypeValue instances for the display components.
+   */
+  public hydrateRunInfo(runInfo: FunctionTestCaseRunInfo): FunctionTestCaseRunInfo {
+    type Serialized = { type: string; options: unknown; data: JsonValue };
+    const typeRegistry = TypeRegistry.instance();
+    const hydrate = (v: unknown): TypeValue =>
+      new TypeValue(
+        typeRegistry.from({ type: (v as Serialized).type, options: (v as Serialized).options }),
+        (v as Serialized).data
+      );
+    return {
+      comparisons: runInfo.comparisons.map((c) => ({
+        ...c,
+        expected: hydrate(c.expected),
+        actual: hydrate(c.actual)
+      }))
+    };
   }
 }

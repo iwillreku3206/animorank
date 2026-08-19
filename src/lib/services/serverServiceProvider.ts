@@ -1,8 +1,5 @@
 import { Logger } from '$lib/logging/logger';
 import { LoggerRegistry } from '$lib/logging/loggerRegistry';
-//import { TestCaseService } from '$lib/testCase/testCaseService';
-//import { CodeExecutor } from '$lib/testCase/executor';
-//import { Judge0Executor } from '$lib/testCase/executor/judge0';
 import { ServiceRegistry, type ISingleton } from './registry';
 import { ServiceProvider } from './serviceProvider';
 import { ProblemService } from '$lib/problem/problemService';
@@ -11,6 +8,7 @@ import { PracticeSessionService } from '$lib/practiceSession/practiceSessionServ
 import { TagService } from '$lib/tag/tagService';
 import { CodeExecutor } from '$lib/executor';
 import { CodeExecutorRegistry } from '$lib/executor/codeExecutorRegistry';
+import { Judge0Executor } from '$lib/executor/judge0';
 
 export class ServerServiceProvider extends ServiceProvider {
   private static _instance: ServerServiceProvider | null;
@@ -19,11 +17,9 @@ export class ServerServiceProvider extends ServiceProvider {
     super();
     // Import any service registries here
     this._registries.set(Logger, new LoggerRegistry());
-    this._registries.set(CodeExecutor, new CodeExecutorRegistry());
-    //this._registries.set(
-    //  TestCaseService as ISingleton<TestCaseService>,
-    //  ServiceRegistry.createSingleSingletonServiceRegistry(TestCaseService)
-    //);
+    const codeExecutorRegistry = new CodeExecutorRegistry();
+    codeExecutorRegistry.registerCodeExecutor(Judge0Executor);
+    this._registries.set(CodeExecutor, codeExecutorRegistry);
     this._registries.set(
       ProblemService as ISingleton<ProblemService>,
       ServiceRegistry.createSingleSingletonServiceRegistry(ProblemService)
@@ -44,7 +40,6 @@ export class ServerServiceProvider extends ServiceProvider {
       TagService as ISingleton<TagService>,
       ServiceRegistry.createSingleSingletonServiceRegistry(TagService)
     );
-    //this._registries.set(CodeExecutor, ServiceRegistry.createSingleServiceRegistry(Judge0Executor));
   }
 
   public static instance(): ServiceProvider {

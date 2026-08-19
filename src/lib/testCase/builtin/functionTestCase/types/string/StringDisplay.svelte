@@ -3,7 +3,7 @@
   import type { TypeValue } from '../../typeValue.svelte';
 
   let { value }: { value: TypeValue<StringType> } = $props();
-  let realValue = $derived.by(() => value.value);
+  let realValue = $derived.by(() => value.value.value);
 </script>
 
 <pre>{realValue}</pre>

@@ -3,6 +3,8 @@
   import type { Symbol } from './types';
   import { OperatorRegistry } from './operatorRegistry';
   import Button from '$lib/components/ui/buttons/Button.svelte';
+  import DynamicForm from '$lib/components/ui/inputs/DynamicForm.svelte';
+  import GearIcon from '@iconify-svelte/fa6-solid/gear';
   import ValueEditorMount from './ValueEditorMount.svelte';
 
   let { testCase }: { testCase: FunctionTestCase } = $props();
@@ -94,6 +96,39 @@
                   <option value={opKey}>{operatorNames[opKey]}</option>
                 {/each}
               </select>
+            {/if}
+            {#if comp.operator.optionsForm !== null && comp.operator.options !== null}
+              <div class="dropdown dropdown-end">
+                <div
+                  tabindex="0"
+                  role="button"
+                  class="btn btn-xs btn-ghost btn-square text-base-content/70 hover:text-base-content"
+                  aria-label="Edit operator options"
+                >
+                  <GearIcon class="h-4 w-4" />
+                </div>
+                <div
+                  tabindex="-1"
+                  class="dropdown-content z-50 bg-base-200 border border-base-300 rounded-box p-3 shadow-lg min-w-max"
+                >
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-base-content/70">Options for {comp.operator.displayName}</span
+                    >
+                    <button
+                      type="button"
+                      class="btn btn-xs btn-primary"
+                      onclick={() => (document.activeElement as HTMLElement)?.blur()}
+                    >
+                      Done
+                    </button>
+                  </div>
+                  <DynamicForm
+                    class="min-w-min"
+                    form={comp.operator.optionsForm}
+                    bind:value={comp.operator.options}
+                  />
+                </div>
+              </div>
             {/if}
             <Button
               class="btn-xs btn-ghost ml-auto"

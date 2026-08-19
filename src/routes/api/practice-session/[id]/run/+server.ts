@@ -2,30 +2,19 @@ import z from 'zod';
 import type { RequestHandler } from './$types';
 import { db } from '$lib/zenstack';
 import { error, successObject } from '$lib/response';
-import type { ProblemTestCase } from '$lib/zenstack/models';
-import type { TestCase, TestCaseResult } from '$lib/testCase/testCase';
+import type { ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
+import type { TestCaseResult } from '$lib/testCase/types';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
 import { ProblemService } from '$lib/problem/problemService';
 import { TestCaseService } from '$lib/testCase/testCaseService';
+import { ServerTestCaseRegistry } from '$lib/testCase/testCaseRegistry.server';
+import { LanguageRegistry } from '$lib/language/languageRegistry';
+import { CodeExecutor } from '$lib/executor';
 
 const runValidator = z.object({
   test_type: z.enum(['public', 'all']).default('public')
 });
-
-async function runTestCase(testCase: TestCase<ProblemTestCase>, code: string): Promise<TestCaseResult> {
-  const result = await testCase.execute(code);
-
-  if (!testCase.dbTestCase.public) {
-    result.runInfo = [];
-    // For convenience, we just want to delete this field
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((result as any).testCaseInfo as ProblemTestCase | undefined) = undefined;
-    (result.hidden as boolean) = true;
-  }
-
-  return result;
-}
 
 export const POST: RequestHandler = async ({ locals, params, request }) => {
   const session = await locals.auth();
@@ -34,7 +23,6 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   const serviceProvider = ServerServiceProvider.instance();
   const practiceSessionService = serviceProvider.getService(PracticeSessionService);
   const problemService = serviceProvider.getService(ProblemService);
-  const testCaseService = serviceProvider.getService(TestCaseService);
 
   const {
     success: parseSuccess,
@@ -56,48 +44,54 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   // this should never happen, this is just a TypeScript assertion
   if (!problem) return error(404, 'Problem not found');
 
-  const testCasesRaw = await testCaseService.findByProblem({
+  const testCasesRaw = await TestCaseService.instance().findByProblem({
     problemId: problem.id,
     user: session.user
   });
 
   const { test_type } = parsedData;
-  const testCases = test_type === 'public' ? testCasesRaw.filter((tc) => tc.dbTestCase.public) : testCasesRaw;
+  const language = new LanguageRegistry().getInstance(problem.model.language.toLowerCase());
+  const executor = serviceProvider.getService(CodeExecutor);
+  const state = {
+    sections: Object.fromEntries(practiceSession.previousCode.sections.map((s) => [s.slot.label, s.code]))
+  };
+  const testCases = testCasesRaw.filter((tc) => (test_type === 'public' ? tc.public : true));
 
   const results = await Promise.all(
     testCases.map(async (tc) => {
       try {
-        return await runTestCase(tc, practiceSession.previousCode.fullCode);
+        const serverTestCase = ServerTestCaseRegistry.instance().from(tc, problem);
+        return await serverTestCase.run(language, executor, state);
       } catch (error) {
         return {
-          success: false as const,
-          runInfo: [],
-          reason: 'compile_error' as const,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          ...(tc.dbTestCase.public ? { hidden: false, testCaseInfo: tc.dbTestCase } : { hidden: true })
-        } satisfies TestCaseResult;
+          success: false,
+          testCaseInfo: tc.public ? (tc as TestCaseModel & { public: true }) : { public: false },
+          ...(tc.public
+            ? {
+                compilerOutput: error instanceof Error ? error.message : 'Unknown error',
+                runInfo: [] as unknown as never
+              }
+            : {})
+        } as TestCaseResult<never>;
       }
     })
   );
 
-  if (test_type === 'all') {
-    const allSuccess = results.reduce((prev, next) => prev && next.success, true);
+  const allSuccess = results.reduce((prev, next) => prev && next.success, true);
 
-    if (allSuccess) {
-      await db.practiceSession.update({
-        where: { id: params.id, student_id: session.user.id },
-        data: {
-          done: true
-        }
-      });
-    }
-
-    return successObject({
-      results
+  if (test_type === 'all' && allSuccess) {
+    await db.practiceSession.update({
+      where: { id: params.id, student_id: session.user.id },
+      data: {
+        done: true
+      }
     });
   }
 
+  // Only public test results are sent to the client; hidden tests still run
+  // and count toward `success` above, but their details never leave the server.
   return successObject({
-    results
+    success: allSuccess,
+    results: results.filter((r) => r.testCaseInfo.public)
   });
 };

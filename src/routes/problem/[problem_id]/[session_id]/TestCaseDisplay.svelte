@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { TestRunResponse } from './api';
-  import TestCaseCard from './TestCaseCard.svelte';
   import Button from '$lib/components/ui/buttons/Button.svelte';
 
   interface Props {
@@ -13,11 +12,16 @@
 
   let { tests, testSubmitted = false, selectedTest = $bindable(-1), handleReturn, lastTestType }: Props = $props();
 
-  let publicTests = $derived(tests.results.filter((x) => !x.hidden));
+  // The backend only sends public test results; the API layer already converts
+  // each result to its TestCase class.
+  let selectedTestCase = $derived.by(() => {
+    if (selectedTest < 0 || selectedTest >= tests.results.length) return null;
+    return tests.results[selectedTest].testCase ?? null;
+  });
 
   $effect(() => {
-    if (publicTests.length === 0) selectedTest = -1;
-    else selectedTest = Math.min(publicTests.length - 1, selectedTest);
+    if (tests.results.length === 0) selectedTest = -1;
+    else selectedTest = Math.min(tests.results.length - 1, selectedTest);
   });
 </script>
 
@@ -37,9 +41,9 @@
   </div>
 {:else if lastTestType === 'run'}
   <div class="flex flex-row h-full">
-    {#if tests.results.length > 0 && selectedTest in publicTests}
+    {#if selectedTestCase !== null}
       <ul class="menu bg-base-200 rounded-box w-56 h-full">
-        {#each publicTests as result, i (i)}
+        {#each tests.results as result, i (i)}
           <li class={result.success ? 'text-primary' : 'text-error'}>
             <button onclick={() => (selectedTest = i)}>
               Case {i + 1}
@@ -47,8 +51,9 @@
           </li>
         {/each}
       </ul>
+      {@const Display = selectedTestCase.display}
       <div class="p-4 w-full h-full">
-        <TestCaseCard result={publicTests[selectedTest]} />
+        <Display testCaseResult={tests.results[selectedTest]} />
       </div>
     {:else}
       <div class="p-4 w-full h-full items-center justify-center">No test results yet. Click "Run" to run tests.</div>
@@ -59,12 +64,7 @@
     {#each tests.results as result, i (i)}
       <div class=" bg-base-100 p-2 rounded-lg text-sm flex flex-row gap-4 items-center">
         <span class={result.success ? 'text-primary' : 'text-error'}>Case {i + 1}</span>
-        {result.success
-          ? 'Passed'
-          : result.reason
-              .split('_')
-              .map((x) => `${x.charAt(0).toUpperCase()}${x.substring(1)}`)
-              .join(' ')}
+        {result.success ? 'Passed' : 'Failed'}
       </div>
     {/each}
   </div>
