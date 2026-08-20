@@ -1,10 +1,12 @@
 import { db } from '$lib/zenstack';
 import type { User } from '@auth/sveltekit';
 import type { JsonValue } from '@zenstackhq/orm';
+import type { ProblemTestCase } from '$lib/zenstack/models';
 import { Problem } from '$lib/problem';
 import { TestCaseRegistry } from './testCaseRegistry';
 import { ServerTestCaseRegistry } from './testCaseRegistry.server';
 import type { ServerTestCase } from './testCase.server';
+import { validateFunctionTestCaseKeys } from './builtin/functionTestCase/types.server';
 
 export interface FindByProblemOptions {
   problemId: string;
@@ -64,29 +66,30 @@ export class TestCaseService {
 
     if (!problem) return null;
 
-    const defaultData: Record<string, JsonValue> = {
-      function: { function: '', parameters: [], comparisons: [] },
-      stdio: { input: '', output: '' },
-      custom: { test_code: '' }
-    };
+    // Reject arbitrary type strings (M4): an unregistered type would create a
+    // row no registry key can hydrate — invisible in the editor, undeletable
+    // from the UI, and a permanent failure in runs. Registered types create
+    // their own default data instead of a duplicated hardcoded map.
+    const registry = ServerTestCaseRegistry.instance();
+    if (!registry.keys().includes(options.type)) {
+      throw new Error(`Unknown test case type "${options.type}"`);
+    }
 
-    const model = await db.problemTestCase.create({
-      data: {
-        type: options.type,
-        problem_id: options.problemId,
-        data: defaultData[options.type] ?? {}
-      }
-    });
-
-    return ServerTestCaseRegistry.instance().from(model, new Problem(problem));
+    return registry.getStatic(options.type).create(new Problem(problem));
   }
 
-  public async findByProblem(options: FindByProblemOptions): Promise<ServerTestCase[]> {
-    const problem = await db.problem.findUnique({
+  /**
+   * Fetch the problem and its (access-filtered) test case models for a
+   * problem. Returns null when the problem does not exist.
+   */
+  private async fetchByProblem(
+    options: FindByProblemOptions
+  ): Promise<{ problem: Problem; models: ProblemTestCase[] } | null> {
+    const problemModel = await db.problem.findUnique({
       where: { id: options.problemId }
     });
 
-    if (!problem) return [];
+    if (!problemModel) return null;
 
     const models = await db.problemTestCase.findMany({
       where: {
@@ -104,7 +107,33 @@ export class TestCaseService {
       orderBy: { created_at: 'asc' }
     });
 
-    return models.map((model) => ServerTestCaseRegistry.instance().from(model, new Problem(problem)));
+    return { problem: new Problem(problemModel), models };
+  }
+
+  public async findByProblem(options: FindByProblemOptions): Promise<ServerTestCase[]> {
+    const fetched = await this.fetchByProblem(options);
+    if (!fetched) return [];
+
+    return fetched.models.map((model) => ServerTestCaseRegistry.instance().from(model, fetched.problem));
+  }
+
+  /**
+   * Like findByProblem, but for the edit page: every function test case's
+   * keys are validated against the problem's function definitions before
+   * construction. The first invalid row throws a descriptive error instead
+   * of crashing the FunctionTestCase constructor and silently dropping the
+   * row from the editor (where it would become undeletable).
+   */
+  public async findByProblemForEdit(options: FindByProblemOptions): Promise<ServerTestCase[]> {
+    const fetched = await this.fetchByProblem(options);
+    if (!fetched) return [];
+
+    for (const model of fetched.models) {
+      const invalid = validateFunctionTestCaseKeys(model, fetched.problem);
+      if (invalid) throw new Error(invalid);
+    }
+
+    return fetched.models.map((model) => ServerTestCaseRegistry.instance().from(model, fetched.problem));
   }
 
   public async findById(options: FindByIdOptions): Promise<ServerTestCase | null> {
@@ -120,6 +149,14 @@ export class TestCaseService {
   public async update(options: UpdateOptions): Promise<ServerTestCase | null> {
     const existing = await this.authorizeTestCase(options.id, options.user);
     if (!existing) return null;
+
+    // Reject payloads that would produce an unparseable row (M9): unknown
+    // type keys, non-boolean public, or data that does not match the
+    // effective type's schema.
+    ServerTestCaseRegistry.instance().validateUpdate(
+      { type: options.type, public: options.public, data: options.data },
+      existing.type
+    );
 
     const model = await db.problemTestCase.update({
       where: { id: options.id },

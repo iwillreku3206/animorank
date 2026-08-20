@@ -11,6 +11,13 @@ import type { JsonObject } from '@zenstackhq/orm';
  */
 type Parameter = {
   /**
+   * @description Stable id so test-case parameter values can follow this
+   * parameter across renames and removals. Created once at parameter
+   * creation; backfilled for legacy parameters on edit-page load.
+   */
+  id?: string;
+
+  /**
    * @description Name (or symbol) of the parameter.
    * Only used if the language supports named parameters
    */
@@ -23,6 +30,7 @@ type Parameter = {
 };
 
 export const ParameterSchema = z.object({
+  id: z.string().optional(),
   name: z
     .string()
     .nullable()
@@ -70,6 +78,13 @@ export const FunctionSchema = z.object({
  */
 export type ParameterValue<T extends Type = Type> = {
   /**
+   * @description Stable id of the definition parameter this value belongs to.
+   * Lets syncParameters keep values attached across removals and renames
+   * (M8).
+   */
+  id?: string;
+
+  /**
    * @description Name (or symbol) of the parameter.
    * Only used if the language supports named parameters
    */
@@ -82,6 +97,7 @@ export type ParameterValue<T extends Type = Type> = {
 };
 
 export const ParameterValueSchema = z.object({
+  id: z.string().optional(),
   name: z
     .string()
     .nullable()
@@ -151,6 +167,7 @@ export function parseExtensionData(problem: Problem): FunctionTestCaseProblemDat
       name: fn.name,
       symbol: fn.symbol ?? '',
       parameters: fn.parameters.map((p) => ({
+        id: p.id,
         name: p.name ?? '',
         type: p.type ? TypeRegistry.instance().from(p.type) : null
       })),
@@ -170,6 +187,7 @@ export function serializeExtensionData(data: FunctionTestCaseProblemData): JsonO
           name: fn.name,
           ...(fn.symbol ? { symbol: fn.symbol } : {}),
           parameters: fn.parameters.map((p) => ({
+            ...(p.id ? { id: p.id } : {}),
             ...(p.name ? { name: p.name } : {}),
             type: p.type ? (p.type.toJSON() as JsonObject) : null
           })),

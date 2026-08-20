@@ -15,11 +15,15 @@ export const POST: RequestHandler = async ({ locals, request }) => {
   const { success, data, error: zodError } = await postValidator.safeParseAsync(await request.json());
   if (!success) return error(400, zodError);
 
-  const newTestCase = await TestCaseService.instance().create({
-    problemId: data.problem,
-    type: data.type,
-    user: session.user
-  });
+  try {
+    const newTestCase = await TestCaseService.instance().create({
+      problemId: data.problem,
+      type: data.type,
+      user: session.user
+    });
 
-  return newTestCase ? successObject(newTestCase.testCase.model) : error(404, 'Problem not found');
+    return newTestCase ? successObject(newTestCase.testCase.model) : error(404, 'Problem not found');
+  } catch (validationError) {
+    return error(400, validationError instanceof Error ? validationError.message : 'Invalid test case');
+  }
 };

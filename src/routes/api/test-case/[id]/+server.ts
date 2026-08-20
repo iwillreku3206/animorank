@@ -19,15 +19,19 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
 
   const body = await request.json();
 
-  const updated = await TestCaseService.instance().update({
-    id: params.id,
-    type: body.type,
-    public: body.public,
-    data: body.data as JsonValue,
-    user: session.user
-  });
+  try {
+    const updated = await TestCaseService.instance().update({
+      id: params.id,
+      type: body.type,
+      public: body.public,
+      data: body.data as JsonValue,
+      user: session.user
+    });
 
-  if (!updated) return error(404, 'Not found');
+    if (!updated) return error(404, 'Not found');
+  } catch (validationError) {
+    return error(400, validationError instanceof Error ? validationError.message : 'Invalid test case update');
+  }
 
   return successObject({ status: 'Success' });
 };

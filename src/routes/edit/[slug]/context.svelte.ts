@@ -33,6 +33,14 @@ export class ProblemEditorWindowContext {
   constructor(initialValues: InitialValues) {
     this.problem = new Problem(initialValues.problem);
     this.functionData = this.problem.functionData;
+    // Backfill stable ids for parameters created before the id scheme so
+    // syncParameters can keep values attached across removals (M8). The
+    // extension_data autosave persists them.
+    for (const fn of Object.values(this.functionData.functions)) {
+      for (const parameter of fn.parameters) {
+        parameter.id ??= crypto.randomUUID();
+      }
+    }
     this.testCases = initialValues.testCases
       .map((model) => {
         try {

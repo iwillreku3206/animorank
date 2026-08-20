@@ -17,7 +17,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 export const handleError: HandleServerError = async ({ error }) => {
   const serviceProvider = ServerServiceProvider.instance();
   const logger = serviceProvider.getService(Logger, 'webserver');
-  logger.error('CRASH ERROR: ' + JSON.stringify(error).replaceAll('\\n', '\n'));
+  logger.error('CRASH ERROR: ' + (error instanceof Error ? (error.stack ?? error.message) : JSON.stringify(error)));
 
-  return error as Error;
+  return { message: 'Internal Error' };
 };

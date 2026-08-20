@@ -130,12 +130,6 @@
       for="ps-description"><span class="label-text font-bold">Description</span></label
     >
     <Editor bind:text={problemSet.description} />
-    <textarea
-      id="ps-description"
-      bind:value={problemSet.description}
-      class="textarea textarea-bordered w-full"
-      rows={3}
-    ></textarea>
   </div>
 
   <div class="form-control mb-4">

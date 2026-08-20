@@ -29,6 +29,7 @@ export function buildRunScript(processes: ProcessRequest[], exportFiles: string[
   if (!last) return '';
   const lines = [[last.command, ...last.args].join(' ')];
   for (const path of exportFiles) {
+    // TODO: escape paths
     lines.push(
       `printf '<<<__AR_FILE_BEGIN:%s>>>\\n' "${path}"`,
       `cat "${path}"`,

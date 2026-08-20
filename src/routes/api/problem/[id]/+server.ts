@@ -6,6 +6,20 @@ import { successObject } from '$lib/response';
 import { Language } from '$lib/zenstack/models';
 import type { JsonValue } from '@zenstackhq/orm';
 
+// Cap the extension_data payload so a runaway client cannot store
+// unbounded JSON verbatim in the column.
+const MAX_EXTENSION_DATA_BYTES = 1024 * 1024;
+
+const extensionDataValidator = z
+  .unknown()
+  .refine((d): d is Record<string, unknown> => typeof d === 'object' && d !== null && !Array.isArray(d), {
+    message: 'extension_data must be a JSON object'
+  })
+  .refine((d) => JSON.stringify(d).length <= MAX_EXTENSION_DATA_BYTES, {
+    message: `extension_data must be at most ${MAX_EXTENSION_DATA_BYTES} bytes`
+  })
+  .optional();
+
 const updateValidator = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
@@ -16,10 +30,7 @@ const updateValidator = z.object({
   difficulty_id: z.uuid().optional().nullable(),
   subject_id: z.uuid().optional().nullable(),
   topics: z.array(z.uuid()).optional(),
-  extension_data: z
-    .unknown()
-    .transform((d) => d as JsonValue)
-    .optional()
+  extension_data: extensionDataValidator
 });
 
 export const PUT: RequestHandler = async ({ locals, request, params }) => {
@@ -30,23 +41,39 @@ export const PUT: RequestHandler = async ({ locals, request, params }) => {
   const { success, error: zodError, data } = await updateValidator.safeParseAsync(await request.json());
   if (!success) return error(400, zodError);
 
-  const { topics, subject_id, difficulty_id, ...updates } = data;
+  const { topics, subject_id, difficulty_id, extension_data, ...updates } = data;
 
-  db.$transaction(async (tx) => {
+  const existing = await db.problem.findUnique({
+    where: {
+      id: params.id,
+      problem_set: { collaborators: { some: { collaborator_id: session.user.id } } }
+    },
+    select: { extension_data: true }
+  });
+  if (!existing) return error(404, 'Problem not found');
+
+  // Prisma JSON set semantics replace the whole column; merge into the stored
+  // value so a partial payload never wipes sibling keys.
+  const stored = existing.extension_data;
+  const storedObject =
+    typeof stored === 'object' && stored !== null && !Array.isArray(stored) ? (stored as Record<string, unknown>) : {};
+  const mergedExtensionData = extension_data !== undefined ? { ...storedObject, ...extension_data } : undefined;
+
+  await db.$transaction(async (tx) => {
     await tx.problem.update({
-      where: {
-        id: params.id,
-        problem_set: { collaborators: { some: { collaborator_id: session.user.id } } }
-      },
+      where: { id: params.id },
       data: {
         ...updates,
         subject_id,
-        difficulty_id
+        difficulty_id,
+        ...(mergedExtensionData !== undefined && { extension_data: mergedExtensionData as JsonValue })
       }
     });
 
     if (topics) {
-      await tx.problemTopic.deleteMany();
+      await tx.problemTopic.deleteMany({
+        where: { problem_id: params.id }
+      });
       await tx.problemTopic.createMany({
         data: topics.map((id) => ({ problem_id: params.id, tag_id: id }))
       });

@@ -86,6 +86,7 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
         const type = problemData.functions[parsed.function].parameters[i].type!;
 
         return {
+          id: parameter.id,
           name: parameter.name,
           value: new TypeValue(type, parameter.value.data)
         };
@@ -101,38 +102,55 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
     const def = this.problem.functionData.functions[fnName];
     this.data = {
       function: fnName,
-      parameters: def ? def.parameters.map((p) => ({ name: p.name, value: p.type!.defaultValue() })) : [],
+      parameters: def ? def.parameters.map((p) => ({ id: p.id, name: p.name, value: p.type!.defaultValue() })) : [],
       comparisons: []
     };
   }
 
   /**
-   * Keep the stored parameter list in sync with the function definition, filling in
-   * default values for parameters that were added since the test case was created.
+   * Keep the stored parameter list in sync with the function definition,
+   * filling in default values for parameters that were added since the test
+   * case was created.
+   *
+   * Stored values are matched to definition parameters by stable id, so a
+   * removed or reordered parameter keeps its value attached (M8). Legacy
+   * id-less entries fall back to name, then to position; every matched value
+   * is backfilled with the definition parameter's id so the next sync can
+   * match exactly.
    */
   public syncParameters(functions: FunctionTestCaseProblemData): void {
     const fn = functions.functions[this.data.function];
     if (!fn) return;
 
     if (!fn.parameters.some((p) => !p.type)) {
-      const stored = this.data.parameters;
+      const original = this.data.parameters;
+      const remaining = [...original];
       const params = fn.parameters.map((p, i) => {
-        const existing = stored[i];
-        if (!existing) return { name: p.name, value: p.type!.defaultValue() };
+        // Match by id, then name (legacy), then position. Matches are
+        // consumed so an ambiguous name is never reused for a later
+        // parameter.
+        const existing =
+          (p.id ? remaining.find((s) => s.id && s.id === p.id) : undefined) ??
+          (!p.id && p.name ? remaining.find((s) => !s.id && s.name === p.name) : undefined) ??
+          remaining[i];
+        if (existing) remaining.splice(remaining.indexOf(existing), 1);
 
-        const sameName = existing.name === p.name;
+        if (!existing) return { id: p.id, name: p.name, value: p.type!.defaultValue() };
+
         const sameType =
           existing.value.type.id === p.type!.id &&
           deepEqual(existing.value.type.options, p.type!.options, { strict: true });
 
-        if (sameName && sameType) return existing;
+        const id = p.id ?? existing.id;
+        if (existing.name === p.name && sameType && existing.id === id) return existing;
         return {
+          id,
           name: p.name,
           value: sameType ? existing.value : new TypeValue(p.type!, existing.value.value)
         };
       });
 
-      if (params.length !== stored.length || params.some((p, i) => p !== stored[i])) {
+      if (params.length !== original.length || params.some((p, i) => p !== original[i])) {
         this.data = { ...this.data, parameters: params };
       }
     }

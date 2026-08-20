@@ -13,7 +13,7 @@
   const availableTypes = $derived([...typeRegistry.keys()]);
 
   function addParameter(fn: FuncDef) {
-    fn.parameters = [...(fn.parameters ?? []), { name: '', type: null }];
+    fn.parameters = [...(fn.parameters ?? []), { id: crypto.randomUUID(), name: '', type: null }];
   }
 
   function removeParameter(fn: FuncDef, index: number) {

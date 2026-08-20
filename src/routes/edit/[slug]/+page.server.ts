@@ -33,7 +33,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   const { topics, ...problem } = problemResult;
 
-  const testCases = await TestCaseService.instance().findByProblem({
+  const testCases = await TestCaseService.instance().findByProblemForEdit({
     problemId: problem.id,
     user: session.user
   });

@@ -8,6 +8,7 @@ import { FunctionTestCase, type FunctionTestCaseRunInfo } from './functionTestCa
 import { stripMain } from './languages/c/c';
 import { TypeValue } from './typeValue.svelte';
 import { parseExtensionData } from './types';
+import { validateFunctionTestCaseKeys } from './types.server';
 import { TypeRegistry } from './typeRegistry';
 import { CLanguage } from '$lib/language/c';
 import { CodeExecutor } from '$lib/executor';
@@ -401,6 +402,70 @@ describe('CFunctionTestCase execute', () => {
   });
 });
 
+describe('validateFunctionTestCaseKeys', () => {
+  const problem = new Problem(problemModel);
+  const makeModel = (overrides: Partial<ProblemTestCase> = {}) =>
+    ({ ...makeTestCaseModel(), ...overrides }) as unknown as ProblemTestCase;
+
+  it('accepts a test case whose function and parameters resolve', () => {
+    expect(validateFunctionTestCaseKeys(makeModel(), problem)).toBeNull();
+  });
+
+  it('rejects a test case referencing a missing function', () => {
+    const result = validateFunctionTestCaseKeys(
+      makeModel({ data: { function: 'missing', parameters: [], comparisons: [] } }),
+      problem
+    );
+    expect(result).toContain('references function "missing"');
+    expect(result).toContain('not defined');
+  });
+
+  it('rejects a test case with more parameters than the function defines', () => {
+    const result = validateFunctionTestCaseKeys(
+      makeModel({
+        data: {
+          function: 'fn1',
+          parameters: [
+            { name: 'x', value: { type: 'int', options: { size: 32, signed: null }, data: { value: '0' } } },
+            { name: 'y', value: { type: 'int', options: { size: 32, signed: null }, data: { value: '0' } } }
+          ],
+          comparisons: []
+        }
+      }),
+      problem
+    );
+    expect(result).toContain('parameter 1');
+    expect(result).toContain('only defines 1');
+  });
+
+  it('rejects a test case whose function has an untyped parameter', () => {
+    const untypedProblem = new Problem({
+      ...problemModel,
+      extension_data: {
+        builtin_testCase_function: {
+          functions: {
+            fn1: {
+              name: 'square',
+              parameters: [{ name: 'x', type: null }],
+              returnType: [{ type: 'int', options: { size: 32, signed: null } }]
+            }
+          }
+        }
+      }
+    } as unknown as ProblemModel);
+    expect(validateFunctionTestCaseKeys(makeModel(), untypedProblem)).toContain('has no type');
+  });
+
+  it('ignores non-function test cases', () => {
+    expect(validateFunctionTestCaseKeys(makeModel({ type: 'stdio' }), problem)).toBeNull();
+  });
+
+  it('rejects data that does not match the function schema', () => {
+    const result = validateFunctionTestCaseKeys(makeModel({ data: { function: 42 } }), problem);
+    expect(result).toContain('does not match the function schema');
+  });
+});
+
 describe('FunctionTestCase hydrateRunInfo', () => {
   it('re-hydrates wire JSON comparisons into TypeValue-backed values', () => {
     const serverTestCase = ServerTestCaseRegistry.instance().from(makeTestCaseModel(), new Problem(problemModel));
@@ -557,6 +622,140 @@ describe('FunctionTestCase comparison symbol type sync', () => {
     expect(testCase.data.comparisons[0].value.type.id).toBe('float');
     // switching to the same symbol is a no-op
     expect(testCase.data.comparisons[0].value.value).toEqual({ value: '1.5' });
+  });
+});
+
+describe('syncParameters matches stored values by stable id (M8)', () => {
+  const intParam = (id: string) => ({ id, name: '', type: { type: 'int', options: { size: 32, signed: null } } });
+  const intValue = (id: string, value: string) => ({
+    id,
+    name: '',
+    value: { type: 'int', options: { size: 32, signed: null }, data: { value } }
+  });
+
+  const makeProblem = (parameters: unknown[]) =>
+    new Problem({
+      ...problemModel,
+      id: 'problem-m8',
+      extension_data: {
+        builtin_testCase_function: {
+          functions: {
+            fn1: {
+              name: 'sum',
+              parameters,
+              returnType: [{ type: 'int', options: { size: 32, signed: null } }]
+            }
+          }
+        }
+      }
+    } as unknown as ProblemModel);
+
+  const makeTestCase = (parameters: unknown[]) =>
+    ServerTestCaseRegistry.instance().from(
+      {
+        id: 'test-case-m8',
+        type: 'function',
+        problem_id: 'problem-m8',
+        data: { function: 'fn1', parameters, comparisons: [] }
+      } as unknown as ProblemTestCase,
+      makeProblem([intParam('a'), intParam('b'), intParam('c')])
+    ).testCase as FunctionTestCase;
+
+  const syncTo = (testCase: FunctionTestCase, parameters: unknown[]) => {
+    testCase.syncParameters(parseExtensionData(makeProblem(parameters)));
+    return testCase.data.parameters;
+  };
+
+  it('keeps each value attached when a non-last parameter is removed', () => {
+    const testCase = makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
+
+    // b is removed: c's value must survive, b's must be dropped
+    const params = syncTo(testCase, [intParam('a'), intParam('c')]);
+
+    expect(params.map((p) => p.id)).toEqual(['a', 'c']);
+    expect(params.map((p) => p.value.value)).toEqual([{ value: '1' }, { value: '3' }]);
+  });
+
+  it('reorders values with their parameters', () => {
+    const testCase = makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
+
+    const params = syncTo(testCase, [intParam('c'), intParam('a'), intParam('b')]);
+
+    expect(params.map((p) => p.id)).toEqual(['c', 'a', 'b']);
+    expect(params.map((p) => p.value.value)).toEqual([{ value: '3' }, { value: '1' }, { value: '2' }]);
+  });
+
+  it('keeps the value when a matched parameter changes type', () => {
+    const testCase = makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
+
+    const params = syncTo(testCase, [
+      { id: 'a', name: '', type: { type: 'string', options: {} } },
+      intParam('b'),
+      intParam('c')
+    ]);
+
+    expect(params[0].id).toBe('a');
+    expect(params[0].value.type.id).toBe('string');
+    expect(params[0].value.value).toEqual({ value: '1' });
+  });
+
+  it('fills defaults for added parameters and backfills their ids', () => {
+    const testCase = makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
+
+    const params = syncTo(testCase, [intParam('a'), intParam('b'), intParam('c'), intParam('d')]);
+
+    expect(params.map((p) => p.id)).toEqual(['a', 'b', 'c', 'd']);
+    expect(params[3].value.value).toEqual({ value: '0' });
+  });
+
+  it('matches legacy id-less values by name', () => {
+    const problem = new Problem({
+      ...problemModel,
+      id: 'problem-m8-name',
+      extension_data: {
+        builtin_testCase_function: {
+          functions: {
+            fn1: {
+              name: 'sum',
+              parameters: [{ name: 'x', type: { type: 'int', options: { size: 32, signed: null } } }],
+              returnType: [{ type: 'int', options: { size: 32, signed: null } }]
+            }
+          }
+        }
+      }
+    } as unknown as ProblemModel);
+
+    const testCase = ServerTestCaseRegistry.instance().from(
+      {
+        id: 'test-case-m8-name',
+        type: 'function',
+        problem_id: 'problem-m8-name',
+        data: {
+          function: 'fn1',
+          parameters: [
+            { name: 'x', value: { type: 'int', options: { size: 32, signed: null }, data: { value: '7' } } }
+          ],
+          comparisons: []
+        }
+      } as unknown as ProblemTestCase,
+      problem
+    ).testCase as FunctionTestCase;
+
+    // the definition keeps x but renames nothing: name match preserves value
+    testCase.syncParameters(parseExtensionData(problem));
+
+    expect(testCase.data.parameters).toHaveLength(1);
+    expect(testCase.data.parameters[0].name).toBe('x');
+    expect(testCase.data.parameters[0].value.value).toEqual({ value: '7' });
+  });
+
+  it('is a no-op when nothing changed', () => {
+    const testCase = makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
+    const before = testCase.data.parameters;
+
+    testCase.syncParameters(parseExtensionData(makeProblem([intParam('a'), intParam('b'), intParam('c')])));
+
+    expect(testCase.data.parameters).toBe(before);
   });
 });
 

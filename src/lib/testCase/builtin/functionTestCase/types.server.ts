@@ -2,9 +2,11 @@ import type { JsonObject } from '@zenstackhq/orm';
 import { Logger } from '$lib/logging/logger';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import type { Problem } from '$lib/problem';
+import type { ProblemTestCase } from '$lib/zenstack/models';
 import { TypeRegistry } from './typeRegistry';
 import type { FunctionTestCaseProblemData } from './types';
 import { FunctionTestCaseProblemDataSchema } from './types';
+import { FunctionTestCaseDataSchema } from './functionTestCase.svelte';
 
 /**
  * Server-side version of extension data loading with structured logging.
@@ -31,6 +33,7 @@ export function loadExtensionData(problem: Problem): FunctionTestCaseProblemData
       name: fn.name,
       symbol: fn.symbol ?? '',
       parameters: fn.parameters.map((p) => ({
+        id: p.id,
         name: p.name ?? '',
         type: p.type ? TypeRegistry.instance().from(p.type) : null
       })),
@@ -39,4 +42,42 @@ export function loadExtensionData(problem: Problem): FunctionTestCaseProblemData
   }
 
   return data;
+}
+
+/**
+ * Validate that a function test case's keys resolve against the problem's
+ * function definitions: the referenced function must exist, and every stored
+ * parameter value must map to a defined, typed parameter. Non-function test
+ * cases always pass.
+ *
+ * Returns a human-readable description of the first problem found, or null
+ * when the test case is valid. The edit page runs this before constructing
+ * test cases so an orphaned row fails loudly instead of crashing the
+ * FunctionTestCase constructor and being silently dropped from the editor.
+ */
+export function validateFunctionTestCaseKeys(model: ProblemTestCase, problem: Problem): string | null {
+  if (model.type !== 'function') return null;
+
+  const parsed = FunctionTestCaseDataSchema.safeParse(model.data);
+  if (!parsed.success) {
+    return `Test case ${model.id} has data that does not match the function schema: ${parsed.error.message}`;
+  }
+
+  const { function: functionName, parameters } = parsed.data;
+  const fn = loadExtensionData(problem).functions[functionName];
+  if (!fn) {
+    return `Test case ${model.id} references function "${functionName}", which is not defined for this problem (delete the test case or restore the function in the Functions window)`;
+  }
+
+  for (let i = 0; i < parameters.length; i++) {
+    const definition = fn.parameters[i];
+    if (!definition) {
+      return `Test case ${model.id} references parameter ${i} of function "${functionName}", which only defines ${fn.parameters.length} parameter(s) (delete the test case or restore the parameter)`;
+    }
+    if (!definition.type) {
+      return `Test case ${model.id} references parameter ${i} of function "${functionName}", which has no type (delete the test case or set the parameter type)`;
+    }
+  }
+
+  return null;
 }
