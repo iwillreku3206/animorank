@@ -1,7 +1,6 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import ValueEditorMount from '../../ValueEditorMount.svelte';
-  import { TypeRegistry } from '../../typeRegistry';
   import { TypeValue } from '../../typeValue.svelte';
   import type { Type } from '../../type.svelte';
   import type { Pointer } from '.';
@@ -10,14 +9,19 @@
 
   const target = $derived(value.type.targetType);
 
-  // Rebuild the inner TypeValue only when the pointer's target type changes,
-  // so editing the inner value does not remount the nested editor.
+  // The nested editor works against a target-typed TypeValue. Rebuild it only
+  // when the pointer's target type actually changes. The guard keeps the
+  // write tracked: an effect that writes state it never reads is rescheduled
+  // by Svelte after unrelated flushes, which would reassign `inner` (and
+  // remount the nested editor, stealing focus) on every keystroke.
   let inner = $state<TypeValue<Type>>(new TypeValue(target, value.value));
   $effect(() => {
-    inner = new TypeValue(
-      target,
-      untrack(() => value.value)
-    );
+    if (inner.type !== target) {
+      inner = new TypeValue(
+        target,
+        untrack(() => value.value)
+      );
+    }
   });
 
   function writeBack() {

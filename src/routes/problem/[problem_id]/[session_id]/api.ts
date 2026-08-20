@@ -20,7 +20,8 @@ function hydrateResults(
       // public results carry the full model as testCaseInfo
       const testCase = registry.from(r.testCaseInfo as ProblemTestCase, problem);
       return 'runInfo' in r ? { ...r, testCase, runInfo: testCase.hydrateRunInfo(r.runInfo) } : { ...r, testCase };
-    } catch {
+    } catch (error) {
+      console.error(error);
       return r;
     }
   });

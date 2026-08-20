@@ -3,36 +3,35 @@ import { ServerTestCase } from '$lib/testCase/testCase.server';
 import type { TestCaseLanguageRegistry } from '$lib/testCase/testCaseLanguageRegistry.server';
 import type { TestCaseResult } from '$lib/testCase/types';
 import type { ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
-import { FunctionTestCase, type FunctionTestCaseData, type FunctionTestCaseRunInfo } from './functionTestCase.svelte';
-import { FunctionTestCaseLanguageRegistry } from './languageRegistry';
+import { StdioTestCase, type StdioTestCaseData, type StdioTestCaseRunInfo } from './stdioTestCase.svelte';
+import { StdioTestCaseLanguageRegistry } from './languageRegistry';
 
-export class ServerFunctionTestCase extends ServerTestCase<FunctionTestCaseData, FunctionTestCaseRunInfo> {
-  _languageRegistry = new FunctionTestCaseLanguageRegistry();
+export class ServerStdioTestCase extends ServerTestCase<StdioTestCaseData, StdioTestCaseRunInfo> {
+  _languageRegistry = new StdioTestCaseLanguageRegistry();
   public get languageRegistry(): TestCaseLanguageRegistry {
     return this._languageRegistry;
   }
   public constructor(model: TestCaseModel, problem: Problem) {
-    super(new FunctionTestCase(model, problem));
+    super(new StdioTestCase(model, problem));
   }
   public static id() {
-    return 'function';
+    return 'stdio';
   }
 
   public static async create(problem: Problem): Promise<ServerTestCase> {
-    const data: FunctionTestCaseData = {
-      function: '',
-      comparisons: [],
-      parameters: []
+    const data: StdioTestCaseData = {
+      input: '',
+      output: ''
     };
-    return new ServerFunctionTestCase(await ServerTestCase.createModel('function', problem, data), problem);
+    return new ServerStdioTestCase(await ServerTestCase.createModel('stdio', problem, data), problem);
   }
 
-  protected failureResult(error: unknown): TestCaseResult<FunctionTestCaseRunInfo> {
+  protected failureResult(error: unknown): TestCaseResult<StdioTestCaseRunInfo> {
     const model = this.testCase.model;
     if (model.public === true) {
       return {
         success: false,
-        runInfo: { comparisons: [] },
+        runInfo: { expected: this.testCase.data.output, actual: '' },
         testCaseInfo: model as TestCaseModel & { public: true },
         compilerOutput: error instanceof Error ? error.message : 'Unknown error'
       };

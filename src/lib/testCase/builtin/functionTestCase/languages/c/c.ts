@@ -13,6 +13,54 @@ import { loadExtensionData } from '../../types.server';
 import { CExecutionContext } from './executionContext';
 import { CTypeRegistry } from './typeRegistry';
 
+// Remove student-defined `main` declarations before the submission is
+// included into the generated harness: the harness provides the entry point,
+// so a student `main` would otherwise fail to link. The declaration pattern
+// follows the legacy customTestCase implementation, with the parameter list
+// broadened to any non-parenthesis characters (covers `char *argv[]`, `const`,
+// underscores, …).
+const mainRegex = /(int|void) main\s*\([^()]*\)\s*\{/g;
+
+/**
+ * Strip any `main` function declaration from a C submission. Line endings are
+ * normalized to `\n` first so the regex matches Windows-style sources too.
+ *
+ * The body is consumed with balanced braces (the legacy regex's greedy
+ * `(.|\s)*` tail would delete everything after a leading `main`, e.g. a
+ * slots template whose `main` wraps the student code).
+ */
+export function stripMain(code: string): string {
+  const normalized = code.replaceAll('\r\n', '\n');
+  let result = '';
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = mainRegex.exec(normalized)) !== null) {
+    // The header match ends at the opening brace; scan for its matching close.
+    let depth = 0;
+    let i = match.index + match[0].length - 1;
+    for (; i < normalized.length; i++) {
+      const ch = normalized[i];
+      if (ch === '{') {
+        depth++;
+      } else if (ch === '}' && --depth === 0) {
+        break;
+      }
+    }
+
+    if (depth !== 0) {
+      // Unbalanced braces: keep the match and continue scanning past it.
+      mainRegex.lastIndex = match.index + match[0].length;
+      continue;
+    }
+
+    result += normalized.slice(lastIndex, match.index);
+    lastIndex = i + 1;
+    mainRegex.lastIndex = i + 1;
+  }
+  result += normalized.slice(lastIndex);
+  return result;
+}
+
 export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> {
   readonly typeRegistry = new CTypeRegistry();
 
@@ -149,7 +197,7 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
     const files: File[] = [
       {
         path: 'submission.c',
-        content: Buffer.from(previousCode, 'utf8')
+        content: Buffer.from(stripMain(previousCode), 'utf8')
       },
       {
         path: 'main.c',
@@ -171,6 +219,23 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
     });
 
     const resultFiles = arrayToHashMap(result.fileOutputs, (f) => f.path);
+
+    // A compile or runtime failure means the export files never appeared, so
+    // the comparison values cannot be reconstructed. Report the failure with
+    // the compiler/run diagnostics instead of a fabricated comparison.
+    const missingFile = fileNames.find((name) => !(name in resultFiles));
+    if (missingFile) {
+      if (this.testCase.testCase.model.public === true) {
+        return {
+          success: false,
+          runInfo: { comparisons: [] },
+          testCaseInfo: this.testCase.testCase.model as TestCaseModel & { public: true },
+          compilerOutput: result.processOutputs[0]?.stderr?.toString('utf8')
+        };
+      } else {
+        return { success: false, testCaseInfo: { public: false } };
+      }
+    }
 
     const results = [];
     for (const comparison of comparisons) {

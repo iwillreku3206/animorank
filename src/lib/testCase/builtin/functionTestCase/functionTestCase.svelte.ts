@@ -16,6 +16,7 @@ import type { JsonValue } from '@zenstackhq/orm';
 import { OperatorRegistry } from './operatorRegistry';
 import { TypeRegistry } from './typeRegistry';
 import { TypeValue } from './typeValue.svelte';
+import type { Type } from './type.svelte';
 import type { Problem } from '$lib/problem';
 import deepEqual from 'deep-equal';
 
@@ -100,27 +101,35 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
    */
   public syncParameters(functions: FunctionTestCaseProblemData): void {
     const fn = functions.functions[this.data.function];
-    if (!fn || fn.parameters.some((p) => !p.type)) return;
+    if (!fn) return;
 
-    const stored = this.data.parameters;
-    const params = fn.parameters.map((p, i) => {
-      const existing = stored[i];
-      if (!existing) return { name: p.name, value: p.type!.defaultValue() };
+    if (!fn.parameters.some((p) => !p.type)) {
+      const stored = this.data.parameters;
+      const params = fn.parameters.map((p, i) => {
+        const existing = stored[i];
+        if (!existing) return { name: p.name, value: p.type!.defaultValue() };
 
-      const sameName = existing.name === p.name;
-      const sameType =
-        existing.value.type.id === p.type!.id &&
-        deepEqual(existing.value.type.options, p.type!.options, { strict: true });
+        const sameName = existing.name === p.name;
+        const sameType =
+          existing.value.type.id === p.type!.id &&
+          deepEqual(existing.value.type.options, p.type!.options, { strict: true });
 
-      if (sameName && sameType) return existing;
-      return {
-        name: p.name,
-        value: sameType ? existing.value : new TypeValue(p.type!, existing.value.value)
-      };
-    });
+        if (sameName && sameType) return existing;
+        return {
+          name: p.name,
+          value: sameType ? existing.value : new TypeValue(p.type!, existing.value.value)
+        };
+      });
 
-    if (params.length !== stored.length || params.some((p, i) => p !== stored[i])) {
-      this.data = { ...this.data, parameters: params };
+      if (params.length !== stored.length || params.some((p, i) => p !== stored[i])) {
+        this.data = { ...this.data, parameters: params };
+      }
+    }
+
+    // The function signature changed: comparisons referencing a symbol whose
+    // type changed (return type or a parameter type) follow along.
+    for (const comparison of this.data.comparisons) {
+      this.syncComparisonValue(comparison, functions);
     }
   }
 
@@ -130,6 +139,34 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
 
   public setComparisonSymbol(i: number, symbol: Symbol): void {
     this.data.comparisons[i].symbol = symbol;
+    this.syncComparisonValue(this.data.comparisons[i]);
+  }
+
+  /**
+   * The type a comparison symbol compares against: the function's return type
+   * for `return`, or the Nth parameter's type for `paramN`.
+   */
+  private symbolType(symbol: Symbol, functions: FunctionTestCaseProblemData = this.problem.functionData): Type | null {
+    const fn = functions.functions[this.data.function];
+    if (!fn) return null;
+    if (symbol === 'return') return fn.returnType[0] ?? null;
+    const param = symbol.match(/^param(\d+)$/);
+    if (!param) return null;
+    return fn.parameters[parseInt(param[1], 10)]?.type ?? null;
+  }
+
+  /**
+   * Keep a comparison's value type in sync with its symbol's type. When they
+   * differ the value resets to the new type's default so the value editor and
+   * the comparator always work against the symbol's actual type.
+   */
+  private syncComparisonValue(comparison: Comparison, functions?: FunctionTestCaseProblemData): void {
+    const type = this.symbolType(comparison.symbol, functions);
+    if (!type) return;
+    const { value } = comparison;
+    if (value.type.id !== type.id || !deepEqual(value.type.options, type.options, { strict: true })) {
+      comparison.value = type.defaultValue();
+    }
   }
 
   public setComparisonOperator(i: number, key: string): void {

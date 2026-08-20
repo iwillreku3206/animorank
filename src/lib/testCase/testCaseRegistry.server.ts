@@ -1,6 +1,8 @@
 import type { Problem } from '$lib/problem';
 import { ServiceRegistry, type ClassServiceOf } from '$lib/services/registry';
 import { ServerFunctionTestCase } from './builtin/functionTestCase/functionTestCase.server';
+import { ServerStdioTestCase } from './builtin/stdioTestCase/stdioTestCase.server';
+import { ServerCustomTestCase } from './builtin/customTestCase/customTestCase.server';
 import type { ServerTestCase } from './testCase.server';
 import type { ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 
@@ -25,6 +27,8 @@ export class ServerTestCaseRegistry extends ServiceRegistry<
   constructor() {
     super();
     this.registerTest(ServerFunctionTestCase);
+    this.registerTest(ServerStdioTestCase);
+    this.registerTest(ServerCustomTestCase);
   }
 
   public registerTest(value: ClassServiceOf<this>): void {

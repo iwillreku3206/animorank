@@ -15,7 +15,8 @@
   // The backend only sends public test results; the API layer already converts
   // each result to its TestCase class.
   let selectedTestCase = $derived.by(() => {
-    if (selectedTest < 0 || selectedTest >= tests.results.length) return null;
+    if (selectedTest < 0) return null;
+    if (selectedTest >= tests.results.length) return tests.results.at(-1)?.testCase ?? null;
     return tests.results[selectedTest].testCase ?? null;
   });
 
@@ -42,7 +43,7 @@
 {:else if lastTestType === 'run'}
   <div class="flex flex-row h-full">
     {#if selectedTestCase !== null}
-      <ul class="menu bg-base-200 rounded-box w-56 h-full">
+      <ul class="menu bg-base-200 rounded-box w-32 min-w-32 h-full flex flex-col flex-nowrap overflow-x-scroll">
         {#each tests.results as result, i (i)}
           <li class={result.success ? 'text-primary' : 'text-error'}>
             <button onclick={() => (selectedTest = i)}>
@@ -52,7 +53,7 @@
         {/each}
       </ul>
       {@const Display = selectedTestCase.display}
-      <div class="p-4 w-full h-full">
+      <div class="p-4 w-full h-full overflow-x-scroll">
         <Display testCaseResult={tests.results[selectedTest]} />
       </div>
     {:else}

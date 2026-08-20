@@ -3,6 +3,8 @@ import { type ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 import type { TestCase } from './testCase.svelte';
 import type { Problem } from '$lib/problem';
 import { FunctionTestCase } from './builtin/functionTestCase/functionTestCase.svelte';
+import { StdioTestCase } from './builtin/stdioTestCase/stdioTestCase.svelte';
+import { CustomTestCase } from './builtin/customTestCase/customTestCase.svelte';
 
 export class TestCaseRegistry extends ServiceRegistry<
   TestCase,
@@ -25,6 +27,8 @@ export class TestCaseRegistry extends ServiceRegistry<
   constructor() {
     super();
     this.register('function', FunctionTestCase);
+    this.register('stdio', StdioTestCase);
+    this.register('custom', CustomTestCase);
   }
 
   public from(model: TestCaseModel, problem: Problem) {

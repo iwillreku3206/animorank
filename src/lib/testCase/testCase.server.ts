@@ -29,7 +29,19 @@ export abstract class ServerTestCase<Data extends IntoJsonValue = any, RunInfo e
     this.testCase = testCase;
   }
 
-  public run(language: Language, executor: CodeExecutor, state: IntoJsonValue): Promise<TestCaseResult<RunInfo>> {
-    return this.languageRegistry.getInstance(language.id, this).execute(executor, state);
+  public async run(language: Language, executor: CodeExecutor, state: IntoJsonValue): Promise<TestCaseResult<RunInfo>> {
+    try {
+      return await this.languageRegistry.getInstance(language.id, this).execute(executor, state);
+    } catch (error) {
+      return this.failureResult(error);
+    }
   }
+
+  /**
+   * Build a failed result with a valid (empty) runInfo when execution cannot
+   * proceed at all (e.g. missing function definitions, unconfigured executor).
+   * Each concrete type owns its RunInfo shape, so the empty form is
+   * type-specific; a thrown error must never leak as an invalid runInfo.
+   */
+  protected abstract failureResult(_error: unknown): TestCaseResult<RunInfo>;
 }

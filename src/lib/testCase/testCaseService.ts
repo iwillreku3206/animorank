@@ -62,7 +62,9 @@ export class TestCaseService {
     if (!problem) return null;
 
     const defaultData: Record<string, JsonValue> = {
-      function: { function: '', parameters: [], comparisons: [] }
+      function: { function: '', parameters: [], comparisons: [] },
+      stdio: { input: '', output: '' },
+      custom: { test_code: '' }
     };
 
     return db.problemTestCase.create({

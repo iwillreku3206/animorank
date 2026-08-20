@@ -39,22 +39,6 @@ export const load: PageServerLoad = async ({ locals, params }) => {
     problemId: problem.id,
     user: session.user
   });
-  testCases
-    .map((tc) => {
-      try {
-        return ServerTestCaseRegistry.instance().from(tc, new Problem(problem));
-      } catch (error) {
-        return null;
-      }
-    })
-    .filter((t) => !!t)
-    .forEach((t) => {
-      try {
-        console.log(t.languageRegistry.getInstance('c', t).generateCode()[0]);
-      } catch (error) {
-        console.log(error);
-      }
-    });
 
   const tags = await serviceProvider.getService(TagService).findAll();
 
