@@ -1,13 +1,12 @@
 import type { RequestHandler } from './$types';
 import { z } from 'zod';
-import { HistoryEntryType } from '$lib/zenstack/models';
-import type { PracticeHistoryEntryCreateManyArgs } from '$lib/zenstack/input';
+import type { SessionHistoryEntryCreateManyArgs } from '$lib/zenstack/input';
 import { db } from '$lib/zenstack';
 
 const validator = z.array(
   z.object({
     timestamp: z.date(),
-    type: z.enum(Object.values(HistoryEntryType)),
+    type: z.string(),
     data: z.any(),
     session_id: z.uuid()
   })
@@ -34,7 +33,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     });
   }
 
-  await db.practiceHistoryEntry.createMany({
+  await db.sessionHistoryEntry.createMany({
     data: bodyData.map(
       (event) =>
         ({
@@ -42,7 +41,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
           practice_session_id: event.session_id,
           type: event.type,
           timestamp: event.timestamp
-        }) satisfies PracticeHistoryEntryCreateManyArgs['data']
+        }) satisfies SessionHistoryEntryCreateManyArgs['data']
     )
   });
 

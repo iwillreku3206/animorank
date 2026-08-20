@@ -1,7 +1,10 @@
 import { db } from '$lib/zenstack';
-import type { ProblemTestCase } from '$lib/zenstack/models';
 import type { User } from '@auth/sveltekit';
 import type { JsonValue } from '@zenstackhq/orm';
+import { Problem } from '$lib/problem';
+import { TestCaseRegistry } from './testCaseRegistry';
+import { ServerTestCaseRegistry } from './testCaseRegistry.server';
+import type { ServerTestCase } from './testCase.server';
 
 export interface FindByProblemOptions {
   problemId: string;
@@ -51,7 +54,7 @@ export class TestCaseService {
     });
   }
 
-  public async create(options: CreateOptions): Promise<ProblemTestCase | null> {
+  public async create(options: CreateOptions): Promise<ServerTestCase | null> {
     const problem = await db.problem.findUnique({
       where: {
         id: options.problemId,
@@ -67,17 +70,25 @@ export class TestCaseService {
       custom: { test_code: '' }
     };
 
-    return db.problemTestCase.create({
+    const model = await db.problemTestCase.create({
       data: {
         type: options.type,
         problem_id: options.problemId,
         data: defaultData[options.type] ?? {}
       }
     });
+
+    return ServerTestCaseRegistry.instance().from(model, new Problem(problem));
   }
 
-  public async findByProblem(options: FindByProblemOptions): Promise<ProblemTestCase[]> {
-    return db.problemTestCase.findMany({
+  public async findByProblem(options: FindByProblemOptions): Promise<ServerTestCase[]> {
+    const problem = await db.problem.findUnique({
+      where: { id: options.problemId }
+    });
+
+    if (!problem) return [];
+
+    const models = await db.problemTestCase.findMany({
       where: {
         problem_id: options.problemId,
         problem: {
@@ -92,17 +103,25 @@ export class TestCaseService {
       },
       orderBy: { created_at: 'asc' }
     });
+
+    return models.map((model) => ServerTestCaseRegistry.instance().from(model, new Problem(problem)));
   }
 
-  public async findById(options: FindByIdOptions): Promise<ProblemTestCase | null> {
-    return this.authorizeTestCase(options.id, options.user);
+  public async findById(options: FindByIdOptions): Promise<ServerTestCase | null> {
+    const model = await this.authorizeTestCase(options.id, options.user);
+    if (!model) return null;
+
+    const problem = await db.problem.findUnique({ where: { id: model.problem_id } });
+    if (!problem) return null;
+
+    return ServerTestCaseRegistry.instance().from(model, new Problem(problem));
   }
 
-  public async update(options: UpdateOptions): Promise<ProblemTestCase | null> {
+  public async update(options: UpdateOptions): Promise<ServerTestCase | null> {
     const existing = await this.authorizeTestCase(options.id, options.user);
     if (!existing) return null;
 
-    return db.problemTestCase.update({
+    const model = await db.problemTestCase.update({
       where: { id: options.id },
       data: {
         ...(options.type !== undefined && { type: options.type }),
@@ -110,6 +129,11 @@ export class TestCaseService {
         ...(options.data !== undefined && { data: options.data })
       }
     });
+
+    const problem = await db.problem.findUnique({ where: { id: model.problem_id } });
+    if (!problem) return null;
+
+    return ServerTestCaseRegistry.instance().from(model, new Problem(problem));
   }
 
   public async delete(id: string, user: User): Promise<boolean> {

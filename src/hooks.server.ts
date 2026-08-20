@@ -14,10 +14,10 @@ export const handle: Handle = async ({ event, resolve }) => {
   return response;
 };
 
-export const handleError: HandleServerError = ({ error, event }) => {
+export const handleError: HandleServerError = async ({ error }) => {
   const serviceProvider = ServerServiceProvider.instance();
   const logger = serviceProvider.getService(Logger, 'webserver');
   logger.error('CRASH ERROR: ' + JSON.stringify(error).replaceAll('\\n', '\n'));
 
-  return error;
+  return error as Error;
 };

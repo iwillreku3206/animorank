@@ -1,10 +1,10 @@
 import { type Form } from '$lib/form';
 import type { JsonValue } from '@zenstackhq/orm';
+import type { IntoJsonValue } from '$lib/types/utils';
 import { Type, TypeSchema } from '../../type.svelte';
 import type { ValueDisplay, ValueEditor } from '../../types';
 import { TypeRegistry } from '../../typeRegistry';
 import { TypeValue } from '../../typeValue.svelte';
-import type { IntoJsonValue } from '$lib/types/utils';
 import type z from 'zod';
 import PointerDisplay from './PointerDisplay.svelte';
 import PointerEditor from './PointerEditor.svelte';
@@ -47,7 +47,7 @@ function normalizeTarget(target: unknown): Type {
   return TypeRegistry.instance().getStatic('int').create();
 }
 
-export class Pointer extends Type<IntoJsonValue, Form, { target: Type }> {
+export class Pointer extends Type<JsonValue, Form, { target: Type }> {
   static id(): string {
     return 'pointer';
   }
@@ -56,8 +56,9 @@ export class Pointer extends Type<IntoJsonValue, Form, { target: Type }> {
     return new Pointer({ target: TypeRegistry.instance().getStatic('int').create() });
   }
 
-  constructor(options: { target?: unknown }) {
-    super({ target: normalizeTarget(options.target) });
+  constructor(options: IntoJsonValue | { target?: Type }) {
+    const target = options !== null && typeof options === 'object' && 'target' in options ? options.target : undefined;
+    super({ target: normalizeTarget(target) });
   }
 
   /**

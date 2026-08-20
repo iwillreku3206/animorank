@@ -21,5 +21,5 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     user: session.user
   });
 
-  return newTestCase ? successObject(newTestCase) : error(404, 'Problem not found');
+  return newTestCase ? successObject(newTestCase.testCase.model) : error(404, 'Problem not found');
 };

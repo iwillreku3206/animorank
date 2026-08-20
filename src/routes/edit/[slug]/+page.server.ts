@@ -4,8 +4,6 @@ import { db } from '$lib/zenstack';
 import { TestCaseService } from '$lib/testCase/testCaseService';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { TagService } from '$lib/tag';
-import { ServerTestCaseRegistry } from '$lib/testCase/testCaseRegistry.server';
-import { Problem } from '$lib/problem';
 import { toJsonValue } from '$lib/types/utils';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -45,7 +43,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
   return {
     problem,
     topics: topics.map((t) => t.tag_id),
-    testCases: testCases.map((tc) => ({ ...tc, data: toJsonValue(tc.data) })),
+    testCases: testCases.map((tc) => ({ ...tc.testCase.model, data: toJsonValue(tc.testCase.data) })),
     tags: tags.map((tag) => tag.model),
     user: session.user
   };

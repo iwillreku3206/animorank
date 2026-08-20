@@ -109,7 +109,18 @@ export class ProblemService {
 
     const updated = await db.problem.update({
       where: { id },
-      data: updates
+      data: {
+        ...(updates.name !== undefined && { name: updates.name }),
+        ...(updates.description !== undefined && { description: updates.description }),
+        ...(updates.language !== undefined && { language: updates.language }),
+        ...(updates.starter_code !== undefined && { starter_code: updates.starter_code }),
+        ...(updates.visible !== undefined && { visible: updates.visible }),
+        ...(updates.uses_slots !== undefined && { uses_slots: updates.uses_slots }),
+        ...(updates.difficulty_id !== undefined && { difficulty_id: updates.difficulty_id }),
+        ...(updates.subject_id !== undefined && { subject_id: updates.subject_id }),
+        // extension_data is a required Json column: null means "no change"
+        ...(updates.extension_data != null && { extension_data: updates.extension_data })
+      }
     });
 
     return new Problem(updated);

@@ -8,7 +8,6 @@ import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
 import { ProblemService } from '$lib/problem/problemService';
 import { TestCaseService } from '$lib/testCase/testCaseService';
-import { ServerTestCaseRegistry } from '$lib/testCase/testCaseRegistry.server';
 import { LanguageRegistry } from '$lib/language/languageRegistry';
 import { CodeExecutor } from '$lib/executor';
 
@@ -44,7 +43,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   // this should never happen, this is just a TypeScript assertion
   if (!problem) return error(404, 'Problem not found');
 
-  const testCasesRaw = await TestCaseService.instance().findByProblem({
+  const testCases = await TestCaseService.instance().findByProblem({
     problemId: problem.id,
     user: session.user
   });
@@ -55,18 +54,19 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   const state = {
     sections: Object.fromEntries(practiceSession.previousCode.sections.map((s) => [s.slot.label, s.code]))
   };
-  const testCases = testCasesRaw.filter((tc) => (test_type === 'public' ? tc.public : true));
+  const selected = testCases.filter((tc) => (test_type === 'public' ? tc.testCase.model.public : true));
 
   const results = await Promise.all(
-    testCases.map(async (tc) => {
+    selected.map(async (tc) => {
       try {
-        const serverTestCase = ServerTestCaseRegistry.instance().from(tc, problem);
-        return await serverTestCase.run(language, executor, state);
+        return await tc.run(language, executor, state);
       } catch (error) {
         return {
           success: false,
-          testCaseInfo: tc.public ? (tc as TestCaseModel & { public: true }) : { public: false },
-          ...(tc.public
+          testCaseInfo: tc.testCase.model.public
+            ? (tc.testCase.model as TestCaseModel & { public: true })
+            : { public: false },
+          ...(tc.testCase.model.public
             ? {
                 compilerOutput: error instanceof Error ? error.message : 'Unknown error',
                 runInfo: [] as unknown as never

@@ -61,7 +61,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
           id: problem.id,
           name: problem.name,
           visible: problem.visible,
-          testCases: testCases.map((tc) => tc.dbTestCase)
+          testCases: testCases.map((tc) => tc.testCase.model)
         };
       })
     ),
