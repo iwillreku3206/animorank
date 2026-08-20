@@ -192,7 +192,7 @@ describe('CFunctionTestCase execute', () => {
     });
 
     expect(result.success).toBe(true);
-    if ('runInfo' in result) {
+    if ('runInfo' in result && 'comparisons' in result.runInfo) {
       expect(result.runInfo.comparisons[0]).toMatchObject({
         symbol: 'return',
         result: true,
@@ -270,6 +270,89 @@ describe('CFunctionTestCase execute', () => {
     });
   });
 
+  it('reports output_not_generated when the run process is killed by a signal', async () => {
+    // M3 regression: a segfaulted program still yields marker pairs with empty
+    // content, so the export files are present but empty. The crash must be
+    // reported as a distinct failure, not compared as empty values (which used
+    // to throw BigInt('') and drop the real stderr).
+    class CrashedRunExecutor extends CodeExecutor {
+      public async execute(): Promise<ExecutionResult> {
+        return {
+          processOutputs: [{ exitCode: 0 }, { exitCode: undefined }],
+          fileOutputs: [
+            { path: '__ar_test_return', content: Buffer.from('') },
+            { path: '__ar_test_param0', content: Buffer.from('') }
+          ]
+        };
+      }
+    }
+
+    const serverTestCase = ServerTestCaseRegistry.instance().from(makeModel(), new Problem(problem));
+    const result = await serverTestCase.run(new CLanguage(), new CrashedRunExecutor(), {
+      sections: { body: 'int square(int x) { return *(int*)0; }' }
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      testCaseInfo: { id: 'test-case-1', public: true }
+    });
+    if ('runInfo' in result) {
+      expect(result.runInfo).toEqual({ failure: 'output_not_generated', exitCode: undefined });
+    }
+    if ('compilerOutput' in result) {
+      expect(result.compilerOutput).toBeUndefined();
+    }
+  });
+
+  it('reports output_not_generated with exit code and stderr on abnormal run exit', async () => {
+    class AbortRunExecutor extends CodeExecutor {
+      public async execute(): Promise<ExecutionResult> {
+        return {
+          processOutputs: [{ exitCode: 0 }, { exitCode: 134, stderr: Buffer.from('Aborted (core dumped)') }],
+          fileOutputs: [
+            { path: '__ar_test_return', content: Buffer.from('') },
+            { path: '__ar_test_param0', content: Buffer.from('') }
+          ]
+        };
+      }
+    }
+
+    const serverTestCase = ServerTestCaseRegistry.instance().from(makeModel(), new Problem(problem));
+    const result = await serverTestCase.run(new CLanguage(), new AbortRunExecutor(), {
+      sections: { body: 'int square(int x) { abort(); }' }
+    });
+
+    expect(result).toMatchObject({ success: false });
+    if ('runInfo' in result) {
+      expect(result.runInfo).toEqual({
+        failure: 'output_not_generated',
+        exitCode: 134,
+        stderr: 'Aborted (core dumped)'
+      });
+    }
+  });
+
+  it('omits failure details for hidden test cases when the run crashes', async () => {
+    class CrashedRunExecutor extends CodeExecutor {
+      public async execute(): Promise<ExecutionResult> {
+        return {
+          processOutputs: [{ exitCode: 0 }, { exitCode: undefined }],
+          fileOutputs: [
+            { path: '__ar_test_return', content: Buffer.from('') },
+            { path: '__ar_test_param0', content: Buffer.from('') }
+          ]
+        };
+      }
+    }
+
+    const serverTestCase = ServerTestCaseRegistry.instance().from(makeModel({ public: false }), new Problem(problem));
+    const result = await serverTestCase.run(new CLanguage(), new CrashedRunExecutor(), {
+      sections: { body: 'int square(int x) { return *(int*)0; }' }
+    });
+
+    expect(result).toEqual({ success: false, testCaseInfo: { public: false } });
+  });
+
   it('fails gracefully when the function definition is missing', async () => {
     const missingModel = makeModel({
       data: { function: 'missing', parameters: [], comparisons: [] }
@@ -337,11 +420,27 @@ describe('FunctionTestCase hydrateRunInfo', () => {
 
     const hydrated = testCase.hydrateRunInfo(runInfo);
 
-    expect(hydrated.comparisons[0]).toMatchObject({ symbol: 'return', result: true });
-    expect(hydrated.comparisons[0].expected).toBeInstanceOf(TypeValue);
-    expect(hydrated.comparisons[0].expected.value).toEqual({ value: '5' });
-    expect(hydrated.comparisons[0].actual).toBeInstanceOf(TypeValue);
-    expect(hydrated.comparisons[0].actual.value).toEqual({ value: '5' });
+    expect('comparisons' in hydrated).toBe(true);
+    if ('comparisons' in hydrated) {
+      expect(hydrated.comparisons[0]).toMatchObject({ symbol: 'return', result: true });
+      expect(hydrated.comparisons[0].expected).toBeInstanceOf(TypeValue);
+      expect(hydrated.comparisons[0].expected.value).toEqual({ value: '5' });
+      expect(hydrated.comparisons[0].actual).toBeInstanceOf(TypeValue);
+      expect(hydrated.comparisons[0].actual.value).toEqual({ value: '5' });
+    }
+  });
+
+  it('passes output_not_generated failures through unchanged', () => {
+    const serverTestCase = ServerTestCaseRegistry.instance().from(makeTestCaseModel(), new Problem(problemModel));
+    const testCase = serverTestCase.testCase as FunctionTestCase;
+
+    const runInfo = {
+      failure: 'output_not_generated',
+      exitCode: undefined,
+      stderr: undefined
+    } as unknown as FunctionTestCaseRunInfo;
+
+    expect(testCase.hydrateRunInfo(runInfo)).toEqual(runInfo);
   });
 });
 

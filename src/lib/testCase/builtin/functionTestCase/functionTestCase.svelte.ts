@@ -26,14 +26,25 @@ export type FunctionTestCaseData = {
   comparisons: Comparison[];
 };
 
-export type FunctionTestCaseRunInfo = {
-  comparisons: {
-    symbol: Symbol;
-    expected: TypeValue;
-    actual: TypeValue;
-    result: boolean;
-  }[];
-};
+export type FunctionTestCaseRunInfo =
+  | {
+      comparisons: {
+        symbol: Symbol;
+        expected: TypeValue;
+        actual: TypeValue;
+        result: boolean;
+      }[];
+    }
+  | {
+      /**
+       * The run process exited abnormally (crash, signal, non-zero exit) so
+       * the harness never wrote the export files. Distinct from a comparison
+       * failure: the values were never produced.
+       */
+      failure: 'output_not_generated';
+      exitCode?: number;
+      stderr?: string;
+    };
 
 export const FunctionTestCaseDataSchema = z.object({
   function: z.string(),
@@ -205,6 +216,7 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
    * values into TypeValue instances for the display components.
    */
   public hydrateRunInfo(runInfo: FunctionTestCaseRunInfo): FunctionTestCaseRunInfo {
+    if ('failure' in runInfo) return runInfo;
     type Serialized = { type: string; options: unknown; data: JsonValue };
     const typeRegistry = TypeRegistry.instance();
     const hydrate = (v: unknown): TypeValue =>

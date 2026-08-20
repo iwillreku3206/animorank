@@ -237,6 +237,29 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
       }
     }
 
+    // The run process exited abnormally (crash, signal, non-zero exit) after
+    // the harness started writing export files. The run script prints a
+    // begin/cat/end marker triple unconditionally, so the files are present
+    // but empty even when the program segfaulted before fopen; comparing
+    // those empty values would throw (BigInt('')) or fail misleadingly, and
+    // the real crash stderr would be dropped. Report a distinct failure.
+    const runProcess = result.processOutputs[1];
+    if (runProcess && runProcess.exitCode !== 0) {
+      if (this.testCase.testCase.model.public === true) {
+        return {
+          success: false,
+          runInfo: {
+            failure: 'output_not_generated',
+            exitCode: runProcess.exitCode,
+            stderr: runProcess.stderr?.toString('utf8')
+          },
+          testCaseInfo: this.testCase.testCase.model as TestCaseModel & { public: true }
+        };
+      } else {
+        return { success: false, testCaseInfo: { public: false } };
+      }
+    }
+
     const results = [];
     for (const comparison of comparisons) {
       const symbol = comparison.symbol;

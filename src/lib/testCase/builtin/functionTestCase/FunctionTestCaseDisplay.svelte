@@ -32,24 +32,39 @@
     {#if testCaseResult.compilerOutput}
       <pre class="text-error text-xs bg-base-100 rounded-lg p-2 overflow-x-auto">{testCaseResult.compilerOutput}</pre>
     {/if}
-    {#each testCaseResult.runInfo.comparisons as comparison, i (i)}
-      {@const ExpectedDisplay = displayFor(comparison.expected)}
-      {@const ActualDisplay = displayFor(comparison.actual)}
-      <div class="bg-base-100 flex flex-col gap-2 rounded-lg p-3">
-        <div class="flex flex-row items-center gap-2">
-          <span class="font-mono text-xs text-base-content opacity-80">{label(comparison.symbol)}</span>
-          <span class={comparison.result ? 'text-success' : 'text-error'}>{comparison.result ? '✓' : '✗'}</span>
-        </div>
-        <div class="flex flex-row items-center gap-2">
-          <span class="text-xs text-base-content opacity-80">Expected:</span>
-          <ExpectedDisplay value={comparison.expected} />
-        </div>
-        <div class="flex flex-row items-center gap-2">
-          <span class="text-xs text-base-content opacity-80">Actual:</span>
-          <ActualDisplay value={comparison.actual} />
-        </div>
+    {#if 'failure' in testCaseResult.runInfo}
+      <div class="bg-base-100 flex flex-col gap-1 rounded-lg p-3">
+        <span class="font-mono text-xs text-error">Output not generated</span>
+        {#if testCaseResult.runInfo.exitCode !== undefined}
+          <span class="font-mono text-xs text-base-content opacity-80">
+            Exit code: {testCaseResult.runInfo.exitCode}
+          </span>
+        {/if}
+        {#if testCaseResult.runInfo.stderr}
+          <pre class="text-error text-xs bg-base-100 rounded-lg p-2 overflow-x-auto">{testCaseResult.runInfo
+              .stderr}</pre>
+        {/if}
       </div>
-    {/each}
+    {:else}
+      {#each testCaseResult.runInfo.comparisons as comparison, i (i)}
+        {@const ExpectedDisplay = displayFor(comparison.expected)}
+        {@const ActualDisplay = displayFor(comparison.actual)}
+        <div class="bg-base-100 flex flex-col gap-2 rounded-lg p-3">
+          <div class="flex flex-row items-center gap-2">
+            <span class="font-mono text-xs text-base-content opacity-80">{label(comparison.symbol)}</span>
+            <span class={comparison.result ? 'text-success' : 'text-error'}>{comparison.result ? '✓' : '✗'}</span>
+          </div>
+          <div class="flex flex-row items-center gap-2">
+            <span class="text-xs text-base-content opacity-80">Expected:</span>
+            <ExpectedDisplay value={comparison.expected} />
+          </div>
+          <div class="flex flex-row items-center gap-2">
+            <span class="text-xs text-base-content opacity-80">Actual:</span>
+            <ActualDisplay value={comparison.actual} />
+          </div>
+        </div>
+      {/each}
+    {/if}
   </div>
 {:else}
   <div class="p-4">Hidden test case</div>
