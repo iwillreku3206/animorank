@@ -33,36 +33,42 @@ describe('operators', () => {
   const string = (value: string) => new TypeValue(StringType.create(), { value });
   const pointer = (value: string) => new TypeValue(new Pointer({ target: 'int' }), { value });
 
-  it('less_than compares int, float, string, pointer', () => {
+  it('less_than compares int, float', () => {
     const op = LessThanOperator.create();
     expect(op.compare(int('3'), int('4'))).toBe(true);
     expect(op.compare(float('1.5'), float('2.5'))).toBe(true);
-    expect(op.compare(string('a'), string('b'))).toBe(true);
-    expect(op.compare(pointer('3'), pointer('4'))).toBe(true);
     expect(op.compare(int('4'), int('3'))).toBe(false);
   });
 
-  it('less_than_equal compares int, float, string, pointer', () => {
+  it('less_than_equal compares int, float', () => {
     const op = LessThanEqualOperator.create();
     expect(op.compare(int('4'), int('4'))).toBe(true);
     expect(op.compare(float('2.5'), float('2.5'))).toBe(true);
-    expect(op.compare(string('b'), string('b'))).toBe(true);
-    expect(op.compare(pointer('4'), pointer('4'))).toBe(true);
     expect(op.compare(int('5'), int('4'))).toBe(false);
   });
 
-  it('greater_than and greater_than_equal compare int, float, string, pointer', () => {
+  it('greater_than and greater_than_equal compare int, float', () => {
     const gt = GreaterThanOperator.create();
     const gte = GreaterThanEqualOperator.create();
     expect(gt.compare(int('5'), int('4'))).toBe(true);
     expect(gt.compare(float('2.5'), float('1.5'))).toBe(true);
-    expect(gt.compare(string('b'), string('a'))).toBe(true);
-    expect(gt.compare(pointer('5'), pointer('4'))).toBe(true);
     expect(gte.compare(int('4'), int('4'))).toBe(true);
     expect(gte.compare(float('1.5'), float('1.5'))).toBe(true);
-    expect(gte.compare(string('a'), string('a'))).toBe(true);
-    expect(gte.compare(pointer('4'), pointer('4'))).toBe(true);
     expect(gt.compare(int('4'), int('5'))).toBe(false);
+  });
+
+  it('rejects string and pointer operands for numeric-only operators', () => {
+    const operators = [
+      LessThanOperator.create(),
+      LessThanEqualOperator.create(),
+      GreaterThanOperator.create(),
+      GreaterThanEqualOperator.create(),
+      new WithinRangeOperator({ range: '2' })
+    ];
+    for (const op of operators) {
+      expect(() => op.compare(string('a'), string('b'))).toThrow();
+      expect(() => op.compare(pointer('3'), pointer('4'))).toThrow();
+    }
   });
 
   it('equal and not_equal compare int, float, string, pointer', () => {
@@ -85,9 +91,6 @@ describe('operators', () => {
     expect(op.compare(int('4'), int('7'))).toBe(false);
     expect(op.compare(float('1.5'), float('2.5'))).toBe(true);
     expect(op.compare(float('1.5'), float('4'))).toBe(false);
-    expect(op.compare(string('ab'), string('abc'))).toBe(true);
-    expect(op.compare(string('ab'), string('abcde'))).toBe(false);
-    expect(op.compare(pointer('4'), pointer('5'))).toBe(true);
   });
 
   it('exposes an options form only for operators with settings', () => {

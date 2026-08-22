@@ -32,16 +32,6 @@ describe('StringType', () => {
     expect(await type.validateValue({ value: 'hi' } as JsonValue)).toBe(true);
     expect(await type.validateValue(5 as JsonValue)).toBeInstanceOf(Error);
   });
-
-  it('compares with less_than through the operator registry', () => {
-    const op = LessThanOperator.create();
-    expect(
-      op.compare(new TypeValue(StringType.create(), { value: 'a' }), new TypeValue(StringType.create(), { value: 'b' }))
-    ).toBe(true);
-    expect(
-      op.compare(new TypeValue(StringType.create(), { value: 'b' }), new TypeValue(StringType.create(), { value: 'a' }))
-    ).toBe(false);
-  });
 });
 
 describe('Pointer', () => {
@@ -49,14 +39,6 @@ describe('Pointer', () => {
     const pointer = new Pointer({ target: 'int' });
     expect(await pointer.validateValue({ value: '0' } as JsonValue)).toBe(true);
     expect(await pointer.validateValue({ nope: true } as JsonValue)).toBeInstanceOf(Error);
-  });
-
-  it('delegates less_than to the target type', () => {
-    const op = LessThanOperator.create();
-    const a = new TypeValue(new Pointer({ target: 'int' }), { value: '3' });
-    const b = new TypeValue(new Pointer({ target: 'int' }), { value: '4' });
-    expect(op.compare(a, b)).toBe(true);
-    expect(op.compare(b, a)).toBe(false);
   });
 
   it('defaults to an int target', () => {
