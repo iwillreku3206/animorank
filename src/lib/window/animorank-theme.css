@@ -139,10 +139,14 @@
   margin: 0 4px 0 4px;
 }
 
-/* Prevent end users from closing panels: hide the per-tab close button.
- * dockview-core 6.x has no option to disable it. */
-.dockview-theme-animorank .dv-default-tab-action {
+/* Hide the per-tab close button for windows that are not closable.
+ * dockview-core 6.x has no per-panel option to disable it, so closable tabs
+ * get a `.dv-closable-tab` marker class from the custom tab renderer. */
+.dockview-theme-animorank .dv-tab .dv-default-tab-action {
   display: none !important;
+}
+.dockview-theme-animorank .dv-closable-tab .dv-default-tab-action {
+  display: block !important;
 }
 .dockview-theme-animorank .dv-default-tab-content {
   margin: 0 !important;

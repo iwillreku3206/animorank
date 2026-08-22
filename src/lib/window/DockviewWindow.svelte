@@ -8,7 +8,8 @@
     context = $bindable(),
     windowRegistry,
     storageKey,
-    defaultLayout
+    defaultLayout,
+    manager = $bindable()
   }: {
     context: unknown;
     // `WindowRegistry`'s protected `_registry` is invariant in its type
@@ -17,10 +18,10 @@
     windowRegistry: WindowRegistry<any>;
     storageKey?: string;
     defaultLayout?: DefaultLayout;
+    manager?: DockviewWindowManager<unknown>;
   } = $props();
 
   let root: HTMLDivElement | undefined = $state();
-  let manager: DockviewWindowManager<unknown> | undefined = $state();
 
   onMount(() => {
     const options: DockviewWindowManagerOptions = { storageKey, defaultLayout };

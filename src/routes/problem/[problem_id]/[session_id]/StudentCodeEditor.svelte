@@ -39,69 +39,11 @@
   // svelte-ignore state_referenced_locally
   let code = $state(practiceSession.previousCode.fullCode);
 
-  $effect(() => {
-    if (!useSlots) {
-      codeSections['body'] = code;
-    }
-  });
-
-  async function handleReset() {
-    if (!monacoNamespace) return;
-    const monaco = await monacoNamespace;
-    if (!monaco) return;
-    const starterCode = problem.getProcessedCode();
-    const newModel = monaco.editor.createModel(starterCode, language);
-    monacoInstance?.setModel(newModel);
-    monacoModel?.dispose();
-    monacoModel = newModel;
-    registerConstrained(problem.getSlots().map((slot) => ({ label: slot.label, range: slot.initialRange })));
-    codeSections = Object.fromEntries(problem.getDefaultSections().map((s) => [s.slot.label, s.code]));
-  }
-
-  function registerConstrained(ranges: { range: [number, number, number, number]; label: string }[]) {
-    if (useSlots && monacoInstance && constrainedInstance && monacoModel) {
-      constrainedInstance.initializeIn(monacoInstance);
-      const model = monacoInstance.getModel();
-      if (!model) return;
-      constrainedInstance.addRestrictionsTo(
-        model,
-        ranges.map((range) => ({ ...range, allowMultiline: true }))
-      );
-
-      // @ts-expect-error Added by non-TypeScript plugin
-      monacoModel.toggleHighlightOfEditableAreas({
-        cssClassForSingleLine: 'customClass--singleLine',
-        cssClassForMultiLine: 'customClass--multiLine'
-      });
-
-      // @ts-expect-error Added by non-TypeScript plugin
-      monacoModel.onDidChangeContentInEditableRange((newCode) => {
-        codeSections = { ...$state.snapshot(codeSections), ...newCode };
-      });
-    }
-  }
-
   onMount(() => {
-    if (registerReset) {
-      registerReset(handleReset);
-    }
-
     monacoNamespace?.then(() => {
       if (!monacoInstance) return;
-
       telemetry.attachMonaco(monacoInstance);
-
-      registerConstrained(
-        practiceSession.previousCode.sections.map((section) => ({
-          range: section.slot.initialRange,
-          label: section.slot.label
-        }))
-      );
     });
-  });
-
-  $effect(() => {
-    monacoInstance?.updateOptions({ readOnly: locked });
   });
 </script>
 
@@ -113,6 +55,16 @@
     bind:monacoModel
     bind:constrainedInstance
     {language}
+    {useSlots}
+    bind:codeSections
+    slots={problem.getSlots()}
+    bind:locked
+    resetCode={problem.getProcessedCode()}
+    resetSlots={problem.getSlots()}
+    resetSections={Object.fromEntries(
+      problem.getDefaultSections().map((section) => [section.slot.label, section.code])
+    )}
+    {registerReset}
   />
 
   {#if locked && !testSubmitted}

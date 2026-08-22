@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { TestRunResponse } from './api';
+  import type { TestRunResponse } from '$lib/practiceSession/api';
   import Button from '$lib/components/ui/buttons/Button.svelte';
 
   interface Props {

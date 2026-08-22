@@ -4,16 +4,23 @@
   import { browser } from '$app/environment';
   import constrainedEditor from 'constrained-editor-plugin';
   import { DEFAULT_MONACO_THEME } from './themes';
+  import type { Slot } from '$lib/problem';
 
   let {
-    // eslint-disable-next-line no-useless-assignment
     monacoNamespace = $bindable(undefined),
     monacoInstance = $bindable(undefined),
     monacoModel = $bindable(undefined),
-    // eslint-disable-next-line no-useless-assignment
     constrainedInstance = $bindable(undefined),
     code = $bindable(''),
     language,
+    useSlots = false,
+    slots = [],
+    codeSections = $bindable({}),
+    locked = $bindable(false),
+    resetCode,
+    resetSlots = [],
+    resetSections = {},
+    registerReset,
     ...rest
   }: {
     monacoNamespace?: Promise<typeof monaco | undefined>;
@@ -22,13 +29,68 @@
     constrainedInstance?: ReturnType<typeof constrainedEditor>;
     code: string;
     language: string;
+    /** Restrict editing to the slot ranges when the problem uses slots. */
+    useSlots?: boolean;
+    /** The slot ranges to restrict editing to. */
+    slots?: Slot[];
+    /** Per-slot code sections, kept in sync with the editor content. */
+    codeSections?: Record<string, string>;
+    /** Make the editor read-only. */
+    locked?: boolean;
+    /** The code to restore when the registered reset callback is invoked. */
+    resetCode?: string;
+    /** The slot ranges to re-apply after a reset. */
+    resetSlots?: Slot[];
+    /** The per-slot code sections to restore after a reset. */
+    resetSections?: Record<string, string>;
+    /** Invoked with a callback that restores the editor to its reset state. */
+    registerReset?: (_cb: () => void) => void;
     class?: string;
   } = $props();
 
   let editorContainer = $state<HTMLDivElement>();
 
+  function registerConstrained(ranges: { range: [number, number, number, number]; label: string }[]) {
+    if (useSlots && monacoInstance && constrainedInstance && monacoModel) {
+      constrainedInstance.initializeIn(monacoInstance);
+      const model = monacoInstance.getModel();
+      if (!model) return;
+      constrainedInstance.addRestrictionsTo(
+        model,
+        ranges.map((range) => ({ ...range, allowMultiline: true }))
+      );
+
+      // @ts-expect-error Added by non-TypeScript plugin
+      monacoModel.toggleHighlightOfEditableAreas({
+        cssClassForSingleLine: 'customClass--singleLine',
+        cssClassForMultiLine: 'customClass--multiLine'
+      });
+
+      // @ts-expect-error Added by non-TypeScript plugin
+      monacoModel.onDidChangeContentInEditableRange((newCode) => {
+        codeSections = { ...$state.snapshot(codeSections), ...newCode };
+      });
+    }
+  }
+
+  async function handleReset() {
+    if (!monacoNamespace || resetCode === undefined) return;
+    const monaco = await monacoNamespace;
+    if (!monaco) return;
+    const newModel = monaco.editor.createModel(resetCode, language);
+    monacoInstance?.setModel(newModel);
+    monacoModel?.dispose();
+    monacoModel = newModel;
+    registerConstrained(resetSlots.map((slot) => ({ label: slot.label, range: slot.initialRange })));
+    codeSections = { ...resetSections };
+  }
+
   onMount(() => {
     if (!browser) return;
+
+    if (registerReset) {
+      registerReset(handleReset);
+    }
 
     monacoNamespace = import('$lib/monaco').then((module) => {
       if (!editorContainer) return;
@@ -58,12 +120,24 @@
         code = monacoInstance?.getValue() || '';
       });
 
+      registerConstrained(slots.map((slot) => ({ label: slot.label, range: slot.initialRange })));
+
       return monaco;
     });
     return () => {
       monacoInstance?.dispose();
       monacoModel?.dispose();
     };
+  });
+
+  $effect(() => {
+    monacoInstance?.updateOptions({ readOnly: locked });
+  });
+
+  $effect(() => {
+    if (!useSlots) {
+      codeSections['body'] = code;
+    }
   });
 
   $effect(() => {

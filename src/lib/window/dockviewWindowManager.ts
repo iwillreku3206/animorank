@@ -1,7 +1,8 @@
-import { createDockview, type DockviewApi, type SerializedDockview } from 'dockview-core';
+import { createDockview, type AddPanelPositionOptions, type DockviewApi, type SerializedDockview } from 'dockview-core';
 import { themeAnimoRank } from './animorank-theme';
 import { Window } from './index';
 import { WindowRegistry } from './windowRegistry';
+import { WindowTab } from './windowTab';
 import { defaultLayoutToDockview, pruneDockviewLayout, type DefaultLayout, type LayoutSize } from './layout';
 
 export interface DockviewWindowManagerOptions {
@@ -43,7 +44,11 @@ export class DockviewWindowManager<T> {
   public attach(root: HTMLDivElement): void {
     this.dockview = createDockview(root, {
       theme: themeAnimoRank,
-      createComponent: (options) => this.ensureWindow(options.id).getRenderer()
+      // A default tab component name routes every tab through
+      // createTabComponent, which supplies the closable-tab renderer.
+      defaultTabComponent: 'window-tab',
+      createComponent: (options) => this.ensureWindow(options.id).getRenderer(),
+      createTabComponent: (options) => (this.ensureWindow(options.id).closable ? new WindowTab(true) : undefined)
     });
 
     const serialized = this.loadSavedLayout() ?? this.buildDefaultLayout(root);
@@ -68,15 +73,55 @@ export class DockviewWindowManager<T> {
     }
   }
 
-  public openWindow(key: string): Window<T> {
+  /**
+   * Open the window, focusing it when it is already open. When it needs to be
+   * created, `positions` (a single position or a list of candidates) places
+   * the panel relative to an existing panel or group; the first candidate
+   * whose reference is open is used.
+   */
+  public openWindow(key: string, positions?: AddPanelPositionOptions | AddPanelPositionOptions[]): Window<T> {
     const window = this.ensureWindow(key);
     const panel = this.dockview?.getPanel(key);
     if (panel) {
       panel.api.setActive();
     } else {
-      this.dockview?.addPanel({ id: key, title: window.title, component: 'default' });
+      const position = this.resolvePosition(positions);
+      this.dockview?.addPanel({
+        id: key,
+        title: window.title,
+        component: 'default',
+        ...(position !== undefined ? { position } : {})
+      });
+      // Positioned additions are not activated by dockview; focus the panel.
+      this.dockview?.getPanel(key)?.api.setActive();
     }
     return window;
+  }
+
+  private resolvePosition(
+    positions: AddPanelPositionOptions | AddPanelPositionOptions[] | undefined
+  ): AddPanelPositionOptions | undefined {
+    if (!positions || !this.dockview) {
+      return undefined;
+    }
+    const candidates = Array.isArray(positions) ? positions : [positions];
+    return candidates.find((position) => this.isPositionUsable(position));
+  }
+
+  private isPositionUsable(position: AddPanelPositionOptions): boolean {
+    if (!this.dockview) {
+      return false;
+    }
+    if ('referencePanel' in position) {
+      const id = typeof position.referencePanel === 'string' ? position.referencePanel : position.referencePanel.id;
+      return this.dockview.getPanel(id) !== undefined;
+    }
+    if ('referenceGroup' in position) {
+      return typeof position.referenceGroup === 'string'
+        ? this.dockview.getGroup(position.referenceGroup) !== undefined
+        : true;
+    }
+    return true;
   }
 
   public destroy(): void {
