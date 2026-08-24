@@ -14,7 +14,8 @@ export class CFloat extends CType<Float> {
   }
 
   private literal(value: string) {
-    return this.type.options.size === 64 ? value : `${value}f`;
+    const normalized = /[.eE]/.test(value) ? value : `${value}.0`;
+    return this.type.options.size === 64 ? normalized : `${normalized}f`;
   }
 
   public generateParameterDefinition(symbol: string): string {

@@ -4,16 +4,44 @@ import { CType } from '../cType';
 import type { CExecutionContext } from '../executionContext';
 
 function escapeCLiteral(value: string): string {
-  return (
-    '"' +
-    value
-      .replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/\n/g, '\\n')
-      .replace(/\r/g, '\\r')
-      .replace(/\t/g, '\\t') +
-    '"'
-  );
+  let out = '"';
+  for (const ch of value) {
+    switch (ch) {
+      case '\\':
+        out += '\\\\';
+        break;
+      case '"':
+        out += '\\"';
+        break;
+      case '\n':
+        out += '\\n';
+        break;
+      case '\r':
+        out += '\\r';
+        break;
+      case '\t':
+        out += '\\t';
+        break;
+      case '\x07':
+        out += '\\a';
+        break;
+      case '\b':
+        out += '\\b';
+        break;
+      case '\f':
+        out += '\\f';
+        break;
+      case '\v':
+        out += '\\v';
+        break;
+      default: {
+        const cp = ch.codePointAt(0)!;
+        if (cp < 0x20 || cp === 0x7f) out += '\\' + cp.toString(8).padStart(3, '0');
+        else out += ch;
+      }
+    }
+  }
+  return out + '"';
 }
 
 export class CStringType extends CType<StringType> {

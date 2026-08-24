@@ -148,7 +148,7 @@ describe('ServerStdioTestCase', () => {
     expect(result).toMatchObject({
       success: false,
       runInfo: { expected: '25\n', actual: '' },
-      compilerOutput: 'Judge0 is not configured'
+      failureReason: 'Judge0 is not configured'
     });
   });
 

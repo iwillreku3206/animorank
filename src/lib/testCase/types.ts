@@ -10,6 +10,7 @@ export type TestCaseResult<T> =
   | {
       success: boolean;
       testCaseInfo: TestCaseModel & { public: true };
+      failureReason?: string;
       compilerOutput?: string;
       runInfo: T;
     };

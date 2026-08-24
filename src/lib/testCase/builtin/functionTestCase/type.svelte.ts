@@ -51,12 +51,9 @@ export abstract class Type<
   abstract get displayName(): string;
 
   abstract get optionsForm(): OptionsForm;
-  // Allowed because the specific implementations of `Type` are expected to expect the same type
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  abstract get valueForm(): ValueEditor<Type<any, any>>;
-  // Allowed because the specific implementations of `Type` are expected to expect the same type
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  abstract get valueDisplay(): ValueDisplay<Type<any, any>>;
+  abstract get valueForm(): ValueEditor<Type>;
+
+  abstract get valueDisplay(): ValueDisplay<Type>;
 }
 
 export const TypeSchema = z.object({

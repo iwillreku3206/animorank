@@ -2,7 +2,6 @@ import type { Form } from '$lib/form';
 import type { IntoJsonValue } from '$lib/types/utils';
 import { z } from 'zod';
 import { Operator } from '../../operator.svelte';
-import type { OperatorTypeRegistry } from '../../operatorTypeRegistry';
 import { WithinRangeOperatorTypeRegistry } from './registry';
 
 const withinRangeOptions = {
@@ -31,9 +30,7 @@ export class WithinRangeOperator extends Operator<{ range: string }> {
     super(withinRangeOptionsSchema.parse(options ?? {}));
   }
 
-  public get operatorTypeRegistry(): OperatorTypeRegistry<WithinRangeOperator> {
-    return new WithinRangeOperatorTypeRegistry();
-  }
+  static typeRegistry = new WithinRangeOperatorTypeRegistry();
 
   get optionsForm(): Form | null {
     return withinRangeOptions;

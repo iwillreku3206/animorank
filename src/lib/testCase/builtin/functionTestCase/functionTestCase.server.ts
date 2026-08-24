@@ -1,16 +1,12 @@
 import type { Problem } from '$lib/problem';
 import { ServerTestCase } from '$lib/testCase/testCase.server';
-import type { TestCaseLanguageRegistry } from '$lib/testCase/testCaseLanguageRegistry.server';
 import type { TestCaseResult } from '$lib/testCase/types';
 import type { ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 import { FunctionTestCase, type FunctionTestCaseData, type FunctionTestCaseRunInfo } from './functionTestCase.svelte';
 import { FunctionTestCaseLanguageRegistry } from './languageRegistry';
 
 export class ServerFunctionTestCase extends ServerTestCase<FunctionTestCaseData, FunctionTestCaseRunInfo> {
-  _languageRegistry = new FunctionTestCaseLanguageRegistry();
-  public get languageRegistry(): TestCaseLanguageRegistry {
-    return this._languageRegistry;
-  }
+  static languageRegistry = new FunctionTestCaseLanguageRegistry();
   public constructor(model: TestCaseModel, problem: Problem) {
     super(new FunctionTestCase(model, problem));
   }
@@ -34,7 +30,7 @@ export class ServerFunctionTestCase extends ServerTestCase<FunctionTestCaseData,
         success: false,
         runInfo: { comparisons: [] },
         testCaseInfo: model as TestCaseModel & { public: true },
-        compilerOutput: error instanceof Error ? error.message : 'Unknown error'
+        failureReason: error instanceof Error ? error.message : 'Unknown error'
       };
     }
     return { success: false, testCaseInfo: { public: false } };

@@ -1,5 +1,6 @@
 import { ServiceRegistry } from '$lib/services/registry';
 import { OperatorSchema, type Operator } from './operator.svelte';
+import type { OperatorTypeRegistry } from './operatorTypeRegistry';
 import { LessThanOperator } from './operators/less_than';
 import { LessThanEqualOperator } from './operators/less_than_equal';
 import { GreaterThanOperator } from './operators/greater_than';
@@ -15,6 +16,7 @@ export class OperatorRegistry extends ServiceRegistry<
   {
     id(): string;
     create(): Operator;
+    typeRegistry: OperatorTypeRegistry<Operator>;
   }
 > {
   private static _instance: OperatorRegistry | null;

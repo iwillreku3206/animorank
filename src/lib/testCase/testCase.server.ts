@@ -1,6 +1,7 @@
 import type { CodeExecutor } from '$lib/executor';
 import type { Language } from '$lib/language';
 import type { Problem } from '$lib/problem';
+import type { TestCaseLanguage } from './testCaseLanguage.server';
 import { toJsonValue, type IntoJsonValue } from '$lib/types/utils';
 import { db } from '$lib/zenstack';
 import type { TestCase } from './testCase.svelte';
@@ -9,9 +10,13 @@ import type { TestCaseResult } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export abstract class ServerTestCase<Data extends IntoJsonValue = any, RunInfo extends IntoJsonValue = any> {
-  testCase: TestCase<Data, RunInfo>;
+  // Unparameterized (TC = any): the nominal protected member on ServerTestCase
+  // makes TestCaseLanguageRegistry<X> invariant in X, so no concrete registry
+  // would be assignable to TestCaseLanguageRegistry<ServerTestCase>. The
+  // contract still requires every concrete class to provide the static.
+  declare static languageRegistry: TestCaseLanguageRegistry;
 
-  public abstract get languageRegistry(): TestCaseLanguageRegistry<this>;
+  testCase: TestCase<Data, RunInfo>;
 
   static async createModel(type: string, problem: Problem, data: IntoJsonValue) {
     const model = db.problemTestCase.create({
@@ -31,7 +36,11 @@ export abstract class ServerTestCase<Data extends IntoJsonValue = any, RunInfo e
 
   public async run(language: Language, executor: CodeExecutor, state: IntoJsonValue): Promise<TestCaseResult<RunInfo>> {
     try {
-      return await this.languageRegistry.getInstance(language.id, this).execute(executor, state);
+      const testCaseLanguage = (this.constructor as typeof ServerTestCase).languageRegistry.getInstance(
+        language.id,
+        this
+      );
+      return await (testCaseLanguage as TestCaseLanguage<ServerTestCase<Data, RunInfo>>).execute(executor, state);
     } catch (error) {
       return this.failureResult(error);
     }

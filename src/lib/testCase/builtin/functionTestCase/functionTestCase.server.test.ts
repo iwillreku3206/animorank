@@ -5,7 +5,9 @@ import { Problem } from '$lib/problem';
 import { toJsonValue } from '$lib/types/utils';
 import type { Problem as ProblemModel, ProblemTestCase } from '$lib/zenstack/models';
 import { FunctionTestCase, type FunctionTestCaseRunInfo } from './functionTestCase.svelte';
-import { stripMain } from './languages/c/c';
+import { ServerFunctionTestCase } from './functionTestCase.server';
+import { stripMain, CFunctionTestCase } from './languages/c/c';
+import { Pointer } from './types/pointer';
 import { TypeValue } from './typeValue.svelte';
 import { parseExtensionData } from './types';
 import { validateFunctionTestCaseKeys } from './types.server';
@@ -126,7 +128,7 @@ describe('CFunctionTestCase codegen with new types', () => {
 
     // generateCode is private; reach it the way the load debug block does.
     const [code] = (
-      serverTestCase.languageRegistry.getInstance('c', serverTestCase) as never as {
+      ServerFunctionTestCase.languageRegistry.getInstance('c', serverTestCase as ServerFunctionTestCase) as never as {
         generateCode(): [string, string[]];
       }
     ).generateCode();
@@ -140,6 +142,79 @@ describe('CFunctionTestCase codegen with new types', () => {
     expect(code).toContain('&');
     // void return: no result symbol, direct call without assignment
     expect(code).not.toContain('= work(');
+  });
+
+  it('emits a .0 suffix for whole-number float literals', () => {
+    const floatModel = {
+      ...model,
+      data: {
+        function: 'fn1',
+        comparisons: [],
+        parameters: [
+          { name: 'p', value: { type: 'pointer', options: { target: 'int' }, data: { value: '5' } } },
+          { name: 'f', value: { type: 'float', options: { size: 32 }, data: { value: '5' } } },
+          { name: 's', value: { type: 'string', options: {}, data: { value: 'hi' } } }
+        ]
+      }
+    } as unknown as ProblemTestCase;
+    const serverTestCase = ServerTestCaseRegistry.instance().from(floatModel, new Problem(problem));
+
+    const [code] = (
+      ServerFunctionTestCase.languageRegistry.getInstance('c', serverTestCase as ServerFunctionTestCase) as never as {
+        generateCode(): [string, string[]];
+      }
+    ).generateCode();
+
+    expect(code).toContain('= 5.0f;');
+    expect(code).not.toContain('= 5f;');
+  });
+
+  it('escapes every C string-literal escape sequence and control characters', () => {
+    const stringModel = {
+      ...model,
+      data: {
+        function: 'fn1',
+        comparisons: [],
+        parameters: [
+          { name: 'p', value: { type: 'pointer', options: { target: 'int' }, data: { value: '5' } } },
+          { name: 'f', value: { type: 'float', options: { size: 32 }, data: { value: '1.5' } } },
+          { name: 's', value: { type: 'string', options: {}, data: { value: '\x07\x08\x0c\x0b\x09\x0a\x0d"\x01\\' } } }
+        ]
+      }
+    } as unknown as ProblemTestCase;
+    const serverTestCase = ServerTestCaseRegistry.instance().from(stringModel, new Problem(problem));
+
+    const [code] = (
+      ServerFunctionTestCase.languageRegistry.getInstance('c', serverTestCase as ServerFunctionTestCase) as never as {
+        generateCode(): [string, string[]];
+      }
+    ).generateCode();
+
+    expect(code).toContain('"\\a\\b\\f\\v\\t\\n\\r\\"\\001\\\\"');
+  });
+
+  it('generates valid pointer parameter definitions at any depth', () => {
+    // The shared `model` fixture is hydrated in place by the earlier tests, so
+    // build a fresh one here.
+    const freshModel = {
+      ...model,
+      data: { function: 'fn1', parameters: [], comparisons: [] }
+    } as unknown as ProblemTestCase;
+    const serverTestCase = ServerTestCaseRegistry.instance().from(freshModel, new Problem(problem));
+    const lang = ServerFunctionTestCase.languageRegistry.getInstance(
+      'c',
+      serverTestCase as ServerFunctionTestCase
+    ) as CFunctionTestCase;
+
+    const intPointer = CFunctionTestCase.typeRegistry.getInstance('pointer', lang, new Pointer({ target: 'int' }));
+    expect(intPointer.generateParameterDefinition('p')).toBe('int* p');
+
+    const pointerPointer = CFunctionTestCase.typeRegistry.getInstance(
+      'pointer',
+      lang,
+      new Pointer({ target: { type: 'pointer', options: { target: 'int' } } })
+    );
+    expect(pointerPointer.generateParameterDefinition('p')).toBe('int** p');
   });
 });
 
@@ -249,7 +324,7 @@ describe('CFunctionTestCase execute', () => {
     expect(submission.content.toString('utf8')).toBe('int square(int x) { return x * x; }');
   });
 
-  it('fails with compilerOutput when execution produces no export files', async () => {
+  it('reports compile_error when execution produces no export files', async () => {
     class CompileFailExecutor extends CodeExecutor {
       public async execute(): Promise<ExecutionResult> {
         return {
@@ -266,12 +341,12 @@ describe('CFunctionTestCase execute', () => {
 
     expect(result).toMatchObject({
       success: false,
-      runInfo: { comparisons: [] },
+      runInfo: { failure: 'compile_error' },
       compilerOutput: 'error: undeclared identifier'
     });
   });
 
-  it('reports output_not_generated when the run process is killed by a signal', async () => {
+  it('reports run_error when the run process is killed by a signal', async () => {
     // M3 regression: a segfaulted program still yields marker pairs with empty
     // content, so the export files are present but empty. The crash must be
     // reported as a distinct failure, not compared as empty values (which used
@@ -298,14 +373,14 @@ describe('CFunctionTestCase execute', () => {
       testCaseInfo: { id: 'test-case-1', public: true }
     });
     if ('runInfo' in result) {
-      expect(result.runInfo).toEqual({ failure: 'output_not_generated', exitCode: undefined });
+      expect(result.runInfo).toEqual({ failure: 'run_error', exitCode: undefined });
     }
     if ('compilerOutput' in result) {
       expect(result.compilerOutput).toBeUndefined();
     }
   });
 
-  it('reports output_not_generated with exit code and stderr on abnormal run exit', async () => {
+  it('reports run_error with exit code and stderr on abnormal run exit', async () => {
     class AbortRunExecutor extends CodeExecutor {
       public async execute(): Promise<ExecutionResult> {
         return {
@@ -326,10 +401,58 @@ describe('CFunctionTestCase execute', () => {
     expect(result).toMatchObject({ success: false });
     if ('runInfo' in result) {
       expect(result.runInfo).toEqual({
-        failure: 'output_not_generated',
+        failure: 'run_error',
         exitCode: 134,
         stderr: 'Aborted (core dumped)'
       });
+    }
+  });
+
+  it('reports timeout when the executor kills the compile without an exit code', async () => {
+    class TimeoutExecutor extends CodeExecutor {
+      public async execute(): Promise<ExecutionResult> {
+        return {
+          processOutputs: [{ exitCode: undefined }],
+          fileOutputs: []
+        };
+      }
+    }
+
+    const serverTestCase = ServerTestCaseRegistry.instance().from(makeModel(), new Problem(problem));
+    const result = await serverTestCase.run(new CLanguage(), new TimeoutExecutor(), {
+      sections: { body: '' }
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      runInfo: { failure: 'timeout' }
+    });
+    if ('compilerOutput' in result) {
+      expect(result.compilerOutput).toBeUndefined();
+    }
+  });
+
+  it('reports output_not_generated when the compile succeeds but no export files appear', async () => {
+    class NoExportFilesExecutor extends CodeExecutor {
+      public async execute(): Promise<ExecutionResult> {
+        return {
+          processOutputs: [{ exitCode: 0 }],
+          fileOutputs: []
+        };
+      }
+    }
+
+    const serverTestCase = ServerTestCaseRegistry.instance().from(makeModel(), new Problem(problem));
+    const result = await serverTestCase.run(new CLanguage(), new NoExportFilesExecutor(), {
+      sections: { body: '' }
+    });
+
+    expect(result).toMatchObject({
+      success: false,
+      runInfo: { failure: 'output_not_generated' }
+    });
+    if ('compilerOutput' in result) {
+      expect(result.compilerOutput).toBeUndefined();
     }
   });
 
@@ -362,9 +485,10 @@ describe('CFunctionTestCase execute', () => {
     const result = await serverTestCase.run(new CLanguage(), stub, { sections: { body: '' } });
 
     expect(result).toMatchObject({ success: false, runInfo: { comparisons: [] } });
-    if ('compilerOutput' in result) {
-      expect(result.compilerOutput).toContain('Missing function definition');
+    if ('failureReason' in result) {
+      expect(result.failureReason).toContain('Missing function definition');
     }
+    expect(result).not.toHaveProperty('compilerOutput');
   });
 
   it('fails gracefully when the executor throws', async () => {
@@ -382,7 +506,7 @@ describe('CFunctionTestCase execute', () => {
     expect(result).toMatchObject({
       success: false,
       runInfo: { comparisons: [] },
-      compilerOutput: 'Judge0 is not configured'
+      failureReason: 'Judge0 is not configured'
     });
   });
 
@@ -495,14 +619,13 @@ describe('FunctionTestCase hydrateRunInfo', () => {
     }
   });
 
-  it('passes output_not_generated failures through unchanged', () => {
+  it('passes failure runInfos through unchanged', () => {
     const serverTestCase = ServerTestCaseRegistry.instance().from(makeTestCaseModel(), new Problem(problemModel));
     const testCase = serverTestCase.testCase as FunctionTestCase;
 
     const runInfo = {
-      failure: 'output_not_generated',
-      exitCode: undefined,
-      stderr: undefined
+      failure: 'run_error',
+      exitCode: undefined
     } as unknown as FunctionTestCaseRunInfo;
 
     expect(testCase.hydrateRunInfo(runInfo)).toEqual(runInfo);

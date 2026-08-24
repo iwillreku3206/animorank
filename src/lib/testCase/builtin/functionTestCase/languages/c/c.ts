@@ -62,7 +62,7 @@ export function stripMain(code: string): string {
 }
 
 export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> {
-  readonly typeRegistry = new CTypeRegistry();
+  static typeRegistry = new CTypeRegistry();
 
   private generateCode(): [string, string[]] {
     const { function: functionName, parameters } = this.testCase.testCase.data;
@@ -81,11 +81,11 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
     if (!rawReturnType) {
       throw new Error('Cannot generate code: function has no return type');
     }
-    const returnType = this.typeRegistry.getInstance(rawReturnType.id, this, rawReturnType);
+    const returnType = CFunctionTestCase.typeRegistry.getInstance(rawReturnType.id, this, rawReturnType);
 
     const fnParameters = fn.parameters.map((parameter) => {
       const { type } = parameter;
-      return this.typeRegistry.getInstance(type!.id, this, type!);
+      return CFunctionTestCase.typeRegistry.getInstance(type!.id, this, type!);
     });
 
     const context = new CExecutionContext();
@@ -97,7 +97,7 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
 
     // get definitions
     fn.returnType.forEach((type) => {
-      const languageType = this.typeRegistry.getInstance(type!.id, this, type!);
+      const languageType = CFunctionTestCase.typeRegistry.getInstance(type!.id, this, type!);
       languageType.pushPreDefinitions(context);
     });
 
@@ -129,7 +129,11 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
       const parameter = parameters[i];
       const symbol = context.getNewSymbol();
       parameterSymbols.push(symbol);
-      const languageType = this.typeRegistry.getInstance(parameter.value.type.id, this, parameter.value.type);
+      const languageType = CFunctionTestCase.typeRegistry.getInstance(
+        parameter.value.type.id,
+        this,
+        parameter.value.type
+      );
       languageType.pushDeclaration(context, symbol, parameter.value);
     }
 
@@ -153,7 +157,11 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
     // print out all values
     for (const i in parameters) {
       const parameter = parameters[i];
-      const languageType = this.typeRegistry.getInstance(parameter.value.type.id, this, parameter.value.type);
+      const languageType = CFunctionTestCase.typeRegistry.getInstance(
+        parameter.value.type.id,
+        this,
+        parameter.value.type
+      );
       const fileHandle = context.getNewSymbol();
       fileHandleSymbols.push(fileHandle);
       const fileName = `__ar_test_param${i}`;
@@ -164,7 +172,7 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
 
     if (returnTypeSymbol) {
       const type = fn.returnType[0]!;
-      const languageType = this.typeRegistry.getInstance(type.id, this, type);
+      const languageType = CFunctionTestCase.typeRegistry.getInstance(type.id, this, type);
       const fileHandle = context.getNewSymbol();
       fileHandleSymbols.push(fileHandle);
       fileNames.push('__ar_test_return');
@@ -225,12 +233,15 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
     // the compiler/run diagnostics instead of a fabricated comparison.
     const missingFile = fileNames.find((name) => !(name in resultFiles));
     if (missingFile) {
+      const compileExitCode = result.processOutputs[0]?.exitCode;
+      const failure =
+        compileExitCode === undefined ? 'timeout' : compileExitCode === 0 ? 'output_not_generated' : 'compile_error';
       if (this.testCase.testCase.model.public === true) {
         return {
           success: false,
-          runInfo: { comparisons: [] },
+          runInfo: { failure },
           testCaseInfo: this.testCase.testCase.model as TestCaseModel & { public: true },
-          compilerOutput: result.processOutputs[0]?.stderr?.toString('utf8')
+          compilerOutput: failure === 'compile_error' ? result.processOutputs[0]?.stderr?.toString('utf8') : undefined
         };
       } else {
         return { success: false, testCaseInfo: { public: false } };
@@ -249,7 +260,7 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
         return {
           success: false,
           runInfo: {
-            failure: 'output_not_generated',
+            failure: 'run_error',
             exitCode: runProcess.exitCode,
             stderr: runProcess.stderr?.toString('utf8')
           },
@@ -265,7 +276,7 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
       const symbol = comparison.symbol;
       const file = resultFiles[`__ar_test_${symbol}`];
       const fileContent = file.content.toString('utf8');
-      const actual = this.typeRegistry
+      const actual = CFunctionTestCase.typeRegistry
         .getInstance(comparison.value.type.id, this, comparison.value.type)
         .readFromPrint(fileContent);
       const result = comparison.operator.compare(comparison.value, actual);

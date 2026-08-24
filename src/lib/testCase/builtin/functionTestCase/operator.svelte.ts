@@ -16,6 +16,8 @@ export const OperatorSchema = z.object({
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export abstract class Operator<Options extends IntoJsonValue = any> {
+  declare static typeRegistry: OperatorTypeRegistry<Operator>;
+
   public options: Options = $state() as Options;
 
   constructor(options: Options) {
@@ -26,9 +28,7 @@ export abstract class Operator<Options extends IntoJsonValue = any> {
     return (this.constructor as ClassServiceOf<OperatorRegistry>).id();
   }
 
-  public abstract get operatorTypeRegistry(): OperatorTypeRegistry<Operator<Options>>;
-
-  abstract get displayName(): string;
+  public abstract get displayName(): string;
 
   /**
    * @description The form to edit this operator's options, or null when the
@@ -56,7 +56,7 @@ export abstract class Operator<Options extends IntoJsonValue = any> {
       throw new Error('Type options must match');
     }
 
-    const operatorType = this.operatorTypeRegistry.getInstance(
+    const operatorType = (this.constructor as ClassServiceOf<OperatorRegistry>).typeRegistry.getInstance(
       (a.type.constructor as ClassServiceOf<TypeRegistry>).id(),
       this.options,
       a.type.options

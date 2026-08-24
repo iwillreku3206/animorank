@@ -1,5 +1,4 @@
 import { Operator } from '../../operator.svelte';
-import type { OperatorTypeRegistry } from '../../operatorTypeRegistry';
 import { EqualOperatorTypeRegistry } from './registry';
 
 export class EqualOperator extends Operator<null> {
@@ -11,9 +10,7 @@ export class EqualOperator extends Operator<null> {
     return new EqualOperator(null);
   }
 
-  public get operatorTypeRegistry(): OperatorTypeRegistry<EqualOperator> {
-    return new EqualOperatorTypeRegistry();
-  }
+  static typeRegistry = new EqualOperatorTypeRegistry();
 
   get displayName(): string {
     return '=';

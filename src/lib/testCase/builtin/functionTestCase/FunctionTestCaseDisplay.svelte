@@ -22,6 +22,13 @@
     if (ret) return `Return value ${ret[1]}`;
     return symbol;
   }
+
+  const failureLabels: Record<string, string> = {
+    compile_error: 'Compilation failed',
+    output_not_generated: 'Output not generated',
+    run_error: 'Runtime error',
+    timeout: 'Timed out'
+  };
 </script>
 
 {#if 'runInfo' in testCaseResult}
@@ -32,9 +39,14 @@
     {#if testCaseResult.compilerOutput}
       <pre class="text-error text-xs bg-base-100 rounded-lg p-2 overflow-x-auto">{testCaseResult.compilerOutput}</pre>
     {/if}
+    {#if testCaseResult.failureReason}
+      <pre class="text-error text-xs bg-base-100 rounded-lg p-2 overflow-x-auto">{testCaseResult.failureReason}</pre>
+    {/if}
     {#if 'failure' in testCaseResult.runInfo}
       <div class="bg-base-100 flex flex-col gap-1 rounded-lg p-3">
-        <span class="font-mono text-xs text-error">Output not generated</span>
+        <span class="font-mono text-xs text-error">
+          {failureLabels[testCaseResult.runInfo.failure] ?? testCaseResult.runInfo.failure}
+        </span>
         {#if testCaseResult.runInfo.exitCode !== undefined}
           <span class="font-mono text-xs text-base-content opacity-80">
             Exit code: {testCaseResult.runInfo.exitCode}

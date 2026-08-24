@@ -6,17 +6,10 @@ import { successObject } from '$lib/response';
 import { Language } from '$lib/zenstack/models';
 import type { JsonValue } from '@zenstackhq/orm';
 
-// Cap the extension_data payload so a runaway client cannot store
-// unbounded JSON verbatim in the column.
-const MAX_EXTENSION_DATA_BYTES = 1024 * 1024;
-
 const extensionDataValidator = z
   .unknown()
   .refine((d): d is Record<string, unknown> => typeof d === 'object' && d !== null && !Array.isArray(d), {
     message: 'extension_data must be a JSON object'
-  })
-  .refine((d) => JSON.stringify(d).length <= MAX_EXTENSION_DATA_BYTES, {
-    message: `extension_data must be at most ${MAX_EXTENSION_DATA_BYTES} bytes`
   })
   .optional();
 

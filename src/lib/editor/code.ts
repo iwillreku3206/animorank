@@ -35,6 +35,7 @@ export class CodeEditorState {
 export type CodeEditorOptions = {
   template: string;
   useSections: boolean;
+  language?: string;
 };
 
 export class CodeEditor extends Editor<CodeEditorOptions, CodeEditorState> {

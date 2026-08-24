@@ -1,5 +1,4 @@
 import { Operator } from '../../operator.svelte';
-import type { OperatorTypeRegistry } from '../../operatorTypeRegistry';
 import { LessThanOperatorTypeRegistry } from './registry';
 
 export class LessThanOperator extends Operator<null> {
@@ -11,9 +10,7 @@ export class LessThanOperator extends Operator<null> {
     return new LessThanOperator(null);
   }
 
-  public get operatorTypeRegistry(): OperatorTypeRegistry<LessThanOperator> {
-    return new LessThanOperatorTypeRegistry();
-  }
+  static typeRegistry = new LessThanOperatorTypeRegistry();
 
   get displayName(): string {
     return '<';

@@ -1,5 +1,4 @@
 import { Operator } from '../../operator.svelte';
-import type { OperatorTypeRegistry } from '../../operatorTypeRegistry';
 import { LessThanEqualOperatorTypeRegistry } from './registry';
 
 export class LessThanEqualOperator extends Operator<null> {
@@ -11,9 +10,7 @@ export class LessThanEqualOperator extends Operator<null> {
     return new LessThanEqualOperator(null);
   }
 
-  public get operatorTypeRegistry(): OperatorTypeRegistry<LessThanEqualOperator> {
-    return new LessThanEqualOperatorTypeRegistry();
-  }
+  static typeRegistry = new LessThanEqualOperatorTypeRegistry();
 
   get displayName(): string {
     return '<=';

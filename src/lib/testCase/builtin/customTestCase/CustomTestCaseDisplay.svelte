@@ -13,6 +13,9 @@
     {#if testCaseResult.compilerOutput}
       <pre class="text-error text-xs bg-base-100 rounded-lg p-2 overflow-x-auto">{testCaseResult.compilerOutput}</pre>
     {/if}
+    {#if testCaseResult.failureReason}
+      <pre class="text-error text-xs bg-base-100 rounded-lg p-2 overflow-x-auto">{testCaseResult.failureReason}</pre>
+    {/if}
     {#if !testCaseResult.success}
       <div class="bg-base-100 flex flex-col gap-2 rounded-lg p-3">
         <div class="flex flex-row items-center gap-2">

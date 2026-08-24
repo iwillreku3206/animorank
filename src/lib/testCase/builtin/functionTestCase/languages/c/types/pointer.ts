@@ -4,7 +4,7 @@ import { TypeValue } from '../../../typeValue.svelte';
 import type { Type } from '../../../type.svelte';
 import { CType } from '../cType';
 import type { CExecutionContext } from '../executionContext';
-import type { CFunctionTestCase } from '../c';
+import { CFunctionTestCase } from '../c';
 
 export class CPointer extends CType<Pointer> {
   static type = Pointer;
@@ -19,7 +19,7 @@ export class CPointer extends CType<Pointer> {
   }
 
   private innerCType(): CType<Type> {
-    return this.language.typeRegistry.getInstance(this.type.targetType.id, this.language, this.type.targetType);
+    return CFunctionTestCase.typeRegistry.getInstance(this.type.targetType.id, this.language, this.type.targetType);
   }
 
   private innerTypeValue(value: TypeValue<Pointer>): TypeValue<Type> {
@@ -27,7 +27,9 @@ export class CPointer extends CType<Pointer> {
   }
 
   public generateParameterDefinition(symbol: string): string {
-    return `${this.innerCType().generateParameterDefinition(symbol)}*`;
+    // generateReturnType() already appends the trailing `*` (int*), so a
+    // pointer-to-int yields `int* p` and a pointer-to-pointer `int** p`.
+    return `${this.generateReturnType()} ${symbol}`;
   }
 
   public generateReturnType(): string {

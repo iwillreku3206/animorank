@@ -4,6 +4,7 @@ import { ServerFunctionTestCase } from './builtin/functionTestCase/functionTestC
 import { ServerStdioTestCase } from './builtin/stdioTestCase/stdioTestCase.server';
 import { ServerCustomTestCase } from './builtin/customTestCase/customTestCase.server';
 import type { ServerTestCase } from './testCase.server';
+import type { TestCaseLanguageRegistry } from './testCaseLanguageRegistry.server';
 import type { ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 import { FunctionTestCaseDataSchema } from './builtin/functionTestCase/functionTestCase.svelte';
 import { StdioTestCaseDataSchema } from './builtin/stdioTestCase/stdioTestCase.svelte';
@@ -24,6 +25,7 @@ export class ServerTestCaseRegistry extends ServiceRegistry<
     id(): string;
     // eslint-disable-next-line no-unused-vars
     create(problem: Problem): Promise<ServerTestCase>;
+    languageRegistry: TestCaseLanguageRegistry;
   }
 > {
   private static _instance: ServerTestCaseRegistry | null;

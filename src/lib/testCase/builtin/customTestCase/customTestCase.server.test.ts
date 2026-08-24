@@ -144,7 +144,7 @@ describe('ServerCustomTestCase', () => {
     expect(result).toMatchObject({
       success: false,
       runInfo: { exitCode: 1, stderr: '' },
-      compilerOutput: 'Judge0 is not configured'
+      failureReason: 'Judge0 is not configured'
     });
   });
 

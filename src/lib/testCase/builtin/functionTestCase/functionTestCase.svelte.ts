@@ -37,11 +37,16 @@ export type FunctionTestCaseRunInfo =
     }
   | {
       /**
-       * The run process exited abnormally (crash, signal, non-zero exit) so
-       * the harness never wrote the export files. Distinct from a comparison
-       * failure: the values were never produced.
+       * Why the run produced no comparison results:
+       * - `compile_error`: compilation failed (stderr in the result's
+       *   `compilerOutput`).
+       * - `output_not_generated`: compilation succeeded but the export files
+       *   never appeared.
+       * - `run_error`: the run process crashed/exited non-zero (was
+       *   `output_not_generated`).
+       * - `timeout`: the executor killed the run (Judge0 status 5).
        */
-      failure: 'output_not_generated';
+      failure: 'compile_error' | 'output_not_generated' | 'run_error' | 'timeout';
       exitCode?: number;
       stderr?: string;
     };
