@@ -37,6 +37,6 @@
 </script>
 
 <h2 class="text-2xl">{problem.name}</h2>
-<div style="filter: invert(100%) hue-rotate(180deg);">
+<div>
   <YfmStaticView {html} />
 </div>
