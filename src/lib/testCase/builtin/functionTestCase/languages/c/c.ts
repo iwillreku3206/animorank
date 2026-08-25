@@ -22,19 +22,67 @@ import { CTypeRegistry } from './typeRegistry';
 const mainRegex = /(int|void) main\s*\([^()]*\)\s*\{/g;
 
 /**
+ * Mask of positions inside string literals or comments, so the main-strip
+ * never deletes code that merely LOOKS like a main declaration inside a
+ * string or comment (e.g. `char* s = "int main() { hello }";` would
+ * otherwise be rewritten to `char* s = "";`, mutating the tested value).
+ */
+function maskStringsAndComments(code: string): boolean[] {
+  const masked = new Array<boolean>(code.length).fill(false);
+  let i = 0;
+  while (i < code.length) {
+    const ch = code[i];
+    const next = code[i + 1];
+    if (ch === '/' && next === '/') {
+      const end = code.indexOf('\n', i);
+      const stop = end === -1 ? code.length : end;
+      for (let j = i; j < stop; j++) masked[j] = true;
+      i = stop;
+    } else if (ch === '/' && next === '*') {
+      const end = code.indexOf('*/', i + 2);
+      const stop = end === -1 ? code.length : end + 2;
+      for (let j = i; j < stop; j++) masked[j] = true;
+      i = stop;
+    } else if (ch === '"' || ch === "'") {
+      const quote = ch;
+      let j = i + 1;
+      while (j < code.length) {
+        if (code[j] === '\\') j += 2;
+        else if (code[j] === quote) {
+          j++;
+          break;
+        } else j++;
+      }
+      for (let k = i; k < j && k < code.length; k++) masked[k] = true;
+      i = j;
+    } else {
+      i++;
+    }
+  }
+  return masked;
+}
+
+/**
  * Strip any `main` function declaration from a C submission. Line endings are
  * normalized to `\n` first so the regex matches Windows-style sources too.
  *
  * The body is consumed with balanced braces (the legacy regex's greedy
- * `(.|\s)*` tail would delete everything after a leading `main`, e.g. a
- * slots template whose `main` wraps the student code).
+ * `(.|\s)` tail would delete everything after a leading `main`, e.g. a
+ * slots template whose `main` wraps the student code), and matches inside
+ * string literals or comments are skipped entirely.
  */
 export function stripMain(code: string): string {
   const normalized = code.replaceAll('\r\n', '\n');
+  const masked = maskStringsAndComments(normalized);
   let result = '';
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = mainRegex.exec(normalized)) !== null) {
+    // Never strip main-like text that lives inside a string or comment.
+    if (masked[match.index]) {
+      mainRegex.lastIndex = match.index + match[0].length;
+      continue;
+    }
     // The header match ends at the opening brace; scan for its matching close.
     let depth = 0;
     let i = match.index + match[0].length - 1;
@@ -139,7 +187,7 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
 
     // prepare return value
     let returnTypeSymbol: string | undefined;
-    if (fn.returnType.length !== 0 && rawReturnType.id !== 'void') {
+    if (fn.returnType.length !== 0 && !rawReturnType.isVoid) {
       returnTypeSymbol = context.getNewSymbol();
       returnType.pushDeclaration(context, returnTypeSymbol);
     }
@@ -219,7 +267,7 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
           // main.c includes submission.c (see generateCode), so compiling both
           // files would define every function twice and fail to link.
           command: 'gcc',
-          args: ['-Wall', '-Werror', '-o', '__ar_test_main', 'main.c', '-lm']
+          args: ['-Wall', '-Werror', '-o', '__ar_test_main', 'main.c', '-lm', '-lpthread']
         },
         { command: './__ar_test_main', args: [] }
       ],
@@ -276,6 +324,24 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
       const symbol = comparison.symbol;
       const file = resultFiles[`__ar_test_${symbol}`];
       const fileContent = file.content.toString('utf8');
+
+      if (fileContent === '' && comparison.value.type.id !== 'string') {
+        // The run script's marker echoes make a never-written export file
+        // look "present but empty" — e.g. the student function called
+        // exit() before the harness wrote its value. Feeding '' to the
+        // operators would throw BigInt('') or compare NaN; report it
+        // explicitly instead. (Empty STRING actuals are legitimate.)
+        if (this.testCase.testCase.model.public === true) {
+          return {
+            success: false,
+            runInfo: { failure: 'output_not_generated' },
+            testCaseInfo: this.testCase.testCase.model as TestCaseModel & { public: true }
+          };
+        } else {
+          return { success: false, testCaseInfo: { public: false } };
+        }
+      }
+
       const actual = CFunctionTestCase.typeRegistry
         .getInstance(comparison.value.type.id, this, comparison.value.type)
         .readFromPrint(fileContent);
@@ -294,9 +360,11 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
         compilerOutput: result.processOutputs[0]?.stderr?.toString('utf8')
       };
     } else {
+      // Hidden results carry no details: not the model (which contains
+      // `data` — the expected values), no runInfo, nothing but the flag.
       return {
         success,
-        testCaseInfo: this.testCase.testCase.model as TestCaseModel & { public: false }
+        testCaseInfo: { public: false }
       };
     }
   }

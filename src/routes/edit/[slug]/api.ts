@@ -54,6 +54,5 @@ export async function updateTestCase(testCase: ProblemTestCase): Promise<boolean
   });
 
   const res = await req.json();
-  console.log(res.status, res.status === 'Success');
   return res.status === 'Success';
 }

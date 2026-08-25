@@ -43,7 +43,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   // this should never happen, this is just a TypeScript assertion
   if (!problem) return error(404, 'Problem not found');
 
-  const testCases = await TestCaseService.instance().findByProblem({
+  const testCases = await serviceProvider.getService(TestCaseService).findByProblem({
     problemId: problem.id,
     user: session.user
   });
@@ -88,10 +88,13 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
     });
   }
 
-  // Only public test results are sent to the client; hidden tests still run
-  // and count toward `success` above, but their details never leave the server.
+  // Hidden test results are sent to the client as bare
+  // { success, testCaseInfo: { public: false } } entries — enough to show
+  // WHICH test indices failed (the response array is in test-case order),
+  // with none of the details leaking: no expected/actual values, no runInfo,
+  // no compilerOutput. Public results carry the full details.
   return successObject({
     success: allSuccess,
-    results: results.filter((r) => r.testCaseInfo.public)
+    results
   });
 };

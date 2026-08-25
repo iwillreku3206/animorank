@@ -39,6 +39,18 @@
         }
       }
     });
+
+    // Teardown: Svelte runs only the returned cleanup when the effect re-runs
+    // or the host component is destroyed. Without this, the last mounted
+    // editor was never unmounted — every removed comparison row, synced
+    // parameter, or window close leaked the editor, its live effects, and its
+    // references into the test-case state graph.
+    return () => {
+      if (mounted) {
+        unmount(mounted);
+        mounted = undefined;
+      }
+    };
   });
 </script>
 

@@ -7,5 +7,9 @@
 -- AlterTable
 ALTER TABLE "Problem" ADD COLUMN     "extension_data" JSONB NOT NULL DEFAULT '{}';
 
+-- The flatten migration only sets `data` for rows with a matching child row,
+-- so a legacy orphan row can still hold NULL; the column is required below.
+UPDATE "ProblemTestCase" SET "data" = '{}'::jsonb WHERE "data" IS NULL;
+
 -- AlterTable
 ALTER TABLE "ProblemTestCase" ALTER COLUMN "data" SET NOT NULL;

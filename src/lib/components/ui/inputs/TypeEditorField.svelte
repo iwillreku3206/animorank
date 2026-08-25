@@ -3,10 +3,16 @@
   import { TypeRegistry } from '$lib/testCase/builtin/functionTestCase/typeRegistry';
   import type { Type } from '$lib/testCase/builtin/functionTestCase/type.svelte';
 
-  let { type = $bindable(null) }: { type: Type | null } = $props();
+  let {
+    type = $bindable(null),
+    excludeTypeIds = []
+  }: {
+    type: Type | null;
+    excludeTypeIds?: readonly string[];
+  } = $props();
 </script>
 
 <TypeEditor
   bind:type
-  availableTypes={[...TypeRegistry.instance().keys()]}
+  availableTypes={[...TypeRegistry.instance().keys()].filter((t) => !excludeTypeIds.includes(t))}
 />

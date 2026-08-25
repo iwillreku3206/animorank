@@ -2,11 +2,17 @@ import type { Problem } from '$lib/problem';
 import { ServerTestCase } from '$lib/testCase/testCase.server';
 import type { TestCaseResult } from '$lib/testCase/types';
 import type { ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
-import { FunctionTestCase, type FunctionTestCaseData, type FunctionTestCaseRunInfo } from './functionTestCase.svelte';
+import {
+  FunctionTestCase,
+  FunctionTestCaseDataSchema,
+  type FunctionTestCaseData,
+  type FunctionTestCaseRunInfo
+} from './functionTestCase.svelte';
 import { FunctionTestCaseLanguageRegistry } from './languageRegistry';
 
 export class ServerFunctionTestCase extends ServerTestCase<FunctionTestCaseData, FunctionTestCaseRunInfo> {
   static languageRegistry = new FunctionTestCaseLanguageRegistry();
+  public static dataSchema = FunctionTestCaseDataSchema;
   public constructor(model: TestCaseModel, problem: Problem) {
     super(new FunctionTestCase(model, problem));
   }

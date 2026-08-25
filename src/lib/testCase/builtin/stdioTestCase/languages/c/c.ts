@@ -39,9 +39,11 @@ export class CStdioTestCase extends TestCaseLanguage<ServerStdioTestCase> {
         compilerOutput
       };
     } else {
+      // Hidden results carry no details: not the model (which contains
+      // `data` — the expected output), no runInfo, nothing but the flag.
       return {
         success,
-        testCaseInfo: this.testCase.testCase.model as TestCaseModel & { public: false }
+        testCaseInfo: { public: false }
       };
     }
   }

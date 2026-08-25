@@ -8,6 +8,12 @@
   import { removeBookmark, toggleBookmark } from '../bookmark';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
+  import transform from '@diplodoc/transform';
+  import YfmStaticView from '$lib/components/content/YfmStaticView.svelte';
+  import { transform as latex } from '@diplodoc/latex-extension/plugin';
+  import { transform as mermaid } from '@diplodoc/mermaid-extension/plugin';
+  import { transform as transformHTML } from '@diplodoc/html-extension';
+  import defaultPlugins from '@diplodoc/transform/lib/plugins';
 
   let { data }: PageProps = $props();
 
@@ -81,10 +87,20 @@
           />{/each}
       </div>
 
-      <!-- Description -->
-      <p class="text-base-content/70 line-clamp-3 overflow-hidden whitespace-pre-wrap">
-        {problemSet.description}
-      </p>
+      <!-- Description (YFM markup from the instructor editor, rendered) -->
+      <div class="text-base-content/70 line-clamp-3 overflow-hidden">
+        <YfmStaticView
+          html={transform(problemSet.description ?? '', {
+            allowHTML: true,
+            plugins: [
+              latex({ bundle: false, runtime: 'extension:latex' }),
+              mermaid({ bundle: false, runtime: 'extension:mermaid' }),
+              transformHTML({ bundle: false, runtimeJsPath: 'extension:html' }),
+              ...defaultPlugins
+            ]
+          }).result.html}
+        />
+      </div>
     </div>
 
     <!-- Col 2: Actions -->

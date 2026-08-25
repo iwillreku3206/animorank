@@ -33,7 +33,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   const result = await codeExecutor.execute({
     files: [{ path: 'main.c', content: Buffer.from(practiceSession.previousCode.fullCode, 'utf8') }],
     processes: [
-      { command: 'gcc', args: ['-Werror', '-Wall', '-o', 'program', 'main.c', '-lm'] },
+      { command: 'gcc', args: ['-Werror', '-Wall', '-o', 'program', 'main.c', '-lm', '-lpthread'] },
       { command: './program', args: [], stdin: Buffer.from(parsedData.stdin, 'utf8') }
     ]
   });

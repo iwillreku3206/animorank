@@ -16,6 +16,10 @@ function hydrateResults(
 ): (TestCaseResult<FunctionTestCaseRunInfo> & { testCase?: TestCase })[] {
   const registry = TestCaseRegistry.instance();
   return raw.map((r) => {
+    // Hidden results arrive as bare { success, testCaseInfo: { public: false } }
+    // entries by design — they carry no model to hydrate and no details to
+    // display, so pass them through untouched.
+    if (!r.testCaseInfo.public) return r;
     try {
       // public results carry the full model as testCaseInfo
       const testCase = registry.from(r.testCaseInfo as ProblemTestCase, problem);

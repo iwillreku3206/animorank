@@ -5,6 +5,7 @@
   import TypeEditorField from './TypeEditorField.svelte';
 
   import Editor from '$lib/components/editor/Editor.svelte';
+  import CodeEditor from '$lib/components/editor/CodeEditor.svelte';
 
   import type { Component } from 'svelte';
   import type { Form, FormFieldType, FormValue } from '$lib/form';
@@ -36,7 +37,10 @@
     for (const id of Object.keys(form.fields)) {
       if (value[id] === undefined) {
         const field = form.fields[id];
-        (value[id as keyof T['fields']] as (typeof defaults)[FormFieldType]) = field.default ?? defaults[field.type];
+        // `??` would clobber a legitimate `default: null` (e.g. the int
+        // `signed` option); only undefined means "not filled yet".
+        (value[id as keyof T['fields']] as (typeof defaults)[FormFieldType]) =
+          field.default !== undefined ? field.default : defaults[field.type];
       }
     }
   });
@@ -57,7 +61,7 @@
           class="input input-xs input-primary"
           type="text"
           id={fid}
-          pattern={field.regex?.toString()}
+          pattern={field.regex instanceof RegExp ? field.regex.source : field.regex}
           bind:value={(value as FormValue<Form>)[id]}
         />
       </fieldset>
@@ -73,7 +77,7 @@
           class="input input-xs input-primary"
           type="url"
           id={fid}
-          pattern={field.regex?.toString()}
+          pattern={field.regex instanceof RegExp ? field.regex.source : field.regex}
           bind:value={(value as FormValue<Form>)[id]}
         />
       </fieldset>
@@ -93,6 +97,14 @@
           max={field.max}
           step={field.isInteger ? 1 : undefined}
           bind:value={(value as FormValue<Form>)[id]}
+          oninput={() => {
+            // bind:value yields null (cleared) or NaN (partial input like
+            // "-"); the schema requires a real number, so normalize.
+            const current = (value as Record<string, unknown>)[id];
+            if (current === null || (typeof current === 'number' && !Number.isFinite(current))) {
+              (value as Record<string, unknown>)[id] = 0;
+            }
+          }}
         />
       </fieldset>
     {/if}
@@ -317,7 +329,10 @@
     {#if field.type === 'typeEditor'}
       <fieldset class="fieldset">
         <span class="label">{field.label}</span>
-        <TypeEditorField bind:type={(value as FormValue<Form>)[id]} />
+        <TypeEditorField
+          bind:type={(value as FormValue<Form>)[id]}
+          excludeTypeIds={field.excludeTypeIds}
+        />
       </fieldset>
     {/if}
   {/each}

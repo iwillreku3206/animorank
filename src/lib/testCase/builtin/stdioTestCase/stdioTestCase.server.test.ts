@@ -77,6 +77,39 @@ describe('ServerStdioTestCase', () => {
     });
   });
 
+  it('fails on a nonzero exit even when stdout matches the expected output', async () => {
+    class NonZeroExitExecutor extends CodeExecutor {
+      public async execute(): Promise<ExecutionResult> {
+        return {
+          processOutputs: [{ exitCode: 0 }, { exitCode: 1, stdout: Buffer.from('25\n') }],
+          fileOutputs: []
+        };
+      }
+    }
+    const serverTestCase = ServerTestCaseRegistry.instance().from(makeTestCaseModel(), new Problem(problemModel));
+    const result = await serverTestCase.run(new CLanguage(), new NonZeroExitExecutor(), { sections: { body: '' } });
+
+    // A crashing/exiting program must fail even if its partial stdout matches.
+    expect(result).toMatchObject({ success: false, runInfo: { expected: '25\n', actual: '25\n' } });
+  });
+
+  it('fails without crashing on the judge0 timeout shape (single processOutput entry)', async () => {
+    class TimeoutExecutor extends CodeExecutor {
+      public async execute(): Promise<ExecutionResult> {
+        return {
+          processOutputs: [{ exitCode: undefined }],
+          fileOutputs: []
+        };
+      }
+    }
+    const serverTestCase = ServerTestCaseRegistry.instance().from(makeTestCaseModel(), new Problem(problemModel));
+    const result = await serverTestCase.run(new CLanguage(), new TimeoutExecutor(), { sections: { body: '' } });
+
+    // Judge0 status 5 collapses to a single entry with no exit code; the
+    // binding must fail cleanly instead of crashing on the missing run entry.
+    expect(result).toMatchObject({ success: false, runInfo: { expected: '25\n', actual: '' } });
+  });
+
   it('fails when stdout differs from the expected output', async () => {
     const model = makeTestCaseModel({ data: { input: '5\n', output: '26\n' } });
     const serverTestCase = ServerTestCaseRegistry.instance().from(model, new Problem(problemModel));
@@ -113,7 +146,9 @@ describe('ServerStdioTestCase', () => {
     );
     const result = await serverTestCase.run(new CLanguage(), stub, { sections: { body: '' } });
 
+    // Hidden results must not leak the model (its `data` holds expected output).
     expect(result).toMatchObject({ success: true, testCaseInfo: { public: false } });
+    expect(result.testCaseInfo).toEqual({ public: false });
     expect(result).not.toHaveProperty('runInfo');
   });
 

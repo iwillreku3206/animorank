@@ -1,6 +1,7 @@
 import { error, successObject } from '$lib/response';
 import z from 'zod';
 import type { RequestHandler } from './$types';
+import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { TestCaseService } from '$lib/testCase/testCaseService';
 
 const postValidator = z.object({
@@ -16,7 +17,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
   if (!success) return error(400, zodError);
 
   try {
-    const newTestCase = await TestCaseService.instance().create({
+    const newTestCase = await ServerServiceProvider.instance().getService(TestCaseService).create({
       problemId: data.problem,
       type: data.type,
       user: session.user

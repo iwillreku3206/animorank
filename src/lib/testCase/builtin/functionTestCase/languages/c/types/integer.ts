@@ -48,11 +48,20 @@ export class CInteger extends CType<Integer> {
     return this.typeDef();
   }
   public pushDeclaration(context: CExecutionContext, symbol: string, value?: TypeValue<Integer> | undefined): void {
-    const { size } = this.type.options;
+    const { signed, size } = this.type.options;
     context.pushCode(`${this.typeDef()} ${symbol};`);
     if (value) {
       const decString = BigInt(value.value.value).toString(10);
-      context.pushCode(`${symbol} = ${decString}${size === 64 ? 'll' : ''};`);
+      // 64-bit literals need the correct suffix: `ll` for signed, `ull` for
+      // unsigned — UINT64_MAX as `…ll` exceeds `long long` and fails -Werror.
+      // INT64_MIN cannot be written as a single literal, so emit it as an
+      // arithmetic expression. (signed === null behaves as signed, matching
+      // printfSymbol.)
+      let literal = `${decString}${size === 64 ? (signed === false ? 'ull' : 'll') : ''}`;
+      if (size === 64 && signed !== false && decString === '-9223372036854775808') {
+        literal = '(-9223372036854775807ll - 1ll)';
+      }
+      context.pushCode(`${symbol} = ${literal};`);
     }
   }
   public pushPreDefinitions(context: CExecutionContext): void {

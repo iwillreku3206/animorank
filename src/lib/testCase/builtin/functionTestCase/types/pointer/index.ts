@@ -8,9 +8,12 @@ import { TypeValue } from '../../typeValue.svelte';
 import type z from 'zod';
 import PointerDisplay from './PointerDisplay.svelte';
 import PointerEditor from './PointerEditor.svelte';
+import { VoidType } from '../void';
 
 /**
- * Options form with a TypeEditor for the pointer's target type.
+ * Options form with a TypeEditor for the pointer's target type. Void is
+ * excluded: `void*` has no backing value and the generated harness would
+ * reference an undeclared symbol.
  */
 function buildPointerOptions(): Form {
   return {
@@ -18,6 +21,7 @@ function buildPointerOptions(): Form {
       target: {
         label: 'Pointed To Type',
         type: 'typeEditor',
+        excludeTypeIds: [VoidType.id()],
         default: TypeRegistry.instance().getStatic('int').create()
       }
     }

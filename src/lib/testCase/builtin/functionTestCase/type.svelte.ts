@@ -40,6 +40,16 @@ export abstract class Type<
   }
 
   /**
+   * @description Whether this type represents the absence of a value. The
+   *   void type stubs this to `true`; every value type inherits `false`.
+   *   Callers use this instead of comparing type ids, so void-ness lives in
+   *   the type implementation.
+   */
+  public get isVoid(): boolean {
+    return false;
+  }
+
+  /**
    * @description A function that validates the value for the type
    * @returns `true` if the data is valid, `Error` otherwise
    */

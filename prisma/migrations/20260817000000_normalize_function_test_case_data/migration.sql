@@ -150,6 +150,7 @@ WITH definitions AS (
     FROM "ProblemTestCase" ptc
     WHERE ptc."problem_id" = k."problem_id"
       AND ptc."data"->>'function_name' = k.fn_name
+    ORDER BY ptc."created_at" ASC, ptc."id" ASC
     LIMIT 1
   ) l ON true
   GROUP BY k."problem_id"
@@ -199,7 +200,7 @@ SET "data" = jsonb_build_object(
               ELSE c->>'operator'
             END,
             'options', CASE WHEN c->>'operator' = 'WITHIN_RANGE'
-              THEN jsonb_build_object('range', c->>'range_value')
+              THEN jsonb_build_object('range', COALESCE(c->>'range_value', '0'))
               ELSE NULL
             END
           ),

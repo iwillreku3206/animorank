@@ -49,4 +49,19 @@ describe('ServerTestCaseRegistry.validateUpdate', () => {
     expect(() => registry.validateUpdate({}, 'function')).not.toThrow();
     expect(() => registry.validateUpdate({ type: 'function' }, 'function')).not.toThrow();
   });
+
+  it('requires data when changing the type of an existing row', () => {
+    // A type-only update would write stdio-shaped data under the function
+    // type (or vice versa) — an unparseable row that 500s every hydration.
+    expect(() => registry.validateUpdate({ type: 'function' }, 'stdio')).toThrow(
+      'Changing test case type to "function" requires data'
+    );
+    expect(() => registry.validateUpdate({ type: 'stdio' }, 'custom')).toThrow(
+      'Changing test case type to "stdio" requires data'
+    );
+    // Changing type WITH data validates the data against the new type and passes.
+    expect(() =>
+      registry.validateUpdate({ type: 'stdio', data: { input: '1', output: '2' } }, 'function')
+    ).not.toThrow();
+  });
 });

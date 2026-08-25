@@ -125,10 +125,7 @@
   </div>
 
   <div class="form-control mb-4">
-    <label
-      class="label"
-      for="ps-description"><span class="label-text font-bold">Description</span></label
-    >
+    <label class="label"><span class="label-text font-bold">Description</span></label>
     <Editor bind:text={problemSet.description} />
   </div>
 

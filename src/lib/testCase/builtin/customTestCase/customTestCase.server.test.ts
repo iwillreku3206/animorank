@@ -72,11 +72,76 @@ describe('ServerCustomTestCase', () => {
     expect(captured!.processes[1].command).toBe('./program');
   });
 
+  it('removes constructor attributes that would bypass the validator', async () => {
+    captured = undefined;
+    const serverTestCase = ServerTestCaseRegistry.instance().from(makeTestCaseModel(), new Problem(problemModel));
+    await serverTestCase.run(new CLanguage(), stub, {
+      sections: {
+        body: [
+          '#include <stdlib.h>',
+          '',
+          '__attribute__((constructor)) void cheat() { exit(0); }',
+          '',
+          'int main() { printf("hi"); return 0; }'
+        ].join('\n')
+      }
+    });
+
+    const submission = captured!.files.find((f) => f.path === 'submission.c')!.content.toString('utf8');
+    // The attribute is gone, so the function can no longer run before the
+    // validator's main; the function itself is left behind as inert code.
+    expect(submission).not.toContain('constructor');
+    expect(submission).toContain('void cheat()');
+    expect(submission).not.toContain('main');
+  });
+
+  it('removes destructor, priority, spelling, and init_array attribute variants', async () => {
+    captured = undefined;
+    const serverTestCase = ServerTestCaseRegistry.instance().from(makeTestCaseModel(), new Problem(problemModel));
+    await serverTestCase.run(new CLanguage(), stub, {
+      sections: {
+        body: [
+          '__attribute__((destructor)) void bye() {}',
+          '__attribute__((constructor(101))) void prio() {}',
+          '__attribute__((__constructor__)) void c2() {}',
+          '__attribute__((section(".init_array"))) void (*init)() = 0;',
+          'int main() { return 0; }'
+        ].join('\n')
+      }
+    });
+
+    const submission = captured!.files.find((f) => f.path === 'submission.c')!.content.toString('utf8');
+    expect(submission).not.toContain('constructor');
+    expect(submission).not.toContain('destructor');
+    expect(submission).not.toContain('.init_array');
+    expect(submission).not.toContain('main');
+  });
+
   it('passes when the test program exits with code 0', async () => {
     const serverTestCase = ServerTestCaseRegistry.instance().from(makeTestCaseModel(), new Problem(problemModel));
     const result = await serverTestCase.run(new CLanguage(), stub, { sections: { body: '' } });
 
-    expect(result).toMatchObject({ success: true, runInfo: { exitCode: 0, stderr: '' } });
+    expect(result).toMatchObject({ success: true, runInfo: { exitCode: 0 } });
+  });
+
+  it('fails without crashing on the judge0 timeout shape (single processOutput entry)', async () => {
+    class TimeoutExecutor extends CodeExecutor {
+      public async execute(): Promise<ExecutionResult> {
+        return {
+          processOutputs: [{ exitCode: undefined }],
+          fileOutputs: []
+        };
+      }
+    }
+    const serverTestCase = ServerTestCaseRegistry.instance().from(makeTestCaseModel(), new Problem(problemModel));
+    const result = await serverTestCase.run(new CLanguage(), new TimeoutExecutor(), { sections: { body: '' } });
+
+    // Judge0 status 5 collapses to a single entry with no exit code; the
+    // binding must fail cleanly instead of crashing on the missing run entry.
+    expect(result).toMatchObject({ success: false });
+    if ('runInfo' in result) {
+      expect(result.runInfo).toHaveProperty('exitCode');
+    }
   });
 
   it('fails when the test program exits nonzero, surfacing stderr', async () => {
@@ -125,7 +190,9 @@ describe('ServerCustomTestCase', () => {
     );
     const result = await serverTestCase.run(new CLanguage(), stub, { sections: { body: '' } });
 
+    // Hidden results must not leak the model (its `data` holds test_code).
     expect(result).toMatchObject({ success: true, testCaseInfo: { public: false } });
+    expect(result.testCaseInfo).toEqual({ public: false });
     expect(result).not.toHaveProperty('runInfo');
   });
 

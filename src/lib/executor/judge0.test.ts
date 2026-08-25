@@ -8,12 +8,20 @@ const processes: ProcessRequest[] = [
 ];
 
 describe('buildCompileScript', () => {
-  it('emits one line per process except the last', () => {
-    expect(buildCompileScript(processes)).toBe('gcc -Wall -o main main.c');
+  it('emits one quoted line per process except the last', () => {
+    expect(buildCompileScript(processes)).toBe("'gcc' '-Wall' '-o' 'main' 'main.c'");
   });
 
   it('returns empty string with fewer than 2 processes', () => {
     expect(buildCompileScript([{ command: './main', args: [] }])).toBe('');
+  });
+
+  it('quotes arguments with spaces, quotes, and metacharacters', () => {
+    const script = buildCompileScript([
+      { command: 'gcc', args: ['-o', 'my program', "it's", '$HOME'] },
+      { command: './main', args: [] }
+    ]);
+    expect(script).toBe("'gcc' '-o' 'my program' 'it'\\''s' '$HOME'");
   });
 });
 
@@ -21,15 +29,21 @@ describe('buildRunScript', () => {
   it('emits the last process command line plus a begin/cat/end marker triple per export file', () => {
     expect(buildRunScript(processes, ['__ar_test_return', '__ar_test_param0'])).toBe(
       [
-        './main',
-        `printf '<<<__AR_FILE_BEGIN:%s>>>\\n' "__ar_test_return"`,
-        `cat "__ar_test_return"`,
-        `printf '<<<__AR_FILE_END:%s>>>\\n' "__ar_test_return"`,
-        `printf '<<<__AR_FILE_BEGIN:%s>>>\\n' "__ar_test_param0"`,
-        `cat "__ar_test_param0"`,
-        `printf '<<<__AR_FILE_END:%s>>>\\n' "__ar_test_param0"`
+        "'./main'",
+        `printf '<<<__AR_FILE_BEGIN:%s>>>\\n' '__ar_test_return'`,
+        `cat '__ar_test_return'`,
+        `printf '<<<__AR_FILE_END:%s>>>\\n' '__ar_test_return'`,
+        `printf '<<<__AR_FILE_BEGIN:%s>>>\\n' '__ar_test_param0'`,
+        `cat '__ar_test_param0'`,
+        `printf '<<<__AR_FILE_END:%s>>>\\n' '__ar_test_param0'`
       ].join('\n')
     );
+  });
+
+  it('quotes export file paths in the marker triple', () => {
+    const script = buildRunScript(processes, ['weird name.c']);
+    expect(script).toContain(`cat 'weird name.c'`);
+    expect(script).not.toContain(`cat "weird name.c"`);
   });
 });
 

@@ -38,7 +38,12 @@ export class CFloat extends CType<Float> {
   }
 
   public pushPrint(context: CExecutionContext, symbol: string, fileSymbol: string): void {
-    const template = this.type.options.size === 64 ? '%lf' : '%f';
+    // Round-trip precision: the printed text feeds readFromPrint and the JS
+    // comparison operators, so %f/%lf's 6-decimal truncation misgraded
+    // correct submissions (1.0f/3.0f printed "0.333333" vs the true float
+    // value 0.333333343). %.9g/%.17g print exactly enough digits to
+    // round-trip float/double.
+    const template = this.type.options.size === 64 ? '%.17g' : '%.9g';
     context.pushCode(`fprintf(${fileSymbol}, "${template}", ${symbol});`);
   }
 }

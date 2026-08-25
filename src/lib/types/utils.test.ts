@@ -34,4 +34,27 @@ describe('toJsonValue', () => {
   it('rejects non-POJO values without toJSON', () => {
     expect(() => toJsonValue({ map: new Map() as never })).toThrow('non-POJO');
   });
+
+  it('rejects non-finite numbers, bigint, and functions', () => {
+    expect(() => toJsonValue({ v: Number.NaN } as never)).toThrow('non-finite');
+    expect(() => toJsonValue({ v: Infinity } as never)).toThrow('non-finite');
+    expect(() => toJsonValue({ v: 1n } as never)).toThrow('BigInt');
+    expect(() => toJsonValue({ f: () => {} } as never)).toThrow('cannot convert function');
+  });
+
+  it('omits undefined object members and maps them to null in arrays', () => {
+    expect(toJsonValue({ a: undefined, b: 1 } as never)).toEqual({ b: 1 });
+    expect(toJsonValue([1, undefined, 2] as never)).toEqual([1, null, 2]);
+  });
+
+  it('rejects circular references', () => {
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    expect(() => toJsonValue(circular as never)).toThrow('circular');
+  });
+
+  it('passes through shared (non-circular) object references', () => {
+    const shared = { v: 1 };
+    expect(toJsonValue({ a: shared, b: shared } as never)).toEqual({ a: { v: 1 }, b: { v: 1 } });
+  });
 });

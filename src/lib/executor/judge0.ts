@@ -7,6 +7,15 @@ import type { Judge0SubmissionRequest, Judge0SubmissionResponse } from '$lib/typ
 import { env } from '$env/dynamic/private';
 
 /**
+ * Quote a command/argument for the bash scripts Judge0 runs: embedded
+ * spaces, quotes, and metacharacters must not be able to break the command
+ * line or inject extra commands.
+ */
+function shellQuote(arg: string): string {
+  return `'${arg.replaceAll("'", `'\\''`)}'`;
+}
+
+/**
  * Build the compile script: one command line per process, EXCEPT the last
  * process (which is the run process). Judge0's multi-file language runs the
  * `compile` file for compilation and `run` for execution, both via bash.
@@ -15,7 +24,7 @@ export function buildCompileScript(processes: ProcessRequest[]): string {
   if (processes.length < 2) return '';
   return processes
     .slice(0, -1)
-    .map((process) => [process.command, ...process.args].join(' '))
+    .map((process) => [process.command, ...process.args].map(shellQuote).join(' '))
     .join('\n');
 }
 
@@ -27,13 +36,12 @@ export function buildCompileScript(processes: ProcessRequest[]): string {
 export function buildRunScript(processes: ProcessRequest[], exportFiles: string[]): string {
   const last = processes.at(-1);
   if (!last) return '';
-  const lines = [[last.command, ...last.args].join(' ')];
+  const lines = [[last.command, ...last.args].map(shellQuote).join(' ')];
   for (const path of exportFiles) {
-    // TODO: escape paths
     lines.push(
-      `printf '<<<__AR_FILE_BEGIN:%s>>>\\n' "${path}"`,
-      `cat "${path}"`,
-      `printf '<<<__AR_FILE_END:%s>>>\\n' "${path}"`
+      `printf '<<<__AR_FILE_BEGIN:%s>>>\\n' ${shellQuote(path)}`,
+      `cat ${shellQuote(path)}`,
+      `printf '<<<__AR_FILE_END:%s>>>\\n' ${shellQuote(path)}`
     );
   }
   return lines.join('\n');
@@ -86,9 +94,28 @@ export class Judge0Executor extends CodeExecutor {
     const req = await fetch(`${env.JUDGE0_BASE_URL}/submissions?wait=true&base64_encoded=true`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(submissionParams)
+      body: JSON.stringify(submissionParams),
+      // wait=true blocks until the submission finishes; give generous
+      // headroom over the wall-time limit before giving up on a hung Judge0.
+      signal: AbortSignal.timeout(120_000)
     });
+    if (!req.ok) {
+      // Non-2xx bodies carry an `error` field; an HTML error page (proxy 502)
+      // has none. Surface a descriptive error instead of misparsing the body
+      // as a submission result.
+      let detail = req.statusText;
+      try {
+        const body = (await req.json()) as { error?: unknown };
+        if (body.error !== undefined) detail = String(body.error);
+      } catch {
+        // keep the status text
+      }
+      throw new Error(`Judge0 request failed (${req.status}): ${detail}`);
+    }
     const res = (await req.json()) as Judge0SubmissionResponse;
+    if (!res.status || typeof res.status.id !== 'number') {
+      throw new Error('Judge0 returned an unexpected response shape');
+    }
 
     const stdout = Buffer.from(res.stdout ?? '', 'base64');
     const stderr = Buffer.from(res.stderr ?? '', 'base64');

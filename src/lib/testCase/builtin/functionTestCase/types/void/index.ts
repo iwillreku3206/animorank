@@ -27,6 +27,10 @@ export class VoidType extends Type<Record<string, never>, typeof voidOptions> {
     super(extractZodSchema(voidOptions).parse(options));
   }
 
+  public override get isVoid(): boolean {
+    return true;
+  }
+
   public async validateValue(data: JsonValue): Promise<true | Error> {
     const { error, success } = voidValidator.safeParse(data);
     return success ? true : error;

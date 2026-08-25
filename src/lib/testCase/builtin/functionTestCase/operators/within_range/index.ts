@@ -14,7 +14,13 @@ const withinRangeOptions = {
 } as const satisfies Form;
 
 const withinRangeOptionsSchema = z.object({
-  range: z.string().default('0')
+  // Normalize null/empty (legacy rows migrated with a NULL range_value, and
+  // cleared form fields) to '0'; reject anything non-numeric so a garbage
+  // range can never reach the judge-time BigInt/Number conversions.
+  range: z.preprocess(
+    (v) => (v === null || v === undefined || v === '' ? '0' : v),
+    z.string().regex(/^\d+(\.\d+)?$/, 'Range must be a non-negative number')
+  )
 });
 
 export class WithinRangeOperator extends Operator<{ range: string }> {

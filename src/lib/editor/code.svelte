@@ -138,6 +138,23 @@
     if (editor && editor.getValue() !== code) {
       const model = editor.getModel();
       if (!model) return;
+
+      if (options.useSections) {
+        // External slot updates: route them through the constrained plugin so
+        // they survive. A full-range edit spans the non-editable template
+        // text and the plugin reverts it as an "outside edit", leaving the
+        // editor text stale.
+        const sections = parseSlots(options.template, editorState.sections).sections;
+        const next: Record<string, string> = {};
+        for (const section of sections) {
+          next[section.slot.label] = editorState.sections[section.slot.label] ?? '';
+        }
+        (
+          model as unknown as { updateValueInEditableRanges: (values: Record<string, string>) => void }
+        ).updateValueInEditableRanges(next);
+        return;
+      }
+
       const fullRange = model.getFullModelRange();
       editor.pushUndoStop();
       editor.executeEdits('undoable-reset', [

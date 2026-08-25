@@ -78,6 +78,128 @@ describe('ServerFunctionTestCase', () => {
     // The SvelteKit load serializer must accept the converted model.
     expect(() => stringify({ ...testCaseModel, data: converted })).not.toThrow();
   });
+
+  it('hydrates parameters from stored types when the function definition is missing', () => {
+    const testCaseModel = {
+      ...makeTestCaseModel(),
+      data: {
+        function: 'missing',
+        parameters: [{ name: 'x', value: { type: 'int', options: { size: 32, signed: null }, data: { value: '3' } } }],
+        comparisons: []
+      }
+    } as unknown as ProblemTestCase;
+    const serverTestCase = ServerTestCaseRegistry.instance().from(testCaseModel, new Problem(problemModel));
+    const testCase = serverTestCase.testCase as FunctionTestCase;
+
+    expect(testCase.data.parameters[0].value.type.id).toBe('int');
+    expect(testCase.data.parameters[0].value.value).toEqual({ value: '3' });
+  });
+
+  it('hydrates parameters from stored types when a definition parameter is untyped', () => {
+    const untypedProblem = {
+      ...problemModel,
+      extension_data: {
+        builtin_testCase_function: {
+          functions: {
+            fn1: {
+              name: 'square',
+              parameters: [{ name: 'x', type: null }],
+              returnType: [{ type: 'int', options: { size: 32, signed: null } }]
+            }
+          }
+        }
+      }
+    } as unknown as ProblemModel;
+    const serverTestCase = ServerTestCaseRegistry.instance().from(makeTestCaseModel(), new Problem(untypedProblem));
+    const testCase = serverTestCase.testCase as FunctionTestCase;
+
+    expect(testCase.data.parameters[0].value.type.id).toBe('int');
+    expect(testCase.data.parameters[0].value.value).toEqual({ value: '0' });
+  });
+
+  it('selectFunction skips untyped definition parameters instead of crashing', () => {
+    const untypedProblem = {
+      ...problemModel,
+      extension_data: {
+        builtin_testCase_function: {
+          functions: {
+            fn1: {
+              name: 'square',
+              parameters: [
+                { name: 'typed', type: { type: 'int', options: { size: 32, signed: null } } },
+                { name: 'untyped', type: null }
+              ],
+              returnType: [{ type: 'int', options: { size: 32, signed: null } }]
+            }
+          }
+        }
+      }
+    } as unknown as ProblemModel;
+    const testCaseModel = {
+      ...makeTestCaseModel(),
+      data: { function: 'fn1', parameters: [], comparisons: [] }
+    } as unknown as ProblemTestCase;
+    const testCase = new FunctionTestCase(testCaseModel, new Problem(untypedProblem));
+
+    expect(() => testCase.selectFunction('fn1')).not.toThrow();
+    expect(testCase.data.parameters.map((p) => p.name)).toEqual(['typed']);
+  });
+
+  it('addComparison defaults to the equal operator (int return)', () => {
+    const serverTestCase = ServerTestCaseRegistry.instance().from(makeTestCaseModel(), new Problem(problemModel));
+    const testCase = serverTestCase.testCase as FunctionTestCase;
+
+    testCase.addComparison();
+    expect(testCase.data.comparisons).toHaveLength(1);
+    expect(testCase.data.comparisons[0].operator.id).toBe('equal');
+  });
+
+  it('addComparison defaults to equal for string-returning functions', () => {
+    const stringProblem = {
+      ...problemModel,
+      extension_data: {
+        builtin_testCase_function: {
+          functions: {
+            fn1: { name: 'greet', parameters: [], returnType: [{ type: 'string', options: {} }] }
+          }
+        }
+      }
+    } as unknown as ProblemModel;
+    const testCaseModel = {
+      ...makeTestCaseModel(),
+      data: { function: 'fn1', parameters: [], comparisons: [] }
+    } as unknown as ProblemTestCase;
+    const testCase = new FunctionTestCase(testCaseModel, new Problem(stringProblem));
+
+    // The previous default (less_than) is not registered for strings and made
+    // every default comparison fail at run time.
+    testCase.addComparison();
+    expect(testCase.data.comparisons).toHaveLength(1);
+    expect(testCase.data.comparisons[0].operator.id).toBe('equal');
+  });
+
+  it('addComparison adds nothing for void-returning functions', () => {
+    const voidProblem = {
+      ...problemModel,
+      extension_data: {
+        builtin_testCase_function: {
+          functions: {
+            fn1: { name: 'print_hi', parameters: [], returnType: [{ type: 'void', options: {} }] }
+          }
+        }
+      }
+    } as unknown as ProblemModel;
+    const testCaseModel = {
+      ...makeTestCaseModel(),
+      data: { function: 'fn1', parameters: [], comparisons: [] }
+    } as unknown as ProblemTestCase;
+    const testCase = new FunctionTestCase(testCaseModel, new Problem(voidProblem));
+
+    // The harness never emits a return file for void, so such a comparison
+    // could never run; it must not be creatable.
+    testCase.addComparison();
+    expect(testCase.data.comparisons).toHaveLength(0);
+  });
 });
 
 describe('CFunctionTestCase codegen with new types', () => {
@@ -134,12 +256,13 @@ describe('CFunctionTestCase codegen with new types', () => {
     ).generateCode();
 
     expect(code).toContain('void work(int*');
-    expect(code).toContain('float');
-    expect(code).toContain('char*');
-    expect(code).toContain('= 5;');
-    expect(code).toContain('= 1.5f;');
-    expect(code).toContain('"hi"');
-    expect(code).toContain('&');
+    expect(code).toContain('float sym_1;');
+    expect(code).toContain('char* sym_2;');
+    expect(code).toContain('int sym_0__target;');
+    expect(code).toContain('sym_0__target = 5;');
+    expect(code).toContain('sym_0 = &sym_0__target;');
+    expect(code).toContain('sym_1 = 1.5f;');
+    expect(code).toContain('sym_2 = "hi";');
     // void return: no result symbol, direct call without assignment
     expect(code).not.toContain('= work(');
   });
@@ -298,6 +421,19 @@ describe('CFunctionTestCase execute', () => {
     expect(submissionCode).not.toContain('main');
   });
 
+  it('stripMain leaves main-like text inside strings and comments untouched', () => {
+    const code = [
+      'char* s = "int main() { hello }";',
+      '// int main() { commented out }',
+      '/* int main() { blocked } */',
+      'int real(void) { return 1; }'
+    ].join('\n');
+    expect(stripMain(code)).toBe(code);
+
+    // A real top-level main is still removed.
+    expect(stripMain('int main() { return 0; }')).toBe('');
+  });
+
   it('returns no runInfo for hidden test cases', async () => {
     captured = undefined;
     const serverTestCase = ServerTestCaseRegistry.instance().from(makeModel({ public: false }), new Problem(problem));
@@ -305,7 +441,9 @@ describe('CFunctionTestCase execute', () => {
       sections: { body: 'int square(int x) { return 5; }' }
     });
 
+    // Hidden results must not leak the model (its `data` holds expected values).
     expect(result).toMatchObject({ success: true, testCaseInfo: { public: false } });
+    expect(result.testCaseInfo).toEqual({ public: false });
     expect(result).not.toHaveProperty('runInfo');
   });
 
@@ -489,6 +627,28 @@ describe('CFunctionTestCase execute', () => {
       expect(result.failureReason).toContain('Missing function definition');
     }
     expect(result).not.toHaveProperty('compilerOutput');
+  });
+
+  it('fails per test case, not with a hydration throw, when a stale function reference has parameters', async () => {
+    // Previously the constructor dereferenced
+    // `functions[parsed.function].parameters[i].type!` and threw for any row
+    // with stored parameters referencing a deleted function — 500ing the
+    // whole run endpoint. The constructor now falls back to the stored value
+    // types, and the run degrades to a per-test-case failure.
+    const staleModel = makeModel({
+      data: {
+        function: 'missing',
+        parameters: [{ name: 'x', value: { type: 'int', options: { size: 32, signed: null }, data: { value: '3' } } }],
+        comparisons: []
+      }
+    });
+    const serverTestCase = ServerTestCaseRegistry.instance().from(staleModel, new Problem(problem));
+    const result = await serverTestCase.run(new CLanguage(), stub, { sections: { body: '' } });
+
+    expect(result).toMatchObject({ success: false, runInfo: { comparisons: [] } });
+    if ('failureReason' in result) {
+      expect(result.failureReason).toContain('Missing function definition');
+    }
   });
 
   it('fails gracefully when the executor throws', async () => {

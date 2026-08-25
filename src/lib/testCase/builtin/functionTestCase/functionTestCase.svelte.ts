@@ -88,7 +88,14 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
         })
       ),
       parameters: parsed.parameters.map((parameter, i) => {
-        const type = problemData.functions[parsed.function].parameters[i].type!;
+        // The definition's parameter type is authoritative; fall back to the
+        // stored value's own type so a row referencing a deleted function,
+        // an out-of-range parameter, or a not-yet-typed definition parameter
+        // still loads (degrading to a visible row instead of being silently
+        // dropped, or 500ing the run endpoint). syncParameters re-types
+        // values against the definition once it is complete again.
+        const definitionType = problemData.functions[parsed.function]?.parameters[i]?.type;
+        const type = definitionType ?? typeRegistry.from(parameter.value);
 
         return {
           id: parameter.id,
@@ -107,7 +114,14 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
     const def = this.problem.functionData.functions[fnName];
     this.data = {
       function: fnName,
-      parameters: def ? def.parameters.map((p) => ({ id: p.id, name: p.name, value: p.type!.defaultValue() })) : [],
+      // Parameters without a type cannot get a value yet; they are omitted
+      // from the reset and backfilled by syncParameters once the author
+      // types them in the Functions window.
+      parameters: def
+        ? def.parameters
+            .filter((p) => p.type !== null)
+            .map((p) => ({ id: p.id, name: p.name, value: p.type!.defaultValue() }))
+        : [],
       comparisons: []
     };
   }
@@ -215,9 +229,23 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
   public addComparison(): void {
     const fn = this.problem.functionData.functions[this.data.function];
     const returnType = fn?.returnType[0];
-    const operators = [...OperatorRegistry.instance().keys()];
-    if (!returnType || operators.length === 0) return;
-    const operator = OperatorRegistry.instance().getStatic(operators[0]).create();
+    // Void returns (and missing/untyped return slots) cannot be compared:
+    // the harness never emits a return export file for them, so the
+    // comparison could never run.
+    if (!returnType || returnType.isVoid) return;
+
+    // Default to `equal`: it is the only operator registered for every value
+    // type (int/float/string/pointer), so a comparison created for a
+    // string/pointer-returning function actually runs. The previous default —
+    // the first registered operator, less_than — only supports int/float and
+    // made every default comparison on such functions fail at run time with
+    // "Service string not found".
+    const registry = OperatorRegistry.instance();
+    const keys = registry.keys();
+    const defaultKey = keys.includes('equal') ? 'equal' : keys[0];
+    if (!defaultKey) return;
+
+    const operator = registry.getStatic(defaultKey).create();
     const comparison = Comparison.create(returnType, operator);
     this.data = { ...this.data, comparisons: [...this.data.comparisons, comparison] };
   }
@@ -240,6 +268,9 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
    */
   public hydrateRunInfo(runInfo: FunctionTestCaseRunInfo): FunctionTestCaseRunInfo {
     if ('failure' in runInfo) return runInfo;
+    // The run endpoint's catch branch sends `runInfo: []` for public tests
+    // whose execution threw — not a comparisons shape, nothing to hydrate.
+    if (!('comparisons' in runInfo)) return runInfo;
     type Serialized = { type: string; options: unknown; data: JsonValue };
     const typeRegistry = TypeRegistry.instance();
     const hydrate = (v: unknown): TypeValue =>

@@ -3,7 +3,6 @@ import type { User } from '@auth/sveltekit';
 import type { JsonValue } from '@zenstackhq/orm';
 import type { ProblemTestCase } from '$lib/zenstack/models';
 import { Problem } from '$lib/problem';
-import { TestCaseRegistry } from './testCaseRegistry';
 import { ServerTestCaseRegistry } from './testCaseRegistry.server';
 import type { ServerTestCase } from './testCase.server';
 import { validateFunctionTestCaseKeys } from './builtin/functionTestCase/types.server';
@@ -33,17 +32,6 @@ export interface UpdateOptions {
 }
 
 export class TestCaseService {
-  private static _instance: TestCaseService | null;
-
-  private constructor() {}
-
-  public static instance(): TestCaseService {
-    if (!TestCaseService._instance) {
-      TestCaseService._instance = new TestCaseService();
-    }
-    return TestCaseService._instance;
-  }
-
   /** Access check shared across all methods that target a specific test case. */
   private async authorizeTestCase(id: string, user: User) {
     return db.problemTestCase.findUnique({
@@ -120,20 +108,26 @@ export class TestCaseService {
   /**
    * Like findByProblem, but for the edit page: every function test case's
    * keys are validated against the problem's function definitions before
-   * construction. The first invalid row throws a descriptive error instead
-   * of crashing the FunctionTestCase constructor and silently dropping the
-   * row from the editor (where it would become undeletable).
+   * construction. Invalid rows are skipped and logged instead of throwing —
+   * a single stale row used to 500 the whole page load (and the suggested
+   * repair, "delete the test case or restore the function", was unreachable
+   * because the page never rendered). The Functions window now blocks
+   * creating such rows in the first place.
    */
   public async findByProblemForEdit(options: FindByProblemOptions): Promise<ServerTestCase[]> {
     const fetched = await this.fetchByProblem(options);
     if (!fetched) return [];
 
+    const result: ServerTestCase[] = [];
     for (const model of fetched.models) {
       const invalid = validateFunctionTestCaseKeys(model, fetched.problem);
-      if (invalid) throw new Error(invalid);
+      if (invalid) {
+        console.error(`Skipping unhydratable test case ${model.id}: ${invalid}`);
+        continue;
+      }
+      result.push(ServerTestCaseRegistry.instance().from(model, fetched.problem));
     }
-
-    return fetched.models.map((model) => ServerTestCaseRegistry.instance().from(model, fetched.problem));
+    return result;
   }
 
   public async findById(options: FindByIdOptions): Promise<ServerTestCase | null> {

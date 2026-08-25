@@ -32,7 +32,7 @@ const integerOptions = {
           value: 64
         }
       ] as const,
-      default: '32'
+      default: 32
     },
     signed: {
       label: 'Signed',
@@ -80,12 +80,26 @@ export class Integer extends Type<Value, typeof integerOptions> {
 
     if (!zSuccess) return zError;
 
+    let value: bigint;
     try {
-      new SerializableBigInt(zData.value);
-      return true;
+      value = new SerializableBigInt(zData.value).value;
     } catch (error) {
       return error as Error;
     }
+
+    // Enforce the size/signed bounds the editor advertises ("check the size
+    // limits of the integer"): the C harness emits the value as the declared
+    // integer type, so an out-of-range expected value would silently wrap
+    // (implementation-defined) or fail -Werror with a misleading error.
+    const { size, signed } = this.options;
+    const bits = BigInt(size);
+    const min = signed === false ? 0n : -(1n << (bits - 1n));
+    const max = signed === false ? (1n << bits) - 1n : (1n << (bits - 1n)) - 1n;
+    if (value < min || value > max) {
+      return new Error(`Value ${value} is out of range for ${this.displayName} (${min}..${max})`);
+    }
+
+    return true;
   }
   public defaultValue(): TypeValue<this> {
     return new TypeValue(this, { value: '0' });

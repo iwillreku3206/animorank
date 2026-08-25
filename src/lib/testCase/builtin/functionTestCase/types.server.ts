@@ -4,6 +4,7 @@ import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import type { Problem } from '$lib/problem';
 import type { ProblemTestCase } from '$lib/zenstack/models';
 import { TypeRegistry } from './typeRegistry';
+import { OperatorRegistry } from './operatorRegistry';
 import type { FunctionTestCaseProblemData } from './types';
 import { FunctionTestCaseProblemDataSchema } from './types';
 import { FunctionTestCaseDataSchema } from './functionTestCase.svelte';
@@ -76,6 +77,31 @@ export function validateFunctionTestCaseKeys(model: ProblemTestCase, problem: Pr
     }
     if (!definition.type) {
       return `Test case ${model.id} references parameter ${i} of function "${functionName}", which has no type (delete the test case or set the parameter type)`;
+    }
+  }
+
+  // Comparisons must resolve against the registries and the function's
+  // signature — an unregistered type/operator id or a dangling symbol would
+  // otherwise throw inside the client constructor and silently drop the row.
+  const typeRegistry = TypeRegistry.instance();
+  const operatorRegistry = OperatorRegistry.instance();
+  for (const comparison of parsed.data.comparisons) {
+    if (!typeRegistry.keys().includes(comparison.value.type)) {
+      return `Test case ${model.id} comparison uses unregistered value type "${comparison.value.type}"`;
+    }
+    if (!operatorRegistry.keys().includes(comparison.operator.type)) {
+      return `Test case ${model.id} comparison uses unregistered operator "${comparison.operator.type}"`;
+    }
+    const symbol = comparison.symbol;
+    if (symbol === 'return') {
+      if (!fn.returnType[0]) {
+        return `Test case ${model.id} compares the return value of function "${functionName}", which has no return type`;
+      }
+    } else {
+      const match = symbol.match(/^param(\d+)$/);
+      if (!match || !fn.parameters[parseInt(match[1], 10)]) {
+        return `Test case ${model.id} comparison references symbol "${symbol}", which function "${functionName}" does not define`;
+      }
     }
   }
 

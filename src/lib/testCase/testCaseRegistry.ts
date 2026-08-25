@@ -26,9 +26,9 @@ export class TestCaseRegistry extends ServiceRegistry<
 
   constructor() {
     super();
-    this.register('function', FunctionTestCase);
-    this.register('stdio', StdioTestCase);
-    this.register('custom', CustomTestCase);
+    this.register(FunctionTestCase.id(), FunctionTestCase);
+    this.register(StdioTestCase.id(), StdioTestCase);
+    this.register(CustomTestCase.id(), CustomTestCase);
   }
 
   public from(model: TestCaseModel, problem: Problem) {

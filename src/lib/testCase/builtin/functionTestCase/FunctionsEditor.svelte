@@ -1,6 +1,8 @@
 <script lang="ts">
   import { getProblemEditorContext } from '../../../../routes/edit/[slug]/context.svelte';
   import type { Function as FuncDef } from './types';
+  import { FunctionTestCase } from './functionTestCase.svelte';
+  import { Integer } from './types/int';
   import TypeEditor from './TypeEditor.svelte';
   import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
   import Button from '$lib/components/ui/buttons/Button.svelte';
@@ -13,7 +15,11 @@
   const availableTypes = $derived([...typeRegistry.keys()]);
 
   function addParameter(fn: FuncDef) {
-    fn.parameters = [...(fn.parameters ?? []), { id: crypto.randomUUID(), name: '', type: null }];
+    // Default the type immediately: an untyped parameter persisted to
+    // extension_data crashed test-case hydration (the constructor and
+    // selectFunction used to deref `type!`). The author changes it via the
+    // TypeEditor dropdown, which never clears back to null.
+    fn.parameters = [...(fn.parameters ?? []), { id: crypto.randomUUID(), name: '', type: Integer.create() }];
   }
 
   function removeParameter(fn: FuncDef, index: number) {
@@ -45,6 +51,9 @@
   {/if}
 
   {#each Object.entries(data.functions) as [id, fn] (id)}
+    {@const referencing = context.testCases.filter(
+      (tc) => tc instanceof FunctionTestCase && tc.data.function === id
+    ).length}
     <details
       class="bg-base-300 border border-base-100 rounded"
       open
@@ -131,9 +140,16 @@
         </fieldset>
 
         <!-- Remove function -->
-        <div class="flex justify-end pt-2 border-t border-base-300">
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-base-300">
+          {#if referencing > 0}
+            <span class="text-error text-xs">
+              Referenced by {referencing} test case{referencing === 1 ? '' : 's'} — delete
+              {referencing === 1 ? 'it' : 'them'} first
+            </span>
+          {/if}
           <Button
             class="btn-xs btn-error btn-outline"
+            disabled={referencing > 0}
             onclick={() => context.removeFunction(id)}
           >
             Remove function

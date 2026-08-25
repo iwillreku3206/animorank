@@ -13,6 +13,22 @@ import type { CustomTestCaseRunInfo } from '../../customTestCase.svelte';
 // customTestCase: the regex removes every `int/void main(...) { ... }` block.
 const mainRegex = /(int|void) main\s*\([A-Za-z0-9 ,\\*]*\)\s*\{(.|\s)*\}/g;
 
+// Pre-main execution attributes let submission code run before the test's
+// main() — i.e. before the validator in main.c ever executes. A student can
+// smuggle `__attribute__((constructor)) void cheat() { exit(0); }` past the
+// main strip above, and the combined binary then exits 0 without the
+// validator running, passing the test case. Strip constructor/destructor
+// attributes (both spellings, optional priority) and .init_array/.fini_array
+// section attributes so nothing in the submission can run before main. The
+// functions themselves are left in place (they become plain, never-called
+// code). NOTE: these are regexes, not a lexer — attribute text inside string
+// literals/comments would also be removed; revisit when the main strip is
+// replaced with the lexer-aware scanner.
+const preMainAttrRegex =
+  /__attribute__\s*\(\s*\(\s*(?:__)?(?:constructor|destructor)(?:__)?\s*(?:\(\s*\d+\s*\))?\s*\)\s*\)/g;
+const preMainSectionRegex =
+  /__attribute__\s*\(\s*\(\s*(?:__)?section(?:__)?\s*\(\s*["']\.(?:init|fini)_array["']\s*\)\s*\)\s*\)/g;
+
 export class CCustomTestCase extends TestCaseLanguage<ServerCustomTestCase> {
   public async execute(executor: CodeExecutor, state: IntoJsonValue): Promise<TestCaseResult<CustomTestCaseRunInfo>> {
     const codeState = new CodeEditorState(state);
@@ -21,7 +37,11 @@ export class CCustomTestCase extends TestCaseLanguage<ServerCustomTestCase> {
       ? parseSlots(problem.starter_code, codeState.sections).fullCode
       : (codeState.sections['body'] ?? '');
 
-    const submission = previousCode.replaceAll('\r\n', '\n').replaceAll(mainRegex, '');
+    const submission = previousCode
+      .replaceAll('\r\n', '\n')
+      .replaceAll(preMainAttrRegex, '')
+      .replaceAll(preMainSectionRegex, '')
+      .replaceAll(mainRegex, '');
 
     const result = await executor.execute({
       files: [
@@ -49,9 +69,11 @@ export class CCustomTestCase extends TestCaseLanguage<ServerCustomTestCase> {
         compilerOutput
       };
     } else {
+      // Hidden results carry no details: not the model (which contains
+      // `data` — the test_code), no runInfo, nothing but the success flag.
       return {
         success,
-        testCaseInfo: this.testCase.testCase.model as TestCaseModel & { public: false }
+        testCaseInfo: { public: false }
       };
     }
   }

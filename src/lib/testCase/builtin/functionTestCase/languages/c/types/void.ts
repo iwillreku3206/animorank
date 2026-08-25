@@ -19,7 +19,8 @@ export class CVoid extends CType<VoidType> {
   }
 
   public pushDeclaration(_context: CExecutionContext, _symbol: string, _value?: TypeValue<VoidType>): void {
-    // `void` cannot be declared as a variable; callers special-case void returns.
+    // `void` cannot be declared as a variable; the harness consults
+    // `type.isVoid` and never declares, prints, or compares a void value.
   }
 
   public pushPreDefinitions(_context: CExecutionContext): void {}

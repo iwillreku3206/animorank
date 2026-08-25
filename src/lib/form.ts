@@ -1,5 +1,4 @@
 import type { Component } from 'svelte';
-import { match } from 'ts-pattern';
 import { z } from 'zod';
 import type { Type } from '$lib/testCase/builtin/functionTestCase/type.svelte';
 import type { IntoJsonValue } from './types/utils';
@@ -39,6 +38,11 @@ interface TextExtra {
   regex?: RegExp | string;
 }
 
+interface TypeEditorExtra {
+  /** Type ids the picker should not offer (e.g. pointer targets can't be void). */
+  excludeTypeIds?: readonly string[];
+}
+
 type FieldConfigLookup = {
   text: TextExtra;
   url: TextExtra;
@@ -52,7 +56,7 @@ type FieldConfigLookup = {
   select: SelectionExtra;
   radio: SelectionExtra;
   segmented: SelectionExtra;
-  typeEditor: object;
+  typeEditor: TypeEditorExtra;
   checkbox: object;
 };
 
@@ -101,22 +105,6 @@ export type ExtractExactValue<F> = F extends { type: 'number' | 'range' }
 export type FormValue<T extends Form> = {
   [K in keyof T['fields']]: ExtractExactValue<T['fields'][K]>;
 };
-
-export function extractDefaults(form: Form) {
-  const defaults: Record<string, InferValueType<FormFieldType>> = {};
-  for (const key of Object.keys(form.fields)) {
-    let defaultItem = form.fields[key].default;
-    if (!defaultItem) {
-      defaultItem = match(form.fields[key].type)
-        .with('number', 'range', () => 0)
-        .with('checkbox', () => false)
-        .with('date', 'time', 'datetime', () => new Date())
-        .otherwise(() => '');
-    }
-    defaults[key] = defaultItem;
-  }
-  return defaults;
-}
 
 function buildFieldSchema(field: FormFieldDefinition): z.ZodTypeAny {
   switch (field.type) {
@@ -171,7 +159,19 @@ function buildFieldSchema(field: FormFieldDefinition): z.ZodTypeAny {
         const s = z.enum(values as string[]);
         return field.default !== undefined ? s.default(field.default as string) : s;
       }
-      const s = z.any();
+      // Non-string option values (numbers, booleans, null): build a literal
+      // union so out-of-enum stored values are rejected instead of passing
+      // through z.any() and reaching codegen's strict-equality branches.
+      const s =
+        values.length > 0
+          ? z.union(
+              values.map((v) => z.literal(v as string | number | boolean | null)) as unknown as [
+                z.ZodTypeAny,
+                z.ZodTypeAny,
+                ...z.ZodTypeAny[]
+              ]
+            )
+          : z.any();
       return field.default !== undefined ? s.default(field.default) : s;
     }
   }

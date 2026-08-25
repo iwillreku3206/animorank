@@ -45,7 +45,8 @@ export class ProblemEditorWindowContext {
       .map((model) => {
         try {
           return TestCaseRegistry.instance().from(model, this.problem);
-        } catch {
+        } catch (error) {
+          console.error(`Dropping unhydratable test case ${model.id}:`, error);
           return null;
         }
       })
@@ -95,8 +96,20 @@ export class ProblemEditorWindowContext {
     this.functionData.functions[key] = { name: '', symbol: '', parameters: [], returnType: [] };
   }
 
-  public removeFunction(id: string): void {
+  /**
+   * Remove a function definition. Refuses (returns false) when a test case
+   * still references it: the autosave would persist the dangling reference
+   * and the next edit-page load would fail validation for every collaborator,
+   * with no way to repair through the UI. Delete the referencing test cases
+   * first.
+   */
+  public removeFunction(id: string): boolean {
+    const referenced = this.testCases.some(
+      (testCase) => testCase instanceof FunctionTestCase && testCase.data.function === id
+    );
+    if (referenced) return false;
     delete this.functionData.functions[id];
+    return true;
   }
 
   private async saveProblem() {
