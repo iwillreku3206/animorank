@@ -4,7 +4,7 @@ import type { TestCaseResult } from '$lib/testCase/types';
 import type { ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 import {
   FunctionTestCase,
-  FunctionTestCaseDataSchema,
+  getFunctionTestCaseDataSchema,
   type FunctionTestCaseData,
   type FunctionTestCaseRunInfo
 } from './functionTestCase.svelte';
@@ -12,7 +12,9 @@ import { FunctionTestCaseLanguageRegistry } from './languageRegistry';
 
 export class ServerFunctionTestCase extends ServerTestCase<FunctionTestCaseData, FunctionTestCaseRunInfo> {
   static languageRegistry = new FunctionTestCaseLanguageRegistry();
-  public static dataSchema = FunctionTestCaseDataSchema;
+  public static get dataSchema() {
+    return getFunctionTestCaseDataSchema();
+  }
   public constructor(model: TestCaseModel, problem: Problem) {
     super(new FunctionTestCase(model, problem));
   }

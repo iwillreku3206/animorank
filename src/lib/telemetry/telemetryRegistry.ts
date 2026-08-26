@@ -1,4 +1,4 @@
-import { ServiceRegistry } from '$lib/services/registry';
+import { ServiceRegistry } from '$lib/registry';
 import { ConsoleTelemetryService } from './consoleTelemetryService';
 import { DummyTelemetryService } from './dummyTelemetryService';
 import type { TelemetryService } from './telemetryService';

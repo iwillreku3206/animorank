@@ -1,5 +1,5 @@
 import type { Problem } from '$lib/problem';
-import { ServiceRegistry, type ClassServiceOf } from '$lib/services/registry';
+import { ServiceRegistry, type ClassServiceOf } from '$lib/registry';
 import { ServerFunctionTestCase } from './builtin/functionTestCase/functionTestCase.server';
 import { ServerStdioTestCase } from './builtin/stdioTestCase/stdioTestCase.server';
 import { ServerCustomTestCase } from './builtin/customTestCase/customTestCase.server';
@@ -18,15 +18,6 @@ export class ServerTestCaseRegistry extends ServiceRegistry<
     validateUpdate(options: TestCaseUpdateOptions, existingType: string): void;
   }
 > {
-  private static _instance: ServerTestCaseRegistry | null;
-
-  public static instance(): ServerTestCaseRegistry {
-    if (!ServerTestCaseRegistry._instance) {
-      ServerTestCaseRegistry._instance = new ServerTestCaseRegistry();
-    }
-    return ServerTestCaseRegistry._instance;
-  }
-
   constructor() {
     super();
     this.registerTest(ServerFunctionTestCase);

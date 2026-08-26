@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
   import DockviewWindow from '$lib/window/DockviewWindow.svelte';
   import type { DefaultLayout } from '$lib/window/layout';
   import { ProblemEditorWindowRegistry } from './windowRegistry';
@@ -24,12 +24,15 @@
   };
 
   let context = $state(
-    new ProblemEditorWindowContext({
-      problem: data.problem,
-      testCases: data.testCases,
-      tags: data.tags,
-      topics: data.topics
-    })
+    untrack(
+      () =>
+        new ProblemEditorWindowContext({
+          problem: data.problem,
+          testCases: data.testCases,
+          tags: data.tags,
+          topics: data.topics
+        })
+    )
   );
 
   onDestroy(() => {

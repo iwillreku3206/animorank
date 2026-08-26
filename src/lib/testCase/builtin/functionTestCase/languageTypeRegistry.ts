@@ -1,4 +1,4 @@
-import { ServiceRegistry, type ClassServiceOf } from '$lib/services/registry';
+import { ServiceRegistry, type ClassServiceOf } from '$lib/registry';
 import type { TestCaseLanguage } from '$lib/testCase/testCaseLanguage.server';
 import type { ServerFunctionTestCase } from './functionTestCase.server';
 import type { LanguageType } from './languageType';

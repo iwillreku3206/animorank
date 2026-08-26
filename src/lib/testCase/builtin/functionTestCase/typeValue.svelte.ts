@@ -1,7 +1,7 @@
 import type { JsonValue } from '@zenstackhq/orm';
 import { toJsonValue, type IntoJsonValue } from '$lib/types/utils';
 import type { Type } from './type.svelte';
-import type { ClassServiceOf } from '$lib/services/registry';
+import type { ClassServiceOf } from '$lib/registry';
 import type { TypeRegistry } from './typeRegistry';
 import z from 'zod';
 

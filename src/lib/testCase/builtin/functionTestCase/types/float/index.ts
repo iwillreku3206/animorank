@@ -76,11 +76,11 @@ export class Float extends Type<Value, typeof floatOptions> {
     return floatOptions;
   }
 
-  get valueDisplay(): ValueDisplay<this> {
-    return FloatDisplay as unknown as ValueDisplay<this>;
+  get valueDisplay(): ValueDisplay {
+    return FloatDisplay as unknown as ValueDisplay;
   }
 
-  get valueForm(): ValueEditor<this> {
-    return FloatEditor as unknown as ValueEditor<this>;
+  get valueForm(): ValueEditor {
+    return FloatEditor as unknown as ValueEditor;
   }
 }

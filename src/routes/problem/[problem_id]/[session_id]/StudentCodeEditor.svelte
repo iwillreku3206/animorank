@@ -3,7 +3,7 @@
   import type { monaco } from '$lib/monaco';
   import type { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
   import type { Problem } from '$lib/problem';
-  import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
+  import { ClientRegistryProvider } from '$lib/registry/client';
   import { TelemetryService } from '$lib/telemetry/telemetryService';
   import constrainedEditor from 'constrained-editor-plugin';
   import { onMount } from 'svelte';
@@ -34,7 +34,7 @@
   let monacoModel: monaco.editor.ITextModel | undefined = $state();
   let constrainedInstance: ReturnType<typeof constrainedEditor> | undefined = $state();
 
-  const telemetry = ClientServiceProvider.instance().getService(TelemetryService);
+  const telemetry = ClientRegistryProvider.instance().getService(TelemetryService);
 
   // svelte-ignore state_referenced_locally
   let code = $state(practiceSession.previousCode.fullCode);

@@ -1,6 +1,6 @@
 import { error, successObject } from '$lib/response';
 import type { RequestHandler } from './$types';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { TestCaseService } from '$lib/testCase/testCaseService';
 import type { JsonValue } from '@zenstackhq/orm';
 
@@ -8,7 +8,7 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
   const session = await locals.auth();
   if (!session || !session.user.id) return error(403, 'Unauthorized');
 
-  const deleted = await ServerServiceProvider.instance().getService(TestCaseService).delete(params.id, session.user);
+  const deleted = await ServerRegistryProvider.instance().getService(TestCaseService).delete(params.id, session.user);
   if (!deleted) return error(404, 'Not found');
 
   return successObject({ status: 'Success' });
@@ -21,7 +21,7 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
   const body = await request.json();
 
   try {
-    const updated = await ServerServiceProvider.instance()
+    const updated = await ServerRegistryProvider.instance()
       .getService(TestCaseService)
       .update({
         id: params.id,

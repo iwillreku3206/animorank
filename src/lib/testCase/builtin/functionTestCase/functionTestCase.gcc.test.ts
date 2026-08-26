@@ -71,7 +71,7 @@ async function runCase(
   data: Record<string, unknown>,
   body: string
 ): Promise<TestCaseResult<FunctionTestCaseRunInfo>> {
-  const serverTestCase = ServerTestCaseRegistry.instance().from(
+  const serverTestCase = new ServerTestCaseRegistry().from(
     {
       id: 'tc-gcc',
       type: 'function',

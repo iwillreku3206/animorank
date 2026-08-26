@@ -48,11 +48,11 @@ export class VoidType extends Type<Record<string, never>, typeof voidOptions> {
     return voidOptions;
   }
 
-  get valueDisplay(): ValueDisplay<this> {
-    return VoidDisplay as unknown as ValueDisplay<this>;
+  get valueDisplay(): ValueDisplay {
+    return VoidDisplay as unknown as ValueDisplay;
   }
 
-  get valueForm(): ValueEditor<this> {
-    return VoidEditor as unknown as ValueEditor<this>;
+  get valueForm(): ValueEditor {
+    return VoidEditor as unknown as ValueEditor;
   }
 }

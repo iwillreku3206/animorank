@@ -23,15 +23,27 @@ export type ComparisonDefinition = {
   operator: Operator;
 };
 
+let comparisonSchema: ReturnType<typeof buildComparisonSchema> | undefined;
+
+function buildComparisonSchema() {
+  return z.object({
+    symbol: SymbolSchema,
+    operator: OperatorSchema,
+    value: TypeValueSchema
+  });
+}
+
 /**
  * @description Zod schema for a comparison
  * @see Comparison
+ *
+ * Lazily built: the provider import graph (types → registry/global →
+ * testCaseRegistry → functionTestCase) is cyclic at module-eval, so schemas
+ * must not reference cross-module bindings until first use.
  */
-export const ComparisonSchema = z.object({
-  symbol: SymbolSchema,
-  operator: OperatorSchema,
-  value: TypeValueSchema
-});
+export function getComparisonSchema() {
+  return (comparisonSchema ??= buildComparisonSchema());
+}
 
 /**
  * @description Defines a comparison to test

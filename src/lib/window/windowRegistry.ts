@@ -1,5 +1,5 @@
 import { Window } from './index';
-import { ServiceRegistry } from '$lib/services/registry';
+import { ServiceRegistry } from '$lib/registry';
 
 /**
  * Base class for window registries: a `ServiceRegistry` keyed by panel id,

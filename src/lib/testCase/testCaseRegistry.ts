@@ -1,4 +1,4 @@
-import { ServiceRegistry } from '$lib/services/registry';
+import { ServiceRegistry } from '$lib/registry';
 import { type ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 import type { TestCase } from './testCase.svelte';
 import type { Problem } from '$lib/problem';
@@ -15,15 +15,6 @@ export class TestCaseRegistry extends ServiceRegistry<
     create(problem: Problem): Promise<TestCase>;
   }
 > {
-  private static _instance: TestCaseRegistry | null;
-
-  public static instance(): TestCaseRegistry {
-    if (!TestCaseRegistry._instance) {
-      TestCaseRegistry._instance = new TestCaseRegistry();
-    }
-    return TestCaseRegistry._instance;
-  }
-
   constructor() {
     super();
     this.register(FunctionTestCase.id(), FunctionTestCase);

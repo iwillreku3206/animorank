@@ -1,11 +1,6 @@
-export interface ISingleton<T> {
-  name: string;
-  instance(): T;
-}
-
 type Service<T, C extends unknown[], S> =
   | { classObject: (new (..._args: C) => T) & S; singleton: false }
-  | { classObject: ISingleton<T> & S; singleton: true };
+  | { instance: T; singleton: true };
 
 export interface ServiceRegistryOptions {
   keyNotFoundMessage?: (_serviceName: string) => string;
@@ -19,12 +14,6 @@ export type ServiceOf<SR extends ServiceRegistry<any, any, any>> =
 export type ClassServiceOf<SR extends ServiceRegistry<any, any, any>> = Extract<
   ServiceOf<SR>,
   { singleton: false }
->['classObject'];
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type SingletonServiceOf<SR extends ServiceRegistry<any, any, any>> = Extract<
-  ServiceOf<SR>,
-  { singleton: true }
 >['classObject'];
 
 export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
@@ -59,13 +48,10 @@ export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
   }
 
   public static createSingleSingletonServiceRegistry<T, C extends unknown[], S = object>(
-    service: ISingleton<T> & S,
+    instance: T,
     serviceRegistryOptions?: ServiceRegistryOptions
   ) {
-    return ServiceRegistry._createSingleServiceRegistry<T, C, S>(
-      { classObject: service, singleton: true },
-      serviceRegistryOptions
-    );
+    return ServiceRegistry._createSingleServiceRegistry<T, C, S>({ instance, singleton: true }, serviceRegistryOptions);
   }
 
   private _register(key: string, service: Service<T, C, S>) {
@@ -79,8 +65,8 @@ export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
     this._register(key, { classObject: value, singleton: false });
   }
 
-  public registerSingleton(key: string, value: ISingleton<T> & S) {
-    this._register(key, { classObject: value, singleton: true });
+  public registerSingleton(key: string, instance: T) {
+    this._register(key, { instance, singleton: true });
   }
 
   public keys(): string[] {
@@ -94,7 +80,11 @@ export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
         this.options.keyNotFoundMessage ? this.options.keyNotFoundMessage(key) : `Service ${key} not found`
       );
     }
-    return service.classObject as S;
+    if (service.singleton) {
+      // Instance registrations carry no class statics; expose the instance.
+      return service.instance as unknown as S;
+    }
+    return service.classObject;
   }
 
   public getInstance(key: string, ...args: C): T {
@@ -107,7 +97,7 @@ export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
     }
 
     if (service.singleton) {
-      return service.classObject.instance();
+      return service.instance;
     }
 
     return new service.classObject(...args);

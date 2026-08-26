@@ -1,5 +1,6 @@
 import type { TestCaseResult } from '$lib/testCase/types';
 import type { FunctionTestCaseRunInfo } from '$lib/testCase/builtin/functionTestCase/functionTestCase.svelte';
+import { GlobalRegistryProvider } from '$lib/registry/global';
 import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
 import type { TestCase } from '$lib/testCase/testCase.svelte';
 import type { Problem } from '$lib/problem';
@@ -14,7 +15,7 @@ function hydrateResults(
   raw: TestCaseResult<FunctionTestCaseRunInfo>[],
   problem: Problem
 ): (TestCaseResult<FunctionTestCaseRunInfo> & { testCase?: TestCase })[] {
-  const registry = TestCaseRegistry.instance();
+  const registry = GlobalRegistryProvider.instance().getRegistry(TestCaseRegistry);
   return raw.map((r) => {
     // Hidden results arrive as bare { success, testCaseInfo: { public: false } }
     // entries by design — they carry no model to hydrate and no details to

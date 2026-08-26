@@ -1,6 +1,7 @@
 import { type Form } from '$lib/form';
 import type { JsonValue } from '@zenstackhq/orm';
 import type { IntoJsonValue } from '$lib/types/utils';
+import { GlobalRegistryProvider } from '$lib/registry/global';
 import { Type, TypeSchema } from '../../type.svelte';
 import type { ValueDisplay, ValueEditor } from '../../types';
 import { TypeRegistry } from '../../typeRegistry';
@@ -8,6 +9,7 @@ import { TypeValue } from '../../typeValue.svelte';
 import type z from 'zod';
 import PointerDisplay from './PointerDisplay.svelte';
 import PointerEditor from './PointerEditor.svelte';
+import { Integer } from '../int';
 import { VoidType } from '../void';
 
 /**
@@ -22,7 +24,7 @@ function buildPointerOptions(): Form {
         label: 'Pointed To Type',
         type: 'typeEditor',
         excludeTypeIds: [VoidType.id()],
-        default: TypeRegistry.instance().getStatic('int').create()
+        default: GlobalRegistryProvider.instance().getRegistry(TypeRegistry).getStatic('int').create()
       }
     }
   };
@@ -36,19 +38,21 @@ function normalizeTarget(target: unknown): Type {
   if (target instanceof Type) return target;
   if (typeof target === 'string') {
     try {
-      return TypeRegistry.instance().getStatic(target).create();
+      return GlobalRegistryProvider.instance().getRegistry(TypeRegistry).getStatic(target).create();
     } catch {
       // fall through to the default
     }
   }
   if (target !== null && typeof target === 'object' && 'type' in target) {
     try {
-      return TypeRegistry.instance().from(target as z.infer<typeof TypeSchema>);
+      return GlobalRegistryProvider.instance()
+        .getRegistry(TypeRegistry)
+        .from(target as z.infer<typeof TypeSchema>);
     } catch {
       // fall through to the default
     }
   }
-  return TypeRegistry.instance().getStatic('int').create();
+  return GlobalRegistryProvider.instance().getRegistry(TypeRegistry).getStatic('int').create();
 }
 
 export class Pointer extends Type<JsonValue, Form, { target: Type }> {
@@ -57,7 +61,9 @@ export class Pointer extends Type<JsonValue, Form, { target: Type }> {
   }
 
   static create() {
-    return new Pointer({ target: TypeRegistry.instance().getStatic('int').create() });
+    // Direct class reference (not the registry): operator type registries
+    // construct this at module-eval time, before the provider is initialized.
+    return new Pointer({ target: Integer.create() });
   }
 
   constructor(options: IntoJsonValue | { target?: Type }) {
@@ -92,11 +98,11 @@ export class Pointer extends Type<JsonValue, Form, { target: Type }> {
     return buildPointerOptions();
   }
 
-  get valueDisplay(): ValueDisplay<this> {
-    return PointerDisplay as unknown as ValueDisplay<this>;
+  get valueDisplay(): ValueDisplay {
+    return PointerDisplay as unknown as ValueDisplay;
   }
 
-  get valueForm(): ValueEditor<this> {
-    return PointerEditor as unknown as ValueEditor<this>;
+  get valueForm(): ValueEditor {
+    return PointerEditor as unknown as ValueEditor;
   }
 }

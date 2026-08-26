@@ -1,8 +1,9 @@
-import type { Component } from 'react';
+import type { Component } from 'svelte';
 import { TypeSchema, type Type } from './type.svelte';
 import { TypeValueSchema, type TypeValue } from './typeValue.svelte';
 import z from 'zod';
 import type { Problem } from '$lib/problem';
+import { GlobalRegistryProvider } from '$lib/registry/global';
 import { TypeRegistry } from './typeRegistry';
 import type { JsonObject } from '@zenstackhq/orm';
 
@@ -106,12 +107,12 @@ export const ParameterValueSchema = z.object({
   value: TypeValueSchema
 });
 
-export type ValueEditor<T extends Type> = Component<{
-  value: TypeValue<T>;
+export type ValueEditor = Component<{
+  value: TypeValue;
 }>;
 
-export type ValueDisplay<T extends Type> = Component<{
-  value: TypeValue<T>;
+export type ValueDisplay = Component<{
+  value: TypeValue;
 }>;
 /**
  * @description Defines symbols for functions
@@ -162,6 +163,7 @@ export function parseExtensionData(problem: Problem): FunctionTestCaseProblemDat
 
   const data: FunctionTestCaseProblemData = { functions: {} };
 
+  const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
   for (const [key, fn] of Object.entries(parsedData.functions)) {
     data.functions[key] = {
       name: fn.name,
@@ -169,9 +171,9 @@ export function parseExtensionData(problem: Problem): FunctionTestCaseProblemDat
       parameters: fn.parameters.map((p) => ({
         id: p.id,
         name: p.name ?? '',
-        type: p.type ? TypeRegistry.instance().from(p.type) : null
+        type: p.type ? typeRegistry.from(p.type) : null
       })),
-      returnType: fn.returnType.map((t) => (t ? TypeRegistry.instance().from(t) : null))
+      returnType: fn.returnType.map((t) => (t ? typeRegistry.from(t) : null))
     };
   }
 

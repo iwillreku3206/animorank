@@ -1,6 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
   if (!session || !session.user.id) redirect(302, '/');
 
-  const serviceProvider = ServerServiceProvider.instance();
+  const serviceProvider = ServerRegistryProvider.instance();
   const practiceSessionService = serviceProvider.getService(PracticeSessionService);
 
   const practiceSession = await practiceSessionService.findLatestNonDoneOrCreate({

@@ -28,17 +28,6 @@ export interface CreateOptions {
 }
 
 export class ProblemService {
-  private static _instance: ProblemService | null;
-
-  private constructor() {}
-
-  public static instance(): ProblemService {
-    if (!ProblemService._instance) {
-      ProblemService._instance = new ProblemService();
-    }
-    return ProblemService._instance;
-  }
-
   /**
    * Create a new problem.
    */

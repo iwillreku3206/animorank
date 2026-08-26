@@ -1,6 +1,7 @@
 <script lang="ts">
   import DynamicForm from '$lib/components/ui/inputs/DynamicForm.svelte';
   import type { Type } from './type.svelte';
+  import { GlobalRegistryProvider } from '$lib/registry/global';
   import { TypeRegistry } from './typeRegistry';
   import GearIcon from '@iconify-svelte/fa6-solid/gear';
 
@@ -13,7 +14,7 @@
     availableTypes: string[];
     dropdownAlign?: 'start' | 'end';
   } = $props();
-  const typeRegistry = TypeRegistry.instance();
+  const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
 
   function selectType(typeId: string) {
     type = typeId ? typeRegistry.getStatic(typeId).create() : null;

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import DockviewWindow from '$lib/window/DockviewWindow.svelte';
   import type { DockviewWindowManager } from '$lib/window/dockviewWindowManager';
   import type { DefaultLayout } from '$lib/window/layout';
@@ -18,11 +19,14 @@
   const practiceSession = new ClientPracticeSession(data.practiceSession, problem, data.user);
 
   let context = $state(
-    new SolveWindowContext({
-      problem,
-      practiceSession,
-      language: data.problem.language.toLowerCase()
-    })
+    untrack(
+      () =>
+        new SolveWindowContext({
+          problem,
+          practiceSession,
+          language: data.problem.language.toLowerCase()
+        })
+    )
   );
 
   const defaultLayout: DefaultLayout = {

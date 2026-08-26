@@ -48,11 +48,11 @@ export class StringType extends Type<Value, typeof stringOptions> {
     return stringOptions;
   }
 
-  get valueDisplay(): ValueDisplay<this> {
-    return StringDisplay as unknown as ValueDisplay<this>;
+  get valueDisplay(): ValueDisplay {
+    return StringDisplay as unknown as ValueDisplay;
   }
 
-  get valueForm(): ValueEditor<this> {
-    return StringEditor as unknown as ValueEditor<this>;
+  get valueForm(): ValueEditor {
+    return StringEditor as unknown as ValueEditor;
   }
 }

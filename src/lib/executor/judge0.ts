@@ -65,7 +65,7 @@ export function parseFileOutputs(stdout: Buffer): File[] {
 }
 
 export class Judge0Executor extends CodeExecutor {
-  static id = 'default'; // CodeExecutorRegistry.registerCodeExecutor keys by this; ServiceProvider.getService(CodeExecutor) → getDefault() → 'default'
+  static id = 'default'; // CodeExecutorRegistry.registerCodeExecutor keys by this; RegistryProvider.getService(CodeExecutor) → getDefault() → 'default'
   static languages(): Language[] {
     return [new CLanguage()];
   }

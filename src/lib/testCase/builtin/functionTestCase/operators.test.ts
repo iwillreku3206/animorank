@@ -15,7 +15,7 @@ import { TypeValue } from './typeValue.svelte';
 
 describe('OperatorRegistry', () => {
   it('registers all old operators with snake_case ids', () => {
-    expect([...OperatorRegistry.instance().keys()].sort()).toEqual([
+    expect([...new OperatorRegistry().keys()].sort()).toEqual([
       'equal',
       'greater_than',
       'greater_than_equal',
@@ -148,7 +148,7 @@ describe('operators', () => {
 
   it('round-trips operator options through the registry', () => {
     const op = new WithinRangeOperator({ range: '3' });
-    const hydrated = OperatorRegistry.instance().from(op.toJSON());
+    const hydrated = new OperatorRegistry().from(op.toJSON());
     expect(hydrated.options).toEqual({ range: '3' });
     expect(hydrated.compare(int('4'), int('5'))).toBe(true);
     expect(hydrated.compare(int('4'), int('8'))).toBe(false);

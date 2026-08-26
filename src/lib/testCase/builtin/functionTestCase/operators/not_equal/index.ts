@@ -1,6 +1,8 @@
 import { Operator } from '../../operator.svelte';
 import { NotEqualOperatorTypeRegistry } from './registry';
 
+let typeRegistry: NotEqualOperatorTypeRegistry | undefined;
+
 export class NotEqualOperator extends Operator<null> {
   static id(): string {
     return 'not_equal';
@@ -10,7 +12,11 @@ export class NotEqualOperator extends Operator<null> {
     return new NotEqualOperator(null);
   }
 
-  static typeRegistry = new NotEqualOperatorTypeRegistry();
+  // Lazy: the import graph (pointer → global provider → operatorRegistry) is
+  // cyclic at module-eval, so construction must wait for first use.
+  static get typeRegistry(): NotEqualOperatorTypeRegistry {
+    return (typeRegistry ??= new NotEqualOperatorTypeRegistry());
+  }
 
   get displayName(): string {
     return '!=';

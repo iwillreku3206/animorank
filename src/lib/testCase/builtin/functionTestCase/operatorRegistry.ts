@@ -1,4 +1,4 @@
-import { ServiceRegistry } from '$lib/services/registry';
+import { ServiceRegistry } from '$lib/registry';
 import { OperatorSchema, type Operator } from './operator.svelte';
 import type { OperatorTypeRegistry } from './operatorTypeRegistry';
 import { LessThanOperator } from './operators/less_than';
@@ -19,16 +19,7 @@ export class OperatorRegistry extends ServiceRegistry<
     typeRegistry: OperatorTypeRegistry<Operator>;
   }
 > {
-  private static _instance: OperatorRegistry | null;
-
-  public static instance(): OperatorRegistry {
-    if (!OperatorRegistry._instance) {
-      OperatorRegistry._instance = new OperatorRegistry();
-    }
-    return OperatorRegistry._instance;
-  }
-
-  private constructor() {
+  constructor() {
     super();
     this.register('less_than', LessThanOperator);
     this.register('less_than_equal', LessThanEqualOperator);

@@ -1,7 +1,7 @@
 import { error, successObject } from '$lib/response';
 import z from 'zod';
 import type { RequestHandler } from './$types';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { ProblemSetService } from '$lib/problemSet/problemSetService';
 
 export const GET: RequestHandler = async ({ locals, params }) => {
@@ -9,7 +9,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 
   if (!session || !session.user.id) return error(403, 'Unauthorized');
 
-  const problemSetService = ServerServiceProvider.instance().getService(ProblemSetService);
+  const problemSetService = ServerRegistryProvider.instance().getService(ProblemSetService);
 
   const collaborators = await problemSetService.listCollaborators({
     problemSetId: params.id,
@@ -34,7 +34,7 @@ export const POST: RequestHandler = async ({ locals, request, params }) => {
 
   if (!success) return error(400, zodError);
 
-  const problemSetService = ServerServiceProvider.instance().getService(ProblemSetService);
+  const problemSetService = ServerRegistryProvider.instance().getService(ProblemSetService);
 
   const added = await problemSetService.addCollaborator({
     problemSetId: params.id,
@@ -60,7 +60,7 @@ export const DELETE: RequestHandler = async ({ locals, request, params }) => {
 
   if (!success) return error(400, zodError);
 
-  const problemSetService = ServerServiceProvider.instance().getService(ProblemSetService);
+  const problemSetService = ServerRegistryProvider.instance().getService(ProblemSetService);
 
   const removed = await problemSetService.removeCollaborator({
     problemSetId: params.id,

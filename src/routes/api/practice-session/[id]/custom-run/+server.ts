@@ -1,7 +1,7 @@
 import z from 'zod';
 import type { RequestHandler } from './$types';
 import { error, successObject } from '$lib/response';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { CodeExecutor } from '$lib/executor';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
 
@@ -20,7 +20,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   } = await customRunValidator.safeParseAsync(await request.json());
   if (!parseSuccess) return error(400, parseError);
 
-  const serviceProvider = ServerServiceProvider.instance();
+  const serviceProvider = ServerRegistryProvider.instance();
   const practiceSessionService = serviceProvider.getService(PracticeSessionService);
   const codeExecutor = serviceProvider.getService(CodeExecutor);
 

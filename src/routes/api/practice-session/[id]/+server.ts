@@ -1,6 +1,7 @@
 import z from 'zod';
 import type { RequestHandler } from './$types';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { error, successObject } from '$lib/response';
 
 const updateCodeValidator = z.object({
@@ -14,7 +15,7 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
   const { success, error: zodError, data } = await updateCodeValidator.safeParseAsync(await request.json());
   if (!success) return error(400, zodError);
 
-  const service = PracticeSessionService.instance();
+  const service = ServerRegistryProvider.instance().getService(PracticeSessionService);
 
   const update = await service.update({
     id: params.id,

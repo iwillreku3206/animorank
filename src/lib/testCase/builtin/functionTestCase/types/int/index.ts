@@ -116,11 +116,11 @@ export class Integer extends Type<Value, typeof integerOptions> {
     return integerOptions;
   }
 
-  get valueDisplay(): ValueDisplay<this> {
-    return IntegerDisplay as unknown as ValueDisplay<this>;
+  get valueDisplay(): ValueDisplay {
+    return IntegerDisplay as unknown as ValueDisplay;
   }
 
-  get valueForm(): ValueEditor<this> {
-    return IntegerEditor as unknown as ValueEditor<this>;
+  get valueForm(): ValueEditor {
+    return IntegerEditor as unknown as ValueEditor;
   }
 }

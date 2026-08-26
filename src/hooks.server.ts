@@ -1,10 +1,10 @@
 import type { Handle, HandleServerError } from '@sveltejs/kit';
 import { handle as authHandle } from '$lib/auth';
 import { Logger } from '$lib/logging/logger';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 
 export const handle: Handle = async ({ event, resolve }) => {
-  const serviceProvider = ServerServiceProvider.instance();
+  const serviceProvider = ServerRegistryProvider.instance();
   const logger = serviceProvider.getService(Logger, 'webserver');
 
   const response = await authHandle({ event, resolve });
@@ -15,7 +15,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 };
 
 export const handleError: HandleServerError = async ({ error }) => {
-  const serviceProvider = ServerServiceProvider.instance();
+  const serviceProvider = ServerRegistryProvider.instance();
   const logger = serviceProvider.getService(Logger, 'webserver');
 
   // Non-Error throws can be circular or BigInt-containing objects that

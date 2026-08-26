@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import { browser } from '$app/environment';
   import { type monaco } from '$lib/monaco';
   import { DEFAULT_MONACO_THEME } from '$lib/components/editor/themes';
@@ -19,7 +19,7 @@
     class?: string;
   } = $props();
 
-  const language = options.language ?? 'c';
+  const language = untrack(() => options.language ?? 'c');
 
   // Same data as the legacy session editor: the full assembled code (template
   // lines + slot content) for sections problems, or the body section alone.

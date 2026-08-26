@@ -1,5 +1,5 @@
 import type { Language } from '$lib/language';
-import { ServiceRegistry, type ClassServiceOf } from '$lib/services/registry';
+import { ServiceRegistry, type ClassServiceOf } from '$lib/registry';
 import type { CodeExecutor } from '.';
 
 /**

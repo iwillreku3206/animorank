@@ -1,4 +1,4 @@
-import type { Component } from 'svelte';
+import type { Component, ComponentType } from 'svelte';
 import { z } from 'zod';
 import type { Type } from '$lib/testCase/builtin/functionTestCase/type.svelte';
 import type { IntoJsonValue } from './types/utils';
@@ -31,7 +31,10 @@ interface TemporalExtra {
 }
 
 interface SelectionExtra {
-  options: readonly string[] | readonly number[] | readonly { label: string; value: unknown; icon?: Component }[];
+  options:
+    | readonly string[]
+    | readonly number[]
+    | readonly { label: string; value: unknown; icon?: Component | ComponentType }[];
 }
 
 interface TextExtra {

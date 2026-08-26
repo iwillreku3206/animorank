@@ -1,4 +1,4 @@
-import { ServiceRegistry } from '$lib/services/registry';
+import { ServiceRegistry } from '$lib/registry';
 import type { Tag as TagModel } from '$lib/zenstack/models';
 import { Tag } from './Tag';
 import type { SubjectTagCreateOptions, SubjectTagUpdateOptions } from './SubjectTag';

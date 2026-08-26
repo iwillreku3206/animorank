@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { Operator } from '../../operator.svelte';
 import { WithinRangeOperatorTypeRegistry } from './registry';
 
+let typeRegistry: WithinRangeOperatorTypeRegistry | undefined;
+
 const withinRangeOptions = {
   fields: {
     range: {
@@ -36,7 +38,11 @@ export class WithinRangeOperator extends Operator<{ range: string }> {
     super(withinRangeOptionsSchema.parse(options ?? {}));
   }
 
-  static typeRegistry = new WithinRangeOperatorTypeRegistry();
+  // Lazy: the import graph (pointer → global provider → operatorRegistry) is
+  // cyclic at module-eval, so construction must wait for first use.
+  static get typeRegistry(): WithinRangeOperatorTypeRegistry {
+    return (typeRegistry ??= new WithinRangeOperatorTypeRegistry());
+  }
 
   get optionsForm(): Form | null {
     return withinRangeOptions;

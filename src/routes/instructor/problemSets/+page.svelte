@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import type { PageProps } from './$types';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
@@ -6,7 +7,7 @@
 
   let { data }: PageProps = $props();
 
-  let problemSets = $state(data.problemSets);
+  let problemSets = $state(untrack(() => data.problemSets));
   let creating = $state(false);
   let newTitle = $state('');
   let error = $state('');

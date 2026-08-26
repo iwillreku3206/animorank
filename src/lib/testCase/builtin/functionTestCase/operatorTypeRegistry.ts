@@ -1,4 +1,4 @@
-import { ServiceRegistry, type ClassServiceOf } from '$lib/services/registry';
+import { ServiceRegistry, type ClassServiceOf } from '$lib/registry';
 import type { Operator } from './operator.svelte';
 import type { OperatorType } from './operatorType';
 import type { Type } from './type.svelte';

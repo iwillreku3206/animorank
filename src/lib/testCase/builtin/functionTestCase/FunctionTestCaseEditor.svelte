@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { FunctionTestCase } from './functionTestCase.svelte';
   import type { Symbol } from './types';
+  import { GlobalRegistryProvider } from '$lib/registry/global';
   import { OperatorRegistry } from './operatorRegistry';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import DynamicForm from '$lib/components/ui/inputs/DynamicForm.svelte';
@@ -9,7 +10,7 @@
 
   let { testCase }: { testCase: FunctionTestCase } = $props();
 
-  const opRegistry = OperatorRegistry.instance();
+  const opRegistry = GlobalRegistryProvider.instance().getRegistry(OperatorRegistry);
 
   let problemData = $derived(testCase.problem.functionData);
   let availableFunctions = $derived(Object.entries(problemData.functions).map(([id, fn]) => ({ id, name: fn.name })));

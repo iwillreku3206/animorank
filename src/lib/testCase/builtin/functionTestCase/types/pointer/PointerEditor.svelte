@@ -14,7 +14,12 @@
   // write tracked: an effect that writes state it never reads is rescheduled
   // by Svelte after unrelated flushes, which would reassign `inner` (and
   // remount the nested editor, stealing focus) on every keystroke.
-  let inner = $state<TypeValue<Type>>(new TypeValue(target, value.value));
+  let inner = $state<TypeValue<Type>>(
+    new TypeValue(
+      untrack(() => target),
+      value.value
+    )
+  );
   $effect(() => {
     if (inner.type !== target) {
       inner = new TypeValue(

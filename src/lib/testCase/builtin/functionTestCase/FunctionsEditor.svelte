@@ -6,12 +6,13 @@
   import TypeEditor from './TypeEditor.svelte';
   import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
   import Button from '$lib/components/ui/buttons/Button.svelte';
+  import { GlobalRegistryProvider } from '$lib/registry/global';
   import { TypeRegistry } from './typeRegistry';
 
   const context = getProblemEditorContext();
   const data = $derived(context.functionData);
 
-  const typeRegistry = TypeRegistry.instance();
+  const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
   const availableTypes = $derived([...typeRegistry.keys()]);
 
   function addParameter(fn: FuncDef) {

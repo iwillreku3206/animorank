@@ -1,7 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/zenstack';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { TagService } from '$lib/tag';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -34,7 +34,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   if (!problemSet) return redirect(302, '/instructor/problemSets');
 
-  const tagService = ServerServiceProvider.instance().getService(TagService);
+  const tagService = ServerRegistryProvider.instance().getService(TagService);
   const allTags = await tagService.findAll();
 
   return {

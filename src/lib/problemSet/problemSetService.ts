@@ -9,7 +9,7 @@ import type {
 import { TagType } from '$lib/zenstack/models';
 import type { User } from '@auth/sveltekit';
 import { ProblemSet, type CollaboratorInfo, type ProblemSetSummary } from '.';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { Tag, TagService } from '$lib/tag';
 import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
 
@@ -114,17 +114,6 @@ function editableBy(userId: string) {
 }
 
 export class ProblemSetService {
-  private static _instance: ProblemSetService | null;
-
-  private constructor() {}
-
-  public static instance(): ProblemSetService {
-    if (!ProblemSetService._instance) {
-      ProblemSetService._instance = new ProblemSetService();
-    }
-    return ProblemSetService._instance;
-  }
-
   /**
    * Create a new problem set.
    */
@@ -618,7 +607,7 @@ export class ProblemSetService {
       }, [] as string[])
       .filter((tag) => !!tag);
 
-    const tagsArr = await ServerServiceProvider.instance().getService(TagService).findByIds(tagIds);
+    const tagsArr = await ServerRegistryProvider.instance().getService(TagService).findByIds(tagIds);
     const tags = arrayToHashMap(tagsArr, (t) => t.id);
 
     type Summary = ProblemSetSummary & { studentProgress?: StudentProgress };

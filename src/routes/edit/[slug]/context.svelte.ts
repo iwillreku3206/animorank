@@ -1,6 +1,7 @@
 import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
 import type { Problem as ProblemModel, ProblemTestCase, Tag } from '$lib/zenstack/models';
 import { Problem } from '$lib/problem';
+import { GlobalRegistryProvider } from '$lib/registry/global';
 import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
 import type { TestCase } from '$lib/testCase/testCase.svelte';
 import { FunctionTestCase } from '$lib/testCase/builtin/functionTestCase/functionTestCase.svelte';
@@ -44,7 +45,7 @@ export class ProblemEditorWindowContext {
     this.testCases = initialValues.testCases
       .map((model) => {
         try {
-          return TestCaseRegistry.instance().from(model, this.problem);
+          return GlobalRegistryProvider.instance().getRegistry(TestCaseRegistry).from(model, this.problem);
         } catch (error) {
           console.error(`Dropping unhydratable test case ${model.id}:`, error);
           return null;

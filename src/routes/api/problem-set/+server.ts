@@ -1,7 +1,7 @@
 import z from 'zod';
 import type { RequestHandler } from './$types';
 import { error, successObject } from '$lib/response';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { ProblemSetService } from '$lib/problemSet/problemSetService';
 
 const postValidator = z.object({
@@ -18,7 +18,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
   if (!success) return error(400, zodError);
 
-  const problemSetService = ServerServiceProvider.instance().getService(ProblemSetService);
+  const problemSetService = ServerRegistryProvider.instance().getService(ProblemSetService);
 
   const problemSet = await problemSetService.create({
     title: data.title,
@@ -54,7 +54,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 
   if (!success) return error(400, zodError);
 
-  const problemSetService = ServerServiceProvider.instance().getService(ProblemSetService);
+  const problemSetService = ServerRegistryProvider.instance().getService(ProblemSetService);
 
   const result = await problemSetService.findByFilter({
     user: session.user,

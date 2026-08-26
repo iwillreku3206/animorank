@@ -8,6 +8,7 @@
   import deleteIcon from '$lib/assets/delete.svg';
   import type { TestCase } from '$lib/testCase/testCase.svelte';
   import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
+  import { GlobalRegistryProvider } from '$lib/registry/global';
   import TestCaseEditorMount from './TestCases/TestCaseEditorMount.svelte';
 
   let { context }: { context: ProblemEditorWindowContext } = $props();
@@ -39,7 +40,9 @@
     try {
       const model = await createTestCase(context.problem.model.id, type);
       if (model) {
-        const instance = TestCaseRegistry.instance().getInstance(model.type, model, context.problem);
+        const instance = GlobalRegistryProvider.instance()
+          .getRegistry(TestCaseRegistry)
+          .getInstance(model.type, model, context.problem);
         context.testCases = [...context.testCases, instance];
       }
     } catch (error) {
@@ -49,7 +52,7 @@
     }
   }
 
-  const availableTypes = $derived(TestCaseRegistry.instance().keys());
+  const availableTypes = $derived(GlobalRegistryProvider.instance().getRegistry(TestCaseRegistry).keys());
 </script>
 
 <div class="flex flex-col gap-2 overflow-scroll h-full">

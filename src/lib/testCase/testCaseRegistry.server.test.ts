@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ServerTestCaseRegistry } from './testCaseRegistry.server';
 
-const registry = ServerTestCaseRegistry.instance();
+const registry = new ServerTestCaseRegistry();
 
 describe('ServerTestCaseRegistry.validateUpdate', () => {
   it('accepts data matching the effective type schema', () => {

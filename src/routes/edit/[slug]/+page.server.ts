@@ -2,7 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/zenstack';
 import { TestCaseService } from '$lib/testCase/testCaseService';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { TagService } from '$lib/tag';
 import { toJsonValue } from '$lib/types/utils';
 
@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   if (!session || !session.user.id) return redirect(302, '/');
 
-  const serviceProvider = ServerServiceProvider.instance();
+  const serviceProvider = ServerRegistryProvider.instance();
 
   const problemResult = await db.problem.findUnique({
     where: {

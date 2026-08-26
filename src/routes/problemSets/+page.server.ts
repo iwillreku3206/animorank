@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { ProblemSetService } from '$lib/problemSet';
 import { TagService } from '$lib/tag';
 import type { SortOrder, SortType } from '$lib/problemSet/problemSetService';
@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     redirect(302, '/');
   }
 
-  const problemSetService = ServerServiceProvider.instance().getService(ProblemSetService);
+  const problemSetService = ServerRegistryProvider.instance().getService(ProblemSetService);
 
   const params = url.searchParams;
   const filters = parseFilters(params);
@@ -58,7 +58,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
   // Load the full tag universe (not just tags present in the current results) so
   // the filter browser always shows every available tag.
-  const tagService = ServerServiceProvider.instance().getService(TagService);
+  const tagService = ServerRegistryProvider.instance().getService(TagService);
   const allTags = await tagService.findAll();
   const tagGroups = groupBy(allTags, (t) => t.type);
 

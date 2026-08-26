@@ -3,7 +3,7 @@ import FunctionTestCaseDisplay from './FunctionTestCaseDisplay.svelte';
 import { TestCase } from '$lib/testCase/testCase.svelte';
 import type { TestCaseEditor, TestCaseDisplay } from '$lib/testCase/types';
 import z from 'zod';
-import { Comparison, ComparisonSchema } from './comparison.svelte';
+import { Comparison, getComparisonSchema } from './comparison.svelte';
 import {
   ParameterValueSchema,
   parseSymbol,
@@ -13,6 +13,7 @@ import {
 } from './types';
 import { type ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 import type { JsonValue } from '@zenstackhq/orm';
+import { GlobalRegistryProvider } from '$lib/registry/global';
 import { OperatorRegistry } from './operatorRegistry';
 import { TypeRegistry } from './typeRegistry';
 import { TypeValue } from './typeValue.svelte';
@@ -51,11 +52,24 @@ export type FunctionTestCaseRunInfo =
       stderr?: string;
     };
 
-export const FunctionTestCaseDataSchema = z.object({
-  function: z.string(),
-  parameters: z.array(ParameterValueSchema),
-  comparisons: z.array(ComparisonSchema)
-});
+let functionTestCaseDataSchema: ReturnType<typeof buildFunctionTestCaseDataSchema> | undefined;
+
+function buildFunctionTestCaseDataSchema() {
+  return z.object({
+    function: z.string(),
+    parameters: z.array(ParameterValueSchema),
+    comparisons: z.array(getComparisonSchema())
+  });
+}
+
+/**
+ * Lazily built: the provider import graph (types → registry/global →
+ * testCaseRegistry → functionTestCase) is cyclic at module-eval, so schemas
+ * must not reference cross-module bindings until first use.
+ */
+export function getFunctionTestCaseDataSchema() {
+  return (functionTestCaseDataSchema ??= buildFunctionTestCaseDataSchema());
+}
 
 export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTestCaseRunInfo> {
   static id() {
@@ -73,9 +87,9 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
   }
 
   constructor(model: TestCaseModel, problem: Problem) {
-    const parsed = FunctionTestCaseDataSchema.parse(model.data);
-    const opRegistry = OperatorRegistry.instance();
-    const typeRegistry = TypeRegistry.instance();
+    const parsed = getFunctionTestCaseDataSchema().parse(model.data);
+    const opRegistry = GlobalRegistryProvider.instance().getRegistry(OperatorRegistry);
+    const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
     const problemData = problem.functionData;
 
     const data: FunctionTestCaseData = {
@@ -218,7 +232,7 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
   }
 
   public setComparisonOperator(i: number, key: string): void {
-    const operator = OperatorRegistry.instance().getStatic(key).create();
+    const operator = GlobalRegistryProvider.instance().getRegistry(OperatorRegistry).getStatic(key).create();
     this.data.comparisons[i].operator = operator;
   }
 
@@ -240,7 +254,7 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
     // the first registered operator, less_than — only supports int/float and
     // made every default comparison on such functions fail at run time with
     // "Service string not found".
-    const registry = OperatorRegistry.instance();
+    const registry = GlobalRegistryProvider.instance().getRegistry(OperatorRegistry);
     const keys = registry.keys();
     const defaultKey = keys.includes('equal') ? 'equal' : keys[0];
     if (!defaultKey) return;
@@ -272,7 +286,7 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
     // whose execution threw — not a comparisons shape, nothing to hydrate.
     if (!('comparisons' in runInfo)) return runInfo;
     type Serialized = { type: string; options: unknown; data: JsonValue };
-    const typeRegistry = TypeRegistry.instance();
+    const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
     const hydrate = (v: unknown): TypeValue =>
       new TypeValue(
         typeRegistry.from({ type: (v as Serialized).type, options: (v as Serialized).options }),

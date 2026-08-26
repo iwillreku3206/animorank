@@ -31,18 +31,10 @@ export interface ListByTypeOptions {
 }
 
 export class TagService {
-  private static _instance: TagService | null;
   private tagRegistry: TagRegistry;
 
-  private constructor() {
+  constructor() {
     this.tagRegistry = new TagRegistry();
-  }
-
-  public static instance(): TagService {
-    if (!TagService._instance) {
-      TagService._instance = new TagService();
-    }
-    return TagService._instance;
   }
 
   public async create(options: CreateOptions): Promise<Tag<TagModel> | null> {

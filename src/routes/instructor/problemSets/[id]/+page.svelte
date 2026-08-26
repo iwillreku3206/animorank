@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import type { PageProps } from './$types';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
@@ -8,8 +9,8 @@
 
   let { data }: PageProps = $props();
 
-  let problemSet = $state({ ...data.problemSet });
-  let tags = data.tags;
+  let problemSet = $state(untrack(() => ({ ...data.problemSet })));
+  let tags = untrack(() => data.tags);
   let saving = $state(false);
   let saveMessage = $state('');
   let addingProblem = $state(false);
@@ -125,7 +126,7 @@
   </div>
 
   <div class="form-control mb-4">
-    <label class="label"><span class="label-text font-bold">Description</span></label>
+    <span class="label"><span class="label-text font-bold">Description</span></span>
     <Editor bind:text={problemSet.description} />
   </div>
 

@@ -2,7 +2,7 @@ import { toJsonValue, type IntoJsonValue } from '$lib/types/utils';
 import type { Form } from '$lib/form';
 import type { Type } from './type.svelte';
 import type { TypeValue } from './typeValue.svelte';
-import type { ClassServiceOf } from '$lib/services/registry';
+import type { ClassServiceOf } from '$lib/registry';
 import type { OperatorTypeRegistry } from './operatorTypeRegistry';
 import deepEqual from 'deep-equal';
 import type { TypeRegistry } from './typeRegistry';

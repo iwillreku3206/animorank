@@ -3,7 +3,7 @@ import type { JsonValue } from '@zenstackhq/orm';
 import type { IntoJsonValue } from '$lib/types/utils';
 import type { ValueDisplay, ValueEditor } from './types';
 import type { TypeValue } from './typeValue.svelte';
-import type { ClassServiceOf } from '$lib/services/registry';
+import type { ClassServiceOf } from '$lib/registry';
 import type { TypeRegistry } from './typeRegistry';
 import z from 'zod';
 
@@ -61,9 +61,9 @@ export abstract class Type<
   abstract get displayName(): string;
 
   abstract get optionsForm(): OptionsForm;
-  abstract get valueForm(): ValueEditor<Type>;
+  abstract get valueForm(): ValueEditor;
 
-  abstract get valueDisplay(): ValueDisplay<Type>;
+  abstract get valueDisplay(): ValueDisplay;
 }
 
 export const TypeSchema = z.object({
