@@ -49,7 +49,7 @@ export abstract class TestCase<
    * reactive contexts, so implementations may construct `$state`-backed
    * objects freely.
    */
-  public hydrateRunInfo(runInfo: RunInfo): RunInfo {
+  public async hydrateRunInfo(runInfo: RunInfo): Promise<RunInfo> {
     return runInfo;
   }
 }

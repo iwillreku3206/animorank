@@ -149,7 +149,7 @@ export const FunctionTestCaseProblemDataSchema = z.object({
   functions: z.record(z.string(), FunctionSchema)
 });
 
-export function parseExtensionData(problem: Problem): FunctionTestCaseProblemData {
+export async function parseExtensionData(problem: Problem): Promise<FunctionTestCaseProblemData> {
   const {
     data: parsedData,
     error,
@@ -168,12 +168,14 @@ export function parseExtensionData(problem: Problem): FunctionTestCaseProblemDat
     data.functions[key] = {
       name: fn.name,
       symbol: fn.symbol ?? '',
-      parameters: fn.parameters.map((p) => ({
-        id: p.id,
-        name: p.name ?? '',
-        type: p.type ? typeRegistry.from(p.type) : null
-      })),
-      returnType: fn.returnType.map((t) => (t ? typeRegistry.from(t) : null))
+      parameters: await Promise.all(
+        fn.parameters.map(async (p) => ({
+          id: p.id,
+          name: p.name ?? '',
+          type: p.type ? await typeRegistry.from(p.type) : null
+        }))
+      ),
+      returnType: await Promise.all(fn.returnType.map(async (t) => (t ? await typeRegistry.from(t) : null)))
     };
   }
 

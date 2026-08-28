@@ -30,7 +30,7 @@ export class OperatorRegistry extends ServiceRegistry<
     this.register('within_range', WithinRangeOperator);
   }
 
-  public from(serialized: z.infer<typeof OperatorSchema>) {
+  public async from(serialized: z.infer<typeof OperatorSchema>): Promise<Operator> {
     return this.getInstance(serialized.type, serialized.options);
   }
 }

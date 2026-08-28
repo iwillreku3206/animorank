@@ -46,14 +46,14 @@ class StubExecutor extends CodeExecutor {
 const stub = new StubExecutor();
 
 describe('ServerCustomTestCase', () => {
-  it('hydrates the old schema data from the model', () => {
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+  it('hydrates the old schema data from the model', async () => {
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     expect(serverTestCase.testCase.data).toEqual({ test_code: 'int main() { return 0; }' });
   });
 
   it('strips the submission main and links the test code as main.c', async () => {
     captured = undefined;
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     await serverTestCase.run(new CLanguage(), stub, {
       sections: {
         body: 'int square(int x) { return x * x; }\nint main() { printf("hi"); return 0; }'
@@ -74,7 +74,7 @@ describe('ServerCustomTestCase', () => {
 
   it('removes constructor attributes that would bypass the validator', async () => {
     captured = undefined;
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     await serverTestCase.run(new CLanguage(), stub, {
       sections: {
         body: [
@@ -97,7 +97,7 @@ describe('ServerCustomTestCase', () => {
 
   it('removes destructor, priority, spelling, and init_array attribute variants', async () => {
     captured = undefined;
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     await serverTestCase.run(new CLanguage(), stub, {
       sections: {
         body: [
@@ -118,7 +118,7 @@ describe('ServerCustomTestCase', () => {
   });
 
   it('passes when the test program exits with code 0', async () => {
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     const result = await serverTestCase.run(new CLanguage(), stub, { sections: { body: '' } });
 
     expect(result).toMatchObject({ success: true, runInfo: { exitCode: 0 } });
@@ -133,7 +133,7 @@ describe('ServerCustomTestCase', () => {
         };
       }
     }
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     const result = await serverTestCase.run(new CLanguage(), new TimeoutExecutor(), { sections: { body: '' } });
 
     // Judge0 status 5 collapses to a single entry with no exit code; the
@@ -154,7 +154,7 @@ describe('ServerCustomTestCase', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     const result = await serverTestCase.run(new CLanguage(), new FailingExecutor(), {
       sections: { body: '' }
     });
@@ -175,7 +175,7 @@ describe('ServerCustomTestCase', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     const result = await serverTestCase.run(new CLanguage(), new CompileFailExecutor(), {
       sections: { body: '' }
     });
@@ -184,7 +184,7 @@ describe('ServerCustomTestCase', () => {
   });
 
   it('omits runInfo for hidden test cases', async () => {
-    const serverTestCase = new ServerTestCaseRegistry().from(
+    const serverTestCase = await new ServerTestCaseRegistry().from(
       makeTestCaseModel({ public: false }),
       new Problem(problemModel)
     );
@@ -203,7 +203,7 @@ describe('ServerCustomTestCase', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     const result = await serverTestCase.run(new CLanguage(), new ThrowingExecutor(), {
       sections: { body: '' }
     });
@@ -222,7 +222,7 @@ describe('ServerCustomTestCase', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(
+    const serverTestCase = await new ServerTestCaseRegistry().from(
       makeTestCaseModel({ public: false }),
       new Problem(problemModel)
     );

@@ -31,9 +31,27 @@ export class ProblemEditorWindowContext {
 
   private _cleanup: () => void;
 
-  constructor(initialValues: InitialValues) {
+  public static async create(initialValues: InitialValues): Promise<ProblemEditorWindowContext> {
+    const problem = new Problem(initialValues.problem);
+    const functionData = await problem.functionData();
+    const testCases = (
+      await Promise.all(
+        initialValues.testCases.map(async (model) => {
+          try {
+            return await GlobalRegistryProvider.instance().getRegistry(TestCaseRegistry).from(model, problem);
+          } catch (error) {
+            console.error(`Dropping unhydratable test case ${model.id}:`, error);
+            return null;
+          }
+        })
+      )
+    ).filter((tc): tc is TestCase => tc !== null);
+    return new ProblemEditorWindowContext(initialValues, functionData, testCases);
+  }
+
+  private constructor(initialValues: InitialValues, functionData: FunctionTestCaseProblemData, testCases: TestCase[]) {
     this.problem = new Problem(initialValues.problem);
-    this.functionData = this.problem.functionData;
+    this.functionData = functionData;
     // Backfill stable ids for parameters created before the id scheme so
     // syncParameters can keep values attached across removals (M8). The
     // extension_data autosave persists them.
@@ -42,16 +60,7 @@ export class ProblemEditorWindowContext {
         parameter.id ??= crypto.randomUUID();
       }
     }
-    this.testCases = initialValues.testCases
-      .map((model) => {
-        try {
-          return GlobalRegistryProvider.instance().getRegistry(TestCaseRegistry).from(model, this.problem);
-        } catch (error) {
-          console.error(`Dropping unhydratable test case ${model.id}:`, error);
-          return null;
-        }
-      })
-      .filter((tc): tc is TestCase => tc !== null);
+    this.testCases = testCases;
     this.topics = initialValues.topics;
     this.tags = initialValues.tags;
 
@@ -81,7 +90,7 @@ export class ProblemEditorWindowContext {
       $effect(() => {
         for (const testCase of this.testCases) {
           if (testCase instanceof FunctionTestCase) {
-            testCase.syncParameters(this.functionData);
+            void testCase.syncParameters(this.functionData);
           }
         }
       });

@@ -6,7 +6,7 @@ import type { Pointer } from '.';
 
 /** Compares pointer values by dereferencing through the target type (legacy parity). */
 export class GreaterThanEqualPointer extends OperatorType<GreaterThanEqualOperator, Pointer> {
-  public compare(expected: TypeValue<Pointer>, actual: TypeValue<Pointer>): boolean {
+  public async compare(expected: TypeValue<Pointer>, actual: TypeValue<Pointer>): Promise<boolean> {
     const innerExpected = new TypeValue(expected.type.targetType, expected.value as JsonValue);
     const innerActual = new TypeValue(actual.type.targetType, actual.value as JsonValue);
     return new GreaterThanEqualOperator(this.options).compare(innerExpected, innerActual);

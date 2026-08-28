@@ -4,16 +4,16 @@ import { Judge0Executor } from './judge0';
 import { CLanguage } from '$lib/language/c';
 
 describe('CodeExecutorRegistry', () => {
-  it('returns the default executor for a language, resolved by language id', () => {
+  it('returns the default executor for a language, resolved by language id', async () => {
     const registry = new CodeExecutorRegistry();
     registry.registerCodeExecutor(Judge0Executor);
 
     // A fresh instance must resolve through the language id — never through
     // object identity (executors and callers each mint their own instances).
-    expect(registry.getDefaultForLanguage(new CLanguage())).toBeInstanceOf(Judge0Executor);
+    await expect(registry.getDefaultForLanguage(new CLanguage())).resolves.toBeInstanceOf(Judge0Executor);
   });
 
-  it('returns undefined for a language no executor supports', () => {
+  it('returns undefined for a language no executor supports', async () => {
     const registry = new CodeExecutorRegistry();
     registry.registerCodeExecutor(Judge0Executor);
 
@@ -21,15 +21,15 @@ describe('CodeExecutorRegistry', () => {
       public static id = 'fake';
     }
 
-    expect(registry.getDefaultForLanguage(new FakeLanguage())).toBeUndefined();
+    await expect(registry.getDefaultForLanguage(new FakeLanguage())).resolves.toBeUndefined();
   });
 
-  it('returns undefined for an empty registry', () => {
+  it('returns undefined for an empty registry', async () => {
     const registry = new CodeExecutorRegistry();
-    expect(registry.getDefaultForLanguage(new CLanguage())).toBeUndefined();
+    await expect(registry.getDefaultForLanguage(new CLanguage())).resolves.toBeUndefined();
   });
 
-  it('never throws — lookups are undefinable', () => {
+  it('never throws — lookups are undefinable', async () => {
     const registry = new CodeExecutorRegistry();
     registry.registerCodeExecutor(Judge0Executor);
 
@@ -37,8 +37,7 @@ describe('CodeExecutorRegistry', () => {
       public static id = 'nope';
     }
 
-    expect(() => registry.getDefaultForLanguage(new CLanguage())).not.toThrow();
-    expect(() => registry.getDefaultForLanguage(new FakeLanguage())).not.toThrow();
-    expect(registry.getDefaultForLanguage(new FakeLanguage())).toBeUndefined();
+    await expect(registry.getDefaultForLanguage(new CLanguage())).resolves.toBeInstanceOf(Judge0Executor);
+    await expect(registry.getDefaultForLanguage(new FakeLanguage())).resolves.toBeUndefined();
   });
 });

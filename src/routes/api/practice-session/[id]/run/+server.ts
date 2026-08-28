@@ -20,8 +20,8 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   if (!session) return error(403, 'Unauthorized');
 
   const srp = ServerRegistryProvider.instance();
-  const practiceSessionService = srp.getService(PracticeSessionService);
-  const problemService = srp.getService(ProblemService);
+  const practiceSessionService = await srp.getService(PracticeSessionService);
+  const problemService = await srp.getService(ProblemService);
 
   const {
     success: parseSuccess,
@@ -43,14 +43,16 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   // this should never happen, this is just a TypeScript assertion
   if (!problem) return error(404, 'Problem not found');
 
-  const testCases = await srp.getService(TestCaseService).findByProblem({
+  const testCases = await (
+    await srp.getService(TestCaseService)
+  ).findByProblem({
     problemId: problem.id,
     user: session.user
   });
 
   const { test_type } = parsedData;
-  const language = new LanguageRegistry().getInstance(problem.model.language.toLowerCase());
-  const executor = srp.getService(CodeExecutor);
+  const language = await new LanguageRegistry().getInstance(problem.model.language.toLowerCase());
+  const executor = await srp.getService(CodeExecutor);
   const state = {
     sections: Object.fromEntries(practiceSession.previousCode.sections.map((s) => [s.slot.label, s.code]))
   };

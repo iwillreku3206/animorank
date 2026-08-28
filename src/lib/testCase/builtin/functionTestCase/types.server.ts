@@ -13,9 +13,9 @@ import { getFunctionTestCaseDataSchema } from './functionTestCase.svelte';
 /**
  * Server-side version of extension data loading with structured logging.
  */
-export function loadExtensionData(problem: Problem): FunctionTestCaseProblemData {
+export async function loadExtensionData(problem: Problem): Promise<FunctionTestCaseProblemData> {
   const serviceProvider = ServerRegistryProvider.instance();
-  const logger = serviceProvider.getService(Logger, 'builtin/testCase/function');
+  const logger = await serviceProvider.getService(Logger, 'builtin/testCase/function');
 
   const {
     data: parsedData,
@@ -35,12 +35,14 @@ export function loadExtensionData(problem: Problem): FunctionTestCaseProblemData
     data.functions[key] = {
       name: fn.name,
       symbol: fn.symbol ?? '',
-      parameters: fn.parameters.map((p) => ({
-        id: p.id,
-        name: p.name ?? '',
-        type: p.type ? typeRegistry.from(p.type) : null
-      })),
-      returnType: fn.returnType.map((t) => (t ? typeRegistry.from(t) : null))
+      parameters: await Promise.all(
+        fn.parameters.map(async (p) => ({
+          id: p.id,
+          name: p.name ?? '',
+          type: p.type ? await typeRegistry.from(p.type) : null
+        }))
+      ),
+      returnType: await Promise.all(fn.returnType.map(async (t) => (t ? await typeRegistry.from(t) : null)))
     };
   }
 
@@ -58,7 +60,7 @@ export function loadExtensionData(problem: Problem): FunctionTestCaseProblemData
  * test cases so an orphaned row fails loudly instead of crashing the
  * FunctionTestCase constructor and being silently dropped from the editor.
  */
-export function validateFunctionTestCaseKeys(model: ProblemTestCase, problem: Problem): string | null {
+export async function validateFunctionTestCaseKeys(model: ProblemTestCase, problem: Problem): Promise<string | null> {
   if (model.type !== 'function') return null;
 
   const parsed = getFunctionTestCaseDataSchema().safeParse(model.data);
@@ -67,7 +69,7 @@ export function validateFunctionTestCaseKeys(model: ProblemTestCase, problem: Pr
   }
 
   const { function: functionName, parameters } = parsed.data;
-  const fn = loadExtensionData(problem).functions[functionName];
+  const fn = (await loadExtensionData(problem)).functions[functionName];
   if (!fn) {
     return `Test case ${model.id} references function "${functionName}", which is not defined for this problem (delete the test case or restore the function in the Functions window)`;
   }

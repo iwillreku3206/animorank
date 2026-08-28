@@ -33,12 +33,14 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   const { topics, ...problem } = problemResult;
 
-  const testCases = await serviceProvider.getService(TestCaseService).findByProblemForEdit({
+  const testCases = await (
+    await serviceProvider.getService(TestCaseService)
+  ).findByProblemForEdit({
     problemId: problem.id,
     user: session.user
   });
 
-  const tags = await serviceProvider.getService(TagService).findAll();
+  const tags = await (await serviceProvider.getService(TagService)).findAll();
 
   return {
     problem,

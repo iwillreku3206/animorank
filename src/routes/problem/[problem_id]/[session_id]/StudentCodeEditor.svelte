@@ -34,7 +34,15 @@
   let monacoModel: monaco.editor.ITextModel | undefined = $state();
   let constrainedInstance: ReturnType<typeof constrainedEditor> | undefined = $state();
 
-  const telemetry = ClientRegistryProvider.instance().getService(TelemetryService);
+  let telemetry = $state<TelemetryService | null>(null);
+  $effect(() => {
+    if (telemetry) return;
+    void ClientRegistryProvider.instance()
+      .getService(TelemetryService)
+      .then((t) => {
+        telemetry = t;
+      });
+  });
 
   // svelte-ignore state_referenced_locally
   let code = $state(practiceSession.previousCode.fullCode);
@@ -42,7 +50,7 @@
   onMount(() => {
     monacoNamespace?.then(() => {
       if (!monacoInstance) return;
-      telemetry.attachMonaco(monacoInstance);
+      telemetry?.attachMonaco(monacoInstance);
     });
   });
 </script>

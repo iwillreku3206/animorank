@@ -83,25 +83,32 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
       headers: { 'content-type': 'application/json' }
     });
     const model = await res.json();
-    return new FunctionTestCase(model, problem);
+    return FunctionTestCase.from(model, problem);
   }
 
-  constructor(model: TestCaseModel, problem: Problem) {
+  /**
+   * Hydrate a persisted test case, resolving every serialized type/operator
+   * through the registries. Canonical construction path for stored rows; the
+   * sync constructor only builds an empty shell (the registries cannot be
+   * awaited there).
+   */
+  public static async from(model: TestCaseModel, problem: Problem): Promise<FunctionTestCase> {
     const parsed = getFunctionTestCaseDataSchema().parse(model.data);
     const opRegistry = GlobalRegistryProvider.instance().getRegistry(OperatorRegistry);
     const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
-    const problemData = problem.functionData;
+    const problemData = await problem.functionData();
 
-    const data: FunctionTestCaseData = {
-      function: parsed.function,
-      comparisons: parsed.comparisons.map((comparison) =>
+    const comparisons = await Promise.all(
+      parsed.comparisons.map(async (comparison) =>
         Comparison.from({
           symbol: parseSymbol(comparison.symbol),
-          operator: opRegistry.from(comparison.operator),
-          value: new TypeValue(typeRegistry.from(comparison.value), comparison.value.data)
+          operator: await opRegistry.from(comparison.operator),
+          value: new TypeValue(await typeRegistry.from(comparison.value), comparison.value.data)
         })
-      ),
-      parameters: parsed.parameters.map((parameter, i) => {
+      )
+    );
+    const parameters = await Promise.all(
+      parsed.parameters.map(async (parameter, i) => {
         // The definition's parameter type is authoritative; fall back to the
         // stored value's own type so a row referencing a deleted function,
         // an out-of-range parameter, or a not-yet-typed definition parameter
@@ -109,7 +116,7 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
         // dropped, or 500ing the run endpoint). syncParameters re-types
         // values against the definition once it is complete again.
         const definitionType = problemData.functions[parsed.function]?.parameters[i]?.type;
-        const type = definitionType ?? typeRegistry.from(parameter.value);
+        const type = definitionType ?? (await typeRegistry.from(parameter.value));
 
         return {
           id: parameter.id,
@@ -117,15 +124,20 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
           value: new TypeValue(type, parameter.value.data)
         };
       })
-    };
-    super(model, problem, data);
+    );
+
+    return new FunctionTestCase(model, problem, { function: parsed.function, comparisons, parameters });
+  }
+
+  constructor(model: TestCaseModel, problem: Problem, data?: FunctionTestCaseData) {
+    super(model, problem, data ?? { function: '', parameters: [], comparisons: [] });
   }
 
   /**
    * Select the function under test, resetting the parameter list to default values.
    */
-  public selectFunction(fnName: string): void {
-    const def = this.problem.functionData.functions[fnName];
+  public async selectFunction(fnName: string): Promise<void> {
+    const def = (await this.problem.functionData()).functions[fnName];
     this.data = {
       function: fnName,
       // Parameters without a type cannot get a value yet; they are omitted
@@ -151,7 +163,7 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
    * is backfilled with the definition parameter's id so the next sync can
    * match exactly.
    */
-  public syncParameters(functions: FunctionTestCaseProblemData): void {
+  public async syncParameters(functions: FunctionTestCaseProblemData): Promise<void> {
     const fn = functions.functions[this.data.function];
     if (!fn) return;
 
@@ -191,7 +203,7 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
     // The function signature changed: comparisons referencing a symbol whose
     // type changed (return type or a parameter type) follow along.
     for (const comparison of this.data.comparisons) {
-      this.syncComparisonValue(comparison, functions);
+      await this.syncComparisonValue(comparison, functions);
     }
   }
 
@@ -199,17 +211,17 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
     this.data.parameters[i].value = value;
   }
 
-  public setComparisonSymbol(i: number, symbol: Symbol): void {
+  public async setComparisonSymbol(i: number, symbol: Symbol): Promise<void> {
     this.data.comparisons[i].symbol = symbol;
-    this.syncComparisonValue(this.data.comparisons[i]);
+    await this.syncComparisonValue(this.data.comparisons[i]);
   }
 
   /**
    * The type a comparison symbol compares against: the function's return type
    * for `return`, or the Nth parameter's type for `paramN`.
    */
-  private symbolType(symbol: Symbol, functions: FunctionTestCaseProblemData = this.problem.functionData): Type | null {
-    const fn = functions.functions[this.data.function];
+  private async symbolType(symbol: Symbol, functions?: FunctionTestCaseProblemData): Promise<Type | null> {
+    const fn = (functions ?? (await this.problem.functionData())).functions[this.data.function];
     if (!fn) return null;
     if (symbol === 'return') return fn.returnType[0] ?? null;
     const param = symbol.match(/^param(\d+)$/);
@@ -222,8 +234,8 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
    * differ the value resets to the new type's default so the value editor and
    * the comparator always work against the symbol's actual type.
    */
-  private syncComparisonValue(comparison: Comparison, functions?: FunctionTestCaseProblemData): void {
-    const type = this.symbolType(comparison.symbol, functions);
+  private async syncComparisonValue(comparison: Comparison, functions?: FunctionTestCaseProblemData): Promise<void> {
+    const type = await this.symbolType(comparison.symbol, functions);
     if (!type) return;
     const { value } = comparison;
     if (value.type.id !== type.id || !deepEqual(value.type.options, type.options, { strict: true })) {
@@ -231,8 +243,8 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
     }
   }
 
-  public setComparisonOperator(i: number, key: string): void {
-    const operator = GlobalRegistryProvider.instance().getRegistry(OperatorRegistry).getStatic(key).create();
+  public async setComparisonOperator(i: number, key: string): Promise<void> {
+    const operator = (await GlobalRegistryProvider.instance().getRegistry(OperatorRegistry).getStatic(key)).create();
     this.data.comparisons[i].operator = operator;
   }
 
@@ -240,8 +252,8 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
     this.data.comparisons[i].value = value;
   }
 
-  public addComparison(): void {
-    const fn = this.problem.functionData.functions[this.data.function];
+  public async addComparison(): Promise<void> {
+    const fn = (await this.problem.functionData()).functions[this.data.function];
     const returnType = fn?.returnType[0];
     // Void returns (and missing/untyped return slots) cannot be compared:
     // the harness never emits a return export file for them, so the
@@ -259,7 +271,7 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
     const defaultKey = keys.includes('equal') ? 'equal' : keys[0];
     if (!defaultKey) return;
 
-    const operator = registry.getStatic(defaultKey).create();
+    const operator = (await registry.getStatic(defaultKey)).create();
     const comparison = Comparison.create(returnType, operator);
     this.data = { ...this.data, comparisons: [...this.data.comparisons, comparison] };
   }
@@ -280,24 +292,26 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
    * The runInfo arrives over the wire as plain JSON; re-hydrate the comparison
    * values into TypeValue instances for the display components.
    */
-  public hydrateRunInfo(runInfo: FunctionTestCaseRunInfo): FunctionTestCaseRunInfo {
+  public async hydrateRunInfo(runInfo: FunctionTestCaseRunInfo): Promise<FunctionTestCaseRunInfo> {
     if ('failure' in runInfo) return runInfo;
     // The run endpoint's catch branch sends `runInfo: []` for public tests
     // whose execution threw — not a comparisons shape, nothing to hydrate.
     if (!('comparisons' in runInfo)) return runInfo;
     type Serialized = { type: string; options: unknown; data: JsonValue };
     const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
-    const hydrate = (v: unknown): TypeValue =>
+    const hydrate = async (v: unknown): Promise<TypeValue> =>
       new TypeValue(
-        typeRegistry.from({ type: (v as Serialized).type, options: (v as Serialized).options }),
+        await typeRegistry.from({ type: (v as Serialized).type, options: (v as Serialized).options }),
         (v as Serialized).data
       );
     return {
-      comparisons: runInfo.comparisons.map((c) => ({
-        ...c,
-        expected: hydrate(c.expected),
-        actual: hydrate(c.actual)
-      }))
+      comparisons: await Promise.all(
+        runInfo.comparisons.map(async (c) => ({
+          ...c,
+          expected: await hydrate(c.expected),
+          actual: await hydrate(c.actual)
+        }))
+      )
     };
   }
 }

@@ -40,9 +40,9 @@
     try {
       const model = await createTestCase(context.problem.model.id, type);
       if (model) {
-        const instance = GlobalRegistryProvider.instance()
+        const instance = await GlobalRegistryProvider.instance()
           .getRegistry(TestCaseRegistry)
-          .getInstance(model.type, model, context.problem);
+          .from(model, context.problem);
         context.testCases = [...context.testCases, instance];
       }
     } catch (error) {

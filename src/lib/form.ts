@@ -68,6 +68,8 @@ export type FormFieldDefinition = {
     label: string;
     type: K;
     default?: InferValueType<K>;
+    /** Optional helper text rendered under the label. */
+    description?: string;
   } & FieldConfigLookup[K];
 }[FormFieldType];
 

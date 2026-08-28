@@ -70,7 +70,7 @@ export abstract class ServerTestCase<Data extends IntoJsonValue = any, RunInfo e
 
   public async run(language: Language, executor: CodeExecutor, state: IntoJsonValue): Promise<TestCaseResult<RunInfo>> {
     try {
-      const testCaseLanguage = (this.constructor as typeof ServerTestCase).languageRegistry.getInstance(
+      const testCaseLanguage = await (this.constructor as typeof ServerTestCase).languageRegistry.getInstance(
         language.id,
         this
       );

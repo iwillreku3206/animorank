@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   if (!session || !session.user.id) redirect(302, '/');
 
   const serviceProvider = ServerRegistryProvider.instance();
-  const practiceSessionService = serviceProvider.getService(PracticeSessionService);
+  const practiceSessionService = await serviceProvider.getService(PracticeSessionService);
 
   const practiceSession = await practiceSessionService.findLatestNonDoneOrCreate({
     problemId: params.problem_id,

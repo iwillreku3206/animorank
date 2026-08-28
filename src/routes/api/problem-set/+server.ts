@@ -18,7 +18,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
   if (!success) return error(400, zodError);
 
-  const problemSetService = ServerRegistryProvider.instance().getService(ProblemSetService);
+  const problemSetService = await ServerRegistryProvider.instance().getService(ProblemSetService);
 
   const problemSet = await problemSetService.create({
     title: data.title,
@@ -54,7 +54,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 
   if (!success) return error(400, zodError);
 
-  const problemSetService = ServerRegistryProvider.instance().getService(ProblemSetService);
+  const problemSetService = await ServerRegistryProvider.instance().getService(ProblemSetService);
 
   const result = await problemSetService.findByFilter({
     user: session.user,

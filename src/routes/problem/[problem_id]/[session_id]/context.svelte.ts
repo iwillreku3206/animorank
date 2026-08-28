@@ -10,7 +10,10 @@ import {
 } from '$lib/practiceSession/api';
 
 /** Opens (or focuses) a window in the dockview, optionally placing it. */
-export type OpenWindow = (_key: string, _positions?: AddPanelPositionOptions | AddPanelPositionOptions[]) => void;
+export type OpenWindow = (
+  _key: string,
+  _positions?: AddPanelPositionOptions | AddPanelPositionOptions[]
+) => Promise<unknown>;
 
 export interface SolveWindowContextInitial {
   problem: Problem;
@@ -51,7 +54,7 @@ export class SolveWindowContext {
    * Opens (or focuses) a window in the dockview. Wired by the page once the
    * window manager is available.
    */
-  public openWindow: OpenWindow = () => {};
+  public openWindow: OpenWindow = async () => {};
 
   constructor(initial: SolveWindowContextInitial) {
     this.problem = initial.problem;
@@ -74,7 +77,7 @@ export class SolveWindowContext {
     this.lastTestType = 'run';
     this.selectedTest = results.results.length > 0 ? 0 : -1;
     this.editorState.locked = false;
-    this.openWindow('test_cases', { direction: 'below', referencePanel: 'code_editor' });
+    await this.openWindow('test_cases', { direction: 'below', referencePanel: 'code_editor' });
   }
 
   public async submit(): Promise<void> {
@@ -91,7 +94,7 @@ export class SolveWindowContext {
       this.selectedTest = results.results.length > 0 ? 0 : -1;
       this.editorState.locked = false;
     }
-    this.openWindow('test_cases', { direction: 'below', referencePanel: 'code_editor' });
+    await this.openWindow('test_cases', { direction: 'below', referencePanel: 'code_editor' });
   }
 
   public async customRun(stdin: string): Promise<void> {

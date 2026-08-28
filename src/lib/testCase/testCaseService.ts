@@ -64,7 +64,7 @@ export class TestCaseService {
       throw new Error(`Unknown test case type "${options.type}"`);
     }
 
-    return registry.getStatic(options.type).create(new Problem(problem));
+    return (await registry.getStatic(options.type)).create(new Problem(problem));
   }
 
   /**
@@ -103,8 +103,10 @@ export class TestCaseService {
     const fetched = await this.fetchByProblem(options);
     if (!fetched) return [];
 
-    return fetched.models.map((model) =>
-      ServerRegistryProvider.instance().getRegistry(ServerTestCaseRegistry).from(model, fetched.problem)
+    return Promise.all(
+      fetched.models.map((model) =>
+        ServerRegistryProvider.instance().getRegistry(ServerTestCaseRegistry).from(model, fetched.problem)
+      )
     );
   }
 
@@ -123,12 +125,14 @@ export class TestCaseService {
 
     const result: ServerTestCase[] = [];
     for (const model of fetched.models) {
-      const invalid = validateFunctionTestCaseKeys(model, fetched.problem);
+      const invalid = await validateFunctionTestCaseKeys(model, fetched.problem);
       if (invalid) {
         console.error(`Skipping unhydratable test case ${model.id}: ${invalid}`);
         continue;
       }
-      result.push(ServerRegistryProvider.instance().getRegistry(ServerTestCaseRegistry).from(model, fetched.problem));
+      result.push(
+        await ServerRegistryProvider.instance().getRegistry(ServerTestCaseRegistry).from(model, fetched.problem)
+      );
     }
     return result;
   }
@@ -140,7 +144,9 @@ export class TestCaseService {
     const problem = await db.problem.findUnique({ where: { id: model.problem_id } });
     if (!problem) return null;
 
-    return ServerRegistryProvider.instance().getRegistry(ServerTestCaseRegistry).from(model, new Problem(problem));
+    return await ServerRegistryProvider.instance()
+      .getRegistry(ServerTestCaseRegistry)
+      .from(model, new Problem(problem));
   }
 
   public async update(options: UpdateOptions): Promise<ServerTestCase | null> {
@@ -150,7 +156,7 @@ export class TestCaseService {
     // Reject payloads that would produce an unparseable row (M9): unknown
     // type keys, non-boolean public, or data that does not match the
     // effective type's schema.
-    ServerRegistryProvider.instance()
+    await ServerRegistryProvider.instance()
       .getRegistry(ServerTestCaseRegistry)
       .validateUpdate({ type: options.type, public: options.public, data: options.data }, existing.type);
 
@@ -166,7 +172,9 @@ export class TestCaseService {
     const problem = await db.problem.findUnique({ where: { id: model.problem_id } });
     if (!problem) return null;
 
-    return ServerRegistryProvider.instance().getRegistry(ServerTestCaseRegistry).from(model, new Problem(problem));
+    return await ServerRegistryProvider.instance()
+      .getRegistry(ServerTestCaseRegistry)
+      .from(model, new Problem(problem));
   }
 
   public async delete(id: string, user: User): Promise<boolean> {

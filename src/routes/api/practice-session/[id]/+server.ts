@@ -15,7 +15,7 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
   const { success, error: zodError, data } = await updateCodeValidator.safeParseAsync(await request.json());
   if (!success) return error(400, zodError);
 
-  const service = ServerRegistryProvider.instance().getService(PracticeSessionService);
+  const service = await ServerRegistryProvider.instance().getService(PracticeSessionService);
 
   const update = await service.update({
     id: params.id,

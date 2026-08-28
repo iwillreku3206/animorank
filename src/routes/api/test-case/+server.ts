@@ -17,7 +17,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
   if (!success) return error(400, zodError);
 
   try {
-    const newTestCase = await ServerRegistryProvider.instance().getService(TestCaseService).create({
+    const newTestCase = await (
+      await ServerRegistryProvider.instance().getService(TestCaseService)
+    ).create({
       problemId: data.problem,
       type: data.type,
       user: session.user

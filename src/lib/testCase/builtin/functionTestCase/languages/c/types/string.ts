@@ -45,31 +45,35 @@ function escapeCLiteral(value: string): string {
 }
 
 export class CStringType extends CType<StringType> {
-  public readFromPrint(printed: string): TypeValue<StringType> {
+  public async readFromPrint(printed: string): Promise<TypeValue<StringType>> {
     return new TypeValue(this.type, { value: printed });
   }
   static type = StringType;
 
-  public generateParameterDefinition(symbol: string): string {
+  public async generateParameterDefinition(symbol: string): Promise<string> {
     return `char* ${symbol}`;
   }
 
-  public generateReturnType(): string {
+  public async generateReturnType(): Promise<string> {
     return 'char*';
   }
 
-  public pushDeclaration(context: CExecutionContext, symbol: string, value?: TypeValue<StringType>): void {
+  public async pushDeclaration(
+    context: CExecutionContext,
+    symbol: string,
+    value?: TypeValue<StringType>
+  ): Promise<void> {
     context.pushCode(`char* ${symbol};`);
     if (value) {
       context.pushCode(`${symbol} = ${escapeCLiteral(value.value.value)};`);
     }
   }
 
-  public pushPreDefinitions(context: CExecutionContext): void {
+  public async pushPreDefinitions(context: CExecutionContext): Promise<void> {
     context.pushHeader('stdio.h');
   }
 
-  public pushPrint(context: CExecutionContext, symbol: string, fileSymbol: string): void {
+  public async pushPrint(context: CExecutionContext, symbol: string, fileSymbol: string): Promise<void> {
     context.pushCode(`fprintf(${fileSymbol}, "%s", ${symbol});`);
   }
 }

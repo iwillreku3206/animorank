@@ -53,6 +53,10 @@
     {@const field = form.fields[id]}
     {@const fid = `${formId}-${id}`}
 
+    {#if field.description}
+      <p class="text-xs text-base-content/60">{field.description}</p>
+    {/if}
+
     {#if field.type === 'text'}
       <fieldset class="fieldset">
         <label

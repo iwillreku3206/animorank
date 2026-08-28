@@ -21,5 +21,5 @@ export abstract class OperatorType<O extends Operator = Operator, T extends Type
    * @param {TypeValue} b The right-value (usually the actual value)
    */
   // eslint-disable-next-line no-unused-vars
-  public abstract compare(a: TypeValue<T>, b: TypeValue<T>): boolean;
+  public abstract compare(a: TypeValue<T>, b: TypeValue<T>): Promise<boolean>;
 }

@@ -47,14 +47,14 @@ class StubExecutor extends CodeExecutor {
 const stub = new StubExecutor();
 
 describe('ServerStdioTestCase', () => {
-  it('hydrates the old schema data from the model', () => {
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+  it('hydrates the old schema data from the model', async () => {
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     expect(serverTestCase.testCase.data).toEqual({ input: '5\n', output: '25\n' });
   });
 
   it('compiles the submission and feeds the test input on stdin', async () => {
     captured = undefined;
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     await serverTestCase.run(new CLanguage(), stub, {
       sections: { body: 'int main() { int x; scanf("%d", &x); printf("%d\\n", x * x); }' }
     });
@@ -68,7 +68,7 @@ describe('ServerStdioTestCase', () => {
   });
 
   it('passes when stdout matches the expected output', async () => {
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     const result = await serverTestCase.run(new CLanguage(), stub, { sections: { body: '' } });
 
     expect(result).toMatchObject({
@@ -86,7 +86,7 @@ describe('ServerStdioTestCase', () => {
         };
       }
     }
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     const result = await serverTestCase.run(new CLanguage(), new NonZeroExitExecutor(), { sections: { body: '' } });
 
     // A crashing/exiting program must fail even if its partial stdout matches.
@@ -102,7 +102,7 @@ describe('ServerStdioTestCase', () => {
         };
       }
     }
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     const result = await serverTestCase.run(new CLanguage(), new TimeoutExecutor(), { sections: { body: '' } });
 
     // Judge0 status 5 collapses to a single entry with no exit code; the
@@ -112,7 +112,7 @@ describe('ServerStdioTestCase', () => {
 
   it('fails when stdout differs from the expected output', async () => {
     const model = makeTestCaseModel({ data: { input: '5\n', output: '26\n' } });
-    const serverTestCase = new ServerTestCaseRegistry().from(model, new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(model, new Problem(problemModel));
     const result = await serverTestCase.run(new CLanguage(), stub, { sections: { body: '' } });
 
     expect(result).toMatchObject({
@@ -131,7 +131,7 @@ describe('ServerStdioTestCase', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     const result = await serverTestCase.run(new CLanguage(), new CompileFailExecutor(), {
       sections: { body: '' }
     });
@@ -140,7 +140,7 @@ describe('ServerStdioTestCase', () => {
   });
 
   it('omits runInfo for hidden test cases', async () => {
-    const serverTestCase = new ServerTestCaseRegistry().from(
+    const serverTestCase = await new ServerTestCaseRegistry().from(
       makeTestCaseModel({ public: false }),
       new Problem(problemModel)
     );
@@ -159,7 +159,7 @@ describe('ServerStdioTestCase', () => {
       uses_slots: true,
       starter_code: ['int main() {', '%slot code%', '%endslot code%', 'return 0;', '}'].join('\n')
     } as unknown as ProblemModel;
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(slotsProblem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(slotsProblem));
     await serverTestCase.run(new CLanguage(), stub, { sections: { code: 'printf("hello\\n");' } });
 
     const submission = captured!.files.find((f) => f.path === 'main.c')!;
@@ -175,7 +175,7 @@ describe('ServerStdioTestCase', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     const result = await serverTestCase.run(new CLanguage(), new ThrowingExecutor(), {
       sections: { body: '' }
     });
@@ -194,7 +194,7 @@ describe('ServerStdioTestCase', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(
+    const serverTestCase = await new ServerTestCaseRegistry().from(
       makeTestCaseModel({ public: false }),
       new Problem(problemModel)
     );

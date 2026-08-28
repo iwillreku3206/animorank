@@ -11,25 +11,29 @@ export type TestRunResponse = {
   success: boolean;
 };
 
-function hydrateResults(
+async function hydrateResults(
   raw: TestCaseResult<FunctionTestCaseRunInfo>[],
   problem: Problem
-): (TestCaseResult<FunctionTestCaseRunInfo> & { testCase?: TestCase })[] {
+): Promise<(TestCaseResult<FunctionTestCaseRunInfo> & { testCase?: TestCase })[]> {
   const registry = GlobalRegistryProvider.instance().getRegistry(TestCaseRegistry);
-  return raw.map((r) => {
-    // Hidden results arrive as bare { success, testCaseInfo: { public: false } }
-    // entries by design — they carry no model to hydrate and no details to
-    // display, so pass them through untouched.
-    if (!r.testCaseInfo.public) return r;
-    try {
-      // public results carry the full model as testCaseInfo
-      const testCase = registry.from(r.testCaseInfo as ProblemTestCase, problem);
-      return 'runInfo' in r ? { ...r, testCase, runInfo: testCase.hydrateRunInfo(r.runInfo) } : { ...r, testCase };
-    } catch (error) {
-      console.error(error);
-      return r;
-    }
-  });
+  return Promise.all(
+    raw.map(async (r) => {
+      // Hidden results arrive as bare { success, testCaseInfo: { public: false } }
+      // entries by design — they carry no model to hydrate and no details to
+      // display, so pass them through untouched.
+      if (!r.testCaseInfo.public) return r;
+      try {
+        // public results carry the full model as testCaseInfo
+        const testCase = await registry.from(r.testCaseInfo as ProblemTestCase, problem);
+        return 'runInfo' in r
+          ? { ...r, testCase, runInfo: await testCase.hydrateRunInfo(r.runInfo) }
+          : { ...r, testCase };
+      } catch (error) {
+        console.error(error);
+        return r;
+      }
+    })
+  );
 }
 
 export async function runTestCases(session_id: string, problem: Problem): Promise<TestRunResponse> {
@@ -47,7 +51,7 @@ export async function runTestCases(session_id: string, problem: Problem): Promis
 
   return {
     success: res.success,
-    results: hydrateResults(res.results, problem)
+    results: await hydrateResults(res.results, problem)
   };
 }
 
@@ -66,7 +70,7 @@ export async function submit(session_id: string, problem: Problem): Promise<Test
 
   return {
     success: res.success,
-    results: hydrateResults(res.results, problem)
+    results: await hydrateResults(res.results, problem)
   };
 }
 

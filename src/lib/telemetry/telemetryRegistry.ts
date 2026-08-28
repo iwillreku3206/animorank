@@ -11,7 +11,7 @@ export class TelemetryRegistry extends ServiceRegistry<TelemetryService, []> {
     this.register('dummy', DummyTelemetryService);
   }
 
-  public getDefault(): TelemetryService {
+  public async getDefault(): Promise<TelemetryService> {
     return this.getInstance('console');
   }
 }

@@ -11,7 +11,7 @@ export class LoggerRegistry extends ServiceRegistry<Logger, [string]> {
     this.register('file', FileLogger);
   }
 
-  public getDefault(module: string): Logger {
+  public async getDefault(module: string): Promise<Logger> {
     let logger = process.env.LOGGER_TYPE || 'console';
     if (!this._registry.has(logger)) {
       logger = 'console';

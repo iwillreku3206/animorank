@@ -5,7 +5,7 @@ import { ServerRegistryProvider } from '$lib/registry/server';
 
 export const handle: Handle = async ({ event, resolve }) => {
   const serviceProvider = ServerRegistryProvider.instance();
-  const logger = serviceProvider.getService(Logger, 'webserver');
+  const logger = await serviceProvider.getService(Logger, 'webserver');
 
   const response = await authHandle({ event, resolve });
 
@@ -16,7 +16,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 export const handleError: HandleServerError = async ({ error }) => {
   const serviceProvider = ServerRegistryProvider.instance();
-  const logger = serviceProvider.getService(Logger, 'webserver');
+  const logger = await serviceProvider.getService(Logger, 'webserver');
 
   // Non-Error throws can be circular or BigInt-containing objects that
   // JSON.stringify itself crashes on — never let the error handler throw.

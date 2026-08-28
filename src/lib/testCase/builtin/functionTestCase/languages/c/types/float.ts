@@ -4,7 +4,7 @@ import { CType } from '../cType';
 import type { CExecutionContext } from '../executionContext';
 
 export class CFloat extends CType<Float> {
-  public readFromPrint(printed: string): TypeValue<Float> {
+  public async readFromPrint(printed: string): Promise<TypeValue<Float>> {
     return new TypeValue(this.type, { value: printed });
   }
   static type = Float;
@@ -18,26 +18,26 @@ export class CFloat extends CType<Float> {
     return this.type.options.size === 64 ? normalized : `${normalized}f`;
   }
 
-  public generateParameterDefinition(symbol: string): string {
+  public async generateParameterDefinition(symbol: string): Promise<string> {
     return `${this.typeDef()} ${symbol}`;
   }
 
-  public generateReturnType(): string {
+  public async generateReturnType(): Promise<string> {
     return this.typeDef();
   }
 
-  public pushDeclaration(context: CExecutionContext, symbol: string, value?: TypeValue<Float>): void {
+  public async pushDeclaration(context: CExecutionContext, symbol: string, value?: TypeValue<Float>): Promise<void> {
     context.pushCode(`${this.typeDef()} ${symbol};`);
     if (value) {
       context.pushCode(`${symbol} = ${this.literal(value.value.value)};`);
     }
   }
 
-  public pushPreDefinitions(context: CExecutionContext): void {
+  public async pushPreDefinitions(context: CExecutionContext): Promise<void> {
     context.pushHeader('stdio.h');
   }
 
-  public pushPrint(context: CExecutionContext, symbol: string, fileSymbol: string): void {
+  public async pushPrint(context: CExecutionContext, symbol: string, fileSymbol: string): Promise<void> {
     // Round-trip precision: the printed text feeds readFromPrint and the JS
     // comparison operators, so %f/%lf's 6-decimal truncation misgraded
     // correct submissions (1.0f/3.0f printed "0.333333" vs the true float

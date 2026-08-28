@@ -15,8 +15,12 @@ export class ServerFunctionTestCase extends ServerTestCase<FunctionTestCaseData,
   public static get dataSchema() {
     return getFunctionTestCaseDataSchema();
   }
-  public constructor(model: TestCaseModel, problem: Problem) {
-    super(new FunctionTestCase(model, problem));
+  public static async from(model: TestCaseModel, problem: Problem): Promise<ServerFunctionTestCase> {
+    return new ServerFunctionTestCase(model, problem, await FunctionTestCase.from(model, problem));
+  }
+
+  public constructor(model: TestCaseModel, problem: Problem, testCase?: FunctionTestCase) {
+    super(testCase ?? new FunctionTestCase(model, problem));
   }
   public static id() {
     return 'function';

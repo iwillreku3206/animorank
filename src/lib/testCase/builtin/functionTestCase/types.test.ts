@@ -43,15 +43,15 @@ describe('extension data', () => {
       }
     } as unknown as ProblemModel);
 
-  it('preserves stored keys when parsing', () => {
-    const data = parseExtensionData(makeProblem('legacy-id'));
+  it('preserves stored keys when parsing', async () => {
+    const data = await parseExtensionData(makeProblem('legacy-id'));
     expect(Object.keys(data.functions)).toEqual(['legacy-id']);
     expect(data.functions['legacy-id'].name).toBe('add');
     expect(data.functions['legacy-id'].parameters[0].type!.id).toBe('int');
   });
 
-  it('preserves keys when serializing', () => {
-    const serialized = serializeExtensionData(parseExtensionData(makeProblem('legacy-id')));
+  it('preserves keys when serializing', async () => {
+    const serialized = serializeExtensionData(await parseExtensionData(makeProblem('legacy-id')));
     expect(Object.keys(serialized.functions as Record<string, unknown>)).toEqual(['legacy-id']);
     expect((serialized.functions as Record<string, { name: string }>)['legacy-id'].name).toBe('add');
   });

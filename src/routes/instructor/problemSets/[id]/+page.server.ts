@@ -34,7 +34,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   if (!problemSet) return redirect(302, '/instructor/problemSets');
 
-  const tagService = ServerRegistryProvider.instance().getService(TagService);
+  const tagService = await ServerRegistryProvider.instance().getService(TagService);
   const allTags = await tagService.findAll();
 
   return {

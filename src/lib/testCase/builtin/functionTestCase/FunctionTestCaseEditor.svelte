@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { FunctionTestCase } from './functionTestCase.svelte';
-  import type { Symbol } from './types';
+  import type { FunctionTestCaseProblemData, Symbol } from './types';
   import { GlobalRegistryProvider } from '$lib/registry/global';
   import { OperatorRegistry } from './operatorRegistry';
   import Button from '$lib/components/ui/buttons/Button.svelte';
@@ -12,12 +12,23 @@
 
   const opRegistry = GlobalRegistryProvider.instance().getRegistry(OperatorRegistry);
 
-  let problemData = $derived(testCase.problem.functionData);
+  let problemData = $state<FunctionTestCaseProblemData>({ functions: {} });
+  $effect(() => {
+    void testCase.problem.functionData().then((d) => {
+      problemData = d;
+    });
+  });
   let availableFunctions = $derived(Object.entries(problemData.functions).map(([id, fn]) => ({ id, name: fn.name })));
   let availableOperators = $derived([...opRegistry.keys()]);
-  let operatorNames = $derived(
-    Object.fromEntries(availableOperators.map((key) => [key, opRegistry.getStatic(key).create().displayName]))
-  );
+  let operatorNames = $state<Record<string, string>>({});
+  $effect(() => {
+    const keys = [...opRegistry.keys()];
+    void Promise.all(
+      keys.map(async (key) => [key, (await opRegistry.getStatic(key)).create().displayName] as const)
+    ).then((entries) => {
+      operatorNames = Object.fromEntries(entries);
+    });
+  });
 
   let availableSymbols = $derived([
     { value: 'return' as Symbol, label: 'return' },
@@ -39,7 +50,9 @@
       id="fn-select"
       class="select select-xs select-bordered flex-1"
       value={testCase.data.function}
-      onchange={(e) => testCase.selectFunction((e.target as HTMLSelectElement).value)}
+      onchange={(e) => {
+        void testCase.selectFunction((e.target as HTMLSelectElement).value);
+      }}
     >
       <option value="">Select a function</option>
       {#each availableFunctions as fn (fn.id)}
@@ -81,7 +94,9 @@
             <select
               class="select select-xs select-bordered"
               value={comp.symbol as string}
-              onchange={(e) => testCase.setComparisonSymbol(i, (e.target as HTMLSelectElement).value as Symbol)}
+              onchange={(e) => {
+                void testCase.setComparisonSymbol(i, (e.target as HTMLSelectElement).value as Symbol);
+              }}
             >
               {#each availableSymbols as sym (sym)}
                 <option value={sym.value}>{sym.label}</option>
@@ -91,7 +106,9 @@
               <select
                 class="select select-xs select-bordered"
                 value={comp.operator.id}
-                onchange={(e) => testCase.setComparisonOperator(i, (e.target as HTMLSelectElement).value)}
+                onchange={(e) => {
+                  void testCase.setComparisonOperator(i, (e.target as HTMLSelectElement).value);
+                }}
               >
                 {#each availableOperators as opKey (opKey)}
                   <option value={opKey}>{operatorNames[opKey]}</option>
@@ -148,7 +165,9 @@
       {/each}
       <Button
         class="btn-xs btn-success self-start"
-        onclick={() => testCase.addComparison()}
+        onclick={() => {
+          void testCase.addComparison();
+        }}
         disabled={availableOperators.length === 0}
       >
         + Add Comparison

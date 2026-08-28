@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     redirect(302, '/');
   }
 
-  const problemSetService = ServerRegistryProvider.instance().getService(ProblemSetService);
+  const problemSetService = await ServerRegistryProvider.instance().getService(ProblemSetService);
 
   const params = url.searchParams;
   const filters = parseFilters(params);
@@ -58,7 +58,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
   // Load the full tag universe (not just tags present in the current results) so
   // the filter browser always shows every available tag.
-  const tagService = ServerRegistryProvider.instance().getService(TagService);
+  const tagService = await ServerRegistryProvider.instance().getService(TagService);
   const allTags = await tagService.findAll();
   const tagGroups = groupBy(allTags, (t) => t.type);
 

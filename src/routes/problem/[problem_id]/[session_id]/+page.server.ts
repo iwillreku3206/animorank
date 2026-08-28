@@ -10,8 +10,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   if (!session || !session.user.id) redirect(302, '/');
 
   const serviceProvider = ServerRegistryProvider.instance();
-  const problemService = serviceProvider.getService(ProblemService);
-  const practiceSessionService = serviceProvider.getService(PracticeSessionService);
+  const problemService = await serviceProvider.getService(ProblemService);
+  const practiceSessionService = await serviceProvider.getService(PracticeSessionService);
 
   const problem = await problemService.findById({ id: params.problem_id, user: session.user });
   if (!problem) throw error(404, { message: 'Not Found' });

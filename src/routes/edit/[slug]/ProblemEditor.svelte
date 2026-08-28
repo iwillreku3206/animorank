@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, untrack } from 'svelte';
+  import { onDestroy } from 'svelte';
   import DockviewWindow from '$lib/window/DockviewWindow.svelte';
   import type { DefaultLayout } from '$lib/window/layout';
   import { ProblemEditorWindowRegistry } from './windowRegistry';
@@ -23,27 +23,31 @@
     ]
   };
 
-  let context = $state(
-    untrack(
-      () =>
-        new ProblemEditorWindowContext({
-          problem: data.problem,
-          testCases: data.testCases,
-          tags: data.tags,
-          topics: data.topics
-        })
-    )
-  );
+  let context = $state<ProblemEditorWindowContext | null>(null);
+
+  $effect(() => {
+    if (context) return;
+    ProblemEditorWindowContext.create({
+      problem: data.problem,
+      testCases: data.testCases,
+      tags: data.tags,
+      topics: data.topics
+    }).then((c) => {
+      context = c;
+    });
+  });
 
   onDestroy(() => {
-    context.cleanup();
+    context?.cleanup();
   });
 </script>
 
-save status: {context.autosaveStatus}
-<DockviewWindow
-  bind:context
-  {windowRegistry}
-  {defaultLayout}
-  storageKey={`problem-editor-${data.problem.id}`}
-/>
+{#if context}
+  save status: {context.autosaveStatus}
+  <DockviewWindow
+    bind:context
+    {windowRegistry}
+    {defaultLayout}
+    storageKey={`problem-editor-${data.problem.id}`}
+  />
+{/if}

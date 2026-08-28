@@ -9,11 +9,12 @@
   let handleReset = $state(() => {});
 
   // Alongside the test cases window when it is open, otherwise below the editor.
-  const openCustomCode = () =>
-    context.openWindow('custom_code', [
+  const openCustomCode = async () => {
+    await context.openWindow('custom_code', [
       { direction: 'right', referencePanel: 'test_cases' },
       { direction: 'below', referencePanel: 'code_editor' }
     ]);
+  };
 </script>
 
 <div class="flex flex-col h-full w-full">

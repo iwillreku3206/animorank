@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { ProblemEditorWindowContext } from './context.svelte';
 import type { Problem as ProblemModel, ProblemTestCase } from '$lib/zenstack/models';
 
-const makeContext = () =>
-  new ProblemEditorWindowContext({
+const makeContext = async () =>
+  await ProblemEditorWindowContext.create({
     problem: {
       id: 'problem-1',
       name: 'Test problem',
@@ -22,8 +22,8 @@ const makeContext = () =>
   });
 
 describe('ProblemEditorWindowContext.addFunction', () => {
-  it('adds a blank function keyed by uuid', () => {
-    const context = makeContext();
+  it('adds a blank function keyed by uuid', async () => {
+    const context = await makeContext();
     context.addFunction();
     context.addFunction();
 
@@ -44,9 +44,9 @@ describe('ProblemEditorWindowContext.addFunction', () => {
 });
 
 describe('ProblemEditorWindowContext.removeFunction', () => {
-  it('refuses to remove a function referenced by a test case', () => {
+  it('refuses to remove a function referenced by a test case', async () => {
     const fnId = crypto.randomUUID();
-    const context = new ProblemEditorWindowContext({
+    const context = await ProblemEditorWindowContext.create({
       problem: {
         id: 'problem-1',
         name: 'Test problem',
@@ -90,8 +90,8 @@ describe('ProblemEditorWindowContext.removeFunction', () => {
     context.cleanup();
   });
 
-  it('removes a function no test case references', () => {
-    const context = makeContext();
+  it('removes a function no test case references', async () => {
+    const context = await makeContext();
     context.addFunction();
     const fnId = Object.keys(context.functionData.functions)[0];
 

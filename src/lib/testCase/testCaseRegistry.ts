@@ -13,6 +13,8 @@ export class TestCaseRegistry extends ServiceRegistry<
     id(): string;
     // eslint-disable-next-line no-unused-vars
     create(problem: Problem): Promise<TestCase>;
+    // eslint-disable-next-line no-unused-vars
+    from?(model: TestCaseModel, problem: Problem): Promise<TestCase>;
   }
 > {
   constructor() {
@@ -22,7 +24,8 @@ export class TestCaseRegistry extends ServiceRegistry<
     this.register(CustomTestCase.id(), CustomTestCase);
   }
 
-  public from(model: TestCaseModel, problem: Problem) {
-    return this.getInstance(model.type, model, problem);
+  public async from(model: TestCaseModel, problem: Problem): Promise<TestCase> {
+    const cls = await this.getStatic(model.type);
+    return cls.from ? cls.from(model, problem) : this.getInstance(model.type, model, problem);
   }
 }

@@ -16,8 +16,18 @@
   } = $props();
   const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
 
-  function selectType(typeId: string) {
-    type = typeId ? typeRegistry.getStatic(typeId).create() : null;
+  let typeNames = $state<Record<string, string>>({});
+  $effect(() => {
+    const types = availableTypes;
+    void Promise.all(types.map(async (t) => [t, (await typeRegistry.getStatic(t)).create().displayName] as const)).then(
+      (entries) => {
+        typeNames = Object.fromEntries(entries);
+      }
+    );
+  });
+
+  async function selectType(typeId: string) {
+    type = typeId ? (await typeRegistry.getStatic(typeId)).create() : null;
   }
 </script>
 
@@ -25,7 +35,9 @@
   <select
     class="select select-xs select-primary min-w-24"
     value={type?.id ?? ''}
-    onchange={(e) => selectType((e.target as HTMLSelectElement).value)}
+    onchange={(e) => {
+      void selectType((e.target as HTMLSelectElement).value);
+    }}
   >
     <option
       value=""
@@ -33,7 +45,7 @@
     >
     {#each availableTypes as t (t)}
       <option value={t}>
-        {type?.id === t ? type.displayName : typeRegistry.getStatic(t).create().displayName}
+        {type?.id === t ? type.displayName : typeNames[t]}
       </option>
     {/each}
   </select>

@@ -38,12 +38,13 @@ export class TagService {
   }
 
   public async create(options: CreateOptions): Promise<Tag<TagModel> | null> {
-    const model = await this.tagRegistry.getStatic(options.type).create(options);
+    const cls = await this.tagRegistry.getStatic(options.type);
+    const model = await cls.create(options);
     return this.tagRegistry.getInstance(options.type, model);
   }
 
   public async findById(options: FindByIdOptions): Promise<Tag<TagModel> | null> {
-    const cls = this.tagRegistry.getStatic(options.type);
+    const cls = await this.tagRegistry.getStatic(options.type);
     const model = await cls.findById(options.id);
     if (!model) return null;
 
@@ -51,7 +52,7 @@ export class TagService {
   }
 
   public async update(options: UpdateOptions): Promise<Tag<TagModel> | null> {
-    const cls = this.tagRegistry.getStatic(options.type);
+    const cls = await this.tagRegistry.getStatic(options.type);
     const model = await cls.update(options.id, options as TagUpdateOptions);
     if (!model) return null;
 
@@ -59,28 +60,32 @@ export class TagService {
   }
 
   public async delete(options: DeleteOptions): Promise<boolean> {
-    return this.tagRegistry.getStatic(options.type).delete(options.id);
+    return (await this.tagRegistry.getStatic(options.type)).delete(options.id);
   }
 
   public async findByType(options: ListByTypeOptions): Promise<Tag<TagModel>[]> {
-    const cls = this.tagRegistry.getStatic(options.type);
+    const cls = await this.tagRegistry.getStatic(options.type);
     const models = await cls.findAll();
-    return models.map((model) => this.tagRegistry.getInstance(options.type, model));
+    return Promise.all(models.map((model) => this.tagRegistry.getInstance(options.type, model)));
   }
 
   public async findAll(): Promise<Tag<TagModel>[]> {
     const tags = await db.tag.findMany({ orderBy: [{ order: 'asc' }, { label: 'asc' }] });
-    return tags.map((tag) => {
-      return this.tagRegistry.getInstance(tag.type, tag);
-    });
+    return Promise.all(
+      tags.map((tag) => {
+        return this.tagRegistry.getInstance(tag.type, tag);
+      })
+    );
   }
 
   public async findByIds(ids: string[]): Promise<Tag<TagModel>[]> {
     const tags = await db.tag.findMany({
       where: { id: { in: ids } }
     });
-    return tags.map((tag) => {
-      return this.tagRegistry.getInstance(tag.type, tag);
-    });
+    return Promise.all(
+      tags.map((tag) => {
+        return this.tagRegistry.getInstance(tag.type, tag);
+      })
+    );
   }
 }

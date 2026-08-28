@@ -57,12 +57,12 @@ describe('Float', () => {
     expect(await float.validateValue({ value: '1e999' } as JsonValue)).toBeInstanceOf(Error);
   });
 
-  it('compares with less_than through the operator registry', () => {
+  it('compares with less_than through the operator registry', async () => {
     const op = LessThanOperator.create();
     const expected = new TypeValue(Float.create(), { value: '2.5' });
     const actual = new TypeValue(Float.create(), { value: '1.5' });
-    expect(op.compare(expected, actual)).toBe(true); // actual 1.5 < expected 2.5
-    expect(op.compare(actual, expected)).toBe(false); // actual 2.5 < expected 1.5
+    expect(await op.compare(expected, actual)).toBe(true); // actual 1.5 < expected 2.5
+    expect(await op.compare(actual, expected)).toBe(false); // actual 2.5 < expected 1.5
   });
 });
 
@@ -76,7 +76,7 @@ describe('StringType', () => {
 
 describe('Pointer', () => {
   it('validates the inner value against the target type', async () => {
-    const pointer = new Pointer({ target: 'int' });
+    const pointer = await Pointer.from({ target: 'int' });
     expect(await pointer.validateValue({ value: '0' } as JsonValue)).toBe(true);
     expect(await pointer.validateValue({ nope: true } as JsonValue)).toBeInstanceOf(Error);
   });

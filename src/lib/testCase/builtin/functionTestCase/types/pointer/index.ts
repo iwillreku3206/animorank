@@ -24,7 +24,7 @@ function buildPointerOptions(): Form {
         label: 'Pointed To Type',
         type: 'typeEditor',
         excludeTypeIds: [VoidType.id()],
-        default: GlobalRegistryProvider.instance().getRegistry(TypeRegistry).getStatic('int').create()
+        default: Integer.create()
       }
     }
   };
@@ -34,25 +34,25 @@ function buildPointerOptions(): Form {
  * Hydrate the target type from whatever the options carry: a Type instance
  * (in-memory), a type id (legacy wire), or a serialized type `{type, options}`.
  */
-function normalizeTarget(target: unknown): Type {
+async function resolveTarget(target: unknown): Promise<Type> {
   if (target instanceof Type) return target;
   if (typeof target === 'string') {
     try {
-      return GlobalRegistryProvider.instance().getRegistry(TypeRegistry).getStatic(target).create();
+      return (await GlobalRegistryProvider.instance().getRegistry(TypeRegistry).getStatic(target)).create();
     } catch {
       // fall through to the default
     }
   }
   if (target !== null && typeof target === 'object' && 'type' in target) {
     try {
-      return GlobalRegistryProvider.instance()
+      return await GlobalRegistryProvider.instance()
         .getRegistry(TypeRegistry)
         .from(target as z.infer<typeof TypeSchema>);
     } catch {
       // fall through to the default
     }
   }
-  return GlobalRegistryProvider.instance().getRegistry(TypeRegistry).getStatic('int').create();
+  return Integer.create();
 }
 
 export class Pointer extends Type<JsonValue, Form, { target: Type }> {
@@ -66,9 +66,20 @@ export class Pointer extends Type<JsonValue, Form, { target: Type }> {
     return new Pointer({ target: Integer.create() });
   }
 
+  /**
+   * Canonical hydration from serialized (or in-memory) options: resolves a
+   * raw/legacy target through the registry. The sync constructor cannot
+   * resolve types, so it only accepts live Type instances.
+   */
+  public static async from(options: IntoJsonValue | { target?: Type | string | unknown }): Promise<Pointer> {
+    const raw = options !== null && typeof options === 'object' && 'target' in options ? options.target : undefined;
+    const target = await resolveTarget(raw);
+    return new Pointer({ target });
+  }
+
   constructor(options: IntoJsonValue | { target?: Type }) {
     const target = options !== null && typeof options === 'object' && 'target' in options ? options.target : undefined;
-    super({ target: normalizeTarget(target) });
+    super({ target: target instanceof Type ? target : Integer.create() });
   }
 
   /**

@@ -112,11 +112,11 @@ export function stripMain(code: string): string {
 export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> {
   static typeRegistry = new CTypeRegistry();
 
-  private generateCode(): [string, string[]] {
+  private async generateCode(): Promise<[string, string[]]> {
     const { function: functionName, parameters } = this.testCase.testCase.data;
     const { problem } = this.testCase.testCase;
 
-    const { functions } = loadExtensionData(problem);
+    const { functions } = await loadExtensionData(problem);
 
     if (!(functionName in functions)) {
       throw new Error('Missing function definition for function:' + functionName);
@@ -129,12 +129,14 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
     if (!rawReturnType) {
       throw new Error('Cannot generate code: function has no return type');
     }
-    const returnType = CFunctionTestCase.typeRegistry.getInstance(rawReturnType.id, this, rawReturnType);
+    const returnType = await CFunctionTestCase.typeRegistry.getInstance(rawReturnType.id, this, rawReturnType);
 
-    const fnParameters = fn.parameters.map((parameter) => {
-      const { type } = parameter;
-      return CFunctionTestCase.typeRegistry.getInstance(type!.id, this, type!);
-    });
+    const fnParameters = await Promise.all(
+      fn.parameters.map(async (parameter) => {
+        const { type } = parameter;
+        return CFunctionTestCase.typeRegistry.getInstance(type!.id, this, type!);
+      })
+    );
 
     const context = new CExecutionContext();
 
@@ -144,21 +146,21 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
     context.pushHeader('submission.c');
 
     // get definitions
-    fn.returnType.forEach((type) => {
-      const languageType = CFunctionTestCase.typeRegistry.getInstance(type!.id, this, type!);
-      languageType.pushPreDefinitions(context);
-    });
+    for (const type of fn.returnType) {
+      const languageType = await CFunctionTestCase.typeRegistry.getInstance(type!.id, this, type!);
+      await languageType.pushPreDefinitions(context);
+    }
 
-    fnParameters.forEach((parameter) => {
-      parameter.pushPreDefinitions(context);
-    });
+    for (const parameter of fnParameters) {
+      await parameter.pushPreDefinitions(context);
+    }
 
     // declare function
     context.declareFunction(
       fn.symbol || fn.name,
 
-      returnType.generateReturnType(),
-      fnParameters.map((p) => p.generateReturnType()).join(', ')
+      await returnType.generateReturnType(),
+      (await Promise.all(fnParameters.map((p) => p.generateReturnType()))).join(', ')
     );
 
     // start building main
@@ -173,23 +175,22 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
       );
     }
 
-    for (const i in parameters) {
-      const parameter = parameters[i];
+    for (const [i, parameter] of parameters.entries()) {
       const symbol = context.getNewSymbol();
       parameterSymbols.push(symbol);
-      const languageType = CFunctionTestCase.typeRegistry.getInstance(
+      const languageType = await CFunctionTestCase.typeRegistry.getInstance(
         parameter.value.type.id,
         this,
         parameter.value.type
       );
-      languageType.pushDeclaration(context, symbol, parameter.value);
+      await languageType.pushDeclaration(context, symbol, parameter.value);
     }
 
     // prepare return value
     let returnTypeSymbol: string | undefined;
     if (fn.returnType.length !== 0 && !rawReturnType.isVoid) {
       returnTypeSymbol = context.getNewSymbol();
-      returnType.pushDeclaration(context, returnTypeSymbol);
+      await returnType.pushDeclaration(context, returnTypeSymbol);
     }
 
     // execute the function
@@ -203,9 +204,8 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
     const fileNames = [];
 
     // print out all values
-    for (const i in parameters) {
-      const parameter = parameters[i];
-      const languageType = CFunctionTestCase.typeRegistry.getInstance(
+    for (const [i, parameter] of parameters.entries()) {
+      const languageType = await CFunctionTestCase.typeRegistry.getInstance(
         parameter.value.type.id,
         this,
         parameter.value.type
@@ -215,17 +215,17 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
       const fileName = `__ar_test_param${i}`;
       fileNames.push(fileName);
       context.pushCode(`FILE* ${fileHandle} = fopen("${fileName}", "w");`);
-      languageType.pushPrint(context, parameterSymbols[i], fileHandle);
+      await languageType.pushPrint(context, parameterSymbols[i], fileHandle);
     }
 
     if (returnTypeSymbol) {
       const type = fn.returnType[0]!;
-      const languageType = CFunctionTestCase.typeRegistry.getInstance(type.id, this, type);
+      const languageType = await CFunctionTestCase.typeRegistry.getInstance(type.id, this, type);
       const fileHandle = context.getNewSymbol();
       fileHandleSymbols.push(fileHandle);
       fileNames.push('__ar_test_return');
       context.pushCode(`FILE* ${fileHandle} = fopen("__ar_test_return", "w");`);
-      languageType.pushPrint(context, returnTypeSymbol, fileHandle);
+      await languageType.pushPrint(context, returnTypeSymbol, fileHandle);
     }
 
     // close all files
@@ -248,7 +248,7 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
       ? parseSlots(problem.starter_code, codeState.sections).fullCode
       : (codeState.sections['body'] ?? '');
 
-    const [generatedCode, fileNames] = this.generateCode();
+    const [generatedCode, fileNames] = await this.generateCode();
 
     const files: File[] = [
       {
@@ -342,10 +342,10 @@ export class CFunctionTestCase extends TestCaseLanguage<ServerFunctionTestCase> 
         }
       }
 
-      const actual = CFunctionTestCase.typeRegistry
-        .getInstance(comparison.value.type.id, this, comparison.value.type)
-        .readFromPrint(fileContent);
-      const result = comparison.operator.compare(comparison.value, actual);
+      const actual = await (
+        await CFunctionTestCase.typeRegistry.getInstance(comparison.value.type.id, this, comparison.value.type)
+      ).readFromPrint(fileContent);
+      const result = await comparison.operator.compare(comparison.value, actual);
 
       results.push({ result, symbol, actual: actual, expected: comparison.value });
     }

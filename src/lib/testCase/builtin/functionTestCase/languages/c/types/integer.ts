@@ -4,7 +4,7 @@ import { CType } from '../cType';
 import type { CExecutionContext } from '../executionContext';
 
 export class CInteger extends CType<Integer> {
-  public readFromPrint(printed: string): TypeValue<Integer> {
+  public async readFromPrint(printed: string): Promise<TypeValue<Integer>> {
     return new TypeValue(this.type, { value: printed });
   }
   static type = Integer;
@@ -41,13 +41,17 @@ export class CInteger extends CType<Integer> {
     return printfTemplate;
   }
 
-  public generateParameterDefinition(symbol: string): string {
+  public async generateParameterDefinition(symbol: string): Promise<string> {
     return `${this.typeDef()} ${symbol}`;
   }
-  public generateReturnType(): string {
+  public async generateReturnType(): Promise<string> {
     return this.typeDef();
   }
-  public pushDeclaration(context: CExecutionContext, symbol: string, value?: TypeValue<Integer> | undefined): void {
+  public async pushDeclaration(
+    context: CExecutionContext,
+    symbol: string,
+    value?: TypeValue<Integer> | undefined
+  ): Promise<void> {
     const { signed, size } = this.type.options;
     context.pushCode(`${this.typeDef()} ${symbol};`);
     if (value) {
@@ -64,10 +68,10 @@ export class CInteger extends CType<Integer> {
       context.pushCode(`${symbol} = ${literal};`);
     }
   }
-  public pushPreDefinitions(context: CExecutionContext): void {
+  public async pushPreDefinitions(context: CExecutionContext): Promise<void> {
     context.pushHeader('stdio.h');
   }
-  public pushPrint(context: CExecutionContext, symbol: string, fileSymbol: string): void {
+  public async pushPrint(context: CExecutionContext, symbol: string, fileSymbol: string): Promise<void> {
     context.pushCode(`fprintf(${fileSymbol}, "${this.printfSymbol()}", ${symbol});`);
   }
 }

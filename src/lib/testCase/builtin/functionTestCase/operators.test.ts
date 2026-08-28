@@ -31,39 +31,39 @@ describe('operators', () => {
   const int = (value: string) => new TypeValue(Integer.create(), { value });
   const float = (value: string) => new TypeValue(Float.create(), { value });
   const string = (value: string) => new TypeValue(StringType.create(), { value });
-  const pointer = (value: string) => new TypeValue(new Pointer({ target: 'int' }), { value });
+  const pointer = async (value: string) => new TypeValue(await Pointer.from({ target: 'int' }), { value });
 
-  it('less_than passes when the actual value is below the expected value', () => {
+  it('less_than passes when the actual value is below the expected value', async () => {
     const op = LessThanOperator.create();
-    expect(op.compare(int('5'), int('4'))).toBe(true); // actual 4 < expected 5
-    expect(op.compare(float('2.5'), float('1.5'))).toBe(true);
-    expect(op.compare(int('3'), int('4'))).toBe(false); // actual 4 < expected 3
-    expect(op.compare(int('4'), int('4'))).toBe(false); // strict: equal is not less
+    expect(await op.compare(int('5'), int('4'))).toBe(true); // actual 4 < expected 5
+    expect(await op.compare(float('2.5'), float('1.5'))).toBe(true);
+    expect(await op.compare(int('3'), int('4'))).toBe(false); // actual 4 < expected 3
+    expect(await op.compare(int('4'), int('4'))).toBe(false); // strict: equal is not less
   });
 
-  it('less_than_equal passes when the actual value is at most the expected value', () => {
+  it('less_than_equal passes when the actual value is at most the expected value', async () => {
     const op = LessThanEqualOperator.create();
-    expect(op.compare(int('4'), int('4'))).toBe(true);
-    expect(op.compare(float('2.5'), float('2.5'))).toBe(true);
-    expect(op.compare(int('3'), int('4'))).toBe(false); // actual 4 <= expected 3
+    expect(await op.compare(int('4'), int('4'))).toBe(true);
+    expect(await op.compare(float('2.5'), float('2.5'))).toBe(true);
+    expect(await op.compare(int('3'), int('4'))).toBe(false); // actual 4 <= expected 3
   });
 
-  it('greater_than passes when the actual value is above the expected value', () => {
+  it('greater_than passes when the actual value is above the expected value', async () => {
     const gt = GreaterThanOperator.create();
-    expect(gt.compare(int('4'), int('5'))).toBe(true); // actual 5 > expected 4
-    expect(gt.compare(float('1.5'), float('2.5'))).toBe(true);
-    expect(gt.compare(int('5'), int('4'))).toBe(false);
-    expect(gt.compare(int('4'), int('4'))).toBe(false); // strict: equal is not greater
+    expect(await gt.compare(int('4'), int('5'))).toBe(true); // actual 5 > expected 4
+    expect(await gt.compare(float('1.5'), float('2.5'))).toBe(true);
+    expect(await gt.compare(int('5'), int('4'))).toBe(false);
+    expect(await gt.compare(int('4'), int('4'))).toBe(false); // strict: equal is not greater
   });
 
-  it('greater_than_equal passes when the actual value is at least the expected value', () => {
+  it('greater_than_equal passes when the actual value is at least the expected value', async () => {
     const gte = GreaterThanEqualOperator.create();
-    expect(gte.compare(int('4'), int('4'))).toBe(true);
-    expect(gte.compare(float('1.5'), float('1.5'))).toBe(true);
-    expect(gte.compare(int('5'), int('4'))).toBe(false); // actual 4 >= expected 5
+    expect(await gte.compare(int('4'), int('4'))).toBe(true);
+    expect(await gte.compare(float('1.5'), float('1.5'))).toBe(true);
+    expect(await gte.compare(int('5'), int('4'))).toBe(false); // actual 4 >= expected 5
   });
 
-  it('rejects string operands for numeric-only operators; pointers delegate by dereference', () => {
+  it('rejects string operands for numeric-only operators; pointers delegate by dereference', async () => {
     const operators = [
       LessThanOperator.create(),
       LessThanEqualOperator.create(),
@@ -72,49 +72,49 @@ describe('operators', () => {
       new WithinRangeOperator({ range: '2' })
     ];
     for (const op of operators) {
-      expect(() => op.compare(string('a'), string('b'))).toThrow();
+      await expect(op.compare(string('a'), string('b'))).rejects.toThrow();
     }
 
     // Legacy supported relational comparisons on pointers by dereferencing
     // the target type; the delegation lives in the pointer operator types.
-    const pointer = (v: string) => new TypeValue(new Pointer({ target: 'int' }), { value: v });
-    expect(LessThanOperator.create().compare(pointer('5'), pointer('3'))).toBe(true); // actual 3 < expected 5
-    expect(LessThanOperator.create().compare(pointer('3'), pointer('5'))).toBe(false);
-    expect(LessThanEqualOperator.create().compare(pointer('4'), pointer('4'))).toBe(true);
-    expect(GreaterThanOperator.create().compare(pointer('4'), pointer('5'))).toBe(true);
-    expect(new WithinRangeOperator({ range: '2' }).compare(pointer('4'), pointer('5'))).toBe(true);
-    expect(new WithinRangeOperator({ range: '2' }).compare(pointer('4'), pointer('7'))).toBe(false);
+    const pointer = async (v: string) => new TypeValue(await Pointer.from({ target: 'int' }), { value: v });
+    expect(await LessThanOperator.create().compare(await pointer('5'), await pointer('3'))).toBe(true); // actual 3 < expected 5
+    expect(await LessThanOperator.create().compare(await pointer('3'), await pointer('5'))).toBe(false);
+    expect(await LessThanEqualOperator.create().compare(await pointer('4'), await pointer('4'))).toBe(true);
+    expect(await GreaterThanOperator.create().compare(await pointer('4'), await pointer('5'))).toBe(true);
+    expect(await new WithinRangeOperator({ range: '2' }).compare(await pointer('4'), await pointer('5'))).toBe(true);
+    expect(await new WithinRangeOperator({ range: '2' }).compare(await pointer('4'), await pointer('7'))).toBe(false);
   });
 
-  it('equal and not_equal compare int, float, string, pointer', () => {
+  it('equal and not_equal compare int, float, string, pointer', async () => {
     const eq = EqualOperator.create();
     const ne = NotEqualOperator.create();
-    expect(eq.compare(int('4'), int('4'))).toBe(true);
-    expect(eq.compare(float('1.5'), float('1.5'))).toBe(true);
-    expect(eq.compare(string('a'), string('a'))).toBe(true);
-    expect(eq.compare(pointer('4'), pointer('4'))).toBe(true);
-    expect(eq.compare(int('4'), int('5'))).toBe(false);
-    expect(eq.compare(float('1.5'), float('2.5'))).toBe(false);
-    expect(eq.compare(string('a'), string('b'))).toBe(false);
-    expect(eq.compare(pointer('4'), pointer('5'))).toBe(false);
-    expect(ne.compare(int('4'), int('5'))).toBe(true);
-    expect(ne.compare(float('1.5'), float('2.5'))).toBe(true);
-    expect(ne.compare(string('a'), string('b'))).toBe(true);
-    expect(ne.compare(pointer('4'), pointer('5'))).toBe(true);
+    expect(await eq.compare(int('4'), int('4'))).toBe(true);
+    expect(await eq.compare(float('1.5'), float('1.5'))).toBe(true);
+    expect(await eq.compare(string('a'), string('a'))).toBe(true);
+    expect(await eq.compare(await pointer('4'), await pointer('4'))).toBe(true);
+    expect(await eq.compare(int('4'), int('5'))).toBe(false);
+    expect(await eq.compare(float('1.5'), float('2.5'))).toBe(false);
+    expect(await eq.compare(string('a'), string('b'))).toBe(false);
+    expect(await eq.compare(await pointer('4'), await pointer('5'))).toBe(false);
+    expect(await ne.compare(int('4'), int('5'))).toBe(true);
+    expect(await ne.compare(float('1.5'), float('2.5'))).toBe(true);
+    expect(await ne.compare(string('a'), string('b'))).toBe(true);
+    expect(await ne.compare(await pointer('4'), await pointer('5'))).toBe(true);
     // not_equal must NOT pass on equal values (constant-true regression guard)
-    expect(ne.compare(int('4'), int('4'))).toBe(false);
-    expect(ne.compare(float('1.5'), float('1.5'))).toBe(false);
-    expect(ne.compare(string('a'), string('a'))).toBe(false);
-    expect(ne.compare(pointer('4'), pointer('4'))).toBe(false);
+    expect(await ne.compare(int('4'), int('4'))).toBe(false);
+    expect(await ne.compare(float('1.5'), float('1.5'))).toBe(false);
+    expect(await ne.compare(string('a'), string('a'))).toBe(false);
+    expect(await ne.compare(await pointer('4'), await pointer('4'))).toBe(false);
   });
 
-  it('within_range compares with the range option, strictly', () => {
+  it('within_range compares with the range option, strictly', async () => {
     const op = new WithinRangeOperator({ range: '2' });
-    expect(op.compare(int('4'), int('5'))).toBe(true);
-    expect(op.compare(int('4'), int('7'))).toBe(false);
-    expect(op.compare(int('4'), int('6'))).toBe(false); // |6-4| == range is NOT within
-    expect(op.compare(float('1.5'), float('2.5'))).toBe(true);
-    expect(op.compare(float('1.5'), float('4'))).toBe(false);
+    expect(await op.compare(int('4'), int('5'))).toBe(true);
+    expect(await op.compare(int('4'), int('7'))).toBe(false);
+    expect(await op.compare(int('4'), int('6'))).toBe(false); // |6-4| == range is NOT within
+    expect(await op.compare(float('1.5'), float('2.5'))).toBe(true);
+    expect(await op.compare(float('1.5'), float('4'))).toBe(false);
   });
 
   it('rejects non-numeric and negative within_range ranges at parse', () => {
@@ -123,11 +123,11 @@ describe('operators', () => {
     expect(() => new WithinRangeOperator({ range: '1e3' })).toThrow(/non-negative number/);
   });
 
-  it('rejects fractional ranges for integer comparisons with a clear error', () => {
+  it('rejects fractional ranges for integer comparisons with a clear error', async () => {
     const op = new WithinRangeOperator({ range: '2.5' });
-    expect(() => op.compare(int('4'), int('5'))).toThrow(/whole-number range/);
+    await expect(op.compare(int('4'), int('5'))).rejects.toThrow(/whole-number range/);
     // float comparisons still accept fractional ranges
-    expect(op.compare(float('1.5'), float('2.5'))).toBe(true);
+    expect(await op.compare(float('1.5'), float('2.5'))).toBe(true);
   });
 
   it('exposes an options form only for operators with settings', () => {
@@ -146,11 +146,11 @@ describe('operators', () => {
     expect(new WithinRangeOperator({ range: '' }).options).toEqual({ range: '0' });
   });
 
-  it('round-trips operator options through the registry', () => {
+  it('round-trips operator options through the registry', async () => {
     const op = new WithinRangeOperator({ range: '3' });
-    const hydrated = new OperatorRegistry().from(op.toJSON());
+    const hydrated = await new OperatorRegistry().from(op.toJSON());
     expect(hydrated.options).toEqual({ range: '3' });
-    expect(hydrated.compare(int('4'), int('5'))).toBe(true);
-    expect(hydrated.compare(int('4'), int('8'))).toBe(false);
+    expect(await hydrated.compare(int('4'), int('5'))).toBe(true);
+    expect(await hydrated.compare(int('4'), int('8'))).toBe(false);
   });
 });

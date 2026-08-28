@@ -21,8 +21,8 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   if (!parseSuccess) return error(400, parseError);
 
   const serviceProvider = ServerRegistryProvider.instance();
-  const practiceSessionService = serviceProvider.getService(PracticeSessionService);
-  const codeExecutor = serviceProvider.getService(CodeExecutor);
+  const practiceSessionService = await serviceProvider.getService(PracticeSessionService);
+  const codeExecutor = await serviceProvider.getService(CodeExecutor);
 
   const practiceSession = await practiceSessionService.findById({
     id: params.id,

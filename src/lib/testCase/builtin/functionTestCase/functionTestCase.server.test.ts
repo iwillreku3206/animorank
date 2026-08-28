@@ -54,17 +54,17 @@ const makeTestCaseModel = () =>
   }) as unknown as ProblemTestCase;
 
 describe('ServerFunctionTestCase', () => {
-  it('keeps the hydrated data class-backed in the model', () => {
+  it('keeps the hydrated data class-backed in the model', async () => {
     const testCaseModel = makeTestCaseModel();
-    const serverTestCase = new ServerTestCaseRegistry().from(testCaseModel, new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(testCaseModel, new Problem(problemModel));
 
     const testCase = serverTestCase.testCase as FunctionTestCase;
     expect(testCase.data.parameters[0].value.type.id).toBe('int');
   });
 
-  it('converts to a plain JSON value at the serialization boundary', () => {
+  it('converts to a plain JSON value at the serialization boundary', async () => {
     const testCaseModel = makeTestCaseModel();
-    const serverTestCase = new ServerTestCaseRegistry().from(testCaseModel, new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(testCaseModel, new Problem(problemModel));
 
     const converted = toJsonValue(serverTestCase.testCase.data) as {
       parameters: { value: unknown }[];
@@ -79,7 +79,7 @@ describe('ServerFunctionTestCase', () => {
     expect(() => stringify({ ...testCaseModel, data: converted })).not.toThrow();
   });
 
-  it('hydrates parameters from stored types when the function definition is missing', () => {
+  it('hydrates parameters from stored types when the function definition is missing', async () => {
     const testCaseModel = {
       ...makeTestCaseModel(),
       data: {
@@ -88,14 +88,14 @@ describe('ServerFunctionTestCase', () => {
         comparisons: []
       }
     } as unknown as ProblemTestCase;
-    const serverTestCase = new ServerTestCaseRegistry().from(testCaseModel, new Problem(problemModel));
+    const serverTestCase = await new ServerTestCaseRegistry().from(testCaseModel, new Problem(problemModel));
     const testCase = serverTestCase.testCase as FunctionTestCase;
 
     expect(testCase.data.parameters[0].value.type.id).toBe('int');
     expect(testCase.data.parameters[0].value.value).toEqual({ value: '3' });
   });
 
-  it('hydrates parameters from stored types when a definition parameter is untyped', () => {
+  it('hydrates parameters from stored types when a definition parameter is untyped', async () => {
     const untypedProblem = {
       ...problemModel,
       extension_data: {
@@ -110,14 +110,14 @@ describe('ServerFunctionTestCase', () => {
         }
       }
     } as unknown as ProblemModel;
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(untypedProblem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(untypedProblem));
     const testCase = serverTestCase.testCase as FunctionTestCase;
 
     expect(testCase.data.parameters[0].value.type.id).toBe('int');
     expect(testCase.data.parameters[0].value.value).toEqual({ value: '0' });
   });
 
-  it('selectFunction skips untyped definition parameters instead of crashing', () => {
+  it('selectFunction skips untyped definition parameters instead of crashing', async () => {
     const untypedProblem = {
       ...problemModel,
       extension_data: {
@@ -139,22 +139,22 @@ describe('ServerFunctionTestCase', () => {
       ...makeTestCaseModel(),
       data: { function: 'fn1', parameters: [], comparisons: [] }
     } as unknown as ProblemTestCase;
-    const testCase = new FunctionTestCase(testCaseModel, new Problem(untypedProblem));
+    const testCase = await FunctionTestCase.from(testCaseModel, new Problem(untypedProblem));
 
-    expect(() => testCase.selectFunction('fn1')).not.toThrow();
+    await expect(testCase.selectFunction('fn1')).resolves.toBeUndefined();
     expect(testCase.data.parameters.map((p) => p.name)).toEqual(['typed']);
   });
 
-  it('addComparison defaults to the equal operator (int return)', () => {
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+  it('addComparison defaults to the equal operator (int return)', async () => {
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     const testCase = serverTestCase.testCase as FunctionTestCase;
 
-    testCase.addComparison();
+    await testCase.addComparison();
     expect(testCase.data.comparisons).toHaveLength(1);
     expect(testCase.data.comparisons[0].operator.id).toBe('equal');
   });
 
-  it('addComparison defaults to equal for string-returning functions', () => {
+  it('addComparison defaults to equal for string-returning functions', async () => {
     const stringProblem = {
       ...problemModel,
       extension_data: {
@@ -169,16 +169,16 @@ describe('ServerFunctionTestCase', () => {
       ...makeTestCaseModel(),
       data: { function: 'fn1', parameters: [], comparisons: [] }
     } as unknown as ProblemTestCase;
-    const testCase = new FunctionTestCase(testCaseModel, new Problem(stringProblem));
+    const testCase = await FunctionTestCase.from(testCaseModel, new Problem(stringProblem));
 
     // The previous default (less_than) is not registered for strings and made
     // every default comparison fail at run time.
-    testCase.addComparison();
+    await testCase.addComparison();
     expect(testCase.data.comparisons).toHaveLength(1);
     expect(testCase.data.comparisons[0].operator.id).toBe('equal');
   });
 
-  it('addComparison adds nothing for void-returning functions', () => {
+  it('addComparison adds nothing for void-returning functions', async () => {
     const voidProblem = {
       ...problemModel,
       extension_data: {
@@ -193,11 +193,11 @@ describe('ServerFunctionTestCase', () => {
       ...makeTestCaseModel(),
       data: { function: 'fn1', parameters: [], comparisons: [] }
     } as unknown as ProblemTestCase;
-    const testCase = new FunctionTestCase(testCaseModel, new Problem(voidProblem));
+    const testCase = await FunctionTestCase.from(testCaseModel, new Problem(voidProblem));
 
     // The harness never emits a return file for void, so such a comparison
     // could never run; it must not be creatable.
-    testCase.addComparison();
+    await testCase.addComparison();
     expect(testCase.data.comparisons).toHaveLength(0);
   });
 });
@@ -245,13 +245,16 @@ describe('CFunctionTestCase codegen with new types', () => {
     }
   } as unknown as ProblemTestCase;
 
-  it('emits pointer, float, string code and a plain void call', () => {
-    const serverTestCase = new ServerTestCaseRegistry().from(model, new Problem(problem));
+  it('emits pointer, float, string code and a plain void call', async () => {
+    const serverTestCase = await new ServerTestCaseRegistry().from(model, new Problem(problem));
 
     // generateCode is private; reach it the way the load debug block does.
-    const [code] = (
-      ServerFunctionTestCase.languageRegistry.getInstance('c', serverTestCase as ServerFunctionTestCase) as never as {
-        generateCode(): [string, string[]];
+    const [code] = await (
+      (await ServerFunctionTestCase.languageRegistry.getInstance(
+        'c',
+        serverTestCase as ServerFunctionTestCase
+      )) as never as {
+        generateCode(): Promise<[string, string[]]>;
       }
     ).generateCode();
 
@@ -267,7 +270,7 @@ describe('CFunctionTestCase codegen with new types', () => {
     expect(code).not.toContain('= work(');
   });
 
-  it('emits a .0 suffix for whole-number float literals', () => {
+  it('emits a .0 suffix for whole-number float literals', async () => {
     const floatModel = {
       ...model,
       data: {
@@ -280,11 +283,14 @@ describe('CFunctionTestCase codegen with new types', () => {
         ]
       }
     } as unknown as ProblemTestCase;
-    const serverTestCase = new ServerTestCaseRegistry().from(floatModel, new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(floatModel, new Problem(problem));
 
-    const [code] = (
-      ServerFunctionTestCase.languageRegistry.getInstance('c', serverTestCase as ServerFunctionTestCase) as never as {
-        generateCode(): [string, string[]];
+    const [code] = await (
+      (await ServerFunctionTestCase.languageRegistry.getInstance(
+        'c',
+        serverTestCase as ServerFunctionTestCase
+      )) as never as {
+        generateCode(): Promise<[string, string[]]>;
       }
     ).generateCode();
 
@@ -292,7 +298,7 @@ describe('CFunctionTestCase codegen with new types', () => {
     expect(code).not.toContain('= 5f;');
   });
 
-  it('escapes every C string-literal escape sequence and control characters', () => {
+  it('escapes every C string-literal escape sequence and control characters', async () => {
     const stringModel = {
       ...model,
       data: {
@@ -305,39 +311,46 @@ describe('CFunctionTestCase codegen with new types', () => {
         ]
       }
     } as unknown as ProblemTestCase;
-    const serverTestCase = new ServerTestCaseRegistry().from(stringModel, new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(stringModel, new Problem(problem));
 
-    const [code] = (
-      ServerFunctionTestCase.languageRegistry.getInstance('c', serverTestCase as ServerFunctionTestCase) as never as {
-        generateCode(): [string, string[]];
+    const [code] = await (
+      (await ServerFunctionTestCase.languageRegistry.getInstance(
+        'c',
+        serverTestCase as ServerFunctionTestCase
+      )) as never as {
+        generateCode(): Promise<[string, string[]]>;
       }
     ).generateCode();
 
     expect(code).toContain('"\\a\\b\\f\\v\\t\\n\\r\\"\\001\\\\"');
   });
 
-  it('generates valid pointer parameter definitions at any depth', () => {
+  it('generates valid pointer parameter definitions at any depth', async () => {
     // The shared `model` fixture is hydrated in place by the earlier tests, so
     // build a fresh one here.
     const freshModel = {
       ...model,
       data: { function: 'fn1', parameters: [], comparisons: [] }
     } as unknown as ProblemTestCase;
-    const serverTestCase = new ServerTestCaseRegistry().from(freshModel, new Problem(problem));
-    const lang = ServerFunctionTestCase.languageRegistry.getInstance(
+    const serverTestCase = await new ServerTestCaseRegistry().from(freshModel, new Problem(problem));
+    const lang = (await ServerFunctionTestCase.languageRegistry.getInstance(
       'c',
       serverTestCase as ServerFunctionTestCase
-    ) as CFunctionTestCase;
+    )) as CFunctionTestCase;
 
-    const intPointer = CFunctionTestCase.typeRegistry.getInstance('pointer', lang, new Pointer({ target: 'int' }));
-    expect(intPointer.generateParameterDefinition('p')).toBe('int* p');
-
-    const pointerPointer = CFunctionTestCase.typeRegistry.getInstance(
+    const intPointer = await CFunctionTestCase.typeRegistry.getInstance(
       'pointer',
       lang,
-      new Pointer({ target: { type: 'pointer', options: { target: 'int' } } })
+      await Pointer.from({ target: 'int' })
     );
-    expect(pointerPointer.generateParameterDefinition('p')).toBe('int** p');
+    expect(await intPointer.generateParameterDefinition('p')).toBe('int* p');
+
+    const pointerPointer = await CFunctionTestCase.typeRegistry.getInstance(
+      'pointer',
+      lang,
+      await Pointer.from({ target: { type: 'pointer', options: { target: 'int' } } })
+    );
+    expect(await pointerPointer.generateParameterDefinition('p')).toBe('int** p');
   });
 });
 
@@ -385,7 +398,7 @@ describe('CFunctionTestCase execute', () => {
 
   it('executes a public non-slots test case and assembles the submission', async () => {
     captured = undefined;
-    const serverTestCase = new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
     const result = await serverTestCase.run(new CLanguage(), stub, {
       sections: { body: 'int square(int x) { return 5; }' }
     });
@@ -408,7 +421,7 @@ describe('CFunctionTestCase execute', () => {
 
   it('strips a student-defined main from the submission', async () => {
     captured = undefined;
-    const serverTestCase = new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
     await serverTestCase.run(new CLanguage(), stub, {
       sections: {
         body: ['int square(int x) { return 5; }', 'int main() { return 0; }'].join('\n')
@@ -436,7 +449,7 @@ describe('CFunctionTestCase execute', () => {
 
   it('returns no runInfo for hidden test cases', async () => {
     captured = undefined;
-    const serverTestCase = new ServerTestCaseRegistry().from(makeModel({ public: false }), new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeModel({ public: false }), new Problem(problem));
     const result = await serverTestCase.run(new CLanguage(), stub, {
       sections: { body: 'int square(int x) { return 5; }' }
     });
@@ -454,7 +467,7 @@ describe('CFunctionTestCase execute', () => {
       uses_slots: true,
       starter_code: ['%slot code%', '%endslot code%'].join('\n')
     } as unknown as ProblemModel;
-    const serverTestCase = new ServerTestCaseRegistry().from(makeModel(), new Problem(slotsProblem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeModel(), new Problem(slotsProblem));
     await serverTestCase.run(new CLanguage(), stub, { sections: { code: 'int square(int x) { return x * x; }' } });
 
     const submission = captured!.files.find((f) => f.path === 'submission.c')!;
@@ -472,7 +485,7 @@ describe('CFunctionTestCase execute', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
     const result = await serverTestCase.run(new CLanguage(), new CompileFailExecutor(), {
       sections: { body: '' }
     });
@@ -501,7 +514,7 @@ describe('CFunctionTestCase execute', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
     const result = await serverTestCase.run(new CLanguage(), new CrashedRunExecutor(), {
       sections: { body: 'int square(int x) { return *(int*)0; }' }
     });
@@ -531,7 +544,7 @@ describe('CFunctionTestCase execute', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
     const result = await serverTestCase.run(new CLanguage(), new AbortRunExecutor(), {
       sections: { body: 'int square(int x) { abort(); }' }
     });
@@ -556,7 +569,7 @@ describe('CFunctionTestCase execute', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
     const result = await serverTestCase.run(new CLanguage(), new TimeoutExecutor(), {
       sections: { body: '' }
     });
@@ -580,7 +593,7 @@ describe('CFunctionTestCase execute', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
     const result = await serverTestCase.run(new CLanguage(), new NoExportFilesExecutor(), {
       sections: { body: '' }
     });
@@ -607,7 +620,7 @@ describe('CFunctionTestCase execute', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(makeModel({ public: false }), new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeModel({ public: false }), new Problem(problem));
     const result = await serverTestCase.run(new CLanguage(), new CrashedRunExecutor(), {
       sections: { body: 'int square(int x) { return *(int*)0; }' }
     });
@@ -619,7 +632,7 @@ describe('CFunctionTestCase execute', () => {
     const missingModel = makeModel({
       data: { function: 'missing', parameters: [], comparisons: [] }
     });
-    const serverTestCase = new ServerTestCaseRegistry().from(missingModel, new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(missingModel, new Problem(problem));
     const result = await serverTestCase.run(new CLanguage(), stub, { sections: { body: '' } });
 
     expect(result).toMatchObject({ success: false, runInfo: { comparisons: [] } });
@@ -642,7 +655,7 @@ describe('CFunctionTestCase execute', () => {
         comparisons: []
       }
     });
-    const serverTestCase = new ServerTestCaseRegistry().from(staleModel, new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(staleModel, new Problem(problem));
     const result = await serverTestCase.run(new CLanguage(), stub, { sections: { body: '' } });
 
     expect(result).toMatchObject({ success: false, runInfo: { comparisons: [] } });
@@ -658,7 +671,7 @@ describe('CFunctionTestCase execute', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeModel(), new Problem(problem));
     const result = await serverTestCase.run(new CLanguage(), new ThrowingExecutor(), {
       sections: { body: '' }
     });
@@ -677,7 +690,7 @@ describe('CFunctionTestCase execute', () => {
       }
     }
 
-    const serverTestCase = new ServerTestCaseRegistry().from(makeModel({ public: false }), new Problem(problem));
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeModel({ public: false }), new Problem(problem));
     const result = await serverTestCase.run(new CLanguage(), new ThrowingExecutor(), {
       sections: { body: '' }
     });
@@ -691,12 +704,12 @@ describe('validateFunctionTestCaseKeys', () => {
   const makeModel = (overrides: Partial<ProblemTestCase> = {}) =>
     ({ ...makeTestCaseModel(), ...overrides }) as unknown as ProblemTestCase;
 
-  it('accepts a test case whose function and parameters resolve', () => {
-    expect(validateFunctionTestCaseKeys(makeModel(), problem)).toBeNull();
+  it('accepts a test case whose function and parameters resolve', async () => {
+    await expect(validateFunctionTestCaseKeys(makeModel(), problem)).resolves.toBeNull();
   });
 
-  it('rejects a test case referencing a missing function', () => {
-    const result = validateFunctionTestCaseKeys(
+  it('rejects a test case referencing a missing function', async () => {
+    const result = await validateFunctionTestCaseKeys(
       makeModel({ data: { function: 'missing', parameters: [], comparisons: [] } }),
       problem
     );
@@ -704,8 +717,8 @@ describe('validateFunctionTestCaseKeys', () => {
     expect(result).toContain('not defined');
   });
 
-  it('rejects a test case with more parameters than the function defines', () => {
-    const result = validateFunctionTestCaseKeys(
+  it('rejects a test case with more parameters than the function defines', async () => {
+    const result = await validateFunctionTestCaseKeys(
       makeModel({
         data: {
           function: 'fn1',
@@ -722,7 +735,7 @@ describe('validateFunctionTestCaseKeys', () => {
     expect(result).toContain('only defines 1');
   });
 
-  it('rejects a test case whose function has an untyped parameter', () => {
+  it('rejects a test case whose function has an untyped parameter', async () => {
     const untypedProblem = new Problem({
       ...problemModel,
       extension_data: {
@@ -737,22 +750,22 @@ describe('validateFunctionTestCaseKeys', () => {
         }
       }
     } as unknown as ProblemModel);
-    expect(validateFunctionTestCaseKeys(makeModel(), untypedProblem)).toContain('has no type');
+    await expect(validateFunctionTestCaseKeys(makeModel(), untypedProblem)).resolves.toContain('has no type');
   });
 
-  it('ignores non-function test cases', () => {
-    expect(validateFunctionTestCaseKeys(makeModel({ type: 'stdio' }), problem)).toBeNull();
+  it('ignores non-function test cases', async () => {
+    await expect(validateFunctionTestCaseKeys(makeModel({ type: 'stdio' }), problem)).resolves.toBeNull();
   });
 
-  it('rejects data that does not match the function schema', () => {
-    const result = validateFunctionTestCaseKeys(makeModel({ data: { function: 42 } }), problem);
+  it('rejects data that does not match the function schema', async () => {
+    const result = await validateFunctionTestCaseKeys(makeModel({ data: { function: 42 } }), problem);
     expect(result).toContain('does not match the function schema');
   });
 });
 
 describe('FunctionTestCase hydrateRunInfo', () => {
-  it('re-hydrates wire JSON comparisons into TypeValue-backed values', () => {
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+  it('re-hydrates wire JSON comparisons into TypeValue-backed values', async () => {
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     const testCase = serverTestCase.testCase as FunctionTestCase;
 
     // runInfo as it arrives over the wire: plain JSON, not class instances
@@ -767,7 +780,7 @@ describe('FunctionTestCase hydrateRunInfo', () => {
       ]
     } as unknown as FunctionTestCaseRunInfo;
 
-    const hydrated = testCase.hydrateRunInfo(runInfo);
+    const hydrated = await testCase.hydrateRunInfo(runInfo);
 
     expect('comparisons' in hydrated).toBe(true);
     if ('comparisons' in hydrated) {
@@ -779,8 +792,8 @@ describe('FunctionTestCase hydrateRunInfo', () => {
     }
   });
 
-  it('passes failure runInfos through unchanged', () => {
-    const serverTestCase = new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
+  it('passes failure runInfos through unchanged', async () => {
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeTestCaseModel(), new Problem(problemModel));
     const testCase = serverTestCase.testCase as FunctionTestCase;
 
     const runInfo = {
@@ -788,7 +801,7 @@ describe('FunctionTestCase hydrateRunInfo', () => {
       exitCode: undefined
     } as unknown as FunctionTestCaseRunInfo;
 
-    expect(testCase.hydrateRunInfo(runInfo)).toEqual(runInfo);
+    await expect(testCase.hydrateRunInfo(runInfo)).resolves.toEqual(runInfo);
   });
 });
 
@@ -837,11 +850,11 @@ describe('FunctionTestCase comparison symbol type sync', () => {
       ...overrides
     }) as unknown as ProblemTestCase;
 
-  it('updates the value type when the symbol changes to a parameter', () => {
-    const serverTestCase = new ServerTestCaseRegistry().from(makeComparisonModel(), new Problem(problem));
+  it('updates the value type when the symbol changes to a parameter', async () => {
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeComparisonModel(), new Problem(problem));
     const testCase = serverTestCase.testCase as FunctionTestCase;
 
-    testCase.setComparisonSymbol(0, 'param2');
+    await testCase.setComparisonSymbol(0, 'param2');
 
     expect(testCase.data.comparisons[0].symbol).toBe('param2');
     expect(testCase.data.comparisons[0].value.type.id).toBe('string');
@@ -849,29 +862,29 @@ describe('FunctionTestCase comparison symbol type sync', () => {
     expect(testCase.data.comparisons[0].value.value).toEqual({ value: '' });
   });
 
-  it('keeps the value when switching between same-type symbols', () => {
-    const serverTestCase = new ServerTestCaseRegistry().from(makeComparisonModel(), new Problem(problem));
+  it('keeps the value when switching between same-type symbols', async () => {
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeComparisonModel(), new Problem(problem));
     const testCase = serverTestCase.testCase as FunctionTestCase;
-    const intType = new TypeRegistry().getStatic('int').create();
+    const intType = (await new TypeRegistry().getStatic('int')).create();
 
-    testCase.setComparisonSymbol(0, 'param0');
+    await testCase.setComparisonSymbol(0, 'param0');
     testCase.setComparisonValue(0, new TypeValue(intType, { value: '7' }));
-    testCase.setComparisonSymbol(0, 'param1');
+    await testCase.setComparisonSymbol(0, 'param1');
 
     expect(testCase.data.comparisons[0].symbol).toBe('param1');
     expect(testCase.data.comparisons[0].value.type.id).toBe('int');
     expect(testCase.data.comparisons[0].value.value).toEqual({ value: '7' });
   });
 
-  it('re-syncs comparison value types when the function signature updates', () => {
-    const serverTestCase = new ServerTestCaseRegistry().from(makeComparisonModel(), new Problem(problem));
+  it('re-syncs comparison value types when the function signature updates', async () => {
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeComparisonModel(), new Problem(problem));
     const testCase = serverTestCase.testCase as FunctionTestCase;
 
-    testCase.setComparisonSymbol(0, 'param0');
+    await testCase.setComparisonSymbol(0, 'param0');
     expect(testCase.data.comparisons[0].value.type.id).toBe('int');
 
     // The function signature changes: param0 becomes a string.
-    const updated = parseExtensionData(
+    const updated = await parseExtensionData(
       new Problem({
         ...problem,
         extension_data: {
@@ -891,17 +904,17 @@ describe('FunctionTestCase comparison symbol type sync', () => {
       } as unknown as ProblemModel)
     );
 
-    testCase.syncParameters(updated);
+    await testCase.syncParameters(updated);
 
     expect(testCase.data.comparisons[0].value.type.id).toBe('string');
     expect(testCase.data.comparisons[0].value.value).toEqual({ value: '' });
   });
 
-  it('keeps the value when the symbol type is unchanged', () => {
-    const serverTestCase = new ServerTestCaseRegistry().from(makeComparisonModel(), new Problem(problem));
+  it('keeps the value when the symbol type is unchanged', async () => {
+    const serverTestCase = await new ServerTestCaseRegistry().from(makeComparisonModel(), new Problem(problem));
     const testCase = serverTestCase.testCase as FunctionTestCase;
 
-    testCase.setComparisonSymbol(0, 'return');
+    await testCase.setComparisonSymbol(0, 'return');
     expect(testCase.data.comparisons[0].value.type.id).toBe('float');
     // switching to the same symbol is a no-op
     expect(testCase.data.comparisons[0].value.value).toEqual({ value: '1.5' });
@@ -933,45 +946,47 @@ describe('syncParameters matches stored values by stable id (M8)', () => {
       }
     } as unknown as ProblemModel);
 
-  const makeTestCase = (parameters: unknown[]) =>
-    new ServerTestCaseRegistry().from(
-      {
-        id: 'test-case-m8',
-        type: 'function',
-        problem_id: 'problem-m8',
-        data: { function: 'fn1', parameters, comparisons: [] }
-      } as unknown as ProblemTestCase,
-      makeProblem([intParam('a'), intParam('b'), intParam('c')])
+  const makeTestCase = async (parameters: unknown[]) =>
+    (
+      await new ServerTestCaseRegistry().from(
+        {
+          id: 'test-case-m8',
+          type: 'function',
+          problem_id: 'problem-m8',
+          data: { function: 'fn1', parameters, comparisons: [] }
+        } as unknown as ProblemTestCase,
+        makeProblem([intParam('a'), intParam('b'), intParam('c')])
+      )
     ).testCase as FunctionTestCase;
 
-  const syncTo = (testCase: FunctionTestCase, parameters: unknown[]) => {
-    testCase.syncParameters(parseExtensionData(makeProblem(parameters)));
+  const syncTo = async (testCase: FunctionTestCase, parameters: unknown[]) => {
+    await testCase.syncParameters(await parseExtensionData(makeProblem(parameters)));
     return testCase.data.parameters;
   };
 
-  it('keeps each value attached when a non-last parameter is removed', () => {
-    const testCase = makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
+  it('keeps each value attached when a non-last parameter is removed', async () => {
+    const testCase = await makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
 
     // b is removed: c's value must survive, b's must be dropped
-    const params = syncTo(testCase, [intParam('a'), intParam('c')]);
+    const params = await syncTo(testCase, [intParam('a'), intParam('c')]);
 
     expect(params.map((p) => p.id)).toEqual(['a', 'c']);
     expect(params.map((p) => p.value.value)).toEqual([{ value: '1' }, { value: '3' }]);
   });
 
-  it('reorders values with their parameters', () => {
-    const testCase = makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
+  it('reorders values with their parameters', async () => {
+    const testCase = await makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
 
-    const params = syncTo(testCase, [intParam('c'), intParam('a'), intParam('b')]);
+    const params = await syncTo(testCase, [intParam('c'), intParam('a'), intParam('b')]);
 
     expect(params.map((p) => p.id)).toEqual(['c', 'a', 'b']);
     expect(params.map((p) => p.value.value)).toEqual([{ value: '3' }, { value: '1' }, { value: '2' }]);
   });
 
-  it('keeps the value when a matched parameter changes type', () => {
-    const testCase = makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
+  it('keeps the value when a matched parameter changes type', async () => {
+    const testCase = await makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
 
-    const params = syncTo(testCase, [
+    const params = await syncTo(testCase, [
       { id: 'a', name: '', type: { type: 'string', options: {} } },
       intParam('b'),
       intParam('c')
@@ -982,16 +997,16 @@ describe('syncParameters matches stored values by stable id (M8)', () => {
     expect(params[0].value.value).toEqual({ value: '1' });
   });
 
-  it('fills defaults for added parameters and backfills their ids', () => {
-    const testCase = makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
+  it('fills defaults for added parameters and backfills their ids', async () => {
+    const testCase = await makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
 
-    const params = syncTo(testCase, [intParam('a'), intParam('b'), intParam('c'), intParam('d')]);
+    const params = await syncTo(testCase, [intParam('a'), intParam('b'), intParam('c'), intParam('d')]);
 
     expect(params.map((p) => p.id)).toEqual(['a', 'b', 'c', 'd']);
     expect(params[3].value.value).toEqual({ value: '0' });
   });
 
-  it('matches legacy id-less values by name', () => {
+  it('matches legacy id-less values by name', async () => {
     const problem = new Problem({
       ...problemModel,
       id: 'problem-m8-name',
@@ -1008,35 +1023,37 @@ describe('syncParameters matches stored values by stable id (M8)', () => {
       }
     } as unknown as ProblemModel);
 
-    const testCase = new ServerTestCaseRegistry().from(
-      {
-        id: 'test-case-m8-name',
-        type: 'function',
-        problem_id: 'problem-m8-name',
-        data: {
-          function: 'fn1',
-          parameters: [
-            { name: 'x', value: { type: 'int', options: { size: 32, signed: null }, data: { value: '7' } } }
-          ],
-          comparisons: []
-        }
-      } as unknown as ProblemTestCase,
-      problem
+    const testCase = (
+      await new ServerTestCaseRegistry().from(
+        {
+          id: 'test-case-m8-name',
+          type: 'function',
+          problem_id: 'problem-m8-name',
+          data: {
+            function: 'fn1',
+            parameters: [
+              { name: 'x', value: { type: 'int', options: { size: 32, signed: null }, data: { value: '7' } } }
+            ],
+            comparisons: []
+          }
+        } as unknown as ProblemTestCase,
+        problem
+      )
     ).testCase as FunctionTestCase;
 
     // the definition keeps x but renames nothing: name match preserves value
-    testCase.syncParameters(parseExtensionData(problem));
+    await testCase.syncParameters(await parseExtensionData(problem));
 
     expect(testCase.data.parameters).toHaveLength(1);
     expect(testCase.data.parameters[0].name).toBe('x');
     expect(testCase.data.parameters[0].value.value).toEqual({ value: '7' });
   });
 
-  it('is a no-op when nothing changed', () => {
-    const testCase = makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
+  it('is a no-op when nothing changed', async () => {
+    const testCase = await makeTestCase([intValue('a', '1'), intValue('b', '2'), intValue('c', '3')]);
     const before = testCase.data.parameters;
 
-    testCase.syncParameters(parseExtensionData(makeProblem([intParam('a'), intParam('b'), intParam('c')])));
+    await testCase.syncParameters(await parseExtensionData(makeProblem([intParam('a'), intParam('b'), intParam('c')])));
 
     expect(testCase.data.parameters).toBe(before);
   });

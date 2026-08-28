@@ -607,7 +607,7 @@ export class ProblemSetService {
       }, [] as string[])
       .filter((tag) => !!tag);
 
-    const tagsArr = await ServerRegistryProvider.instance().getService(TagService).findByIds(tagIds);
+    const tagsArr = await (await ServerRegistryProvider.instance().getService(TagService)).findByIds(tagIds);
     const tags = arrayToHashMap(tagsArr, (t) => t.id);
 
     type Summary = ProblemSetSummary & { studentProgress?: StudentProgress };

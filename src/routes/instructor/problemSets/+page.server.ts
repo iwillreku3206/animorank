@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ locals }) => {
   if (!session || !session.user.id) return redirect(302, '/');
 
   const rp = ServerRegistryProvider.instance();
-  const problemSetService = rp.getService(ProblemSetService);
+  const problemSetService = await rp.getService(ProblemSetService);
 
   const { problemSets } = await problemSetService.findByFilter({
     user: session.user,

@@ -11,7 +11,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 
   if (!session || !session.user.id) return error(403, 'Unauthorized');
 
-  const problemSetService = ServerRegistryProvider.instance().getService(ProblemSetService);
+  const problemSetService = await ServerRegistryProvider.instance().getService(ProblemSetService);
 
   // Use service to verify access
   const problemSet = await problemSetService.findById({
@@ -42,7 +42,7 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 
   if (!fullProblemSet) return error(404, 'Not found');
 
-  const testCaseService = ServerRegistryProvider.instance().getService(TestCaseService);
+  const testCaseService = await ServerRegistryProvider.instance().getService(TestCaseService);
 
   return successObject({
     id: fullProblemSet.id,
@@ -96,7 +96,7 @@ export const PUT: RequestHandler = async ({ locals, request, params }) => {
 
   if (!success) return error(400, zodError);
 
-  const problemSetService = ServerRegistryProvider.instance().getService(ProblemSetService);
+  const problemSetService = await ServerRegistryProvider.instance().getService(ProblemSetService);
 
   const updated = await problemSetService.update({
     id: params.id,
@@ -135,7 +135,7 @@ export const DELETE: RequestHandler = async ({ locals, params }) => {
 
   if (!session || !session.user.id) return error(403, 'Unauthorized');
 
-  const problemSetService = ServerRegistryProvider.instance().getService(ProblemSetService);
+  const problemSetService = await ServerRegistryProvider.instance().getService(ProblemSetService);
 
   const deleted = await problemSetService.delete({
     id: params.id,

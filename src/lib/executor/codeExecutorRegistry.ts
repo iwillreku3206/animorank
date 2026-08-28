@@ -58,7 +58,7 @@ export class CodeExecutorRegistry extends ServiceRegistry<
    *   execution or report a configuration error) rather than assume an
    *   executor always exists.
    */
-  public getDefaultForLanguage(language: Language): CodeExecutor | undefined {
+  public async getDefaultForLanguage(language: Language): Promise<CodeExecutor | undefined> {
     const id = this.languageMap.get(language.id)?.at(0);
     if (!id || !this.keys().includes(id)) return undefined;
     return this.getInstance(id);

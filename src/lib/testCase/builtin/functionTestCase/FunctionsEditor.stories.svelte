@@ -31,12 +31,19 @@
     }
   } as unknown as ProblemModel;
 
-  const context = new ProblemEditorWindowContext({
-    problem: problemModel,
-    testCases: [],
-    tags: [],
-    topics: []
-  });
+  // The context is normally built by the async `ProblemEditorWindowContext.create()`;
+  // this story needs it synchronously because FunctionsEditor reads it at setup.
+  // Constructing via the runtime path (TS `private` is erased) with the empty
+  // functionData/testCases mirrors what create() would resolve for this story.
+  const context = new (ProblemEditorWindowContext as unknown as new (
+    initialValues: { problem: ProblemModel; testCases: never[]; tags: never[]; topics: never[] },
+    functionData: { functions: Record<string, never> },
+    testCases: never[]
+  ) => ProblemEditorWindowContext)(
+    { problem: problemModel, testCases: [], tags: [], topics: [] },
+    { functions: {} },
+    []
+  );
   setProblemEditorContext(context);
 </script>
 

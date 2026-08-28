@@ -33,7 +33,9 @@ export class PracticeSessionService {
    * Create a new practice session.
    */
   public async create(options: CreateOptions): Promise<ServerPracticeSession | null> {
-    const problem = await ServerRegistryProvider.instance().getService(ProblemService).findById({
+    const problem = await (
+      await ServerRegistryProvider.instance().getService(ProblemService)
+    ).findById({
       id: options.problemId,
       user: options.user
     });
@@ -125,7 +127,9 @@ export class PracticeSessionService {
     });
 
     if (practiceSession) {
-      const problem = await ServerRegistryProvider.instance().getService(ProblemService).findById({
+      const problem = await (
+        await ServerRegistryProvider.instance().getService(ProblemService)
+      ).findById({
         id: practiceSession.problem_id,
         user: options.user
       });
@@ -137,7 +141,9 @@ export class PracticeSessionService {
       return new ServerPracticeSession(practiceSession, problem, options.user);
     }
 
-    const problem = await ServerRegistryProvider.instance().getService(ProblemService).findById({
+    const problem = await (
+      await ServerRegistryProvider.instance().getService(ProblemService)
+    ).findById({
       id: options.problemId,
       user: options.user
     });
@@ -190,7 +196,9 @@ export class PracticeSessionService {
       data: { ...options.newState, previous_state: options.newState.previous_state || undefined }
     });
 
-    const problem = await ServerRegistryProvider.instance().getService(ProblemService).findById({
+    const problem = await (
+      await ServerRegistryProvider.instance().getService(ProblemService)
+    ).findById({
       id: updated.problem_id,
       user: options.user
     });
@@ -203,7 +211,7 @@ export class PracticeSessionService {
 
 export class ServerPracticeSession extends PracticeSession {
   public async persistPracticeSession(): Promise<void> {
-    const service = ServerRegistryProvider.instance().getService(PracticeSessionService);
+    const service = await ServerRegistryProvider.instance().getService(PracticeSessionService);
 
     await service.update({
       id: this.id,
