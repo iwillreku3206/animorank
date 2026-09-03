@@ -1,6 +1,6 @@
 <script lang="ts">
   import Button from '$lib/components/ui/buttons/Button.svelte';
-  import type { CustomRunResponse } from './api';
+  import type { CustomRunResponse } from '$lib/practiceSession/api';
 
   interface Props {
     loading: boolean;

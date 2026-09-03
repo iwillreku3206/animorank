@@ -3,7 +3,7 @@
   lang="ts"
 >
   import { defineMeta } from '@storybook/addon-svelte-csf';
-  import TestCaseDisplay from './TestCaseDisplay.svelte';
+  import TestCaseDisplay from '$lib/components/solve/TestCaseDisplay.svelte';
 
   const { Story } = defineMeta({
     title: 'Student/Test Case Display',
@@ -15,7 +15,7 @@
   import { Problem } from '$lib/problem';
   import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
   import type { Problem as ProblemModel, ProblemTestCase } from '$lib/zenstack/models';
-  import type { TestRunResponse } from './api';
+  import type { TestRunResponse } from '$lib/practiceSession/api';
 
   type Result = TestRunResponse['results'][number];
 
