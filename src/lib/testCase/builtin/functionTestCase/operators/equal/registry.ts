@@ -10,6 +10,8 @@ import { EqualString } from '../../types/string/equal';
 import { EqualPointer } from '../../types/pointer/equal';
 
 export class EqualOperatorTypeRegistry extends OperatorTypeRegistry<EqualOperator> {
+  public id = 'test_case.function.operator.equal.type';
+
   constructor() {
     super();
     this.registerType(Integer.create(), EqualInteger);

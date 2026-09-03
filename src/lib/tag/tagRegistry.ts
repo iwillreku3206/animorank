@@ -22,6 +22,8 @@ export class TagRegistry extends ServiceRegistry<
     findAll(): Promise<TagModel[]>;
   }
 > {
+  public id = 'tag';
+
   public constructor() {
     super();
     this.register('SubjectTag', SubjectTag);

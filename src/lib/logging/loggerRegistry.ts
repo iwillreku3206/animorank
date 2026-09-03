@@ -4,6 +4,8 @@ import type { Logger } from '$lib/logging/logger';
 import { ServiceRegistry } from '$lib/registry';
 
 export class LoggerRegistry extends ServiceRegistry<Logger, [string]> {
+  public id = 'logging';
+
   public constructor() {
     super();
 

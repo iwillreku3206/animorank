@@ -10,6 +10,8 @@ import { NotEqualString } from '../../types/string/not_equal';
 import { NotEqualPointer } from '../../types/pointer/not_equal';
 
 export class NotEqualOperatorTypeRegistry extends OperatorTypeRegistry<NotEqualOperator> {
+  public id = 'test_case.function.operator.not_equal.type';
+
   constructor() {
     super();
     this.registerType(Integer.create(), NotEqualInteger);

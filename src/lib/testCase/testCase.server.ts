@@ -1,6 +1,7 @@
 import type { CodeExecutor } from '$lib/executor';
 import type { Language } from '$lib/language';
 import type { Problem } from '$lib/problem';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import type { TestCaseLanguage } from './testCaseLanguage.server';
 import { toJsonValue, type IntoJsonValue } from '$lib/types/utils';
 import { db } from '$lib/zenstack';
@@ -21,8 +22,12 @@ export abstract class ServerTestCase<Data extends IntoJsonValue = any, RunInfo e
   // Unparameterized (TC = any): the nominal protected member on ServerTestCase
   // makes TestCaseLanguageRegistry<X> invariant in X, so no concrete registry
   // would be assignable to TestCaseLanguageRegistry<ServerTestCase>. The
-  // contract still requires every concrete class to provide the static.
-  declare static languageRegistry: TestCaseLanguageRegistry;
+  // contract sidesteps that by naming the registry class: run() resolves it
+  // through ServerRegistryProvider's class-keyed getRegistry (the base
+  // TestCaseLanguageRegistry default TC = any accepts any concrete registry),
+  // and every concrete class must provide the class of the language registry
+  // that serves it.
+  declare static languageRegistryClass: new () => TestCaseLanguageRegistry;
   declare static id: () => string;
   declare static dataSchema: z.ZodType;
 
@@ -70,10 +75,9 @@ export abstract class ServerTestCase<Data extends IntoJsonValue = any, RunInfo e
 
   public async run(language: Language, executor: CodeExecutor, state: IntoJsonValue): Promise<TestCaseResult<RunInfo>> {
     try {
-      const testCaseLanguage = await (this.constructor as typeof ServerTestCase).languageRegistry.getInstance(
-        language.id,
-        this
-      );
+      const languageRegistryClass = (this.constructor as typeof ServerTestCase).languageRegistryClass;
+      const languageRegistry = ServerRegistryProvider.instance().getRegistry(languageRegistryClass);
+      const testCaseLanguage = await languageRegistry.getInstance(language.id, this);
       return await (testCaseLanguage as TestCaseLanguage<ServerTestCase<Data, RunInfo>>).execute(executor, state);
     } catch (error) {
       return this.failureResult(error);

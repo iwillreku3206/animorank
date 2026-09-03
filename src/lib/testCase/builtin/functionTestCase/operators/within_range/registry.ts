@@ -8,6 +8,8 @@ import { WithinRangeFloat } from '../../types/float/within_range';
 import { WithinRangePointer } from '../../types/pointer/within_range';
 
 export class WithinRangeOperatorTypeRegistry extends OperatorTypeRegistry<WithinRangeOperator> {
+  public id = 'test_case.function.operator.within_range.type';
+
   constructor() {
     super();
     this.registerType(Integer.create(), WithinRangeInteger);

@@ -2,13 +2,14 @@
   import { onDestroy } from 'svelte';
   import DockviewWindow from '$lib/window/DockviewWindow.svelte';
   import type { DefaultLayout } from '$lib/window/layout';
+  import { ClientRegistryProvider } from '$lib/registry/client';
   import { ProblemEditorWindowRegistry } from './windowRegistry';
   import { ProblemEditorWindowContext } from './context.svelte';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
 
-  const windowRegistry = new ProblemEditorWindowRegistry();
+  const windowRegistry = ClientRegistryProvider.instance().getRegistry(ProblemEditorWindowRegistry);
 
   const defaultLayout: DefaultLayout = {
     panes: [

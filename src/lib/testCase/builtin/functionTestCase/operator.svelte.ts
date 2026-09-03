@@ -16,7 +16,7 @@ export const OperatorSchema = z.object({
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export abstract class Operator<Options extends IntoJsonValue = any> {
-  declare static typeRegistry: OperatorTypeRegistry<Operator>;
+  declare static typeRegistryClass: new () => OperatorTypeRegistry<Operator>;
 
   public options: Options = $state() as Options;
 
@@ -56,7 +56,10 @@ export abstract class Operator<Options extends IntoJsonValue = any> {
       throw new Error('Type options must match');
     }
 
-    const operatorType = await (this.constructor as ClassServiceOf<OperatorRegistry>).typeRegistry.getInstance(
+    const { GlobalRegistryProvider } = await import('$lib/registry/global');
+    const registryClass = (this.constructor as ClassServiceOf<OperatorRegistry>).typeRegistryClass;
+    const operatorTypeRegistry = GlobalRegistryProvider.instance().getRegistry(registryClass);
+    const operatorType = await operatorTypeRegistry.getInstance(
       (a.type.constructor as ClassServiceOf<TypeRegistry>).id(),
       this.options,
       a.type.options

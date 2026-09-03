@@ -9,6 +9,8 @@ import { CPointer } from './types/pointer';
 import { CVoid } from './types/void';
 
 export class CTypeRegistry extends LanguageTypeRegistry<CFunctionTestCase, CType<Type>> {
+  public id = 'test_case.function.language.c.type';
+
   constructor() {
     super();
 

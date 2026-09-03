@@ -5,13 +5,14 @@
   import type { DefaultLayout } from '$lib/window/layout';
   import { Problem } from '$lib/problem';
   import { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
+  import { ClientRegistryProvider } from '$lib/registry/client';
   import { SolveWindowRegistry } from './windowRegistry';
   import { SolveWindowContext } from './context.svelte';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
 
-  const windowRegistry = new SolveWindowRegistry();
+  const windowRegistry = ClientRegistryProvider.instance().getRegistry(SolveWindowRegistry);
 
   // svelte-ignore state_referenced_locally
   const problem = new Problem(data.problem);

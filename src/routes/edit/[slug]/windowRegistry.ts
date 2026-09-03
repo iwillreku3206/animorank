@@ -7,6 +7,8 @@ import { PropertiesWindow } from './windows/Properties.window';
 import { TestCasesWindow } from './windows/TestCases.window';
 
 export class ProblemEditorWindowRegistry extends WindowRegistry<ProblemEditorWindowContext> {
+  public id = 'window.problem_editor';
+
   constructor() {
     super();
 

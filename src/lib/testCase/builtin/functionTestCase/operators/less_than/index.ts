@@ -1,8 +1,6 @@
 import { Operator } from '../../operator.svelte';
 import { LessThanOperatorTypeRegistry } from './registry';
 
-let typeRegistry: LessThanOperatorTypeRegistry | undefined;
-
 export class LessThanOperator extends Operator<null> {
   static id(): string {
     return 'less_than';
@@ -12,10 +10,8 @@ export class LessThanOperator extends Operator<null> {
     return new LessThanOperator(null);
   }
 
-  // Lazy: the import graph (pointer → global provider → operatorRegistry) is
-  // cyclic at module-eval, so construction must wait for first use.
-  static get typeRegistry(): LessThanOperatorTypeRegistry {
-    return (typeRegistry ??= new LessThanOperatorTypeRegistry());
+  static get typeRegistryClass(): typeof LessThanOperatorTypeRegistry {
+    return LessThanOperatorTypeRegistry;
   }
 
   get displayName(): string {

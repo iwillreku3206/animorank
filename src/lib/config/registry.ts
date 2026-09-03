@@ -11,6 +11,8 @@ export class ConfigSectionRegistry extends ServiceRegistry<
   [JsonValue | undefined],
   { id: string }
 > {
+  public id = 'config.section';
+
   constructor() {
     super();
     this.registerSection(WebConfigSection);

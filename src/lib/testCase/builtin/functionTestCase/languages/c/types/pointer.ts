@@ -19,7 +19,11 @@ export class CPointer extends CType<Pointer> {
   }
 
   private async innerCType(): Promise<CType<Type>> {
-    return CFunctionTestCase.typeRegistry.getInstance(this.type.targetType.id, this.language, this.type.targetType);
+    return CFunctionTestCase.getTypeRegistry().getInstance(
+      this.type.targetType.id,
+      this.language,
+      this.type.targetType
+    );
   }
 
   private innerTypeValue(value: TypeValue<Pointer>): TypeValue<Type> {

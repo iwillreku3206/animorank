@@ -20,9 +20,9 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   } = await customRunValidator.safeParseAsync(await request.json());
   if (!parseSuccess) return error(400, parseError);
 
-  const serviceProvider = ServerRegistryProvider.instance();
-  const practiceSessionService = await serviceProvider.getService(PracticeSessionService);
-  const codeExecutor = await serviceProvider.getService(CodeExecutor);
+  const registryProvider = ServerRegistryProvider.instance();
+  const practiceSessionService = await registryProvider.getService(PracticeSessionService);
+  const codeExecutor = await registryProvider.getService(CodeExecutor);
 
   const practiceSession = await practiceSessionService.findById({
     id: params.id,

@@ -8,8 +8,12 @@ import { TagService } from '$lib/tag/tagService';
 import { TestCaseService } from '$lib/testCase/testCaseService';
 import { CodeExecutor } from '$lib/executor';
 import { CodeExecutorRegistry } from '$lib/executor/codeExecutorRegistry';
-import { Judge0Executor } from '$lib/executor/judge0';
 import { ServerTestCaseRegistry } from '$lib/testCase/testCaseRegistry.server';
+import { FunctionTestCaseLanguageRegistry } from '$lib/testCase/builtin/functionTestCase/languageRegistry';
+import { StdioTestCaseLanguageRegistry } from '$lib/testCase/builtin/stdioTestCase/languageRegistry';
+import { CustomTestCaseLanguageRegistry } from '$lib/testCase/builtin/customTestCase/languageRegistry';
+import { CTypeRegistry } from '$lib/testCase/builtin/functionTestCase/languages/c/typeRegistry';
+import { TagRegistry } from '$lib/tag/tagRegistry';
 import { RegistryProvider } from './registryProvider';
 
 export class ServerRegistryProvider extends RegistryProvider {
@@ -17,12 +21,15 @@ export class ServerRegistryProvider extends RegistryProvider {
 
   private constructor() {
     super();
-    // Import any service registries here
-    this._registries.set(Logger, new LoggerRegistry());
-    const codeExecutorRegistry = new CodeExecutorRegistry();
-    codeExecutorRegistry.registerCodeExecutor(Judge0Executor);
-    this._registries.set(CodeExecutor, codeExecutorRegistry);
-    this._registries.set(ServerTestCaseRegistry, new ServerTestCaseRegistry());
+    // Registries and services for server-side execution.
+    this.registerServiceRegistry(Logger, new LoggerRegistry());
+    this.registerServiceRegistry(CodeExecutor, new CodeExecutorRegistry());
+    this.registerRegistry(new ServerTestCaseRegistry());
+    this.registerRegistry(new FunctionTestCaseLanguageRegistry());
+    this.registerRegistry(new StdioTestCaseLanguageRegistry());
+    this.registerRegistry(new CustomTestCaseLanguageRegistry());
+    this.registerRegistry(new CTypeRegistry());
+    this.registerRegistry(new TagRegistry());
     this._registries.set(ProblemService, ServiceRegistry.createSingleSingletonServiceRegistry(new ProblemService()));
     this._registries.set(
       ProblemSetService,

@@ -11,7 +11,7 @@ import {
 import { StdioTestCaseLanguageRegistry } from './languageRegistry';
 
 export class ServerStdioTestCase extends ServerTestCase<StdioTestCaseData, StdioTestCaseRunInfo> {
-  static languageRegistry = new StdioTestCaseLanguageRegistry();
+  static languageRegistryClass = StdioTestCaseLanguageRegistry;
   public static dataSchema = StdioTestCaseDataSchema;
   public constructor(model: TestCaseModel, problem: Problem) {
     super(new StdioTestCase(model, problem));

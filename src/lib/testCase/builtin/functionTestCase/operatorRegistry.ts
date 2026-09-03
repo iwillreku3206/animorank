@@ -16,9 +16,11 @@ export class OperatorRegistry extends ServiceRegistry<
   {
     id(): string;
     create(): Operator;
-    typeRegistry: OperatorTypeRegistry<Operator>;
+    typeRegistryClass: new () => OperatorTypeRegistry<Operator>;
   }
 > {
+  public id = 'test_case.function.operator';
+
   constructor() {
     super();
     this.register('less_than', LessThanOperator);

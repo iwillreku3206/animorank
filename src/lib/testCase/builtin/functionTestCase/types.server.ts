@@ -14,8 +14,8 @@ import { getFunctionTestCaseDataSchema } from './functionTestCase.svelte';
  * Server-side version of extension data loading with structured logging.
  */
 export async function loadExtensionData(problem: Problem): Promise<FunctionTestCaseProblemData> {
-  const serviceProvider = ServerRegistryProvider.instance();
-  const logger = await serviceProvider.getService(Logger, 'builtin/testCase/function');
+  const registryProvider = ServerRegistryProvider.instance();
+  const logger = await registryProvider.getService(Logger, 'builtin/testCase/function');
 
   const {
     data: parsedData,

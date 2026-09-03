@@ -14,12 +14,14 @@ export class ServerTestCaseRegistry extends ServiceRegistry<
     id(): string;
     // eslint-disable-next-line no-unused-vars
     create(problem: Problem): Promise<ServerTestCase>;
-    languageRegistry: TestCaseLanguageRegistry;
+    languageRegistryClass: new () => TestCaseLanguageRegistry;
     validateUpdate(options: TestCaseUpdateOptions, existingType: string): void;
     // eslint-disable-next-line no-unused-vars
     from?(model: TestCaseModel, problem: Problem): Promise<ServerTestCase>;
   }
 > {
+  public id = 'test_case.server';
+
   constructor() {
     super();
     this.registerTest(ServerFunctionTestCase);

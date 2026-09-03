@@ -13,6 +13,8 @@ export class TypeRegistry extends ServiceRegistry<
   [IntoJsonValue],
   { create(): Type; id(): string; from?(options: unknown): Promise<Type> }
 > {
+  public id = 'test_case.function.type';
+
   constructor() {
     super();
     this.registerType(Integer);

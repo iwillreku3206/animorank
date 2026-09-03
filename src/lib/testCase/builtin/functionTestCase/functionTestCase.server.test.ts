@@ -6,6 +6,7 @@ import { toJsonValue } from '$lib/types/utils';
 import type { Problem as ProblemModel, ProblemTestCase } from '$lib/zenstack/models';
 import { FunctionTestCase, type FunctionTestCaseRunInfo } from './functionTestCase.svelte';
 import { ServerFunctionTestCase } from './functionTestCase.server';
+import { FunctionTestCaseLanguageRegistry } from './languageRegistry';
 import { stripMain, CFunctionTestCase } from './languages/c/c';
 import { Pointer } from './types/pointer';
 import { TypeValue } from './typeValue.svelte';
@@ -13,6 +14,7 @@ import { parseExtensionData } from './types';
 import { validateFunctionTestCaseKeys } from './types.server';
 import { TypeRegistry } from './typeRegistry';
 import { CLanguage } from '$lib/language/c';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { CodeExecutor } from '$lib/executor';
 import type { ExecutionRequest, ExecutionResult } from '$lib/executor/types';
 
@@ -249,11 +251,9 @@ describe('CFunctionTestCase codegen with new types', () => {
     const serverTestCase = await new ServerTestCaseRegistry().from(model, new Problem(problem));
 
     // generateCode is private; reach it the way the load debug block does.
+    const langRegistry = ServerRegistryProvider.instance().getRegistry(FunctionTestCaseLanguageRegistry);
     const [code] = await (
-      (await ServerFunctionTestCase.languageRegistry.getInstance(
-        'c',
-        serverTestCase as ServerFunctionTestCase
-      )) as never as {
+      (await langRegistry.getInstance('c', serverTestCase as ServerFunctionTestCase)) as never as {
         generateCode(): Promise<[string, string[]]>;
       }
     ).generateCode();
@@ -285,11 +285,9 @@ describe('CFunctionTestCase codegen with new types', () => {
     } as unknown as ProblemTestCase;
     const serverTestCase = await new ServerTestCaseRegistry().from(floatModel, new Problem(problem));
 
+    const langRegistry = ServerRegistryProvider.instance().getRegistry(FunctionTestCaseLanguageRegistry);
     const [code] = await (
-      (await ServerFunctionTestCase.languageRegistry.getInstance(
-        'c',
-        serverTestCase as ServerFunctionTestCase
-      )) as never as {
+      (await langRegistry.getInstance('c', serverTestCase as ServerFunctionTestCase)) as never as {
         generateCode(): Promise<[string, string[]]>;
       }
     ).generateCode();
@@ -313,11 +311,9 @@ describe('CFunctionTestCase codegen with new types', () => {
     } as unknown as ProblemTestCase;
     const serverTestCase = await new ServerTestCaseRegistry().from(stringModel, new Problem(problem));
 
+    const langRegistry = ServerRegistryProvider.instance().getRegistry(FunctionTestCaseLanguageRegistry);
     const [code] = await (
-      (await ServerFunctionTestCase.languageRegistry.getInstance(
-        'c',
-        serverTestCase as ServerFunctionTestCase
-      )) as never as {
+      (await langRegistry.getInstance('c', serverTestCase as ServerFunctionTestCase)) as never as {
         generateCode(): Promise<[string, string[]]>;
       }
     ).generateCode();
@@ -333,19 +329,17 @@ describe('CFunctionTestCase codegen with new types', () => {
       data: { function: 'fn1', parameters: [], comparisons: [] }
     } as unknown as ProblemTestCase;
     const serverTestCase = await new ServerTestCaseRegistry().from(freshModel, new Problem(problem));
-    const lang = (await ServerFunctionTestCase.languageRegistry.getInstance(
-      'c',
-      serverTestCase as ServerFunctionTestCase
-    )) as CFunctionTestCase;
+    const langRegistry = ServerRegistryProvider.instance().getRegistry(FunctionTestCaseLanguageRegistry);
+    const lang = (await langRegistry.getInstance('c', serverTestCase as ServerFunctionTestCase)) as CFunctionTestCase;
 
-    const intPointer = await CFunctionTestCase.typeRegistry.getInstance(
+    const intPointer = await CFunctionTestCase.getTypeRegistry().getInstance(
       'pointer',
       lang,
       await Pointer.from({ target: 'int' })
     );
     expect(await intPointer.generateParameterDefinition('p')).toBe('int* p');
 
-    const pointerPointer = await CFunctionTestCase.typeRegistry.getInstance(
+    const pointerPointer = await CFunctionTestCase.getTypeRegistry().getInstance(
       'pointer',
       lang,
       await Pointer.from({ target: { type: 'pointer', options: { target: 'int' } } })

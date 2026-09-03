@@ -1,13 +1,16 @@
 import type { Language } from '$lib/language';
 import { ServiceRegistry, type ClassServiceOf } from '$lib/registry';
 import type { CodeExecutor } from '.';
+import { Judge0Executor } from './judge0';
 
 /**
  * Registry of code executors, keyed by the language ids they support.
  *
  * Executors declare the languages they handle via their static
  * `languages()` and register themselves with `registerCodeExecutor`; the
- * registry resolves the default executor for a language.
+ * registry resolves the default executor for a language. The built-in
+ * Judge0 executor is registered in the constructor; plugins may register
+ * additional executors afterwards.
  */
 export class CodeExecutorRegistry extends ServiceRegistry<
   CodeExecutor,
@@ -17,6 +20,8 @@ export class CodeExecutorRegistry extends ServiceRegistry<
     languages(): Language[];
   }
 > {
+  public id = 'executor';
+
   // Keyed by language id, not Language instance identity: executors and
   // callers each mint their own instances, so an identity key could never
   // match (getDefaultForLanguage was dead on arrival because of it).
@@ -24,6 +29,7 @@ export class CodeExecutorRegistry extends ServiceRegistry<
 
   constructor() {
     super();
+    this.registerCodeExecutor(Judge0Executor);
   }
 
   /**

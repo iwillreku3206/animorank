@@ -4,6 +4,8 @@ import { DummyTelemetryService } from './dummyTelemetryService';
 import type { TelemetryService } from './telemetryService';
 
 export class TelemetryRegistry extends ServiceRegistry<TelemetryService, []> {
+  public id = 'telemetry';
+
   public constructor() {
     super();
 

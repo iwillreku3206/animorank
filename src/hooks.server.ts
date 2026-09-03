@@ -4,8 +4,8 @@ import { Logger } from '$lib/logging/logger';
 import { ServerRegistryProvider } from '$lib/registry/server';
 
 export const handle: Handle = async ({ event, resolve }) => {
-  const serviceProvider = ServerRegistryProvider.instance();
-  const logger = await serviceProvider.getService(Logger, 'webserver');
+  const registryProvider = ServerRegistryProvider.instance();
+  const logger = await registryProvider.getService(Logger, 'webserver');
 
   const response = await authHandle({ event, resolve });
 
@@ -15,8 +15,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 };
 
 export const handleError: HandleServerError = async ({ error }) => {
-  const serviceProvider = ServerRegistryProvider.instance();
-  const logger = await serviceProvider.getService(Logger, 'webserver');
+  const registryProvider = ServerRegistryProvider.instance();
+  const logger = await registryProvider.getService(Logger, 'webserver');
 
   // Non-Error throws can be circular or BigInt-containing objects that
   // JSON.stringify itself crashes on — never let the error handler throw.

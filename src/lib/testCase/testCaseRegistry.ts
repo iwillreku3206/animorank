@@ -17,6 +17,8 @@ export class TestCaseRegistry extends ServiceRegistry<
     from?(model: TestCaseModel, problem: Problem): Promise<TestCase>;
   }
 > {
+  public id = 'test_case';
+
   constructor() {
     super();
     this.register(FunctionTestCase.id(), FunctionTestCase);

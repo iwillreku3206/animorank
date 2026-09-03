@@ -9,6 +9,8 @@ export class LanguageRegistry extends ServiceRegistry<
     id: string;
   }
 > {
+  public id = 'language';
+
   constructor() {
     super();
     super.register('c', CLanguage);

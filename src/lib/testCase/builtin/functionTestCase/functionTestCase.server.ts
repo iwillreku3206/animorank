@@ -11,7 +11,7 @@ import {
 import { FunctionTestCaseLanguageRegistry } from './languageRegistry';
 
 export class ServerFunctionTestCase extends ServerTestCase<FunctionTestCaseData, FunctionTestCaseRunInfo> {
-  static languageRegistry = new FunctionTestCaseLanguageRegistry();
+  static languageRegistryClass = FunctionTestCaseLanguageRegistry;
   public static get dataSchema() {
     return getFunctionTestCaseDataSchema();
   }

@@ -5,6 +5,7 @@ import { error, successObject } from '$lib/response';
 import type { ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 import type { TestCaseResult } from '$lib/testCase/types';
 import { ServerRegistryProvider } from '$lib/registry/server';
+import { GlobalRegistryProvider } from '$lib/registry/global';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
 import { ProblemService } from '$lib/problem/problemService';
 import { TestCaseService } from '$lib/testCase/testCaseService';
@@ -51,7 +52,9 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   });
 
   const { test_type } = parsedData;
-  const language = await new LanguageRegistry().getInstance(problem.model.language.toLowerCase());
+  const language = await GlobalRegistryProvider.instance()
+    .getRegistry(LanguageRegistry)
+    .getInstance(problem.model.language.toLowerCase());
   const executor = await srp.getService(CodeExecutor);
   const state = {
     sections: Object.fromEntries(practiceSession.previousCode.sections.map((s) => [s.slot.label, s.code]))

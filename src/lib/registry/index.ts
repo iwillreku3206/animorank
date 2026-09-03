@@ -18,6 +18,14 @@ export type ClassServiceOf<SR extends ServiceRegistry<any, any, any>> = Extract<
 >['classObject'];
 
 export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
+  /**
+   * Stable registry identifier within its namespace (e.g. `test_case` for the
+   * `animorank:test_case` key). Concrete registries must override it. The
+   * namespace itself is supplied when the registry is registered with a
+   * provider — registries do not choose their own namespace.
+   */
+  public id: string = '';
+
   protected _registry = new Map<string, Service<T, C, S>>();
   private _inflight = new Map<string, Promise<Service<T, C, S>>>();
   private options: ServiceRegistryOptions;

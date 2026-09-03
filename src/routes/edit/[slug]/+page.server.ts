@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   if (!session || !session.user.id) return redirect(302, '/');
 
-  const serviceProvider = ServerRegistryProvider.instance();
+  const registryProvider = ServerRegistryProvider.instance();
 
   const problemResult = await db.problem.findUnique({
     where: {
@@ -34,13 +34,13 @@ export const load: PageServerLoad = async ({ locals, params }) => {
   const { topics, ...problem } = problemResult;
 
   const testCases = await (
-    await serviceProvider.getService(TestCaseService)
+    await registryProvider.getService(TestCaseService)
   ).findByProblemForEdit({
     problemId: problem.id,
     user: session.user
   });
 
-  const tags = await (await serviceProvider.getService(TagService)).findAll();
+  const tags = await (await registryProvider.getService(TagService)).findAll();
 
   return {
     problem,
