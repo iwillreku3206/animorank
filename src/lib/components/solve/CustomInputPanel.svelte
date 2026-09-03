@@ -16,7 +16,7 @@
 <div class="flex flex-col h-full p-4 gap-4">
   <div class="flex flex-col gap-2 flex-1">
     <label
-      class="text-sm font-medium text-base-content/80"
+      class="text-sm font-medium text-base-content/70"
       for="custom-stdin"
     >
       Standard Input (stdin)
@@ -68,7 +68,7 @@
           {/if}
           {#if result.stdout}
             <div class="flex flex-col gap-2">
-              <h3 class="text-sm font-medium text-base-content/80">Output before error (stdout)</h3>
+              <h3 class="text-sm font-medium text-base-content/70">Output before error (stdout)</h3>
               <pre
                 class="bg-base-200 p-3 rounded-lg font-mono text-sm whitespace-pre-wrap break-words">{result.stdout}</pre>
             </div>

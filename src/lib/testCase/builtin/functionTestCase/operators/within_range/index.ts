@@ -45,4 +45,8 @@ export class WithinRangeOperator extends Operator<{ range: string }> {
   get displayName(): string {
     return 'within range';
   }
+
+  get describeExpectation(): string {
+    return `within ${this.options.range} of`;
+  }
 }

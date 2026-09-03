@@ -1,6 +1,10 @@
 <script lang="ts">
   import type { TestRunResponse } from '$lib/practiceSession/api';
   import Button from '$lib/components/ui/buttons/Button.svelte';
+  import CircleCheckIcon from '@iconify-svelte/fa6-solid/circle-check';
+  import CircleXmarkIcon from '@iconify-svelte/fa6-solid/circle-xmark';
+  import ClockIcon from '@iconify-svelte/fa6-solid/clock';
+  import TriangleExclamationIcon from '@iconify-svelte/fa6-solid/triangle-exclamation';
 
   interface Props {
     tests: TestRunResponse;
@@ -34,6 +38,21 @@
     return result.failureReason ?? 'Failed';
   }
 
+  /**
+   * Icon for the case list, grouped by the same outcome classes reasonLabel
+   * distinguishes: a clock for timeouts, a warning triangle for the code never
+   * running (compile/run error), and a plain cross for a wrong answer.
+   */
+  function statusIcon(result: TestRunResponse['results'][number]) {
+    if (result.success) return CircleCheckIcon;
+    if ('compilerOutput' in result) return TriangleExclamationIcon;
+    if (!('runInfo' in result)) return CircleXmarkIcon;
+    const failure = (result.runInfo as Record<string, unknown>).failure;
+    if (failure === 'timeout') return ClockIcon;
+    if (failure === 'compile_error' || failure === 'run_error') return TriangleExclamationIcon;
+    return CircleXmarkIcon;
+  }
+
   // The backend only sends public test results; the API layer already converts
   // each result to its TestCase class.
   let selectedTestCase = $derived.by(() => {
@@ -65,12 +84,24 @@
 {:else if lastTestType === 'run'}
   <div class="flex flex-row h-full">
     {#if selectedTestCase !== null}
-      <ul class="menu bg-base-200 rounded-box w-32 min-w-32 h-full flex flex-col flex-nowrap overflow-x-scroll">
+      <ul class="flex h-full w-36 min-w-36 flex-col flex-nowrap overflow-x-hidden overflow-y-auto p-4">
         {#each tests.results as result, i (i)}
-          <li class={result.success ? 'text-primary' : 'text-error'}>
-            <button onclick={() => (selectedTest = i)}>
-              Case {i + 1}
-            </button>
+          {@const Icon = statusIcon(result)}
+          {@const active = selectedTest === i}
+          <li>
+            <Button
+              class="btn-ghost btn-sm w-full justify-start gap-2 {result.success
+                ? 'text-success'
+                : 'text-error'} {active ? 'btn-active bg-base-100' : ''}"
+              aria-current={active ? 'true' : undefined}
+              onclick={() => (selectedTest = i)}
+            >
+              <Icon
+                class="h-3.5 w-3.5 shrink-0"
+                aria-hidden="true"
+              />
+              <span class="truncate">Case {i + 1}</span>
+            </Button>
           </li>
         {/each}
       </ul>

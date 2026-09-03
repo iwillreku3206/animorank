@@ -53,7 +53,7 @@
     <p
       data-reveal
       style="--d:0ms"
-      class="font-display text-[clamp(4rem,13vw,6rem)] leading-none font-bold tracking-tight text-base-content/90"
+      class="font-display text-[clamp(4rem,13vw,6rem)] leading-none font-bold tracking-tight text-base-content"
     >
       {page.status}
     </p>

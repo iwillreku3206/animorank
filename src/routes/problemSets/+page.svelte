@@ -198,7 +198,7 @@
                   class="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm transition-colors outline-none hover:bg-base-200 focus-visible:bg-base-200 {sortBy ===
                   opt.value
                     ? 'font-medium text-primary'
-                    : 'text-base-content/80'}"
+                    : 'text-base-content/70'}"
                   onclick={() => setSort(opt.value, sortDesc)}
                   aria-pressed={sortBy === opt.value}
                 >

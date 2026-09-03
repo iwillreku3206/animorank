@@ -60,7 +60,7 @@
   <div class="collapse-title font-medium">
     {#if title}{@render title()}{:else}{titleText}{/if}
   </div>
-  <div class="collapse-content text-sm text-base-content/75">
+  <div class="collapse-content text-sm text-base-content/70">
     {@render children?.()}
   </div>
 </div>

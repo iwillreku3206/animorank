@@ -102,7 +102,7 @@
       {#if user.name}
         <p class="truncate text-sm font-medium text-base-content">{user.name}</p>
       {/if}
-      <p class="truncate text-xs text-base-content/60">{user.email}</p>
+      <p class="truncate text-xs text-base-content/50">{user.email}</p>
     </div>
   </div>
 
@@ -119,7 +119,7 @@
         class="item"
         onclick={() => close()}
       >
-        <ContractIcon class="h-4 w-4 text-base-content/55" />
+        <ContractIcon class="h-4 w-4 text-base-content/50" />
         <span>Review TOS</span>
       </button>
     </form>
