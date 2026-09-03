@@ -59,7 +59,7 @@
   </TextInput>
 
   {#if excludable}
-    <p class="text-xs text-base-content/60">
+    <p class="text-xs text-base-content/50">
       Cycle: <span class="font-medium">
         <span class="text-success">include</span> → <span class="text-error">exclude</span> → clear
       </span>

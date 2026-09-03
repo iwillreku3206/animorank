@@ -225,7 +225,7 @@
   </div>
 
   {#if problemSet.problems.length === 0}
-    <p class="text-sm text-base-content/60 mb-6">No problems yet. Add one to get started.</p>
+    <p class="text-sm text-base-content/70 mb-6">No problems yet. Add one to get started.</p>
   {:else}
     <table class="table w-full mb-8">
       <thead>

@@ -107,7 +107,7 @@
         <p
           data-reveal="up"
           style="--d:150ms"
-          class="mt-6 max-w-[56ch] text-md leading-snug text-base-content/75 lg:text-lg"
+          class="mt-6 max-w-[56ch] text-md leading-snug text-base-content/70 lg:text-lg"
         >
           Problems for the DLSU CS courses, organized by the topics your course covers. Currently CCPROG1, but with more
           on the way.
@@ -120,7 +120,7 @@
         >
           {@render primaryCta('Start practicing')}
           {#if !data.user}
-            <span class="text-sm text-base-content/55"> Sign in with your DLSU Google account. </span>
+            <span class="text-sm text-base-content/50"> Sign in with your DLSU Google account. </span>
           {/if}
         </div>
       </div>
@@ -140,7 +140,7 @@
         <p
           data-reveal="up"
           style="--d:80ms"
-          class="mt-4 text-lg text-base-content/75"
+          class="mt-4 text-lg text-base-content/70"
         >
           Most practice problems are written for someone else. Practice a topic here and it is designed to match your
           course's coverage and style.
@@ -171,12 +171,12 @@
       >
         {#each topicGroups as group (group.label)}
           <div class="flex flex-col gap-2.5 sm:flex-row sm:items-baseline sm:gap-6">
-            <span class="shrink-0 text-sm font-medium text-base-content/60 sm:w-32">
+            <span class="shrink-0 text-sm font-medium text-base-content/50 sm:w-32">
               {group.label}
             </span>
             <div class="flex flex-wrap gap-2">
               {#each group.topics as topic (topic)}
-                <Badge class="badge-lg border-white/10 bg-base-100/60 text-base-content/85">
+                <Badge class="badge-lg border-white/10 bg-base-100/60 text-base-content">
                   {topic}
                 </Badge>
               {/each}
@@ -225,7 +225,7 @@
       ></div>
       <div class="relative max-w-2xl">
         <h2 class="font-display text-4xl font-bold tracking-tight text-balance lg:text-6xl">Practice now.</h2>
-        <p class="mt-6 max-w-[46ch] text-lg leading-relaxed text-primary-content/80">
+        <p class="mt-6 max-w-[46ch] text-lg leading-relaxed text-primary-content/70">
           Log in with your DLSU account to access your problem sets and start practicing.
         </p>
         <div class="mt-10">
