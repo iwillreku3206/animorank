@@ -3,7 +3,12 @@
   import { type monaco } from '$lib/monaco';
   import { browser } from '$app/environment';
   import constrainedEditor from 'constrained-editor-plugin';
-  import { DEFAULT_MONACO_THEME } from './themes';
+  import {
+    BASE_MONACO_OPTIONS,
+    editorSettings,
+    toMonacoEditorOptions,
+    toMonacoModelOptions
+  } from '$lib/editor/settings.svelte';
   import type { Slot } from '$lib/problem';
 
   let {
@@ -99,19 +104,10 @@
       constrainedInstance = constrained;
 
       monacoInstance = monaco.editor.create(editorContainer, {
-        bracketPairColorization: {
-          enabled: true
-        },
+        ...BASE_MONACO_OPTIONS,
+        ...toMonacoEditorOptions(editorSettings.current),
         value: code,
-        automaticLayout: true,
-        fontFamily: 'DM Mono',
-        language,
-        minimap: {
-          enabled: false
-        },
-        theme: DEFAULT_MONACO_THEME,
-        wordWrap: 'on',
-        wordBasedSuggestions: 'currentDocument'
+        language
       });
 
       monacoModel = monacoInstance.getModel() || undefined;
@@ -132,6 +128,19 @@
 
   $effect(() => {
     monacoInstance?.updateOptions({ readOnly: locked });
+  });
+
+  // User settings, kept separate from the `readOnly` effect above so a
+  // preference can never fight the run lock.
+  $effect(() => {
+    monacoInstance?.updateOptions(toMonacoEditorOptions(editorSettings.current));
+  });
+
+  // Model options (tab size, spaces) do not live on the editor, and `handleReset`
+  // swaps in a brand-new model — reading `monacoModel` here re-applies them on
+  // that swap, so Reset Code doesn't silently revert the user's indentation.
+  $effect(() => {
+    monacoModel?.updateOptions(toMonacoModelOptions(editorSettings.current));
   });
 
   $effect(() => {
