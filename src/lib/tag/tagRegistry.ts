@@ -8,14 +8,8 @@ import { DifficultyTag } from './DifficultyTag';
 import type { TopicTagCreateOptions, TopicTagUpdateOptions } from './TopicTag';
 import { TopicTag } from './TopicTag';
 
-export type TagCreateOptions =
-  | SubjectTagCreateOptions
-  | DifficultyTagCreateOptions
-  | TopicTagCreateOptions;
-export type TagUpdateOptions =
-  | SubjectTagUpdateOptions
-  | DifficultyTagUpdateOptions
-  | TopicTagUpdateOptions;
+export type TagCreateOptions = SubjectTagCreateOptions | DifficultyTagCreateOptions | TopicTagCreateOptions;
+export type TagUpdateOptions = SubjectTagUpdateOptions | DifficultyTagUpdateOptions | TopicTagUpdateOptions;
 
 export class TagRegistry extends ServiceRegistry<
   Tag<TagModel>,

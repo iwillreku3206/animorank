@@ -1,16 +1,20 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import { signIn } from '@auth/sveltekit/client';
-  import type { User } from '@auth/sveltekit';
+  import type { Session } from '@auth/sveltekit';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import AccountMenu from '$lib/components/settings/AccountMenu.svelte';
   import Link from '$lib/components/ui/Link.svelte';
   import MenuIcon from '@iconify-svelte/fa6-solid/bars';
   import XIcon from '@iconify-svelte/fa6-solid/xmark';
+  import { problemSetsHref } from '$lib/navigation';
 
-  let { user }: { user: User | null | undefined } = $props();
+  // The layout passes `session?.user`, which carries the app's augmented fields
+  // (`type`, `hasAcceptedTOS`). Typing this as `User` dropped them.
+  let { user }: { user: Session['user'] | null | undefined } = $props();
 
   let loggedIn = $derived(!!user);
+  let problemSetsUrl = $derived(problemSetsHref(user));
   let openDrawer = $state(false);
 
   let drawerEl = $state<HTMLElement>();
@@ -18,8 +22,7 @@
 
   const closeDrawer = () => (openDrawer = false);
 
-  const FOCUSABLE =
-    'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
   $effect(() => {
     if (!openDrawer) return;
@@ -64,9 +67,7 @@
   }}
 />
 
-<nav
-  class="app-gutter safe-top sticky top-0 z-30 grid min-h-16 grid-cols-[1fr_auto_1fr] items-center bg-base-300"
->
+<nav class="app-gutter safe-top sticky top-0 z-30 grid min-h-16 grid-cols-[1fr_auto_1fr] items-center bg-base-300">
   <!-- Left: hamburger (mobile) / brand wordmark (desktop) -->
   <div class="flex items-center justify-self-start">
     <Button
@@ -116,7 +117,7 @@
       {#if loggedIn}
         <Link
           class="px-4 text-base"
-          href="/problemSets">Problem Sets</Link
+          href={problemSetsUrl}>Problem Sets</Link
         >
       {/if}
     </div>
@@ -155,9 +156,7 @@
   tabindex="-1"
   onkeydown={trapFocus}
 >
-  <div
-    class="safe-top flex min-h-16 items-center justify-between border-b border-base-content/10 px-5"
-  >
+  <div class="safe-top flex min-h-16 items-center justify-between border-b border-base-content/10 px-5">
     <a
       href="/"
       onclick={closeDrawer}
@@ -188,7 +187,7 @@
     {#if loggedIn}
       <Link
         class="py-2 text-base"
-        href="/problemSets"
+        href={problemSetsUrl}
         onclick={closeDrawer}>Problem Sets</Link
       >
     {/if}

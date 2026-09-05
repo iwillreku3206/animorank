@@ -1,0 +1,103 @@
+/*
+ * YFM (Yandex Flavored Markdown) dark theme overrides — AnimoRank edition.
+ *
+ * Maps every `--yfm-*` variable onto the animorank-dark daisyUI palette so
+ * rendered YFM content blends seamlessly into the app. DaisyUI `--color-*`
+ * tokens are used wherever they match semantically; derived syntax colors
+ * (comments, pseudo-elements, etc.) use static hex values from the matching
+ * Monaco editor theme (`animorank-dark.ts`).
+ */
+
+.yfm {
+  overflow-wrap: break-word;
+}
+
+.yfm pre,
+.yfm table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Code blocks without a language: default to base text color */
+.yfm pre > code:not([class*='hljs']) {
+  color: var(--color-base-content) !important;
+}
+
+.yfm .hljs {
+  color: var(--color-base-content) !important;
+}
+
+.yfm {
+  /* ---- Text & base ----------------------------------------------------- */
+  --yfm-color-text-private: var(--color-base-content) !important;
+  --yfm-color-base-private: var(--color-base-100) !important;
+  --yfm-color-border-private: color-mix(in oklch, var(--color-base-content) 7%, transparent) !important;
+
+  /* ---- Links ----------------------------------------------------------- */
+  --yfm-color-link-private: var(--color-primary) !important;
+  --yfm-color-link-hover-private: var(--color-primary-focus) !important;
+  --yfm-color-accent-private: var(--color-primary) !important;
+
+  /* ---- Inline code ----------------------------------------------------- */
+  --yfm-color-inline-code-private: var(--color-secondary) !important;
+  --yfm-color-inline-code-background-private: color-mix(
+    in oklch,
+    var(--color-base-content) 12%,
+    transparent
+  ) !important;
+
+  /* ---- Code blocks ----------------------------------------------------- */
+  --yfm-color-code-background-private: color-mix(in oklch, var(--color-base-content) 12%, transparent) !important;
+  --yfm-color-code-background-hovered-private: color-mix(
+    in oklch,
+    var(--color-base-content) 20%,
+    transparent
+  ) !important;
+
+  /* ---- Highlight.js syntax colors -------------------------------------- */
+  --yfm-color-hljs-background-private: color-mix(in oklch, var(--color-base-content) 12%, transparent) !important;
+  --yfm-color-hljs-subst-private: var(--color-base-content) !important;
+  --yfm-color-hljs-comment-private: #7c7c7c !important;
+  --yfm-color-hljs-deletion-private: #4dba89 !important;
+  --yfm-color-hljs-section-private: #a9e289 !important;
+  --yfm-color-hljs-pseudo-private: #b6b6b6 !important;
+  --yfm-color-hljs-literal-private: #e0a838 !important;
+  --yfm-color-hljs-addition-private: #77de3d !important;
+  --yfm-color-hljs-meta-private: #4d99bf !important;
+  --yfm-color-hljs-meta-string-private: #4dba89 !important;
+
+  /* ---- Notes / callouts ------------------------------------------------ */
+  --yfm-color-note-tip-private: var(--color-success) !important;
+  --yfm-color-note-tip-background-private: color-mix(in oklch, var(--color-success) 10%, transparent) !important;
+  --yfm-color-note-warning-private: var(--color-warning) !important;
+  --yfm-color-note-warning-background-private: color-mix(in oklch, var(--color-warning) 15%, transparent) !important;
+  --yfm-color-note-important-private: var(--color-error) !important;
+  --yfm-color-note-important-background-private: color-mix(in oklch, var(--color-error) 8%, transparent) !important;
+  --yfm-color-note-info-private: var(--color-info) !important;
+  --yfm-color-note-info-background-private: color-mix(in oklch, var(--color-info) 8%, transparent) !important;
+
+  /* ---- Terms & definitions --------------------------------------------- */
+  --yfm-color-term-title-private: var(--color-primary) !important;
+  --yfm-color-term-title-hover-private: var(--color-primary-focus) !important;
+  --yfm-color-term-dfn-background-private: var(--color-base-100) !important;
+  --yfm-color-term-dfn-shadow-private: rgba(0, 0, 0, 0.15) !important;
+  --yfm-color-term-dfn-pseudo-shadow-private: var(--color-base-200) !important;
+
+  /* ---- Modals ---------------------------------------------------------- */
+  --yfm-color-modal-content-private: var(--color-base-100) !important;
+  --yfm-color-modal-actions-hover-private: color-mix(in oklch, var(--color-base-content) 5%, transparent) !important;
+  --yfm-color-modal-wide-content-private: color-mix(in oklch, var(--color-base-content) 85%, transparent) !important;
+  --yfm-color-modal-wide-content-overlay-private: var(--color-base-300) !important;
+
+  /* ---- Tables ---------------------------------------------------------- */
+  --yfm-color-table-private: var(--color-base-content) !important;
+  --yfm-color-table-row-background-private: color-mix(in oklch, var(--color-base-content) 2%, transparent) !important;
+  --yfm-color-table-border-private: color-mix(in oklch, var(--color-base-content) 7%, transparent) !important;
+  --yfm-color-table-background-private: var(--color-base-100) !important;
+  --yfm-color-table-head-background-private: color-mix(in oklch, var(--color-base-content) 2%, transparent) !important;
+  --yfm-color-table-stripe-row-background-private: color-mix(
+    in oklch,
+    var(--color-base-content) 2%,
+    transparent
+  ) !important;
+}

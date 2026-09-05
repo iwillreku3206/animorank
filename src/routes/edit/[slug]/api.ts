@@ -1,11 +1,5 @@
-import type {
-  CustomTestCase,
-  FunctionOutputTestCase,
-  Language,
-  ProblemTestCase,
-  ProblemTestCaseType,
-  ProgramIOTestCase
-} from '$lib/zenstack/models';
+import type { JsonValue } from '@zenstackhq/orm';
+import type { Language, ProblemTestCase } from '$lib/zenstack/models';
 
 export interface UpdatePayload {
   name?: string;
@@ -17,6 +11,7 @@ export interface UpdatePayload {
   difficulty_id?: string | null;
   subject_id?: string | null;
   topics?: string[];
+  extension_data?: JsonValue;
 }
 
 export async function saveProblem(problemId: string, updates: UpdatePayload) {
@@ -35,10 +30,7 @@ export async function deleteTestCase(testCaseId: string) {
   });
 }
 
-export async function createTestCase(
-  problem: string,
-  type: ProblemTestCaseType
-): Promise<ProblemTestCase | undefined> {
+export async function createTestCase(problem: string, type: string): Promise<ProblemTestCase | undefined> {
   const req = await fetch('/api/test-case', {
     method: 'POST',
     body: JSON.stringify({
@@ -55,46 +47,10 @@ export async function createTestCase(
   return res;
 }
 
-type AnyTestCase = ProblemTestCase | FunctionOutputTestCase | ProgramIOTestCase | CustomTestCase;
-export async function updateTestCase(testCase: AnyTestCase): Promise<boolean> {
-  let body;
-  switch (testCase.type) {
-    case 'FunctionOutputTestCase': {
-      const functionTestCase = testCase as FunctionOutputTestCase;
-      body = {
-        public: testCase.public,
-        parameters: functionTestCase.parameters,
-        comparisons: functionTestCase.comparisons,
-        return_type: functionTestCase.return_type,
-        function_name: functionTestCase.function_name
-      };
-      break;
-    }
-    case 'ProgramIOTestCase': {
-      const ioTestCase = testCase as ProgramIOTestCase;
-      body = {
-        public: testCase.public,
-        input: ioTestCase.input,
-        output: ioTestCase.output
-      };
-      break;
-    }
-    case 'CustomTestCase': {
-      const customTestCase = testCase as CustomTestCase;
-      body = {
-        public: testCase.public,
-        test_code: customTestCase.test_code
-      };
-      break;
-    }
-  }
-
+export async function updateTestCase(testCase: ProblemTestCase): Promise<boolean> {
   const req = await fetch(`/api/test-case/${testCase.id}`, {
     method: 'PUT',
-    body: JSON.stringify(body),
-    headers: {
-      'content-type': 'application/json'
-    }
+    body: JSON.stringify(testCase)
   });
 
   const res = await req.json();

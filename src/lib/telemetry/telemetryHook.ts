@@ -1,10 +1,9 @@
 import type { ExecutionEvent } from '$lib/testCase/executionHook';
 import type { monaco } from '$lib/monaco';
 import type { Subscribable } from '$lib/utils/subscription';
-import type { HistoryEntryType } from '$lib/zenstack/models';
 
 export type Entry<T = object> = {
-  type: HistoryEntryType;
+  type: string;
   data: T;
 };
 

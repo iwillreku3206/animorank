@@ -10,9 +10,9 @@
   <TextInput
     type="text"
     name="Problem Name"
-    class="input-primary w-full"
-    bind:value={context.problem.name}
+    class="input-xs input-primary w-full"
+    bind:value={context.problem.model.name}
   />
 
-  <Editor bind:text={context.problem.description} />
+  <Editor bind:text={context.problem.model.description} />
 </section>

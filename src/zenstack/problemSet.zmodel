@@ -11,6 +11,13 @@ model ProblemSetTopic {
   @@id([problem_set_id, topic_tag_id])
 }
 
+// NOTE: `title` and `description` are searched with ILIKE '%term%'
+// (ProblemSetService.findByFilter) and are backed by hand-maintained pg_trgm
+// GIN indexes (`problemset_title_trgm`, `problemset_description_trgm`),
+// which are NOT expressible in the zmodel. Prisma's auto-diff will try to
+// drop them in every generated migration — discard those DROP INDEX
+// statements at review time. They are re-created idempotently in
+// prisma/migrations/20260820000000_restore_problemset_trgm_indexes.
 model ProblemSet {
   id            String                   @id @default(uuid()) @db.Uuid
   description   String?
@@ -27,11 +34,22 @@ model ProblemSet {
   problems      Problem[]
   subscriptions Subscription[]
   bookmarks     ProblemSetBookmark[]
+  extensions    ProblemSetExtension[]
 
   collaborators ProblemSetCollaborator[]
 
   created_at    DateTime                 @default(now()) @db.Timestamptz(6)
   updated_at    DateTime                 @updatedAt @db.Timestamptz(6)
+}
+
+model ProblemSetExtension {
+  problem_set_id String     @db.Uuid
+  problem_set    ProblemSet @relation(fields: [problem_set_id], references: [id])
+
+  extension_id   String
+  data           Json
+
+  @@id([problem_set_id, extension_id])
 }
 
 model ProblemSetBookmark {

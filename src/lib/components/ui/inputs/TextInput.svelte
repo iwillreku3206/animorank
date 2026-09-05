@@ -23,14 +23,7 @@
   // when there are no adornments; daisyUI's `<label class="input">` wrapper when a
   // `leading`/`trailing` snippet is given (so the icon sits inside the field and
   // shares its focus ring).
-  let {
-    value = $bindable(''),
-    leading,
-    trailing,
-    type = 'text',
-    class: className,
-    ...rest
-  }: TextInputProps = $props();
+  let { value = $bindable(''), leading, trailing, type = 'text', class: className, ...rest }: TextInputProps = $props();
 
   const wrapped = $derived(leading != null || trailing != null);
 </script>

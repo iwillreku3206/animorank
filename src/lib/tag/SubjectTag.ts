@@ -26,10 +26,7 @@ export class SubjectTag extends Tag<SubjectTagModel> {
     return db.subjectTag.findUnique({ where: { id } });
   }
 
-  static async update(
-    id: string,
-    options: SubjectTagUpdateOptions
-  ): Promise<SubjectTagModel | null> {
+  static async update(id: string, options: SubjectTagUpdateOptions): Promise<SubjectTagModel | null> {
     const existing = await db.subjectTag.findUnique({ where: { id } });
     if (!existing) return null;
 

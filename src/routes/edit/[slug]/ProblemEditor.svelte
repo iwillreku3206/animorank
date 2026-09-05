@@ -1,20 +1,27 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { createDockview, DockviewApi } from 'dockview-core';
-  import { Window } from '$lib/window/index';
-  import { themeAnimoRank } from '$lib/window/animorank-theme';
+  import { onDestroy } from 'svelte';
+  import DockviewWindow from '$lib/window/DockviewWindow.svelte';
+  import type { DefaultLayout } from '$lib/window/layout';
   import { ProblemEditorWindowRegistry } from './windowRegistry';
   import { ProblemEditorWindowContext } from './context.svelte';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
 
-  let root: HTMLDivElement | undefined = $state();
-  let dockview: DockviewApi | undefined = $state();
-
   const windowRegistry = new ProblemEditorWindowRegistry();
 
-  const windowMap: Record<string, Window<ProblemEditorWindowContext>> = {};
+  const defaultLayout: DefaultLayout = {
+    panes: [
+      {
+        orientation: 'vertical',
+        children: [{ tabs: ['metadata', 'properties'], active: 'metadata' }, 'starter_code']
+      },
+      {
+        orientation: 'vertical',
+        children: [{ tabs: ['functions', 'test_cases'], active: 'test_cases' }]
+      }
+    ]
+  };
 
   let context = $state(
     new ProblemEditorWindowContext({
@@ -25,31 +32,15 @@
     })
   );
 
-  function openWindow(key: string) {
-    if (key in windowMap) {
-      dockview?.getPanel(key)?.api.setActive();
-      return windowMap[key];
-    }
-    windowMap[key] = windowRegistry.getInstance(key, context);
-    dockview?.addPanel({ id: key, title: windowMap[key].title, component: 'default' });
-  }
-
-  onMount(() => {
-    dockview = createDockview(root!, {
-      theme: themeAnimoRank,
-      createComponent: (options) => windowMap[options.id].getRenderer()
-    });
-    openWindow('metadata');
-    openWindow('starter_code');
-    openWindow('properties');
-    openWindow('test_cases');
+  onDestroy(() => {
+    context.cleanup();
   });
 </script>
 
 save status: {context.autosaveStatus}
-<div class="relative w-full h-full flex flex-1 flex-col">
-  <div
-    class="absolute top-2 bottom-2 left-2 right-2"
-    bind:this={root}
-  ></div>
-</div>
+<DockviewWindow
+  bind:context
+  {windowRegistry}
+  {defaultLayout}
+  storageKey={`problem-editor-${data.problem.id}`}
+/>

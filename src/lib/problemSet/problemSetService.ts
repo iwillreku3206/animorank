@@ -340,8 +340,7 @@ export class ProblemSetService {
       });
       tagTypeById = new Map(filterTags.map((t) => [t.id, t.type]));
     }
-    const ofType = (ids: string[], type: TagType) =>
-      ids.filter((id) => tagTypeById.get(id) === type);
+    const ofType = (ids: string[], type: TagType) => ids.filter((id) => tagTypeById.get(id) === type);
 
     const subjInc = ofType(includeIds, TagType.SubjectTag);
     const subjExc = ofType(excludeIds, TagType.SubjectTag);
@@ -357,9 +356,7 @@ export class ProblemSetService {
           .leftJoin('ProblemSetTopic', 'ProblemSetTopic.problem_set_id', 'ProblemSet.id')
           .groupBy('ProblemSet.id')
           .select('ProblemSet.id')
-          .select((eb) =>
-            eb.fn<string[]>('array_agg', ['ProblemSetTopic.topic_tag_id']).as('topic_tags')
-          )
+          .select((eb) => eb.fn<string[]>('array_agg', ['ProblemSetTopic.topic_tag_id']).as('topic_tags'))
       )
       .with('problem_progress', (db) =>
         db
@@ -404,23 +401,17 @@ export class ProblemSetService {
           .select('ProblemSet.id')
           .select((eb) =>
             eb.fn
-              .sum(
-                eb.case().when('problem_progress.progress', '=', 'finished').then(1).else(0).end()
-              )
+              .sum(eb.case().when('problem_progress.progress', '=', 'finished').then(1).else(0).end())
               .as('count_finished')
           )
           .select((eb) =>
             eb.fn
-              .sum(
-                eb.case().when('problem_progress.progress', '=', 'unfinished').then(1).else(0).end()
-              )
+              .sum(eb.case().when('problem_progress.progress', '=', 'unfinished').then(1).else(0).end())
               .as('count_unfinished')
           )
           .select((eb) =>
             eb.fn
-              .sum(
-                eb.case().when('problem_progress.progress', '=', 'unstarted').then(1).else(0).end()
-              )
+              .sum(eb.case().when('problem_progress.progress', '=', 'unstarted').then(1).else(0).end())
               .as('count_unstarted')
           )
           .select((eb) => eb.fn.count('Problem.id').as('count_total'))
@@ -429,11 +420,7 @@ export class ProblemSetService {
         db
           .selectFrom('solved_amounts')
           .select('id')
-          .select((eb) =>
-            eb(eb.cast(eb.ref('count_finished'), 'real'), '/', eb.ref('count_total')).as(
-              'progress_pct'
-            )
-          )
+          .select((eb) => eb(eb.cast(eb.ref('count_finished'), 'real'), '/', eb.ref('count_total')).as('progress_pct'))
       )
       .with('problem_count', (db) =>
         db
@@ -446,17 +433,11 @@ export class ProblemSetService {
       .with('collaborators_agg', (db) =>
         db
           .selectFrom('ProblemSet')
-          .innerJoin(
-            'ProblemSetCollaborator',
-            'ProblemSetCollaborator.problem_set_id',
-            'ProblemSet.id'
-          )
+          .innerJoin('ProblemSetCollaborator', 'ProblemSetCollaborator.problem_set_id', 'ProblemSet.id')
           .innerJoin('Teacher', 'ProblemSetCollaborator.collaborator_id', 'Teacher.id')
           .innerJoin('User', 'Teacher.id', 'User.id')
           .select('ProblemSet.id')
-          .select((eb) =>
-            eb.fn.agg<string[]>('json_build_array', ['User.id', 'User.name']).as('collaborators')
-          )
+          .select((eb) => eb.fn.agg<string[]>('json_build_array', ['User.id', 'User.name']).as('collaborators'))
       )
       .with('collaborators', (db) =>
         db
@@ -476,13 +457,7 @@ export class ProblemSetService {
           )
           .select('ProblemSet.id')
           .select((eb) =>
-            eb
-              .case()
-              .when('ProblemSetBookmark.user_id', 'is', null)
-              .then(false)
-              .else(true)
-              .end()
-              .as('bookmarked')
+            eb.case().when('ProblemSetBookmark.user_id', 'is', null).then(false).else(true).end().as('bookmarked')
           )
       )
       .with('difficulty_order', (db) =>
@@ -514,11 +489,7 @@ export class ProblemSetService {
       .select((eb) => eb.ref('solved_amounts.count_unstarted').as('progress_unstarted'))
       .select((eb) =>
         eb(
-          eb(
-            eb.ref('solved_amounts.count_unfinished'),
-            '+',
-            eb.ref('solved_amounts.count_finished')
-          ),
+          eb(eb.ref('solved_amounts.count_unfinished'), '+', eb.ref('solved_amounts.count_finished')),
           '+',
           eb.ref('solved_amounts.count_unstarted')
         ).as('progress_total')
@@ -569,12 +540,7 @@ export class ProblemSetService {
     }
 
     const hasTagFilter =
-      subjInc.length ||
-      subjExc.length ||
-      diffInc.length ||
-      diffExc.length ||
-      topicInc.length ||
-      topicExc.length;
+      subjInc.length || subjExc.length || diffInc.length || diffExc.length || topicInc.length || topicExc.length;
 
     if (hasTagFilter) {
       // Categories are AND-ed together; subject/difficulty includes are OR (IN),
@@ -582,16 +548,10 @@ export class ProblemSetService {
       query = query.where((eb) =>
         eb.and([
           ...(subjInc.length ? [eb('subject_id', 'in', subjInc)] : []),
-          ...(subjExc.length
-            ? [eb.or([eb('subject_id', 'is', null), eb('subject_id', 'not in', subjExc)])]
-            : []),
+          ...(subjExc.length ? [eb.or([eb('subject_id', 'is', null), eb('subject_id', 'not in', subjExc)])] : []),
           ...(diffInc.length ? [eb('difficulty_id', 'in', diffInc)] : []),
-          ...(diffExc.length
-            ? [eb.or([eb('difficulty_id', 'is', null), eb('difficulty_id', 'not in', diffExc)])]
-            : []),
-          ...(topicInc.length
-            ? [eb('topics.topic_tags', topicMatchAll ? '@>' : '&&', eb.val(topicInc))]
-            : []),
+          ...(diffExc.length ? [eb.or([eb('difficulty_id', 'is', null), eb('difficulty_id', 'not in', diffExc)])] : []),
+          ...(topicInc.length ? [eb('topics.topic_tags', topicMatchAll ? '@>' : '&&', eb.val(topicInc))] : []),
           ...(topicExc.length ? [eb.not(eb('topics.topic_tags', '&&', eb.val(topicExc)))] : [])
         ])
       );

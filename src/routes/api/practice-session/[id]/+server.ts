@@ -11,11 +11,7 @@ export const PUT: RequestHandler = async ({ locals, params, request }) => {
   const session = await locals.auth();
   if (!session) return error(403, 'Unauthorized');
 
-  const {
-    success,
-    error: zodError,
-    data
-  } = await updateCodeValidator.safeParseAsync(await request.json());
+  const { success, error: zodError, data } = await updateCodeValidator.safeParseAsync(await request.json());
   if (!success) return error(400, zodError);
 
   const service = PracticeSessionService.instance();

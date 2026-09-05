@@ -31,6 +31,8 @@ model Problem {
   subject           SubjectTag?       @relation(fields: [subject_id], references: [id], onDelete: SetNull)
   topics            ProblemTopic[]
 
+  extension_data    Json              @default('{}')
+
   problem_set_id    String            @db.Uuid
   problem_set       ProblemSet        @relation(fields: [problem_set_id], references: [id], onDelete: Cascade)
 

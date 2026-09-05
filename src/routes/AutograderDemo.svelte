@@ -235,9 +235,7 @@
   <div class="flex min-h-0 flex-1">
     <!-- spec pane (rendered problem) -->
     <div class="ide-pane hidden w-[34%] shrink-0 flex-col border-r border-white/8 lg:flex">
-      <div
-        class="shrink-0 px-4 pt-3 pb-2 text-[11px] font-medium tracking-wide text-base-content/45 uppercase"
-      >
+      <div class="shrink-0 px-4 pt-3 pb-2 text-[11px] font-medium tracking-wide text-base-content/45 uppercase">
         Problem
       </div>
       <div class="relative min-h-0 flex-1 overflow-hidden px-4 pb-4">
@@ -247,9 +245,7 @@
         </h3>
         <p class="mt-2 text-[13px] leading-relaxed text-base-content/75">{program.statement}</p>
 
-        <div
-          class="mt-3 rounded-lg border border-white/8 bg-base-300/50 p-2.5 font-mono text-[11px] leading-relaxed"
-        >
+        <div class="mt-3 rounded-lg border border-white/8 bg-base-300/50 p-2.5 font-mono text-[11px] leading-relaxed">
           {#each program.examples as ex (ex.input)}
             <div class="text-base-content/55">
               <span class="text-base-content/40">in&nbsp;&nbsp;</span>{ex.input}
@@ -289,9 +285,7 @@
       <!-- results / output -->
       <div class="ide-pane flex h-42 shrink-0 flex-col border-t border-white/8 bg-base-300/30">
         <div class="flex shrink-0 items-center justify-between border-b border-white/5 px-4 py-2">
-          <span class="text-[11px] font-medium tracking-wide text-base-content/55 uppercase">
-            Tests
-          </span>
+          <span class="text-[11px] font-medium tracking-wide text-base-content/55 uppercase"> Tests </span>
           <div class="flex items-center gap-2">
             <span class="font-mono text-[11px] tabular-nums text-base-content/45">
               {passed}/{program.cases.length}
@@ -336,9 +330,7 @@
                       : 'text-base-content/45'}"
                 >
                   {#if isPassed}
-                    <span
-                      class="grid h-3.5 w-3.5 shrink-0 place-items-center rounded-full bg-primary/20"
-                    >
+                    <span class="grid h-3.5 w-3.5 shrink-0 place-items-center rounded-full bg-primary/20">
                       {@render checkIcon('h-2 w-2')}
                     </span>
                   {:else if isRunning}

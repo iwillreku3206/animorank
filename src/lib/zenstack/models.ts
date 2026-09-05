@@ -6,17 +6,15 @@
 /* eslint-disable */
 
 import { schema as $schema, type SchemaType as $Schema } from "./schema";
-import type { ModelResult as $ModelResult, TypeDefResult as $TypeDefResult } from "@zenstackhq/orm";
+import type { ModelResult as $ModelResult } from "@zenstackhq/orm";
 export type PracticeSession = $ModelResult<$Schema, "PracticeSession">;
-export type PracticeHistoryEntry = $ModelResult<$Schema, "PracticeHistoryEntry">;
+export type SessionHistoryEntry = $ModelResult<$Schema, "SessionHistoryEntry">;
 export type ProblemTopic = $ModelResult<$Schema, "ProblemTopic">;
 export type Problem = $ModelResult<$Schema, "Problem">;
 export type ProblemTestCase = $ModelResult<$Schema, "ProblemTestCase">;
-export type FunctionOutputTestCase = $ModelResult<$Schema, "FunctionOutputTestCase">;
-export type ProgramIOTestCase = $ModelResult<$Schema, "ProgramIOTestCase">;
-export type CustomTestCase = $ModelResult<$Schema, "CustomTestCase">;
 export type ProblemSetTopic = $ModelResult<$Schema, "ProblemSetTopic">;
 export type ProblemSet = $ModelResult<$Schema, "ProblemSet">;
+export type ProblemSetExtension = $ModelResult<$Schema, "ProblemSetExtension">;
 export type ProblemSetBookmark = $ModelResult<$Schema, "ProblemSetBookmark">;
 export type ProblemSetCollaborator = $ModelResult<$Schema, "ProblemSetCollaborator">;
 export type Subscription = $ModelResult<$Schema, "Subscription">;
@@ -32,16 +30,7 @@ export type Account = $ModelResult<$Schema, "Account">;
 export type Session = $ModelResult<$Schema, "Session">;
 export type VerificationToken = $ModelResult<$Schema, "VerificationToken">;
 export type Authenticator = $ModelResult<$Schema, "Authenticator">;
-export type DataTypeWithValue = $TypeDefResult<$Schema, "DataTypeWithValue">;
-export type Parameter = $TypeDefResult<$Schema, "Parameter">;
-export type Comparison = $TypeDefResult<$Schema, "Comparison">;
-export const HistoryEntryType = $schema.enums.HistoryEntryType.values;
-export type HistoryEntryType = (typeof HistoryEntryType)[keyof typeof HistoryEntryType];
 export const Language = $schema.enums.Language.values;
 export type Language = (typeof Language)[keyof typeof Language];
-export const ProblemTestCaseType = $schema.enums.ProblemTestCaseType.values;
-export type ProblemTestCaseType = (typeof ProblemTestCaseType)[keyof typeof ProblemTestCaseType];
-export const FunctionOutputTestCaseOperator = $schema.enums.FunctionOutputTestCaseOperator.values;
-export type FunctionOutputTestCaseOperator = (typeof FunctionOutputTestCaseOperator)[keyof typeof FunctionOutputTestCaseOperator];
 export const TagType = $schema.enums.TagType.values;
 export type TagType = (typeof TagType)[keyof typeof TagType];

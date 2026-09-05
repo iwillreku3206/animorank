@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Checkbox from '$lib/components/ui/checkboxes/Checkbox.svelte';
   import Tags from 'svelte-tags-input';
   import TagSelect from '$lib/components/ui/TagSelect.svelte';
   import { groupBy } from '$lib/utils/groupBy';
@@ -23,14 +24,14 @@
 
 <h2 class="text-2xl font-bold">Subject</h2>
 <TagSelect
-  bind:selectedTagId={context.problem.subject_id}
+  bind:selectedTagId={context.problem.model.subject_id}
   tags={tags.SubjectTag}
   placeholder="Select a subject"
 />
 
 <h2 class="text-2xl font-bold">Difficulty</h2>
 <TagSelect
-  bind:selectedTagId={context.problem.difficulty_id}
+  bind:selectedTagId={context.problem.model.difficulty_id}
   tags={tags.DifficultyTag}
   placeholder="Select a difficulty"
 />
@@ -46,14 +47,10 @@
 </div>
 
 <h2 class="text-2xl font-bold">Slots</h2>
-<label class="flex flex-row items-center gap-2">
-  <input
-    class="checkbox checkbox-primary rounded-xl!"
-    type="checkbox"
-    bind:checked={context.problem.uses_slots}
-  />
-  Enable slots
-</label>
+<Checkbox
+  class="checkbox-xs checkbox-primary rounded-xl!"
+  bind:checked={context.problem.model.uses_slots}>Enable slots</Checkbox
+>
 
 <style
   lang="postcss"
@@ -62,7 +59,7 @@
   @reference "../../../../app.css";
   /* 1. Make the outer container look like a daisyUI bordered input */
   .daisy-tags-wrapper :global(.svelte-tags-input-layout) {
-    @apply input input-primary border-primary flex h-auto min-h-[3rem] flex-wrap items-center gap-1 py-1.5 focus-within:input-primary bg-base-100;
+    @apply input input-xs input-primary border-primary flex h-auto min-h-[3rem] flex-wrap items-center gap-1 py-1.5 focus-within:input-primary bg-base-100;
   }
 
   .daisy-tags-wrapper :global(.svelte-tags-input-layout):hover {

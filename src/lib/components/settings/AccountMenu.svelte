@@ -5,7 +5,7 @@
   import ContractIcon from '@iconify-svelte/fa6-solid/file-contract';
   import LogoutIcon from '@iconify-svelte/fa6-solid/arrow-right-from-bracket';
 
-  let { user }: { user: User } = $props();
+  let { user, compact = false }: { user: User; compact?: boolean } = $props();
 
   let open = $state(false);
   let triggerEl = $state<HTMLElement | null>(null);
@@ -59,7 +59,7 @@
 <Button
   bind:ref={triggerEl}
   type="button"
-  class="btn-ghost btn-circle grid place-items-center overflow-hidden"
+  class="btn-ghost btn-circle grid place-items-center overflow-hidden {compact ? 'btn-sm' : ''}"
   onclick={toggle}
   aria-haspopup="menu"
   aria-expanded={open}
@@ -68,7 +68,7 @@
   <img
     src={user.image}
     alt=""
-    class="h-10 w-10 rounded-full object-cover"
+    class="rounded-full object-cover {compact ? 'h-7 w-7' : 'h-10 w-10'}"
   />
 </Button>
 
@@ -102,14 +102,13 @@
       {#if user.name}
         <p class="truncate text-sm font-medium text-base-content">{user.name}</p>
       {/if}
-      <p class="truncate text-xs text-base-content/60">{user.email}</p>
+      <p class="truncate text-xs text-base-content/50">{user.email}</p>
     </div>
   </div>
 
   <div class="border-t border-base-content/10"></div>
 
   <div class="p-1.5">
-
     <!-- Review TOS: server form (revokes consent, redirects to /accept-terms). -->
     <form
       method="POST"
@@ -120,7 +119,7 @@
         class="item"
         onclick={() => close()}
       >
-        <ContractIcon class="h-4 w-4 text-base-content/55" />
+        <ContractIcon class="h-4 w-4 text-base-content/50" />
         <span>Review TOS</span>
       </button>
     </form>

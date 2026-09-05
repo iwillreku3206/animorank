@@ -5,8 +5,7 @@
   import { faqSections, type AnswerPart } from './faqs';
 
   // Flatten an answer (string + link parts) to plain text for structured data.
-  const answerText = (parts: AnswerPart[]) =>
-    parts.map((p) => (typeof p === 'string' ? p : p.text)).join('');
+  const answerText = (parts: AnswerPart[]) => parts.map((p) => (typeof p === 'string' ? p : p.text)).join('');
 
   const faqLd = JSON.stringify({
     '@context': 'https://schema.org',
@@ -36,9 +35,7 @@
       <h1 class="font-display text-3xl font-bold tracking-tight text-balance lg:text-4xl">
         Frequently Asked Questions
       </h1>
-      <p class="mt-4 text-md leading-relaxed text-base-content/70">
-        Answers to common questions about AnimoRank.
-      </p>
+      <p class="mt-4 text-md leading-relaxed text-base-content/70">Answers to common questions about AnimoRank.</p>
     </header>
 
     {#each faqSections as section (section.heading)}

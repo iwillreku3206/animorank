@@ -22,10 +22,7 @@ declare module 'constrained-editor-plugin' {
      * @returns the constrained model (the original model augmented with
      *          restriction-related methods and properties).
      */
-    addRestrictionsTo(
-      model: monaco.editor.ITextModel,
-      ranges: RangeRestrictionObject[]
-    ): ConstrainedModel;
+    addRestrictionsTo(model: monaco.editor.ITextModel, ranges: RangeRestrictionObject[]): ConstrainedModel;
 
     /**
      * Remove all restriction-related APIs and listeners from a model.
@@ -96,11 +93,7 @@ declare module 'constrained-editor-plugin' {
      * @param lastInfo            — an object describing the nature of the
      *                              last edit (see `RangeChangeInfo`).
      */
-    validate?: (
-      currentlyTypedValue: string,
-      newRange: monaco.Range,
-      lastInfo: RangeChangeInfo | undefined
-    ) => boolean;
+    validate?: (currentlyTypedValue: string, newRange: monaco.Range, lastInfo: RangeChangeInfo | undefined) => boolean;
   }
 
   // ---------------------------------------------------------------------------

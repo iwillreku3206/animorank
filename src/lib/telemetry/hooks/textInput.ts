@@ -60,10 +60,7 @@ export class TextInputHook extends TelemetryHook {
     const changeHook = monaco.onDidChangeModelContent((e) => {
       e.changes.forEach(({ rangeLength, rangeOffset, text }) => {
         const old = prevText.substring(rangeOffset, rangeOffset + rangeLength);
-        eventQueue.push([
-          { type: 'TEXT_MODIFIED', data: { old, offset: rangeOffset, new: text } },
-          performance.now()
-        ]);
+        eventQueue.push([{ type: 'TEXT_MODIFIED', data: { old, offset: rangeOffset, new: text } }, performance.now()]);
         prevText = monaco.getModel()?.getLinesContent().join('\n') || '';
       });
     });

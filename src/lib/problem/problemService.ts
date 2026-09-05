@@ -27,6 +27,15 @@ export interface CreateOptions {
   visible?: boolean;
 }
 
+/**
+ * A hidden problem (`visible: false`) is delisted for students but must stay
+ * reachable for the set's collaborators, who need to preview and edit what they
+ * have hidden. Applied alongside the problem-set access check, not instead of it.
+ */
+const visibleToUser = (userId: string) => ({
+  OR: [{ visible: true }, { problem_set: { collaborators: { some: { collaborator_id: userId } } } }]
+});
+
 export class ProblemService {
   private static _instance: ProblemService | null;
 
@@ -43,17 +52,8 @@ export class ProblemService {
    * Create a new problem.
    */
   public async create(options: CreateOptions): Promise<Problem | null> {
-    const {
-      name,
-      description,
-      problemSetId,
-      usesSlots,
-      starterCode,
-      language,
-      subjectId,
-      difficultyId,
-      visible
-    } = options;
+    const { name, description, problemSetId, usesSlots, starterCode, language, subjectId, difficultyId, visible } =
+      options;
 
     const problem = await db.problem.create({
       data: {
@@ -65,9 +65,7 @@ export class ProblemService {
         language: language ?? Language.C,
         visible: visible ?? true,
         ...((subjectId ? { subject_id: subjectId } : {}) as Partial<Record<string, unknown>>),
-        ...((difficultyId ? { difficulty_id: difficultyId } : {}) as Partial<
-          Record<string, unknown>
-        >)
+        ...((difficultyId ? { difficulty_id: difficultyId } : {}) as Partial<Record<string, unknown>>)
       }
     });
 
@@ -82,11 +80,9 @@ export class ProblemService {
       where: {
         problem_set: {
           id: options.problemSetId,
-          OR: [
-            { is_global: true },
-            { collaborators: { some: { collaborator_id: options.user.id || '' } } }
-          ]
-        }
+          OR: [{ is_global: true }, { collaborators: { some: { collaborator_id: options.user.id || '' } } }]
+        },
+        ...visibleToUser(options.user.id || '')
       }
     });
 
@@ -101,11 +97,9 @@ export class ProblemService {
       where: {
         id: options.id,
         problem_set: {
-          OR: [
-            { is_global: true },
-            { collaborators: { some: { collaborator_id: options.user.id || '' } } }
-          ]
-        }
+          OR: [{ is_global: true }, { collaborators: { some: { collaborator_id: options.user.id || '' } } }]
+        },
+        ...visibleToUser(options.user.id || '')
       }
     });
 
@@ -126,7 +120,18 @@ export class ProblemService {
 
     const updated = await db.problem.update({
       where: { id },
-      data: updates
+      data: {
+        ...(updates.name !== undefined && { name: updates.name }),
+        ...(updates.description !== undefined && { description: updates.description }),
+        ...(updates.language !== undefined && { language: updates.language }),
+        ...(updates.starter_code !== undefined && { starter_code: updates.starter_code }),
+        ...(updates.visible !== undefined && { visible: updates.visible }),
+        ...(updates.uses_slots !== undefined && { uses_slots: updates.uses_slots }),
+        ...(updates.difficulty_id !== undefined && { difficulty_id: updates.difficulty_id }),
+        ...(updates.subject_id !== undefined && { subject_id: updates.subject_id }),
+        // extension_data is a required Json column: null means "no change"
+        ...(updates.extension_data != null && { extension_data: updates.extension_data })
+      }
     });
 
     return new Problem(updated);

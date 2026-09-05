@@ -42,13 +42,10 @@ export const POST: RequestHandler = async ({ locals, request }) => {
   }
 
   if (!problemSet.is_global && !problemSet.auto_accept) {
-    return new Response(
-      JSON.stringify({ error: 'Not authorized to subscribe to this problem set' }),
-      {
-        status: 403,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
+    return new Response(JSON.stringify({ error: 'Not authorized to subscribe to this problem set' }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   const obj = { problem_set_id: bodyData.problem_set, student_id: session.user.id };

@@ -12,11 +12,7 @@ export const SORT_TYPES = [
   'difficulty'
 ] as const satisfies readonly SortType[];
 
-export const STATUSES = [
-  'not_started',
-  'in_progress',
-  'complete'
-] as const satisfies readonly FilterStatus[];
+export const STATUSES = ['not_started', 'in_progress', 'complete'] as const satisfies readonly FilterStatus[];
 
 export type SortBy = SortType | '';
 export type Status = FilterStatus;

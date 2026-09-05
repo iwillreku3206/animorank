@@ -26,21 +26,9 @@
 
   /* ---- Tab text -------------------------------------------------------- */
   --dv-activegroup-visiblepanel-tab-color: var(--color-primary);
-  --dv-activegroup-hiddenpanel-tab-color: color-mix(
-    in oklch,
-    var(--color-base-content) 75%,
-    transparent
-  );
-  --dv-inactivegroup-visiblepanel-tab-color: color-mix(
-    in oklch,
-    var(--color-primary) 75%,
-    transparent
-  );
-  --dv-inactivegroup-hiddenpanel-tab-color: color-mix(
-    in oklch,
-    var(--color-base-content) 40%,
-    transparent
-  );
+  --dv-activegroup-hiddenpanel-tab-color: color-mix(in oklch, var(--color-base-content) 75%, transparent);
+  --dv-inactivegroup-visiblepanel-tab-color: color-mix(in oklch, var(--color-primary) 75%, transparent);
+  --dv-inactivegroup-hiddenpanel-tab-color: color-mix(in oklch, var(--color-base-content) 40%, transparent);
 
   /* ---- Dividers, separators, borders ----------------------------------- */
   --dv-tab-divider-color: transparent;
@@ -73,11 +61,7 @@
 
   /* ---- Icons, scrollbars, menus ---------------------------------------- */
   --dv-icon-hover-background-color: color-mix(in oklch, var(--color-base-content) 15%, transparent);
-  --dv-tabs-container-scrollbar-color: color-mix(
-    in oklch,
-    var(--color-base-content) 40%,
-    transparent
-  );
+  --dv-tabs-container-scrollbar-color: color-mix(in oklch, var(--color-base-content) 40%, transparent);
   --dv-scrollbar-background-color: color-mix(in oklch, var(--color-base-content) 40%, transparent);
   --dv-context-menu-background-color: var(--color-base-200);
   --dv-context-menu-color: var(--color-base-content);
@@ -155,27 +139,47 @@
   margin: 0 4px 0 4px;
 }
 
-/* Prevent end users from closing panels: hide the per-tab close button.
- * dockview-core 6.x has no option to disable it. */
-.dockview-theme-animorank .dv-default-tab-action {
+/* Hide the per-tab close button for windows that are not closable.
+ * dockview-core 6.x has no per-panel option to disable it, so closable tabs
+ * get a `.dv-closable-tab` marker class from the custom tab renderer. */
+.dockview-theme-animorank .dv-tab .dv-default-tab-action {
   display: none !important;
+}
+/* Closable tabs show the close button at all times — dockview only reveals it
+ * on the active tab or on hover — and `display: flex` (not `block`) keeps the
+ * icon optically centered against the label. */
+.dockview-theme-animorank .dv-closable-tab .dv-default-tab-action {
+  display: flex !important;
+  visibility: visible !important;
 }
 .dockview-theme-animorank .dv-default-tab-content {
   margin: 0 !important;
 }
+.dockview-theme-animorank .dv-closable-tab .dv-default-tab-content {
+  margin-right: 4px !important;
+}
 
 /* While dragging, dockview clones the tab into a ghost element (.dv-dragged)
- * appended to <body>, outside the theme wrapper — so re-hide the close button
- * there too, otherwise it reappears in the drag image. 
+ * appended to <body>, outside the theme wrapper — so the rules above have to
+ * be repeated here, otherwise the ghost doesn't match the tab it came from.
+ * The clone's width is copied from the real tab, so hiding the close button
+ * on a closable tab would leave a blank gap in the drag image.
  *
  * WARNING: This doesn't work when set per-theme, since the dragged element is 
  * outside the theme wrapper. This means that all themes will be affected.
  */
-.dv-dragged .dv-default-tab-action {
+.dv-dragged .dv-default-tab:not(.dv-closable-tab) .dv-default-tab-action {
   display: none !important;
+}
+.dv-dragged .dv-closable-tab .dv-default-tab-action {
+  display: flex !important;
+  visibility: visible !important;
 }
 .dv-dragged .dv-default-tab-content {
   margin: 0 !important;
+}
+.dv-dragged .dv-closable-tab .dv-default-tab-content {
+  margin-right: 4px !important;
 }
 
 /* override default overflow container styles */

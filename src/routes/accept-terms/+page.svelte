@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Checkbox from '$lib/components/ui/checkboxes/Checkbox.svelte';
   import { enhance } from '$app/forms';
   import TriangleExclamationIcon from '@iconify-svelte/fa6-solid/triangle-exclamation';
   import Button from '$lib/components/ui/buttons/Button.svelte';
@@ -40,8 +41,8 @@
       This platform is an optional practice tool and is not a hard requirement for any course.
     </TosCard>
     <TosCard bind:checked={checked[1]}>
-      This platform collects interaction data, including coding logs and session interactions, for
-      the purposes of improving the platform and for academic research.
+      This platform collects interaction data, including coding logs and session interactions, for the purposes of
+      improving the platform and for academic research.
     </TosCard>
     <TosCard bind:checked={checked[2]}>
       Such data, when collected, will always be anonymized prior to any kind of analysis.
@@ -135,8 +136,8 @@
             id="decline-desc"
             class="text-sm leading-relaxed text-base-content"
           >
-            AnimoRank can only be used once you accept the Terms of Service. If you decline, your
-            account and its data will be permanently deleted. This can't be undone.
+            AnimoRank can only be used once you accept the Terms of Service. If you decline, your account and its data
+            will be permanently deleted. This can't be undone.
           </p>
         </div>
       </div>
@@ -144,14 +145,11 @@
       <label
         class="mt-5 flex cursor-pointer items-center gap-3 rounded-lg border border-error/20 bg-error/10 p-3 transition-colors hover:bg-error/15"
       >
-        <input
-          type="checkbox"
+        <Checkbox
           bind:checked={isConfirmed}
-          class="checkbox checkbox-error shrink-0"
+          class="checkbox-error shrink-0"
         />
-        <span class="text-sm text-base-content">
-          I understand this will permanently delete my account.
-        </span>
+        <span class="text-sm text-base-content"> I understand this will permanently delete my account. </span>
       </label>
 
       <div class="mt-6 flex items-center justify-between gap-3">

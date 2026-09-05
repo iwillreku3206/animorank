@@ -21,8 +21,6 @@ export class ConsoleLogger extends Logger {
   protected log(message: Loggable): void {
     const dateTime = new Date();
     const formatted = this.timeFormat.format(dateTime);
-    console.log(
-      `[${LogLevelNames[message.level]}] [${formatted}] [${this.module}] ${message.message}`
-    );
+    console.log(`[${LogLevelNames[message.level]}] [${formatted}] [${this.module}] ${message.message}`);
   }
 }

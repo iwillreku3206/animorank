@@ -2,11 +2,8 @@ import z from 'zod';
 import type { RequestHandler } from './$types';
 import { error, successObject } from '$lib/response';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
-import { CodeExecutor, type CodeExecutionRequest } from '$lib/testCase/executor';
+import { CodeExecutor } from '$lib/executor';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
-
-import compile from '$lib/testCase/testCase/programIOTestCase/compile.sh?raw';
-import run from '$lib/testCase/testCase/programIOTestCase/run.sh?raw';
 
 const customRunValidator = z.object({
   stdin: z.string().default('')
@@ -33,25 +30,21 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   });
   if (!practiceSession) return error(404, 'Practice session not found');
 
-  const codeExecutionRequest: CodeExecutionRequest = {
-    compileScript: compile,
-    runScript: run,
-    stdin: parsedData.stdin,
-    files: [
-      {
-        name: 'main.c',
-        contents: Buffer.from(practiceSession.previousCode.fullCode, 'utf8')
-      }
-    ],
-    timeLimit: 30
-  };
+  const result = await codeExecutor.execute({
+    files: [{ path: 'main.c', content: Buffer.from(practiceSession.previousCode.fullCode, 'utf8') }],
+    processes: [
+      { command: 'gcc', args: ['-Werror', '-Wall', '-o', 'program', 'main.c', '-lm', '-lpthread'] },
+      { command: './program', args: [], stdin: Buffer.from(parsedData.stdin, 'utf8') }
+    ]
+  });
 
-  const result = await codeExecutor.executeCode(codeExecutionRequest);
+  const compile = result.processOutputs[0];
+  const run = result.processOutputs[1];
 
   return successObject({
-    success: result.success,
-    stdout: result.stdout,
-    stderr: result.stderr,
-    error: !result.success && result.reason === 'compile_error' ? result.error : undefined
+    success: compile.exitCode === 0 && run?.exitCode === 0,
+    stdout: run?.stdout?.toString('utf8') ?? '',
+    stderr: run?.stderr?.toString('utf8') ?? '',
+    error: compile.exitCode !== 0 ? compile.stderr?.toString('utf8') : undefined
   });
 };

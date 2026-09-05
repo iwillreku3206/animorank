@@ -8,4 +8,12 @@ import { registerMonacoThemes } from '$lib/components/editor/themes';
 // they are available by name to every editor instance created from this namespace.
 registerMonacoThemes(monaco);
 
+// Re-measure every live editor once the real font has loaded.
+if (typeof document !== 'undefined' && document.fonts) {
+  document.fonts.load('1em "DM Mono"').then(
+    () => monaco.editor.remeasureFonts(),
+    () => {}
+  );
+}
+
 export { monaco };

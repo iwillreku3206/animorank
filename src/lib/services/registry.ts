@@ -11,6 +11,22 @@ export interface ServiceRegistryOptions {
   keyNotFoundMessage?: (_serviceName: string) => string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ServiceOf<SR extends ServiceRegistry<any, any, any>> =
+  SR extends ServiceRegistry<infer T, infer C, infer S> ? Service<T, C, S> : never;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ClassServiceOf<SR extends ServiceRegistry<any, any, any>> = Extract<
+  ServiceOf<SR>,
+  { singleton: false }
+>['classObject'];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type SingletonServiceOf<SR extends ServiceRegistry<any, any, any>> = Extract<
+  ServiceOf<SR>,
+  { singleton: true }
+>['classObject'];
+
 export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
   protected _registry = new Map<string, Service<T, C, S>>();
   private options: ServiceRegistryOptions;
@@ -67,13 +83,15 @@ export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
     this._register(key, { classObject: value, singleton: true });
   }
 
+  public keys(): string[] {
+    return [...this._registry.keys()];
+  }
+
   public getStatic(key: string): S {
     const service = this._registry.get(key);
     if (!service) {
       throw new Error(
-        this.options.keyNotFoundMessage
-          ? this.options.keyNotFoundMessage(key)
-          : `Service ${key} not found`
+        this.options.keyNotFoundMessage ? this.options.keyNotFoundMessage(key) : `Service ${key} not found`
       );
     }
     return service.classObject as S;
@@ -84,9 +102,7 @@ export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
 
     if (!service) {
       throw new Error(
-        this.options.keyNotFoundMessage
-          ? this.options.keyNotFoundMessage(key)
-          : `Service ${key} not found`
+        this.options.keyNotFoundMessage ? this.options.keyNotFoundMessage(key) : `Service ${key} not found`
       );
     }
 

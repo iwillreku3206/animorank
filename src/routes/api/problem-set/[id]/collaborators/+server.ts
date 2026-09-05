@@ -30,11 +30,7 @@ export const POST: RequestHandler = async ({ locals, request, params }) => {
 
   if (!session || !session.user.id) return error(403, 'Unauthorized');
 
-  const {
-    success,
-    data,
-    error: zodError
-  } = await addValidator.safeParseAsync(await request.json());
+  const { success, data, error: zodError } = await addValidator.safeParseAsync(await request.json());
 
   if (!success) return error(400, zodError);
 
@@ -60,11 +56,7 @@ export const DELETE: RequestHandler = async ({ locals, request, params }) => {
 
   if (!session || !session.user.id) return error(403, 'Unauthorized');
 
-  const {
-    success,
-    data,
-    error: zodError
-  } = await removeValidator.safeParseAsync(await request.json());
+  const { success, data, error: zodError } = await removeValidator.safeParseAsync(await request.json());
 
   if (!success) return error(400, zodError);
 

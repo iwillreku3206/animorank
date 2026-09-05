@@ -33,9 +33,7 @@ export const faqSections: FaqSection[] = [
       },
       {
         q: 'Is it free?',
-        a: [
-          'Yes, completely. No paywall, no premium tier, no ads. AnimoRank is an open source project.'
-        ]
+        a: ['Yes, completely. No paywall, no premium tier, no ads. AnimoRank is an open source project.']
       },
       {
         q: 'Is this an official DLSU platform?',

@@ -10,6 +10,7 @@
   import Seo from '$lib/components/layout/Seo.svelte';
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
   import LinkSlashIcon from '@iconify-svelte/fa6-solid/link-slash';
+  import { problemSetsHref } from '$lib/navigation';
 
   const is404 = $derived(page.status === 404);
   // Layout data merges into page.data, so the secondary action can stay
@@ -21,9 +22,7 @@
 
   const heading = $derived(is404 ? "We couldn't find that page." : 'Something went wrong.');
   const message = $derived(
-    is404
-      ? 'The link may be old, or the page may have moved.'
-      : 'An unexpected error stopped this page from loading.'
+    is404 ? 'The link may be old, or the page may have moved.' : 'An unexpected error stopped this page from loading.'
   );
 
   // Reveal enhances an already-visible default: content renders fully on the
@@ -55,7 +54,7 @@
     <p
       data-reveal
       style="--d:0ms"
-      class="font-display text-[clamp(4rem,13vw,6rem)] leading-none font-bold tracking-tight text-base-content/90"
+      class="font-display text-[clamp(4rem,13vw,6rem)] leading-none font-bold tracking-tight text-base-content"
     >
       {page.status}
     </p>
@@ -110,7 +109,7 @@
       {#if user}
         <ButtonLink
           class="btn-lg btn-ghost font-medium"
-          href="/problemSets"
+          href={problemSetsHref(user)}
         >
           Go to your problem sets
         </ButtonLink>

@@ -11,10 +11,7 @@
   let props: YfmStaticViewProps = $props();
 
   onMount(() => {
-    Promise.all([
-      import('@gravity-ui/markdown-editor'),
-      import('@diplodoc/latex-extension/react')
-    ]).then((modules) => {
+    Promise.all([import('@gravity-ui/markdown-editor'), import('@diplodoc/latex-extension/react')]).then((modules) => {
       if (browser && editor) {
         root = ReactDOM.createRoot(editor);
         root.render(

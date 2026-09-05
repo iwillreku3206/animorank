@@ -1,8 +1,8 @@
-import type { TestCaseResult } from './testCase';
+import type { TestCaseResult } from './types';
 
 type Execution = {
   runType: 'run' | 'submit';
-  publicTestResults: TestCaseResult[];
+  publicTestResults: TestCaseResult<unknown>[];
   generalTestResults: boolean[];
   submittedCode: string;
 };
