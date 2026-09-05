@@ -1,16 +1,20 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import { signIn } from '@auth/sveltekit/client';
-  import type { User } from '@auth/sveltekit';
+  import type { Session } from '@auth/sveltekit';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import AccountMenu from '$lib/components/settings/AccountMenu.svelte';
   import Link from '$lib/components/ui/Link.svelte';
   import MenuIcon from '@iconify-svelte/fa6-solid/bars';
   import XIcon from '@iconify-svelte/fa6-solid/xmark';
+  import { problemSetsHref } from '$lib/navigation';
 
-  let { user }: { user: User | null | undefined } = $props();
+  // The layout passes `session?.user`, which carries the app's augmented fields
+  // (`type`, `hasAcceptedTOS`). Typing this as `User` dropped them.
+  let { user }: { user: Session['user'] | null | undefined } = $props();
 
   let loggedIn = $derived(!!user);
+  let problemSetsUrl = $derived(problemSetsHref(user));
   let openDrawer = $state(false);
 
   let drawerEl = $state<HTMLElement>();
@@ -113,7 +117,7 @@
       {#if loggedIn}
         <Link
           class="px-4 text-base"
-          href="/problemSets">Problem Sets</Link
+          href={problemSetsUrl}>Problem Sets</Link
         >
       {/if}
     </div>
@@ -183,7 +187,7 @@
     {#if loggedIn}
       <Link
         class="py-2 text-base"
-        href="/problemSets"
+        href={problemSetsUrl}
         onclick={closeDrawer}>Problem Sets</Link
       >
     {/if}

@@ -10,6 +10,7 @@
   import Seo from '$lib/components/layout/Seo.svelte';
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
   import LinkSlashIcon from '@iconify-svelte/fa6-solid/link-slash';
+  import { problemSetsHref } from '$lib/navigation';
 
   const is404 = $derived(page.status === 404);
   // Layout data merges into page.data, so the secondary action can stay
@@ -108,7 +109,7 @@
       {#if user}
         <ButtonLink
           class="btn-lg btn-ghost font-medium"
-          href="/problemSets"
+          href={problemSetsHref(user)}
         >
           Go to your problem sets
         </ButtonLink>

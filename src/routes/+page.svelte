@@ -9,6 +9,7 @@
   import AutograderDemo from './AutograderDemo.svelte';
   import { signIn } from '@auth/sveltekit/client';
   import Seo from '$lib/components/layout/Seo.svelte';
+  import { problemSetsHref } from '$lib/navigation';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
@@ -64,7 +65,7 @@
   {#if data.user}
     <ButtonLink
       class="btn-lg group font-semibold {onGreen ? 'btn-neutral' : 'btn-primary'}"
-      href="/problemSets"
+      href={problemSetsHref(data.user)}
     >
       Go to your problem sets
       <ArrowRightIcon
