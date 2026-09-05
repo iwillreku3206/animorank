@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Checkbox from '$lib/components/ui/checkboxes/Checkbox.svelte';
   import { toggleValue } from './filterUtils';
   import ClickableBadge from '$lib/components/ui/badges/ClickableBadge.svelte';
   import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
@@ -67,14 +68,11 @@
   </div>
 
   {#if showMatchAll}
-    <label class="label cursor-pointer justify-start gap-2 text-sm">
-      <input
-        type="checkbox"
-        class="checkbox checkbox-sm checkbox-primary"
-        checked={matchAll}
-        onchange={(e) => onMatchAllChange?.(e.currentTarget.checked)}
-      />
-      {matchAllLabel}
-    </label>
+    <Checkbox
+      class="checkbox-sm checkbox-primary"
+      labelClass="text-sm"
+      checked={matchAll}
+      onchange={(e) => onMatchAllChange?.(e.currentTarget.checked)}>{matchAllLabel}</Checkbox
+    >
   {/if}
 </div>

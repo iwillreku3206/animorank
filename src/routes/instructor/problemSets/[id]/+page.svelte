@@ -3,6 +3,8 @@
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
   import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
+  import Select from '$lib/components/ui/selects/Select.svelte';
+  import Checkbox from '$lib/components/ui/checkboxes/Checkbox.svelte';
   import ClickableBadge from '$lib/components/ui/badges/ClickableBadge.svelte';
   import Editor from '$lib/components/editor/Editor.svelte';
 
@@ -130,25 +132,11 @@
   </div>
 
   <div class="form-control mb-4">
-    <label class="label cursor-pointer justify-start gap-4">
-      <input
-        type="checkbox"
-        bind:checked={problemSet.auto_accept}
-        class="checkbox"
-      />
-      <span class="label-text">Auto-accept submissions</span>
-    </label>
+    <Checkbox bind:checked={problemSet.auto_accept}>Auto-accept submissions</Checkbox>
   </div>
 
   <div class="form-control mb-4">
-    <label class="label cursor-pointer justify-start gap-4">
-      <input
-        type="checkbox"
-        bind:checked={problemSet.is_global}
-        class="checkbox"
-      />
-      <span class="label-text">Global (visible to all students)</span>
-    </label>
+    <Checkbox bind:checked={problemSet.is_global}>Global (visible to all students)</Checkbox>
   </div>
 
   <div class="form-control mb-4">
@@ -156,16 +144,16 @@
       class="label"
       for="ps-subject"><span class="label-text font-bold">Subject</span></label
     >
-    <select
+    <Select
       id="ps-subject"
       bind:value={problemSet.subject_id}
-      class="select select-bordered w-full"
+      class="select-bordered w-full"
     >
       <option value={null}>None</option>
       {#each subjectTags as tag (tag.id)}
         <option value={tag.id}>{tag.label}</option>
       {/each}
-    </select>
+    </Select>
   </div>
 
   <div class="form-control mb-4">
@@ -173,16 +161,16 @@
       class="label"
       for="ps-difficulty"><span class="label-text font-bold">Difficulty</span></label
     >
-    <select
+    <Select
       id="ps-difficulty"
       bind:value={problemSet.difficulty_id}
-      class="select select-bordered w-full"
+      class="select-bordered w-full"
     >
       <option value={null}>None</option>
       {#each difficultyTags as tag (tag.id)}
         <option value={tag.id}>{tag.label}</option>
       {/each}
-    </select>
+    </Select>
   </div>
 
   <div class="form-control mb-6">
@@ -247,14 +235,14 @@
               </a>
             </td>
             <td>
-              <label class="cursor-pointer gap-2">
-                <input
-                  type="checkbox"
-                  checked={problem.visible}
-                  class="checkbox"
-                  onchange={() => toggleVisible(problem.id, problem.visible)}
-                />
-              </label>
+              <!-- The column header names this control for sighted users, but a
+                   screen reader reads the checkbox alone — hence the per-row label. -->
+              <Checkbox
+                class="cursor-pointer"
+                aria-label="Toggle visibility for {problem.name}"
+                checked={problem.visible}
+                onchange={() => toggleVisible(problem.id, problem.visible)}
+              />
             </td>
             <td class="flex gap-2">
               <ButtonLink
