@@ -38,7 +38,14 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   if (!problemSet) throw redirect(302, '/');
 
-  const problemIds = problemSet.problems.map((p) => p.id);
+  // Hidden problems are delisted for students, but stay listed for the set's
+  // collaborators so an instructor previewing their own set still sees what
+  // they have hidden. Everything below works from this filtered list, so the
+  // solver/attempt aggregates don't query problems that are never rendered.
+  const isCollaborator = problemSet.collaborators.some((c) => c.collaborator.user.id === session.user.id);
+  const problems = problemSet.problems.filter((p) => p.visible || isCollaborator);
+
+  const problemIds = problems.map((p) => p.id);
 
   const globalProblemSolvers = problemIds.length
     ? groupBy(
@@ -80,7 +87,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
       subject: problemSet.subject,
       difficulty: problemSet.difficulty,
       topics: problemSet.topics.map((t) => t.topic_tag),
-      problems: problemSet.problems.map((p) => ({
+      problems: problems.map((p) => ({
         id: p.id,
         title: p.name,
         difficulty: p.difficulty,

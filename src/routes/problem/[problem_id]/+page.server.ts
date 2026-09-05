@@ -2,6 +2,7 @@ import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
+import { ProblemService } from '$lib/problem/problemService';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
   const session = await locals.auth();
@@ -9,7 +10,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   if (!session || !session.user.id) redirect(302, '/');
 
   const serviceProvider = ServerServiceProvider.instance();
+  const problemService = serviceProvider.getService(ProblemService);
   const practiceSessionService = serviceProvider.getService(PracticeSessionService);
+
+  const problem = await problemService.findById({ id: params.problem_id, user: session.user });
+  if (!problem) throw error(404, { message: 'Not Found' });
 
   const practiceSession = await practiceSessionService.findLatestNonDoneOrCreate({
     problemId: params.problem_id,
