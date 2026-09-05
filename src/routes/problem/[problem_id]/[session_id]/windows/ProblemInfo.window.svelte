@@ -5,6 +5,6 @@
   let { context }: { context: SolveWindowContext } = $props();
 </script>
 
-<div class="pl-5 pb-10 pt-5 pr-3 overflow-scroll h-full">
+<div class="h-full min-w-0 overflow-x-hidden overflow-y-auto pl-5 pb-10 pt-5 pr-3">
   <ProblemDescription problem={context.problem} />
 </div>
