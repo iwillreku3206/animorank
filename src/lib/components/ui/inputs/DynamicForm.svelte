@@ -3,6 +3,9 @@
   generics="T extends Form"
 >
   import TypeEditorField from './TypeEditorField.svelte';
+  import Select from '../selects/Select.svelte';
+  import Checkbox from '../checkboxes/Checkbox.svelte';
+  import Radio from '../radios/Radio.svelte';
 
   import Editor from '$lib/components/editor/Editor.svelte';
   import CodeEditor from '$lib/components/editor/CodeEditor.svelte';
@@ -132,18 +135,11 @@
 
     {#if field.type === 'checkbox'}
       <fieldset class="fieldset">
-        <label
-          class="label cursor-pointer gap-3"
-          for={fid}
+        <Checkbox
+          class="checkbox-xs checkbox-primary"
+          id={fid}
+          bind:checked={value[id] as boolean}>{field.label}</Checkbox
         >
-          <input
-            class="checkbox checkbox-xs checkbox-primary"
-            type="checkbox"
-            id={fid}
-            bind:checked={value[id] as boolean}
-          />
-          {field.label}
-        </label>
       </fieldset>
     {/if}
 
@@ -203,15 +199,15 @@
             class="label"
             for={fid}>{field.label}</label
           >
-          <select
-            class="select select-xs select-primary"
+          <Select
+            class="select-xs select-primary"
             id={fid}
             bind:value={value[id]}
           >
             {#each opts as opt, i (i)}
               <option value={opt.value}>{opt.label}</option>
             {/each}
-          </select>
+          </Select>
         {/if}
       </fieldset>
     {/if}
@@ -227,18 +223,13 @@
               : typeof opt === 'number'
                 ? { label: String(opt), value: opt }
                 : opt}
-          <label
-            class="label cursor-pointer gap-3"
-            for={rid}
+          <Radio
+            class="radio-xs radio-primary"
+            name={id}
+            id={rid}
+            value={optData.value}
+            bind:group={(value as FormValue<Form>)[id]}
           >
-            <input
-              class="radio radio-xs radio-primary"
-              type="radio"
-              name={id}
-              id={rid}
-              value={optData.value}
-              bind:group={(value as FormValue<Form>)[id]}
-            />
             <span class="flex items-center gap-2">
               {#if 'icon' in optData && optData.icon}
                 {@const IconCmp = optData.icon}
@@ -246,7 +237,7 @@
               {/if}
               {String(optData.label)}
             </span>
-          </label>
+          </Radio>
         {/each}
       </fieldset>
     {/if}

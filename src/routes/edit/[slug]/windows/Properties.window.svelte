@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Checkbox from '$lib/components/ui/checkboxes/Checkbox.svelte';
   import Tags from 'svelte-tags-input';
   import TagSelect from '$lib/components/ui/TagSelect.svelte';
   import { groupBy } from '$lib/utils/groupBy';
@@ -46,14 +47,10 @@
 </div>
 
 <h2 class="text-2xl font-bold">Slots</h2>
-<label class="flex flex-row items-center gap-2">
-  <input
-    class="checkbox checkbox-xs checkbox-primary rounded-xl!"
-    type="checkbox"
-    bind:checked={context.problem.model.uses_slots}
-  />
-  Enable slots
-</label>
+<Checkbox
+  class="checkbox-xs checkbox-primary rounded-xl!"
+  bind:checked={context.problem.model.uses_slots}>Enable slots</Checkbox
+>
 
 <style
   lang="postcss"

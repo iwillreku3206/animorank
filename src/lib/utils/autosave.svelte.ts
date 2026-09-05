@@ -24,14 +24,17 @@ export class AutoSave<T> {
 
   public save(data: T) {
     this.clearTimeout();
-    this.state = 'hold';
-    this.timeoutId = setTimeout(async () => {
-      await this._save(data);
+    if (deepEqual(data, this.lastSave)) {
       this.state = 'saved';
+      return;
+    }
+    this.state = 'hold';
+    this.timeoutId = setTimeout(() => {
+      void this._save(data);
     }, this.delayInMilliseconds);
   }
 
-  public forceSave(data: T): Promise<T | void> {
+  public forceSave(data: T): Promise<void> {
     this.clearTimeout();
     return this._save(data);
   }
@@ -43,22 +46,22 @@ export class AutoSave<T> {
     }
   }
 
-  private async _save(data: T): Promise<T | void> {
+  private async _save(data: T): Promise<void> {
+    this.clearTimeout();
     if (deepEqual(data, this.lastSave)) {
+      this.state = 'saved';
       return;
     }
-    return this.callback()
-      .then((d) => {
-        this.state = 'saved';
-        return d;
-      })
-      .catch((error) => {
-        this.state = 'error';
-        console.error(error);
-      })
-      .finally(() => {
-        this.state = 'saved';
-        this.clearTimeout();
-      });
+    this.state = 'saving';
+    try {
+      await this.callback();
+      // Only advance the baseline on success, so a failed save is retried by
+      // the next change rather than being mistaken for already-persisted.
+      this.lastSave = data;
+      this.state = 'saved';
+    } catch (error) {
+      this.state = 'error';
+      console.error(error);
+    }
   }
 }

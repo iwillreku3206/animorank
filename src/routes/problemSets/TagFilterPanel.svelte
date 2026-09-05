@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Checkbox from '$lib/components/ui/checkboxes/Checkbox.svelte';
   import type { Tag } from '$lib/zenstack/models';
   import type { Filters } from './api';
   import { tagState, cycleTag, toggleInclude, cloneFilters } from './filterUtils';
@@ -79,14 +80,11 @@
   </div>
 
   {#if showMatchAll}
-    <label class="label cursor-pointer justify-start gap-2 text-sm">
-      <input
-        type="checkbox"
-        class="checkbox checkbox-sm checkbox-primary"
-        checked={filters.topicMatchAll}
-        onchange={(e) => edit((f) => (f.topicMatchAll = e.currentTarget.checked))}
-      />
-      Match all selected tags
-    </label>
+    <Checkbox
+      class="checkbox-sm checkbox-primary"
+      labelClass="text-sm"
+      checked={filters.topicMatchAll}
+      onchange={(e) => edit((f) => (f.topicMatchAll = e.currentTarget.checked))}>Match all selected tags</Checkbox
+    >
   {/if}
 </div>

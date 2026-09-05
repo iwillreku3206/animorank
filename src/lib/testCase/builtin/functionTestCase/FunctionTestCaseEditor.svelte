@@ -4,6 +4,7 @@
   import { OperatorRegistry } from './operatorRegistry';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import DynamicForm from '$lib/components/ui/inputs/DynamicForm.svelte';
+  import Select from '$lib/components/ui/selects/Select.svelte';
   import GearIcon from '@iconify-svelte/fa6-solid/gear';
   import ValueEditorMount from './ValueEditorMount.svelte';
 
@@ -34,9 +35,9 @@
       for="fn-select"
       class="text-sm font-medium whitespace-nowrap">Function:</label
     >
-    <select
+    <Select
       id="fn-select"
-      class="select select-xs select-bordered flex-1"
+      class="select-xs select-bordered flex-1"
       value={testCase.data.function}
       onchange={(e) => testCase.selectFunction((e.target as HTMLSelectElement).value)}
     >
@@ -44,7 +45,7 @@
       {#each availableFunctions as fn (fn.id)}
         <option value={fn.id}>{fn.name || 'Unnamed function'}</option>
       {/each}
-    </select>
+    </Select>
   </div>
 
   <!-- Parameters -->
@@ -77,25 +78,25 @@
       {#each testCase.data.comparisons as comp, i (i)}
         <div class="flex flex-col gap-2 bg-[#1a1a1a] rounded p-2">
           <div class="flex flex-row gap-2 items-center">
-            <select
-              class="select select-xs select-bordered"
+            <Select
+              class="select-xs select-bordered"
               value={comp.symbol as string}
               onchange={(e) => testCase.setComparisonSymbol(i, (e.target as HTMLSelectElement).value as Symbol)}
             >
               {#each availableSymbols as sym (sym)}
                 <option value={sym.value}>{sym.label}</option>
               {/each}
-            </select>
+            </Select>
             {#if availableOperators.length > 0}
-              <select
-                class="select select-xs select-bordered"
+              <Select
+                class="select-xs select-bordered"
                 value={comp.operator.id}
                 onchange={(e) => testCase.setComparisonOperator(i, (e.target as HTMLSelectElement).value)}
               >
                 {#each availableOperators as opKey (opKey)}
                   <option value={opKey}>{operatorNames[opKey]}</option>
                 {/each}
-              </select>
+              </Select>
             {/if}
             {#if comp.operator.optionsForm !== null && comp.operator.options !== null}
               <div class="dropdown dropdown-end">

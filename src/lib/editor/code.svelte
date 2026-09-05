@@ -2,7 +2,12 @@
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
   import { type monaco } from '$lib/monaco';
-  import { DEFAULT_MONACO_THEME } from '$lib/components/editor/themes';
+  import {
+    BASE_MONACO_OPTIONS,
+    editorSettings,
+    toMonacoEditorOptions,
+    toMonacoModelOptions
+  } from '$lib/editor/settings.svelte';
   import { parseSlots } from '$lib/utils/parseSlots';
   import constrainedEditor from 'constrained-editor-plugin';
   import type { CodeEditorOptions, CodeEditorState } from './code';
@@ -52,15 +57,10 @@
     const init = import('$lib/monaco').then(({ monaco }) => {
       if (!editorContainer) return;
       const monacoEditor = monaco.editor.create(editorContainer, {
+        ...BASE_MONACO_OPTIONS,
+        ...toMonacoEditorOptions(editorSettings.current),
         value: currentCode,
-        language,
-        automaticLayout: true,
-        theme: DEFAULT_MONACO_THEME,
-        fontFamily: 'DM Mono',
-        minimap: { enabled: false },
-        wordWrap: 'on',
-        wordBasedSuggestions: 'currentDocument',
-        bracketPairColorization: { enabled: true }
+        language
       });
       editor = monacoEditor;
       model = monacoEditor.getModel() ?? undefined;
@@ -128,6 +128,14 @@
         model?.dispose();
       });
     };
+  });
+
+  // Live user settings. `editor` is state, so this also runs once the editor
+  // finishes mounting; the model options have to be set separately because
+  // Monaco ignores tabSize/insertSpaces on the editor instance.
+  $effect(() => {
+    editor?.updateOptions(toMonacoEditorOptions(editorSettings.current));
+    editor?.getModel()?.updateOptions(toMonacoModelOptions(editorSettings.current));
   });
 
   $effect(() => {

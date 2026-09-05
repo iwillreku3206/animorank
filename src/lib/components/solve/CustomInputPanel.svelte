@@ -13,8 +13,8 @@
   let stdin = $state('');
 </script>
 
-<div class="flex flex-col h-full p-4 gap-4">
-  <div class="flex flex-col gap-2 flex-1">
+<div class="flex flex-col h-full p-4 gap-4 overflow-y-auto">
+  <div class="flex flex-col gap-2 flex-1 min-h-48">
     <label
       class="text-sm font-medium text-base-content/70"
       for="custom-stdin"
@@ -31,7 +31,7 @@
   </div>
 
   <Button
-    class="btn-sm btn-primary"
+    class="btn-sm btn-primary shrink-0"
     onclick={() => onRun(stdin)}
     disabled={loading}
   >
@@ -39,7 +39,7 @@
   </Button>
 
   {#if result !== null}
-    <div class="flex flex-col gap-3">
+    <div class="flex shrink-0 flex-col gap-3">
       {#if result.success}
         <div class="flex flex-col gap-2">
           <h3 class="text-sm font-medium text-success">Output (stdout)</h3>
