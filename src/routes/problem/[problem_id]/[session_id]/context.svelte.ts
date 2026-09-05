@@ -1,4 +1,5 @@
 import type { AddPanelPositionOptions } from 'dockview-core';
+import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
 import type { Problem } from '$lib/problem';
 import type { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
 import {
@@ -47,6 +48,8 @@ export class SolveWindowContext {
   public customRunLoading: boolean = $state(false);
   public customRunResult: CustomRunResponse | null = $state(null);
 
+  private readonly autosave: AutoSave<Record<string, string>>;
+
   /**
    * Opens (or focuses) a window in the dockview. Wired by the page once the
    * window manager is available.
@@ -64,11 +67,27 @@ export class SolveWindowContext {
         initial.practiceSession.previousCode.sections.map((section) => [section.slot.label, section.code])
       )
     });
+    this.autosave = new AutoSave(() => this.saveCode(), $state.snapshot(this.editorState.codeSections));
+  }
+
+  /** The current autosave state, for the editor status bar. */
+  public get saveState(): AutoSaveState {
+    return this.autosave.state;
+  }
+
+  /** Queue a debounced save. Call whenever the code sections change. */
+  public scheduleSave(): void {
+    this.autosave.save($state.snapshot(this.editorState.codeSections));
+  }
+
+  /** Persist immediately, bypassing the debounce (Ctrl+S, run, submit). */
+  public forceSave(): Promise<void> {
+    return this.autosave.forceSave($state.snapshot(this.editorState.codeSections));
   }
 
   public async run(): Promise<void> {
     this.editorState.locked = true;
-    await this.saveCode();
+    await this.forceSave();
     const results = await runTestCases(this.practiceSession.id, this.problem);
     this.testCaseResults = results;
     this.lastTestType = 'run';
@@ -79,7 +98,7 @@ export class SolveWindowContext {
 
   public async submit(): Promise<void> {
     this.editorState.locked = true;
-    await this.saveCode();
+    await this.forceSave();
     const results = await submit(this.practiceSession.id, this.problem);
     this.testCaseResults = results;
     this.lastTestType = 'submit';
@@ -97,18 +116,23 @@ export class SolveWindowContext {
   public async customRun(stdin: string): Promise<void> {
     this.customRunLoading = true;
     this.customRunResult = null;
-    await this.saveCode();
+    await this.forceSave();
     this.customRunResult = await runCustomInput(this.practiceSession.id, stdin);
     this.customRunLoading = false;
   }
 
   private async saveCode(): Promise<void> {
-    await fetch(`/api/practice-session/${this.practiceSession.id}`, {
+    const response = await fetch(`/api/practice-session/${this.practiceSession.id}`, {
       method: 'PUT',
       body: JSON.stringify({
         code: $state.snapshot(this.editorState.codeSections)
       }),
       headers: { 'content-type': 'application/json' }
     });
+    // `fetch` only rejects on network failure, so a 4xx/5xx has to be raised by
+    // hand or the autosave would report a failed save as 'saved'.
+    if (!response.ok) {
+      throw new Error(`Failed to save code: ${response.status} ${response.statusText}`);
+    }
   }
 }

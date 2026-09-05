@@ -22,7 +22,9 @@
 </script>
 
 <div class="flex flex-col min-h-screen bg-base-300 text-base-content">
-  <Navbar user={data.user} />
+  {#if page.route.id !== '/problem/[problem_id]/[session_id]'}
+    <Navbar user={data.user} />
+  {/if}
 
   <div class="flex flex-col flex-1">
     {@render children?.()}
