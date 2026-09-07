@@ -4,7 +4,7 @@ import Properties from './Properties.window.svelte';
 
 export class PropertiesWindow extends Window<ProblemEditorWindowContext> {
   static title = 'Properties';
-  static closeable = true;
+  static closeable = false;
   constructor(context: ProblemEditorWindowContext) {
     super(
       {

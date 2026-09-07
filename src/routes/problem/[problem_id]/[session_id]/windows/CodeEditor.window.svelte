@@ -41,6 +41,15 @@
     return () => disposables.forEach((disposable) => disposable.dispose());
   });
 
+  // Feed editor activity into this session's telemetry (the collated entries
+  // are flushed into the session history by the context whenever it saves).
+  $effect(() => {
+    const editor = monacoInstance;
+    if (!editor) return;
+    context.telemetry.attachMonaco(editor);
+    return () => context.telemetry.unmountMonaco();
+  });
+
   // Matches VS Code: real tabs are reported as a tab width, not as spaces.
   let indentLabel = $derived(
     `${editorSettings.current.insertSpaces ? 'Spaces' : 'Tab Size'}: ${editorSettings.current.tabSize}`
