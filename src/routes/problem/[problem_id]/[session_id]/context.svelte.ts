@@ -1,5 +1,7 @@
 import type { AddPanelPositionOptions } from 'dockview-core';
 import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
+import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
+import { TelemetryService } from '$lib/telemetry/telemetryService';
 import type { Problem } from '$lib/problem';
 import type { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
 import {
@@ -51,6 +53,13 @@ export class SolveWindowContext {
   private readonly autosave: AutoSave<Record<string, string>>;
 
   /**
+   * The telemetry sink for this session, shared by everything that attaches
+   * hooks or flushes (the editor window, the save path). One instance per
+   * page, so it is bound to this session's id.
+   */
+  public readonly telemetry: TelemetryService;
+
+  /**
    * Opens (or focuses) a window in the dockview. Wired by the page once the
    * window manager is available.
    */
@@ -67,6 +76,7 @@ export class SolveWindowContext {
         initial.practiceSession.previousCode.sections.map((section) => [section.slot.label, section.code])
       )
     });
+    this.telemetry = ClientServiceProvider.instance().getService(TelemetryService, initial.practiceSession.id);
     this.autosave = new AutoSave(() => this.saveCode(), $state.snapshot(this.editorState.codeSections));
   }
 
@@ -134,5 +144,8 @@ export class SolveWindowContext {
     if (!response.ok) {
       throw new Error(`Failed to save code: ${response.status} ${response.statusText}`);
     }
+    // The session state is persisted: flush collated telemetry into the
+    // session history alongside it, instead of on its own timer.
+    void this.telemetry.flush();
   }
 }

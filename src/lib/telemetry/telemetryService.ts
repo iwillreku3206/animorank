@@ -14,13 +14,18 @@ export abstract class TelemetryService {
   private windowUnmounts: UnmountCallback[] = [];
   private executionUnmounts: UnmountCallback[] = [];
 
-  public constructor() {
-    this.registerHook(TextInputHook);
-    this.registerHook(ExecutionHook);
-  }
+  /** The practice session whose history entries are recorded into. */
+  public readonly sessionId: string;
 
   private registerHook(hook: new (_callback: TelemetryCallback) => TelemetryHook) {
-    this.hooks.add(new hook(this.telemetryCallback));
+    // Arrow wrapper keeps `this` bound to the service when the hook fires.
+    this.hooks.add(new hook((entry: Entry) => this.telemetryCallback(entry)));
+  }
+
+  public constructor(sessionId: string) {
+    this.sessionId = sessionId;
+    this.registerHook(TextInputHook);
+    this.registerHook(ExecutionHook);
   }
 
   public attachMonaco(monaco: monaco.editor.IStandaloneCodeEditor) {
@@ -58,6 +63,13 @@ export abstract class TelemetryService {
       this.executionUnmounts.pop()!();
     }
   }
+
+  /**
+   * Persist or transmit any entries the service has collated so far (the
+   * session history strategy writes them out in one batch). Called by the
+   * app when the session is saved; a no-op for strategies without a sink.
+   */
+  public async flush(): Promise<void> {}
 
   protected abstract telemetryCallback(_entry: Entry): void | Promise<void>;
 }

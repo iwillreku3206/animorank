@@ -34,7 +34,8 @@
   let monacoModel: monaco.editor.ITextModel | undefined = $state();
   let constrainedInstance: ReturnType<typeof constrainedEditor> | undefined = $state();
 
-  const telemetry = ClientServiceProvider.instance().getService(TelemetryService);
+  // svelte-ignore state_referenced_locally
+  const telemetry = ClientServiceProvider.instance().getService(TelemetryService, practiceSession.id);
 
   // svelte-ignore state_referenced_locally
   let code = $state(practiceSession.previousCode.fullCode);
