@@ -67,7 +67,7 @@
       language={context.language}
       useSlots={context.useSlots}
       bind:codeSections={context.editorState.codeSections}
-      slots={context.problem.getSlots()}
+      slots={context.slots}
       bind:locked={context.editorState.locked}
       resetCode={context.problem.getProcessedCode()}
       resetSlots={context.problem.getSlots()}
