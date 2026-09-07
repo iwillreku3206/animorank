@@ -55,15 +55,35 @@
 
   let editorContainer = $state<HTMLDivElement>();
 
+  function clampRange(
+    model: monaco.editor.ITextModel,
+    [startLine, startColumn, endLine, endColumn]: [number, number, number, number]
+  ): [number, number, number, number] {
+    const lineCount = model.getLineCount();
+    const start = Math.min(Math.max(startLine, 1), lineCount);
+    const end = Math.min(Math.max(endLine, start), lineCount);
+    return [
+      start,
+      Math.min(Math.max(startColumn, 1), model.getLineMaxColumn(start)),
+      end,
+      Math.min(Math.max(endColumn, 1), model.getLineMaxColumn(end))
+    ];
+  }
+
   function registerConstrained(ranges: { range: [number, number, number, number]; label: string }[]) {
     if (useSlots && monacoInstance && constrainedInstance && monacoModel) {
       constrainedInstance.initializeIn(monacoInstance);
       const model = monacoInstance.getModel();
       if (!model) return;
-      constrainedInstance.addRestrictionsTo(
-        model,
-        ranges.map((range) => ({ ...range, allowMultiline: true }))
-      );
+      try {
+        constrainedInstance.addRestrictionsTo(
+          model,
+          ranges.map((entry) => ({ ...entry, range: clampRange(model, entry.range), allowMultiline: true }))
+        );
+      } catch (error) {
+        console.error('Could not restrict the editor to its slot ranges', error);
+        return;
+      }
 
       // @ts-expect-error Added by non-TypeScript plugin
       monacoModel.toggleHighlightOfEditableAreas({

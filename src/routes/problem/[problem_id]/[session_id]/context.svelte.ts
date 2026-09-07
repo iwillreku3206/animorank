@@ -2,7 +2,7 @@ import type { AddPanelPositionOptions } from 'dockview-core';
 import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
 import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
 import { TelemetryService } from '$lib/telemetry/telemetryService';
-import type { Problem } from '$lib/problem';
+import type { Problem, Slot } from '$lib/problem';
 import type { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
 import {
   runTestCases,
@@ -41,6 +41,7 @@ export class SolveWindowContext {
   public readonly practiceSession: ClientPracticeSession;
   public readonly language: string;
   public readonly useSlots: boolean;
+  public readonly slots: Slot[];
   public readonly editorState: SolveEditorState;
 
   public testCaseResults: TestRunResponse = $state({ results: [], success: false });
@@ -70,11 +71,12 @@ export class SolveWindowContext {
     this.practiceSession = initial.practiceSession;
     this.language = initial.language;
     this.useSlots = initial.problem.uses_slots;
+
+    const previousCode = initial.practiceSession.previousCode;
+    this.slots = previousCode.sections.map((section) => section.slot);
     this.editorState = new SolveEditorState({
-      code: initial.practiceSession.previousCode.fullCode,
-      sections: Object.fromEntries(
-        initial.practiceSession.previousCode.sections.map((section) => [section.slot.label, section.code])
-      )
+      code: previousCode.fullCode,
+      sections: Object.fromEntries(previousCode.sections.map((section) => [section.slot.label, section.code]))
     });
     this.telemetry = ClientServiceProvider.instance().getService(TelemetryService, initial.practiceSession.id);
     this.autosave = new AutoSave(() => this.saveCode(), $state.snapshot(this.editorState.codeSections));
