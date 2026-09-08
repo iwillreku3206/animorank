@@ -4,7 +4,7 @@
   import { beforeNavigate, goto } from '$app/navigation';
   import DockviewWindow from '$lib/window/DockviewWindow.svelte';
   import SolveToolbar from './SolveToolbar.svelte';
-  import type { DockviewWindowManager } from '$lib/window/dockviewWindowManager';
+  import { discardSavedLayouts, type DockviewWindowManager } from '$lib/window/dockviewWindowManager';
   import type { DefaultLayout } from '$lib/window/layout';
   import { Problem } from '$lib/problem';
   import { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
@@ -75,6 +75,12 @@
     });
   });
 
+  // The solve layout was once saved per problem, under `solve-layout-v2-<id>`.
+  // The single `v3` key the dockview now uses orphans those entries, so clear
+  // them out of the student's browser on the way past. Drop this once the keys
+  // have had time to disappear from the browsers still holding them.
+  onMount(() => discardSavedLayouts('solve-layout-v2-'));
+
   onMount(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (untrack(() => context.saveState) !== 'saved') {
@@ -98,7 +104,7 @@
     bind:context
     {windowRegistry}
     {defaultLayout}
-    storageKey={`solve-layout-v2-${data.problem.id}`}
+    storageKey="solve-layout-v3"
     bind:manager
   />
 </div>

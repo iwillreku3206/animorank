@@ -18,6 +18,26 @@ export interface DockviewWindowManagerOptions {
 }
 
 /**
+ * Delete every persisted layout whose key starts with `keyPrefix`.
+ *
+ * Renaming a `storageKey` orphans whatever was saved under the old name: no
+ * code reads it again, but it sits in the visitor's browser indefinitely. Call
+ * this once on mount with the retired prefix and the entries are swept the
+ * first time the page loads. Safe to call repeatedly — after the first sweep
+ * there is nothing left to match — and safe to delete once the retired keys
+ * have had time to disappear from the browsers that hold them.
+ */
+export function discardSavedLayouts(keyPrefix: string): void {
+  try {
+    for (const key of Object.keys(localStorage).filter((candidate) => candidate.startsWith(keyPrefix))) {
+      localStorage.removeItem(key);
+    }
+  } catch {
+    // localStorage unavailable (private mode, quota) — nothing to clean up.
+  }
+}
+
+/**
  * Owns the dockview instance and the windows opened in it. Attach a root
  * element to restore the saved layout (or the default layout, or every
  * registered window), open or focus additional windows by key, and dispose on
