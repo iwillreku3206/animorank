@@ -90,7 +90,7 @@
   {/each}
 
   <Popover.Root>
-    <Popover.Trigger class="btn btn-succcess">Add Test Case</Popover.Trigger>
+    <Popover.Trigger class="btn btn-success">Add Test Case</Popover.Trigger>
     <Popover.Portal>
       <Popover.Overlay />
       <Popover.Content>

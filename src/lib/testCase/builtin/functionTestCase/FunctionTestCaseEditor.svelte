@@ -115,13 +115,13 @@
                   <div class="flex items-center justify-between mb-2">
                     <span class="text-xs font-medium text-base-content/70">Options for {comp.operator.displayName}</span
                     >
-                    <button
+                    <Button
                       type="button"
-                      class="btn btn-xs btn-primary"
+                      class="btn-xs btn-primary"
                       onclick={() => (document.activeElement as HTMLElement)?.blur()}
                     >
                       Done
-                    </button>
+                    </Button>
                   </div>
                   <DynamicForm
                     class="min-w-min"

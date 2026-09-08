@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '$lib/components/ui/buttons/Button.svelte';
   import EllipsisVerticalIcon from '@iconify-svelte/fa6-solid/ellipsis-vertical';
   import PenIcon from '@iconify-svelte/fa6-solid/pen-to-square';
   import TrashIcon from '@iconify-svelte/fa6-solid/trash-can';
@@ -21,13 +22,13 @@
 </script>
 
 <div class="dropdown dropdown-end relative z-10 shrink-0">
-  <button
+  <Button
     tabindex={0}
-    class="btn btn-ghost btn-square btn-sm"
+    class="btn-ghost btn-square btn-sm"
     aria-label="More actions for {title}"
   >
     <EllipsisVerticalIcon class="h-4 w-4" />
-  </button>
+  </Button>
   <div
     tabindex="-1"
     class="dropdown-content z-50 mt-2 w-56 rounded-box border border-base-content/10 bg-base-100 p-1.5 shadow-xl"

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '$lib/components/ui/buttons/Button.svelte';
   import TagChip from '$lib/components/ui/TagChip.svelte';
   import EyeIcon from '@iconify-svelte/fa6-solid/eye';
   import EyeSlashIcon from '@iconify-svelte/fa6-solid/eye-slash';
@@ -83,8 +84,8 @@
     <!-- State toggle rather than an action button: `aria-pressed` lets a screen
          reader announce whether the problem is currently visible, which the
          swapped icon only conveys visually. -->
-    <button
-      class="btn btn-ghost btn-square"
+    <Button
+      class="btn-ghost btn-square"
       aria-label="Visible to students"
       aria-pressed={problem.visible}
       title={problem.visible ? 'Visible to students' : 'Hidden from students'}
@@ -95,16 +96,16 @@
       {:else}
         <EyeSlashIcon class="h-5 w-5 text-base-content/40" />
       {/if}
-    </button>
+    </Button>
 
     <div class="dropdown dropdown-end">
-      <button
+      <Button
         tabindex={0}
-        class="btn btn-ghost btn-square"
+        class="btn-ghost btn-square"
         aria-label="More actions for {problem.name}"
       >
         <EllipsisVerticalIcon class="h-5 w-5" />
-      </button>
+      </Button>
       <div
         tabindex="-1"
         class="dropdown-content z-50 mt-2 w-52 rounded-box border border-base-content/10 bg-base-100 p-1.5 shadow-xl"

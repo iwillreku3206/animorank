@@ -64,7 +64,7 @@
       <div class="flex flex-col gap-3 py-2 px-3">
         <!-- Name -->
         <label class="form-control w-full">
-          <span class="label-text text-xs font-medium pb-1">Name</span>
+          <span class="text-xs font-medium pb-1">Name</span>
           <TextInput
             class="input-xs input-primary w-full"
             placeholder="e.g. add"
@@ -74,7 +74,7 @@
 
         <!-- Symbol -->
         <label class="form-control w-full">
-          <span class="label-text text-xs font-medium pb-1">Symbol (optional)</span>
+          <span class="text-xs font-medium pb-1">Symbol (optional)</span>
           <TextInput
             class="input-xs input-primary w-full"
             placeholder="e.g. add"
