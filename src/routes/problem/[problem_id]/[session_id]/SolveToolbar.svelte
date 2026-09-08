@@ -6,18 +6,64 @@
   import PlayIcon from '@iconify-svelte/fa6-solid/play';
   import PaperPlaneIcon from '@iconify-svelte/fa6-solid/paper-plane';
   import GearIcon from '@iconify-svelte/fa6-solid/gear';
+  import ListIcon from '@iconify-svelte/fa6-solid/list';
+  import ChevronLeftIcon from '@iconify-svelte/fa6-solid/chevron-left';
+  import ChevronRightIcon from '@iconify-svelte/fa6-solid/chevron-right';
+  import { problemHref, problemSetHref } from '$lib/navigation';
+  import type { ProblemLink } from '$lib/problem';
   import type { SolveWindowContext } from './context.svelte';
 
-  let { context, user }: { context: SolveWindowContext; user: User } = $props();
+  let {
+    context,
+    user,
+    neighbors
+  }: {
+    context: SolveWindowContext;
+    user: User;
+    /** The problems either side of this one in its set; `null` at either end. */
+    neighbors: { previous: ProblemLink | null; next: ProblemLink | null };
+  } = $props();
 
   let settingsOpen = $state(false);
+
+  const stepLabels = {
+    previous: 'Previous problem',
+    next: 'Next problem'
+  } as const;
 </script>
 
+{#snippet stepLink(target: ProblemLink | null, direction: 'previous' | 'next')}
+  {@const label = stepLabels[direction]}
+  <span
+    class="inline-flex"
+    title={target ? `${label}: ${target.name}` : `No ${direction} problem in this set`}
+  >
+    <Button
+      class="btn-ghost btn-sm btn-square"
+      href={target ? problemHref(target.id) : undefined}
+      disabled={target ? undefined : true}
+      aria-label={label}
+    >
+      {#if direction === 'previous'}
+        <ChevronLeftIcon
+          class="h-3.5 w-3.5"
+          aria-hidden="true"
+        />
+      {:else}
+        <ChevronRightIcon
+          class="h-3.5 w-3.5"
+          aria-hidden="true"
+        />
+      {/if}
+    </Button>
+  </span>
+{/snippet}
+
 <header class="grid h-12 shrink-0 grid-cols-[1fr_auto_1fr] items-center bg-base-300 px-2">
-  <div class="justify-self-start">
+  <div class="flex flex-row items-center gap-1 justify-self-start">
     <a
       href="/"
-      class="flex items-center"
+      class="flex items-center pr-1"
       aria-label="AnimoRank home"
     >
       <img
@@ -26,6 +72,25 @@
         class="h-7 w-auto transition-opacity hover:opacity-80"
       />
     </a>
+
+    <div
+      class="mr-1 h-5 w-px bg-base-content/15"
+      aria-hidden="true"
+    ></div>
+
+    <Button
+      class="btn-ghost btn-sm gap-2"
+      href={problemSetHref(context.problem.problem_set_id)}
+      title="Back to this problem's set"
+    >
+      <ListIcon
+        class="h-3.5 w-3.5"
+        aria-hidden="true"
+      />
+      Problem set
+    </Button>
+    {@render stepLink(neighbors.previous, 'previous')}
+    {@render stepLink(neighbors.next, 'next')}
   </div>
 
   <!-- Primary actions. Both lock while a run is in flight; the editor panel

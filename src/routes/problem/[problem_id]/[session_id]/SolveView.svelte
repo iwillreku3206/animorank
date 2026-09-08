@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import { createHotkey } from '@tanstack/svelte-hotkeys';
+  import { beforeNavigate, goto } from '$app/navigation';
   import DockviewWindow from '$lib/window/DockviewWindow.svelte';
   import SolveToolbar from './SolveToolbar.svelte';
   import type { DockviewWindowManager } from '$lib/window/dockviewWindowManager';
@@ -57,6 +58,23 @@
 
   createHotkey('Control+S', () => context.forceSave());
 
+  let resuming = false;
+  beforeNavigate((navigation) => {
+    if (resuming || navigation.type === 'leave' || !navigation.to) return;
+    if (context.saveState === 'saved') return;
+
+    navigation.cancel();
+    const { href } = navigation.to.url;
+
+    void context.forceSave().then(() => {
+      if (context.saveState === 'error' && !window.confirm('Your latest changes could not be saved. Leave anyway?')) {
+        return;
+      }
+      resuming = true;
+      void goto(href).finally(() => (resuming = false));
+    });
+  });
+
   onMount(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (untrack(() => context.saveState) !== 'saved') {
@@ -73,6 +91,7 @@
   <SolveToolbar
     {context}
     user={data.user}
+    neighbors={data.neighbors}
   />
 
   <DockviewWindow

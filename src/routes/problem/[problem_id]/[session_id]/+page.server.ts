@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
 import { ProblemService } from '$lib/problem/problemService';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
+import { toProblemLink } from '$lib/problem';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
   const session = await locals.auth();
@@ -22,5 +23,15 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   });
   if (!practiceSession) throw redirect(302, `/problem/${params.problem_id}`);
 
-  return { problem: problem.model, practiceSession: practiceSession.model, user: session.user };
+  const neighbors = await problemService.findNeighbors({ problem, user: session.user });
+
+  return {
+    problem: problem.model,
+    practiceSession: practiceSession.model,
+    user: session.user,
+    neighbors: {
+      previous: toProblemLink(neighbors.previous),
+      next: toProblemLink(neighbors.next)
+    }
+  };
 };
