@@ -23,7 +23,7 @@ export interface CreateOptions {
   problemId: string;
 }
 
-export interface FindLatestNonDoneOptions {
+export interface FindLatestOptions {
   user: User;
   problemId: string;
 }
@@ -120,15 +120,20 @@ export class PracticeSessionService {
   }
 
   /**
-   * Get the latest non-done practice session for a user and problem.
-   * If no such session exists, create a new one.
+   * Get the latest practice session for a user and problem, creating one if
+   * they have never opened it.
+   *
+   * Finished sessions count. Solving a problem does not take the editor away
+   * -- students may come back to tweak their answer, and skipping done
+   * sessions used to strand them on a fresh one full of starter code, with
+   * their solution still in the database but unreachable from the UI. Reset
+   * Code is how they ask for a blank slate instead.
    */
-  public async findLatestNonDoneOrCreate(options: FindLatestNonDoneOptions): Promise<ServerPracticeSession | null> {
+  public async findLatestOrCreate(options: FindLatestOptions): Promise<ServerPracticeSession | null> {
     const practiceSession = await db.practiceSession.findFirst({
       where: {
         student_id: options.user.id,
-        problem_id: options.problemId,
-        done: false
+        problem_id: options.problemId
       },
       orderBy: {
         created_at: 'desc'
