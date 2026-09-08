@@ -98,8 +98,10 @@
     }
   }
 
+  // `locked` means a run is in flight, so a reset would race the grader: it
+  // would swap the code out from under the request that is grading it.
   async function handleReset() {
-    if (!monacoNamespace || resetCode === undefined) return;
+    if (locked || !monacoNamespace || resetCode === undefined) return;
     const monaco = await monacoNamespace;
     if (!monaco) return;
     const newModel = monaco.editor.createModel(resetCode, language);
@@ -107,6 +109,11 @@
     monacoModel?.dispose();
     monacoModel = newModel;
     registerConstrained(resetSlots.map((slot) => ({ label: slot.label, range: slot.initialRange })));
+    // A model swap does not fire the editor's content listener, so `code` would
+    // still hold the old solution. The effect below mirrors it into
+    // `codeSections.body` for slotless problems, and the autosave persists
+    // that, so leaving it stale writes the old code straight back over the reset.
+    code = resetCode;
     codeSections = { ...resetSections };
   }
 

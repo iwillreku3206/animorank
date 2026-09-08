@@ -62,6 +62,7 @@
       type="button"
       class="btn-ghost btn-xs btn-square"
       onclick={() => confirm('Reset code? This action cannot be undone.') && handleReset()}
+      disabled={context.editorState.locked}
       title="Reset code"
       aria-label="Reset code"
     >
@@ -85,7 +86,7 @@
       )}
       registerReset={(cb) => (handleReset = cb)}
     />
-    {#if context.editorState.locked && !context.testSubmitted}
+    {#if context.editorState.locked}
       <div class="absolute inset-0 bg-base-200 backdrop-blur-[1px] flex items-center justify-center rounded-lg">
         <Spinner class="w-10 h-10 text-base-content animate-spin" />
       </div>

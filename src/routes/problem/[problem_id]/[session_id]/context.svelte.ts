@@ -103,6 +103,7 @@ export class SolveWindowContext {
     const results = await runTestCases(this.practiceSession.id, this.problem);
     this.testCaseResults = results;
     this.lastTestType = 'run';
+    this.testSubmitted = false;
     this.selectedTest = results.results.length > 0 ? 0 : -1;
     this.editorState.locked = false;
     this.openWindow('test_cases', { direction: 'below', referencePanel: 'code_editor' });
@@ -116,12 +117,9 @@ export class SolveWindowContext {
     this.lastTestType = 'submit';
 
     // success is computed server-side over all tests, including hidden ones
-    if (results.success) {
-      this.testSubmitted = true;
-    } else {
-      this.selectedTest = results.results.length > 0 ? 0 : -1;
-      this.editorState.locked = false;
-    }
+    this.testSubmitted = results.success;
+    this.selectedTest = results.results.length > 0 ? 0 : -1;
+    this.editorState.locked = false;
     this.openWindow('test_cases', { direction: 'below', referencePanel: 'code_editor' });
   }
 

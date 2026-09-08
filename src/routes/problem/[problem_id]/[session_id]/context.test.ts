@@ -1,9 +1,16 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SolveWindowContext } from './context.svelte';
+import { runTestCases, submit, type TestRunResponse } from '$lib/practiceSession/api';
 import { Problem } from '$lib/problem';
 import { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
 import type { Problem as ProblemModel, PracticeSession as PracticeSessionModel } from '$lib/zenstack/models';
 import type { User } from '@auth/sveltekit';
+
+vi.mock('$lib/practiceSession/api', () => ({
+  runTestCases: vi.fn(),
+  submit: vi.fn(),
+  runCustomInput: vi.fn()
+}));
 
 const STARTER_CODE = [
   '#include <stdio.h>',
@@ -97,5 +104,58 @@ describe('SolveWindowContext slot ranges', () => {
     const context = makeContext({ code: '  puts("hi");' });
     expect(context.editorState.codeSections).toEqual({ code: '  puts("hi");' });
     expect(context.editorState.code).toContain('  puts("hi");');
+  });
+});
+
+// Regression: a passing submit used to leave `locked` true for good, freezing
+// the editor around the accepted solution. One pass marks the session done
+// server-side and nothing ever unmarks it, so there is no credit to protect --
+// students stay free to keep tweaking and re-submitting.
+describe('SolveWindowContext submissions', () => {
+  const result = (success: boolean) =>
+    ({
+      success,
+      results: [{ success, testCaseInfo: { public: true } }]
+    }) as unknown as TestRunResponse;
+
+  beforeEach(() => {
+    // The context force-saves before every run; the response only has to be ok.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('{}', { status: 200 }))
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetAllMocks();
+  });
+
+  it.each([
+    ['passing', true],
+    ['failing', false]
+  ])('leaves the editor editable after a %s submit', async (_label, success) => {
+    vi.mocked(submit).mockResolvedValue(result(success));
+    const context = makeContext({ code: '  puts("hi");' });
+
+    await context.submit();
+
+    expect(context.editorState.locked).toBe(false);
+    expect(context.testSubmitted).toBe(success);
+  });
+
+  it('drops the solved panel when the student runs again', async () => {
+    vi.mocked(submit).mockResolvedValue(result(true));
+    vi.mocked(runTestCases).mockResolvedValue(result(false));
+    const context = makeContext({ code: '  puts("hi");' });
+
+    await context.submit();
+    expect(context.testSubmitted).toBe(true);
+
+    await context.run();
+
+    expect(context.testSubmitted).toBe(false);
+    expect(context.lastTestType).toBe('run');
+    expect(context.editorState.locked).toBe(false);
   });
 });
