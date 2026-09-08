@@ -1,14 +1,19 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import DockviewWindow from '$lib/window/DockviewWindow.svelte';
+  import { discardSavedLayouts } from '$lib/window/dockviewWindowManager';
   import type { DefaultLayout } from '$lib/window/layout';
+  import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
   import { ProblemEditorWindowRegistry } from './windowRegistry';
+  import { testCaseWindowId } from './windows/TestCases.window';
   import { ProblemEditorWindowContext } from './context.svelte';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
 
   const windowRegistry = new ProblemEditorWindowRegistry();
+
+  const testCaseTabs = TestCaseRegistry.instance().keys().map(testCaseWindowId);
 
   const defaultLayout: DefaultLayout = {
     panes: [
@@ -18,7 +23,7 @@
       },
       {
         orientation: 'vertical',
-        children: [{ tabs: ['functions', 'test_cases'], active: 'test_cases' }]
+        children: [{ tabs: ['functions', ...testCaseTabs], active: testCaseTabs[0] ?? 'functions' }]
       }
     ]
   };
@@ -32,6 +37,8 @@
     })
   );
 
+  onMount(() => discardSavedLayouts('problem-editor-'));
+
   onDestroy(() => {
     context.cleanup();
   });
@@ -42,5 +49,5 @@ save status: {context.autosaveStatus}
   bind:context
   {windowRegistry}
   {defaultLayout}
-  storageKey={`problem-editor-${data.problem.id}`}
+  storageKey={`problem-editor:v2:${data.problem.id}`}
 />

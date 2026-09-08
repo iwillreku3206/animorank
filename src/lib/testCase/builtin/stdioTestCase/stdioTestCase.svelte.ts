@@ -26,6 +26,8 @@ export class StdioTestCase extends TestCase<StdioTestCaseData, StdioTestCaseRunI
     return 'stdio';
   }
 
+  static displayName = 'stdio Tests';
+
   static async create(problem: Problem) {
     const res = await fetch('/api/test-case', {
       method: 'POST',

@@ -6,6 +6,7 @@ export interface WindowInitOptions<T> {
   title: string;
   closable: boolean;
   context: T;
+  props?: Record<string, unknown>;
 }
 
 export abstract class Window<T> {
@@ -31,7 +32,7 @@ export abstract class Window<T> {
 
     this.componentInstance = mount(component, {
       target: this._element,
-      props: { context: options.context }
+      props: { context: options.context, ...options.props }
     });
 
     this.title = options.title;

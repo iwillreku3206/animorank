@@ -62,6 +62,8 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
     return 'function';
   }
 
+  static displayName = 'Function Tests';
+
   static async create(problem: Problem) {
     const res = await fetch('/api/test-case', {
       method: 'POST',

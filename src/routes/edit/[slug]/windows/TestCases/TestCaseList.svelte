@@ -1,19 +1,23 @@
 <script lang="ts">
-  import { Popover } from 'bits-ui';
-  import { createTestCase, deleteTestCase } from '../api';
-  import type { ProblemEditorWindowContext } from '../context.svelte';
+  import { createTestCase, deleteTestCase } from '../../api';
+  import type { ProblemEditorWindowContext } from '../../context.svelte';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import EyeIcon from '@iconify-svelte/fa6-solid/eye';
   import EyeSlashIcon from '@iconify-svelte/fa6-solid/eye-slash';
   import deleteIcon from '$lib/assets/delete.svg';
   import type { TestCase } from '$lib/testCase/testCase.svelte';
   import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
-  import TestCaseEditorMount from './TestCases/TestCaseEditorMount.svelte';
+  import TestCaseEditorMount from './TestCaseEditorMount.svelte';
 
-  let { context }: { context: ProblemEditorWindowContext } = $props();
+  // `type` is the test case type this panel owns. Each type gets its own
+  // window, so the panel never has to ask which kind to create.
+  let { context, type }: { context: ProblemEditorWindowContext; type: string } = $props();
 
   let deletesDisabled: Record<string, boolean> = $state({});
   let disableAddTestCase: boolean = $state(false);
+
+  const displayName = $derived(TestCaseRegistry.instance().getStatic(type).displayName);
+  const testCases = $derived(context.testCases.filter((testCase) => testCase.model.type === type));
 
   function onDelete(id: string) {
     deletesDisabled[id] = true;
@@ -34,7 +38,7 @@
     context.testCases = context.testCases;
   }
 
-  async function addTestCase(type: string) {
+  async function addTestCase() {
     disableAddTestCase = true;
     try {
       const model = await createTestCase(context.problem.model.id, type);
@@ -48,16 +52,20 @@
       disableAddTestCase = false;
     }
   }
-
-  const availableTypes = $derived(TestCaseRegistry.instance().keys());
 </script>
 
-<div class="flex flex-col gap-2 overflow-scroll h-full">
-  {#each context.testCases as testCase, i (testCase.model.id)}
+<div class="flex flex-col gap-2 overflow-y-auto h-full p-2">
+  {#if testCases.length === 0}
+    <p class="text-base-content/50 text-sm">
+      No {displayName.toLowerCase()} yet. Click "Add Test Case" to create one.
+    </p>
+  {/if}
+
+  {#each testCases as testCase, i (testCase.model.id)}
     <div class="w-full bg-[#212121] rounded-lg p-4">
       <div class="flex flex-col">
         <div class="flex flex-row gap-2 items-center mb-2">
-          Test Case #{i}: {testCase.model.type}
+          Test Case #{i + 1}
           <div class="ml-auto flex gap-1">
             <Button
               title={testCase.model.public ? 'Hide Test Case' : 'Show Test Case'}
@@ -89,27 +97,13 @@
     </div>
   {/each}
 
-  <Popover.Root>
-    <Popover.Trigger class="btn btn-success">Add Test Case</Popover.Trigger>
-    <Popover.Portal>
-      <Popover.Overlay />
-      <Popover.Content>
-        <Popover.Close />
-        <Popover.Arrow />
-        <div class="bg-neutral-800 rounded-lg flex flex-col gap-2 p-4">
-          {#each availableTypes as type (type)}
-            <Button
-              onclick={() => addTestCase(type)}
-              disabled={disableAddTestCase}
-              class="btn-success btn-sm"
-            >
-              {type} Test Case
-            </Button>
-          {/each}
-        </div>
-      </Popover.Content>
-    </Popover.Portal>
-  </Popover.Root>
+  <Button
+    onclick={addTestCase}
+    disabled={disableAddTestCase}
+    class="btn-success btn-sm self-start"
+  >
+    Add Test Case
+  </Button>
 </div>
 
 <style>
