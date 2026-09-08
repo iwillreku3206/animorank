@@ -1,5 +1,7 @@
 <script lang="ts">
   import Button from '$lib/components/ui/buttons/Button.svelte';
+  import Dropdown from '$lib/components/ui/dropdowns/Dropdown.svelte';
+  import DropdownItem from '$lib/components/ui/dropdowns/DropdownItem.svelte';
   import TagChip from '$lib/components/ui/TagChip.svelte';
   import EyeIcon from '@iconify-svelte/fa6-solid/eye';
   import EyeSlashIcon from '@iconify-svelte/fa6-solid/eye-slash';
@@ -37,10 +39,15 @@
   const studentsSolved = $derived(parseInt((problemSolvers || [])[0]?.solvers.toString() || '0') || 0);
   const passRate = $derived(studentsSolved / (studentsAttempted || 1));
 
-  // daisyUI dropdowns stay open while focus is inside them, so dismissing means
-  // blurring — same approach as TagSelect and the General tab's subject picker.
-  // Called before `confirm()` so the menu isn't left hanging behind the dialog.
-  const closeMenu = () => (document.activeElement as HTMLElement | null)?.blur();
+  function confirmDelete() {
+    // `confirm()` blocks paint, so defer a tick and let the menu finish closing
+    // first — otherwise the dialog appears over a menu still on screen.
+    setTimeout(() => {
+      if (window.confirm(`Delete "${problem.name}"? This action cannot be undone.`)) {
+        onDelete();
+      }
+    }, 0);
+  }
 </script>
 
 <div class="relative flex w-full flex-row gap-8 rounded-lg bg-base-200 px-8 py-4 hover:bg-base-100/70">
@@ -98,44 +105,31 @@
       {/if}
     </Button>
 
-    <div class="dropdown dropdown-end">
-      <Button
-        tabindex={0}
-        class="btn-ghost btn-square"
-        aria-label="More actions for {problem.name}"
+    <Dropdown
+      label="Actions for {problem.name}"
+      class="w-52"
+    >
+      {#snippet trigger(props)}
+        <Button
+          {...props}
+          class="btn-ghost btn-square"
+          aria-label="More actions for {problem.name}"
+        >
+          <EllipsisVerticalIcon class="h-5 w-5" />
+        </Button>
+      {/snippet}
+
+      <DropdownItem href="/edit/{problem.id}">
+        <PenIcon class="h-4 w-4 opacity-70" />
+        Edit problem
+      </DropdownItem>
+      <DropdownItem
+        variant="danger"
+        onSelect={confirmDelete}
       >
-        <EllipsisVerticalIcon class="h-5 w-5" />
-      </Button>
-      <div
-        tabindex="-1"
-        class="dropdown-content z-50 mt-2 w-52 rounded-box border border-base-content/10 bg-base-100 p-1.5 shadow-xl"
-      >
-        <ul class="flex flex-col gap-0.5">
-          <li>
-            <a
-              class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors outline-none hover:bg-base-200 focus-visible:bg-base-200"
-              href="/edit/{problem.id}"
-            >
-              <PenIcon class="h-4 w-4 opacity-70" />
-              Edit problem
-            </a>
-          </li>
-          <li>
-            <button
-              class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-error transition-colors outline-none hover:bg-base-200 focus-visible:bg-base-200"
-              onclick={() => {
-                closeMenu();
-                if (window.confirm(`Delete "${problem.name}"? This action cannot be undone.`)) {
-                  onDelete();
-                }
-              }}
-            >
-              <TrashIcon class="h-4 w-4" />
-              Delete problem
-            </button>
-          </li>
-        </ul>
-      </div>
-    </div>
+        <TrashIcon class="h-4 w-4" />
+        Delete problem
+      </DropdownItem>
+    </Dropdown>
   </div>
 </div>

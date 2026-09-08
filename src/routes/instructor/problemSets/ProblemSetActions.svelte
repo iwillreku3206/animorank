@@ -1,5 +1,7 @@
 <script lang="ts">
   import Button from '$lib/components/ui/buttons/Button.svelte';
+  import Dropdown from '$lib/components/ui/dropdowns/Dropdown.svelte';
+  import DropdownItem from '$lib/components/ui/dropdowns/DropdownItem.svelte';
   import EllipsisVerticalIcon from '@iconify-svelte/fa6-solid/ellipsis-vertical';
   import PenIcon from '@iconify-svelte/fa6-solid/pen-to-square';
   import TrashIcon from '@iconify-svelte/fa6-solid/trash-can';
@@ -16,47 +18,40 @@
     onDelete: () => void;
   } = $props();
 
-  // daisyUI dropdowns stay open while focus is inside them, so dismissing means
-  // blurring. Called before `confirm()` so the menu isn't left open behind it.
-  const closeMenu = () => (document.activeElement as HTMLElement | null)?.blur();
+  function confirmDelete() {
+    // `confirm()` blocks paint, so defer a tick and let the menu finish closing
+    // first — otherwise the dialog appears over a menu still on screen.
+    setTimeout(() => {
+      if (window.confirm(`Delete "${title}"? This deletes its problems too and cannot be undone.`)) {
+        onDelete();
+      }
+    }, 0);
+  }
 </script>
 
-<div class="dropdown dropdown-end relative z-10 shrink-0">
-  <Button
-    tabindex={0}
-    class="btn-ghost btn-square btn-sm"
-    aria-label="More actions for {title}"
+<Dropdown
+  label="Actions for {title}"
+  class="w-56"
+>
+  {#snippet trigger(props)}
+    <Button
+      {...props}
+      class="btn-ghost btn-square btn-sm relative z-10 shrink-0"
+      aria-label="More actions for {title}"
+    >
+      <EllipsisVerticalIcon class="h-4 w-4" />
+    </Button>
+  {/snippet}
+
+  <DropdownItem href="/instructor/problemSets/{id}">
+    <PenIcon class="h-4 w-4 opacity-70" />
+    Manage problem set
+  </DropdownItem>
+  <DropdownItem
+    variant="danger"
+    onSelect={confirmDelete}
   >
-    <EllipsisVerticalIcon class="h-4 w-4" />
-  </Button>
-  <div
-    tabindex="-1"
-    class="dropdown-content z-50 mt-2 w-56 rounded-box border border-base-content/10 bg-base-100 p-1.5 shadow-xl"
-  >
-    <ul class="flex flex-col gap-0.5">
-      <li>
-        <a
-          class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors outline-none hover:bg-base-200 focus-visible:bg-base-200"
-          href="/instructor/problemSets/{id}"
-        >
-          <PenIcon class="h-4 w-4 opacity-70" />
-          Manage problem set
-        </a>
-      </li>
-      <li>
-        <button
-          class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-error transition-colors outline-none hover:bg-base-200 focus-visible:bg-base-200"
-          onclick={() => {
-            closeMenu();
-            if (window.confirm(`Delete "${title}"? This deletes its problems too and cannot be undone.`)) {
-              onDelete();
-            }
-          }}
-        >
-          <TrashIcon class="h-4 w-4" />
-          Delete problem set
-        </button>
-      </li>
-    </ul>
-  </div>
-</div>
+    <TrashIcon class="h-4 w-4" />
+    Delete problem set
+  </DropdownItem>
+</Dropdown>
