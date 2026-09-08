@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, onMount, untrack } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import transform from '@diplodoc/transform';
   import { transform as latex } from '@diplodoc/latex-extension/plugin';
   import { transform as mermaid } from '@diplodoc/mermaid-extension/plugin';
@@ -27,7 +27,9 @@
   // reordered itself whenever the open calls were reordered. Titles come from
   // the window statics, which are safe to read before the windows are built.
   const TAB_IDS = ['general', 'collaborators', 'student_access', 'analytics'];
-  const tabs = TAB_IDS.map((id) => ({ id, title: windowRegistry.getStatic(id).title }));
+  const tabs = await Promise.all(
+    TAB_IDS.map(async (id) => ({ id, title: (await windowRegistry.getStatic(id)).title }))
+  );
 
   // svelte-ignore state_referenced_locally
   // The context is seeded once from the initial load and owns its state from
@@ -88,9 +90,9 @@
     error: 'Failed to save'
   };
 
-  onMount(() => {
+  onMount(async () => {
     for (const { id } of tabs) {
-      windowMap[id] = windowRegistry.getInstance(id, context);
+      windowMap[id] = await windowRegistry.getInstance(id, context);
     }
   });
 
