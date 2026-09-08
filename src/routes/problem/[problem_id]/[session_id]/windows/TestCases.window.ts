@@ -4,7 +4,7 @@ import TestCases from './TestCases.window.svelte';
 
 export class TestCasesWindow extends Window<SolveWindowContext> {
   static title = 'Test Cases';
-  static closeable = true;
+  static closeable = false;
   constructor(context: SolveWindowContext) {
     super(
       {

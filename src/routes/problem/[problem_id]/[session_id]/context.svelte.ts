@@ -1,5 +1,8 @@
 import type { AddPanelPositionOptions } from 'dockview-core';
-import type { Problem } from '$lib/problem';
+import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
+import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
+import { TelemetryService } from '$lib/telemetry/telemetryService';
+import type { Problem, Slot } from '$lib/problem';
 import type { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
 import {
   runTestCases,
@@ -41,6 +44,7 @@ export class SolveWindowContext {
   public readonly practiceSession: ClientPracticeSession;
   public readonly language: string;
   public readonly useSlots: boolean;
+  public readonly slots: Slot[];
   public readonly editorState: SolveEditorState;
 
   public testCaseResults: TestRunResponse = $state({ results: [], success: false });
@@ -49,6 +53,15 @@ export class SolveWindowContext {
   public testSubmitted: boolean = $state(false);
   public customRunLoading: boolean = $state(false);
   public customRunResult: CustomRunResponse | null = $state(null);
+
+  private readonly autosave: AutoSave<Record<string, string>>;
+
+  /**
+   * The telemetry sink for this session, shared by everything that attaches
+   * hooks or flushes (the editor window, the save path). One instance per
+   * page, so it is bound to this session's id.
+   */
+  public readonly telemetry: TelemetryService;
 
   /**
    * Opens (or focuses) a window in the dockview. Wired by the page once the
@@ -61,17 +74,35 @@ export class SolveWindowContext {
     this.practiceSession = initial.practiceSession;
     this.language = initial.language;
     this.useSlots = initial.problem.uses_slots;
+
+    const previousCode = initial.practiceSession.previousCode;
+    this.slots = previousCode.sections.map((section) => section.slot);
     this.editorState = new SolveEditorState({
-      code: initial.practiceSession.previousCode.fullCode,
-      sections: Object.fromEntries(
-        initial.practiceSession.previousCode.sections.map((section) => [section.slot.label, section.code])
-      )
+      code: previousCode.fullCode,
+      sections: Object.fromEntries(previousCode.sections.map((section) => [section.slot.label, section.code]))
     });
+    this.telemetry = ClientServiceProvider.instance().getService(TelemetryService, initial.practiceSession.id);
+    this.autosave = new AutoSave(() => this.saveCode(), $state.snapshot(this.editorState.codeSections));
+  }
+
+  /** The current autosave state, for the editor status bar. */
+  public get saveState(): AutoSaveState {
+    return this.autosave.state;
+  }
+
+  /** Queue a debounced save. Call whenever the code sections change. */
+  public scheduleSave(): void {
+    this.autosave.save($state.snapshot(this.editorState.codeSections));
+  }
+
+  /** Persist immediately, bypassing the debounce (Ctrl+S, run, submit). */
+  public forceSave(): Promise<void> {
+    return this.autosave.forceSave($state.snapshot(this.editorState.codeSections));
   }
 
   public async run(): Promise<void> {
     this.editorState.locked = true;
-    await this.saveCode();
+    await this.forceSave();
     const results = await runTestCases(this.practiceSession.id, this.problem);
     this.testCaseResults = results;
     this.lastTestType = 'run';
@@ -82,7 +113,7 @@ export class SolveWindowContext {
 
   public async submit(): Promise<void> {
     this.editorState.locked = true;
-    await this.saveCode();
+    await this.forceSave();
     const results = await submit(this.practiceSession.id, this.problem);
     this.testCaseResults = results;
     this.lastTestType = 'submit';
@@ -100,18 +131,26 @@ export class SolveWindowContext {
   public async customRun(stdin: string): Promise<void> {
     this.customRunLoading = true;
     this.customRunResult = null;
-    await this.saveCode();
+    await this.forceSave();
     this.customRunResult = await runCustomInput(this.practiceSession.id, stdin);
     this.customRunLoading = false;
   }
 
   private async saveCode(): Promise<void> {
-    await fetch(`/api/practice-session/${this.practiceSession.id}`, {
+    const response = await fetch(`/api/practice-session/${this.practiceSession.id}`, {
       method: 'PUT',
       body: JSON.stringify({
         code: $state.snapshot(this.editorState.codeSections)
       }),
       headers: { 'content-type': 'application/json' }
     });
+    // `fetch` only rejects on network failure, so a 4xx/5xx has to be raised by
+    // hand or the autosave would report a failed save as 'saved'.
+    if (!response.ok) {
+      throw new Error(`Failed to save code: ${response.status} ${response.statusText}`);
+    }
+    // The session state is persisted: flush collated telemetry into the
+    // session history alongside it, instead of on its own timer.
+    void this.telemetry.flush();
   }
 }

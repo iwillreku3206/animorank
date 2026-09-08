@@ -1,5 +1,6 @@
 <script lang="ts">
   import DynamicForm from '$lib/components/ui/inputs/DynamicForm.svelte';
+  import Select from '$lib/components/ui/selects/Select.svelte';
   import type { Type } from './type.svelte';
   import { GlobalRegistryProvider } from '$lib/registry/global';
   import { TypeRegistry } from './typeRegistry';
@@ -32,8 +33,8 @@
 </script>
 
 <span class="inline-flex items-center gap-1">
-  <select
-    class="select select-xs select-primary min-w-24"
+  <Select
+    class="select-xs select-primary min-w-24"
     value={type?.id ?? ''}
     onchange={(e) => {
       void selectType((e.target as HTMLSelectElement).value);
@@ -48,7 +49,7 @@
         {type?.id === t ? type.displayName : typeNames[t]}
       </option>
     {/each}
-  </select>
+  </Select>
   {#if type}
     <div class="dropdown dropdown-{dropdownAlign}">
       <div

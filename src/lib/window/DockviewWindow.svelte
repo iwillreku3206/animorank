@@ -36,7 +36,7 @@
 
 <div class="relative w-full h-full flex flex-1 flex-col">
   <div
-    class="absolute top-2 bottom-2 left-2 right-2"
+    class="absolute top-0 bottom-2 left-2 right-2"
     bind:this={root}
   ></div>
 </div>

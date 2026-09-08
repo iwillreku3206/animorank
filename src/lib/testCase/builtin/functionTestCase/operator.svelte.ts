@@ -30,6 +30,10 @@ export abstract class Operator<Options extends IntoJsonValue = any> {
 
   public abstract get displayName(): string;
 
+  public get describeExpectation(): string {
+    return this.displayName;
+  }
+
   /**
    * @description The form to edit this operator's options, or null when the
    * operator has no configurable options.

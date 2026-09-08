@@ -27,6 +27,15 @@ export interface CreateOptions {
   visible?: boolean;
 }
 
+/**
+ * A hidden problem (`visible: false`) is delisted for students but must stay
+ * reachable for the set's collaborators, who need to preview and edit what they
+ * have hidden. Applied alongside the problem-set access check, not instead of it.
+ */
+const visibleToUser = (userId: string) => ({
+  OR: [{ visible: true }, { problem_set: { collaborators: { some: { collaborator_id: userId } } } }]
+});
+
 export class ProblemService {
   /**
    * Create a new problem.
@@ -61,7 +70,8 @@ export class ProblemService {
         problem_set: {
           id: options.problemSetId,
           OR: [{ is_global: true }, { collaborators: { some: { collaborator_id: options.user.id || '' } } }]
-        }
+        },
+        ...visibleToUser(options.user.id || '')
       }
     });
 
@@ -77,7 +87,8 @@ export class ProblemService {
         id: options.id,
         problem_set: {
           OR: [{ is_global: true }, { collaborators: { some: { collaborator_id: options.user.id || '' } } }]
-        }
+        },
+        ...visibleToUser(options.user.id || '')
       }
     });
 

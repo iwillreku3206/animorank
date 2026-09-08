@@ -4,7 +4,7 @@ import Functions from './Functions.window.svelte';
 
 export class FunctionsWindow extends Window<ProblemEditorWindowContext> {
   static title = 'Functions';
-  static closeable = true;
+  static closeable = false;
   constructor(context: ProblemEditorWindowContext) {
     super(
       {

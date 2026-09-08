@@ -8,6 +8,16 @@
  * Monaco editor theme (`animorank-dark.ts`).
  */
 
+.yfm {
+  overflow-wrap: break-word;
+}
+
+.yfm pre,
+.yfm table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 /* Code blocks without a language: default to base text color */
 .yfm pre > code:not([class*='hljs']) {
   color: var(--color-base-content) !important;

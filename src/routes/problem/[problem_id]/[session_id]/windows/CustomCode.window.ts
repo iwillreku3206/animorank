@@ -4,7 +4,7 @@ import CustomCode from './CustomCode.window.svelte';
 
 export class CustomCodeWindow extends Window<SolveWindowContext> {
   static title = 'Custom Input';
-  static closeable = true;
+  static closeable = false;
   constructor(context: SolveWindowContext) {
     super(
       {

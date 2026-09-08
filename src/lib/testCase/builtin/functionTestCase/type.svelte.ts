@@ -61,6 +61,7 @@ export abstract class Type<
   abstract get displayName(): string;
 
   abstract get optionsForm(): OptionsForm;
+
   abstract get valueForm(): ValueEditor;
 
   abstract get valueDisplay(): ValueDisplay;

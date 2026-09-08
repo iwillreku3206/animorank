@@ -48,7 +48,7 @@
           class="text-sm block py-2 pl-4 border-l-2 transition-colors duration-250
             {activeSection === section.id
             ? 'text-base-content border-primary'
-            : 'text-base-content/60 hover:text-base-content border-neutral'}"
+            : 'text-base-content/70 hover:text-base-content border-neutral'}"
         >
           {section.label}
         </a>
@@ -59,7 +59,7 @@
   <!-- Main content -->
   <main class="flex-1 max-w-2xl">
     <h1 class="font-display text-4xl font-bold mb-2">Privacy Policy</h1>
-    <p class="text-md text-base-content/60 mb-8">Last Updated: May 25, 2026</p>
+    <p class="text-md text-base-content/50 mb-8">Last Updated: May 25, 2026</p>
 
     <div class="prose prose-headings:font-display text-md text-base-content/70">
       <p>

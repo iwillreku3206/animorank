@@ -2,6 +2,12 @@
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
   import Seo from '$lib/components/layout/Seo.svelte';
+  import { problemSetsHref } from '$lib/navigation';
+  import { page } from '$app/state';
+
+  // Layout data merges into page.data, so this stays auth-aware without the
+  // route needing its own load.
+  const problemSetsUrl = $derived(problemSetsHref(page.data?.user));
 </script>
 
 <Seo
@@ -23,7 +29,7 @@
     <div class="mt-9 flex justify-center">
       <ButtonLink
         class="btn-lg group btn-primary gap-2.5 font-semibold"
-        href="/problemSets"
+        href={problemSetsUrl}
       >
         Go to your problem sets
         <ArrowRightIcon

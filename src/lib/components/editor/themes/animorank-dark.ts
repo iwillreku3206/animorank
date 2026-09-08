@@ -13,9 +13,9 @@ import type { monaco } from '$lib/monaco';
  *   --color-accent       #e0a838   numbers, constants
  *   --color-error        #e0584f   error foreground
  *   --color-base-content #e6e6e6   default editor foreground / variables
- *   --color-base-100     #262626   editor + gutter background
- *   --color-base-200     #1a1a1a   hover / suggest / widget backgrounds
- *   --color-base-300     #0a0a0a   widget borders (deepest neutral)
+ *   --color-base-100     #262626   the dockview tab strip above the editor
+ *   --color-base-200     #1a1a1a   editor + gutter background
+ *   --color-base-300     #0a0a0a   hover / suggest / widget backgrounds + borders
  *
  * Syntax colors derived from the palette (not direct daisyUI tokens):
  *   comment  #7c7c7c   muted base-content
@@ -41,7 +41,7 @@ export const animorankDark: monaco.editor.IStandaloneThemeData = {
     { token: 'delimiter', foreground: 'b6b6b6' }
   ],
   colors: {
-    'editor.background': '#262626',
+    'editor.background': '#1a1a1a',
     'editor.foreground': '#e6e6e6',
     'editorLineNumber.foreground': '#737373',
     'editorLineNumber.activeForeground': '#e6e6e6',
@@ -55,12 +55,12 @@ export const animorankDark: monaco.editor.IStandaloneThemeData = {
     'editorWhitespace.foreground': '#e6e6e614',
     'editorBracketMatch.background': '#77de3d22',
     'editorBracketMatch.border': '#77de3d',
-    'editorGutter.background': '#262626',
-    'editorWidget.background': '#1a1a1a',
-    'editorWidget.border': '#0a0a0a',
-    'editorSuggestWidget.background': '#1a1a1a',
+    'editorGutter.background': '#1a1a1a',
+    'editorWidget.background': '#0a0a0a',
+    'editorWidget.border': '#262626',
+    'editorSuggestWidget.background': '#0a0a0a',
     'editorSuggestWidget.selectedBackground': '#77de3d22',
-    'editorHoverWidget.background': '#1a1a1a',
+    'editorHoverWidget.background': '#0a0a0a',
     'scrollbarSlider.background': '#e6e6e620',
     'scrollbarSlider.hoverBackground': '#e6e6e630',
     'scrollbarSlider.activeBackground': '#77de3d55',

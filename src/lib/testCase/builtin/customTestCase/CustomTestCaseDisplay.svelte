@@ -1,37 +1,50 @@
 <script lang="ts">
   import type { TestCaseResult } from '$lib/testCase/types';
   import type { CustomTestCaseRunInfo } from './customTestCase.svelte';
+  import ValueField from '../shared/ValueField.svelte';
+  import HiddenTestCase from '../shared/HiddenTestCase.svelte';
 
   let { testCaseResult }: { testCaseResult: TestCaseResult<CustomTestCaseRunInfo> } = $props();
+
+  function testCode(testCaseResult: TestCaseResult<CustomTestCaseRunInfo>): string {
+    if (!('runInfo' in testCaseResult)) return '';
+    const data = testCaseResult.testCaseInfo.data as { test_code?: string } | null;
+    return data?.test_code ?? '';
+  }
 </script>
 
 {#if 'runInfo' in testCaseResult}
-  <div class="w-full flex flex-col gap-3">
-    <div class={testCaseResult.success ? 'text-success' : 'text-error'}>
-      {testCaseResult.success ? '✓ Passed' : '✗ Failed'}
-    </div>
+  <div class="flex w-full flex-col gap-4">
     {#if testCaseResult.compilerOutput}
-      <pre class="text-error text-xs bg-base-100 rounded-lg p-2 overflow-x-auto">{testCaseResult.compilerOutput}</pre>
+      <ValueField
+        label="Compiler output"
+        value={testCaseResult.compilerOutput}
+        tone="error"
+      />
     {/if}
     {#if testCaseResult.failureReason}
-      <pre class="text-error text-xs bg-base-100 rounded-lg p-2 overflow-x-auto">{testCaseResult.failureReason}</pre>
+      <ValueField
+        label="Failure reason"
+        value={testCaseResult.failureReason}
+        tone="error"
+      />
     {/if}
-    {#if !testCaseResult.success}
-      <div class="bg-base-100 flex flex-col gap-2 rounded-lg p-3">
-        <div class="flex flex-row items-center gap-2">
-          <span class="text-xs text-base-content opacity-80">Exit code:</span>
-          <span class="font-mono text-xs">{testCaseResult.runInfo.exitCode}</span>
-        </div>
-        {#if testCaseResult.runInfo.stderr}
-          <div class="flex flex-col gap-1">
-            <span class="text-xs text-base-content opacity-80">Stderr:</span>
-            <pre class="font-mono text-xs whitespace-pre-wrap bg-base-200 rounded p-2 overflow-x-auto">{testCaseResult
-                .runInfo.stderr}</pre>
-          </div>
-        {/if}
-      </div>
-    {/if}
+    <ValueField
+      label="Test code"
+      value={testCode(testCaseResult)}
+      placeholder="(no test code)"
+    />
+    <ValueField
+      label="Exit code"
+      value={String(testCaseResult.runInfo.exitCode)}
+    />
+    <ValueField
+      label="Stderr"
+      value={testCaseResult.runInfo.stderr}
+      placeholder="(no stderr)"
+      tone="error"
+    />
   </div>
 {:else}
-  <div class="p-4">Hidden test case</div>
+  <HiddenTestCase />
 {/if}

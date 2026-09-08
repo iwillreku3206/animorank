@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Checkbox from '$lib/components/ui/checkboxes/Checkbox.svelte';
   import { enhance } from '$app/forms';
   import TriangleExclamationIcon from '@iconify-svelte/fa6-solid/triangle-exclamation';
   import Button from '$lib/components/ui/buttons/Button.svelte';
@@ -144,10 +145,9 @@
       <label
         class="mt-5 flex cursor-pointer items-center gap-3 rounded-lg border border-error/20 bg-error/10 p-3 transition-colors hover:bg-error/15"
       >
-        <input
-          type="checkbox"
+        <Checkbox
           bind:checked={isConfirmed}
-          class="checkbox checkbox-error shrink-0"
+          class="checkbox-error shrink-0"
         />
         <span class="text-sm text-base-content"> I understand this will permanently delete my account. </span>
       </label>

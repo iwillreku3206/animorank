@@ -36,6 +36,7 @@ export type PaneChild = Pane | string | WindowTabs;
 export interface Pane {
   children: PaneChild[];
   orientation: 'horizontal' | 'vertical';
+  weights?: number[];
 }
 
 export interface DefaultLayout {
@@ -137,7 +138,7 @@ function paneNode(
   // depth is fixed by parity. A mismatch needs a single-child wrapper branch
   // to flip the axis for the children.
   const childDepth = childAxis === axisAt(depth) ? depth + 1 : depth + 2;
-  const children = buildChildren(pane.children, childDepth, state);
+  const children = buildChildren(pane.children, childDepth, state, pane.weights);
   if (children.length === 0) {
     return undefined;
   }
@@ -153,20 +154,38 @@ function paneNode(
   return childDepth === depth + 1 ? branch : { type: 'branch', data: [branch], size };
 }
 
+function resolveShares(children: PaneChild[], weights: number[] | undefined, keep: boolean[]): number[] | undefined {
+  if (!weights || weights.length !== children.length) {
+    return undefined;
+  }
+  if (!weights.every((weight) => Number.isFinite(weight) && weight > 0)) {
+    return undefined;
+  }
+  const kept = weights.filter((_, index) => keep[index]);
+  const total = kept.reduce((sum, weight) => sum + weight, 0);
+  return kept.map((weight) => weight / total);
+}
+
 function buildChildren(
   children: PaneChild[],
   depth: number,
-  state: BuildState
+  state: BuildState,
+  weights?: number[]
 ): SerializedGridObject<GroupPanelViewState>[] {
-  const placeable = children.filter((child) => isPlaceable(child, state));
+  // `isPlaceable` reads `state.used`, which the node builders below mutate, so
+  // the whole row is evaluated up front — as the original single filter did.
+  const keep = children.map((child) => isPlaceable(child, state));
+  const placeable = children.filter((_, index) => keep[index]);
   if (placeable.length === 0) {
     return [];
   }
-  // Equal split: the current extent along the split axis divided by the
-  // number of panes in the split.
-  const childSize = extentAlong(axisAt(depth - 1), state.size) / placeable.length;
+  // Equal split by default: the current extent along the split axis divided by
+  // the number of panes in the split. `weights` replaces it with explicit shares.
+  const extent = extentAlong(axisAt(depth - 1), state.size);
+  const shares = resolveShares(children, weights, keep);
   const nodes: SerializedGridObject<GroupPanelViewState>[] = [];
-  for (const child of placeable) {
+  for (const [index, child] of placeable.entries()) {
+    const childSize = shares ? extent * shares[index] : extent / placeable.length;
     let node: SerializedGridObject<GroupPanelViewState> | undefined;
     if (typeof child === 'string') {
       node = leafNode(child, childSize, state);

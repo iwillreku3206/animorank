@@ -164,6 +164,43 @@ describe('defaultLayoutToDockview', () => {
     ]);
   });
 
+  it('splits by weight when weights are supplied', () => {
+    const layout: DefaultLayout = {
+      panes: [{ orientation: 'vertical', children: ['metadata', 'test_cases'], weights: [2, 1] }]
+    };
+
+    const serialized = defaultLayoutToDockview(layout, size, titles);
+    const [pane] = asBranch(serialized!.grid.root);
+    const [top, bottom] = asBranch(pane).map((c) => c.size!);
+    expect(top).toBeCloseTo(1600 / 3);
+    expect(bottom).toBeCloseTo(800 / 3);
+  });
+
+  it('keeps weights attached to their child when one is dropped', () => {
+    const layout: DefaultLayout = {
+      panes: [{ orientation: 'vertical', children: ['metadata', 'ghost', 'test_cases'], weights: [3, 5, 1] }]
+    };
+
+    const serialized = defaultLayoutToDockview(layout, size, titles);
+    const [pane] = asBranch(serialized!.grid.root);
+    expect(asBranch(pane).map((c) => c.size)).toEqual([600, 200]);
+  });
+
+  it('falls back to an equal split when the weights are malformed', () => {
+    const mismatched: DefaultLayout = {
+      panes: [{ orientation: 'vertical', children: ['metadata', 'test_cases'], weights: [2] }]
+    };
+    const nonPositive: DefaultLayout = {
+      panes: [{ orientation: 'vertical', children: ['metadata', 'test_cases'], weights: [1, 0] }]
+    };
+
+    for (const layout of [mismatched, nonPositive]) {
+      const serialized = defaultLayoutToDockview(layout, size, titles);
+      const [pane] = asBranch(serialized!.grid.root);
+      expect(asBranch(pane).map((c) => c.size)).toEqual([400, 400]);
+    }
+  });
+
   it('returns undefined when nothing is placeable', () => {
     const layout: DefaultLayout = {
       panes: [{ orientation: 'vertical', children: ['ghost', 'poltergeist'] }]

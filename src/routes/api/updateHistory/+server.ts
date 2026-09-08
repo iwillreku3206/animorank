@@ -5,7 +5,9 @@ import { db } from '$lib/zenstack';
 
 const validator = z.array(
   z.object({
-    timestamp: z.date(),
+    // JSON bodies carry timestamps as ISO strings (Date instances do not
+    // survive JSON serialization), so coerce rather than require a Date.
+    timestamp: z.coerce.date(),
     type: z.string(),
     data: z.any(),
     session_id: z.uuid()
