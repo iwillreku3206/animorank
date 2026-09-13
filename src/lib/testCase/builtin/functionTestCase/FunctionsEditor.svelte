@@ -13,7 +13,13 @@
   const data = $derived(context.functionData);
 
   const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
-  const availableTypes = $derived([...typeRegistry.keys()]);
+
+  // Parameters and return types offer every registered type, so plugins that
+  // add types load before the list is built.
+  let availableTypes = $state<string[]>([]);
+  $effect(() => {
+    void typeRegistry.loadKeys().then((keys) => (availableTypes = keys));
+  });
 
   function addParameter(fn: FuncDef) {
     // Default the type immediately: an untyped parameter persisted to

@@ -12,8 +12,8 @@ export class WithinRangeOperatorTypeRegistry extends OperatorTypeRegistry<Within
 
   constructor() {
     super();
-    this.registerType(Integer.create(), WithinRangeInteger);
-    this.registerType(Float.create(), WithinRangeFloat);
-    this.registerType(Pointer.create(), WithinRangePointer);
+    super.register(Integer.id(), WithinRangeInteger);
+    super.register(Float.id(), WithinRangeFloat);
+    super.register(Pointer.id(), WithinRangePointer);
   }
 }

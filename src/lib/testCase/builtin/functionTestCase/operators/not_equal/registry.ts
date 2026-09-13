@@ -14,9 +14,9 @@ export class NotEqualOperatorTypeRegistry extends OperatorTypeRegistry<NotEqualO
 
   constructor() {
     super();
-    this.registerType(Integer.create(), NotEqualInteger);
-    this.registerType(Float.create(), NotEqualFloat);
-    this.registerType(StringType.create(), NotEqualString);
-    this.registerType(Pointer.create(), NotEqualPointer);
+    super.register(Integer.id(), NotEqualInteger);
+    super.register(Float.id(), NotEqualFloat);
+    super.register(StringType.id(), NotEqualString);
+    super.register(Pointer.id(), NotEqualPointer);
   }
 }

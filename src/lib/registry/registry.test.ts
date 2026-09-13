@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ServiceRegistry } from '.';
+import { Registrar } from './registrar';
 
 class CountingService {
   public static instances = 0;
@@ -107,5 +108,74 @@ describe('ServiceRegistry lazy registration', () => {
     const registry = ServiceRegistry.createSingleServiceRegistry(DefaultService);
     const instance = await registry.getDefault();
     expect(instance).toBeInstanceOf(DefaultService);
+  });
+});
+
+describe('ServiceRegistry registration tracking', () => {
+  it('reports the namespace each registration was written under', () => {
+    const registry = new CountingServiceRegistry();
+    new Registrar(registry, 'plugin-a').register('mine', CountingService);
+    new Registrar(registry, '', 'plugin-b').register('plain', CountingService);
+
+    expect(registry.registeredBy('plugin-a:mine')).toBe('plugin-a');
+    // An un-namespaced key still belongs to the plugin that wrote it.
+    expect(registry.registeredBy('plain')).toBe('plugin-b');
+    expect(registry.registeredBy('unknown')).toBeUndefined();
+  });
+
+  it('falls back to the registry default origin for keys registered without one', () => {
+    const registry = new CountingServiceRegistry();
+    expect(registry.registeredBy('lazy')).toBeUndefined();
+
+    registry.setDefaultOrigin('animorank');
+    expect(registry.registeredBy('lazy')).toBe('animorank');
+    // A key that was never registered stays unknown.
+    expect(registry.registeredBy('missing')).toBeUndefined();
+  });
+
+  it('lets the miss resolver provide a key and retries the lookup once', async () => {
+    const registry = new CountingServiceRegistry();
+    const asked: string[] = [];
+    registry.setMissResolver(async (target, key) => {
+      asked.push(key);
+      new Registrar(target, '', 'plugin-a').register(key, CountingService);
+    });
+
+    await expect(registry.getInstance('late')).resolves.toBeInstanceOf(CountingService);
+    expect(asked).toEqual(['late']);
+    expect(registry.registeredBy('late')).toBe('plugin-a');
+  });
+
+  it('reports the missing key when the miss resolver cannot provide it', async () => {
+    const registry = new CountingServiceRegistry();
+    let calls = 0;
+    registry.setMissResolver(async () => {
+      calls += 1;
+    });
+
+    await expect(registry.getInstance('missing')).rejects.toThrow('Missing service missing');
+    expect(calls).toBe(1);
+  });
+
+  it('reports the namespaces that wrote into the registry', () => {
+    const registry = new CountingServiceRegistry();
+    registry.setDefaultOrigin('animorank');
+    new Registrar(registry, 'plugin-a').register('mine', CountingService);
+    new Registrar(registry, '', 'plugin-b').register('plain', CountingService);
+
+    expect(registry.writers().sort()).toEqual(['animorank', 'plugin-a', 'plugin-b']);
+  });
+
+  it('loads the writers before reporting every key', async () => {
+    const registry = new CountingServiceRegistry();
+    let calls = 0;
+    registry.setWritersResolver(async (target) => {
+      calls += 1;
+      new Registrar(target, '', 'plugin-a').register('extra', CountingService);
+    });
+
+    expect(registry.keys()).not.toContain('extra');
+    await expect(registry.loadKeys()).resolves.toContain('extra');
+    expect(calls).toBe(1);
   });
 });

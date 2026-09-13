@@ -18,8 +18,4 @@ export abstract class LanguageTypeRegistry<
   constructor() {
     super();
   }
-
-  public registerType(type: ClassServiceOf<this>) {
-    this.register(type.type.id(), type);
-  }
 }

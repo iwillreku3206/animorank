@@ -61,8 +61,7 @@ export class Pointer extends Type<JsonValue, Form, { target: Type }> {
   }
 
   static create() {
-    // Direct class reference (not the registry): operator type registries
-    // construct this at module-eval time, before the provider is initialized.
+    // Direct class reference (not the registry), so construction stays synchronous.
     return new Pointer({ target: Integer.create() });
   }
 

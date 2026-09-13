@@ -20,15 +20,19 @@
     });
   });
   let availableFunctions = $derived(Object.entries(problemData.functions).map(([id, fn]) => ({ id, name: fn.name })));
-  let availableOperators = $derived([...opRegistry.keys()]);
+  let availableOperators = $state<string[]>([]);
   let operatorNames = $state<Record<string, string>>({});
   $effect(() => {
-    const keys = [...opRegistry.keys()];
-    void Promise.all(
-      keys.map(async (key) => [key, (await opRegistry.getStatic(key)).create().displayName] as const)
-    ).then((entries) => {
+    void (async () => {
+      // The operator select offers every registered operator, so plugins that
+      // add operators load before it is built, along with their display names.
+      const keys = await opRegistry.loadKeys();
+      const entries = await Promise.all(
+        keys.map(async (key) => [key, (await opRegistry.getStatic(key)).create().displayName] as const)
+      );
+      availableOperators = keys;
       operatorNames = Object.fromEntries(entries);
-    });
+    })();
   });
 
   let availableSymbols = $derived([

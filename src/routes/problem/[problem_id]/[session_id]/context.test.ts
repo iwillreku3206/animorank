@@ -4,6 +4,8 @@ import { Problem } from '$lib/problem';
 import { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
 import type { Problem as ProblemModel, PracticeSession as PracticeSessionModel } from '$lib/zenstack/models';
 import type { User } from '@auth/sveltekit';
+import { ClientRegistryProvider } from '$lib/registry/client';
+import { TelemetryRegistry, TelemetryService } from '$lib/telemetry';
 
 const STARTER_CODE = [
   '#include <stdio.h>',
@@ -18,7 +20,7 @@ const STARTER_CODE = [
 
 const user = { id: 'student-1' } as User;
 
-const makeContext = (savedCode: Record<string, string>) => {
+const makeContext = async (savedCode: Record<string, string>) => {
   const problem = new Problem({
     id: 'problem-1',
     name: 'Slots problem',
@@ -44,7 +46,11 @@ const makeContext = (savedCode: Record<string, string>) => {
     user
   );
 
-  return new SolveWindowContext({ problem, practiceSession, language: 'c' });
+  const telemetry = await ClientRegistryProvider.instance()
+    .getRegistry(TelemetryRegistry)
+    .getInstance('dummy', 'session-1');
+
+  return SolveWindowContext.create({ problem, practiceSession, language: 'c', telemetry });
 };
 
 /**
@@ -81,8 +87,8 @@ describe('SolveWindowContext slot ranges', () => {
     ['an emptied slot', { code: '' }],
     ['a longer line than the default', { code: '  printf("a rather long line indeed %d\\n", 1);' }]
   ])('with %s', (_label, savedCode) => {
-    it('stay addressable in the code the editor opens with', () => {
-      const context = makeContext(savedCode);
+    it('stay addressable in the code the editor opens with', async () => {
+      const context = await makeContext(savedCode);
 
       expect(context.slots).toHaveLength(1);
       for (const slot of context.slots) {
@@ -93,8 +99,8 @@ describe('SolveWindowContext slot ranges', () => {
     });
   });
 
-  it('seeds the code sections from the saved state', () => {
-    const context = makeContext({ code: '  puts("hi");' });
+  it('seeds the code sections from the saved state', async () => {
+    const context = await makeContext({ code: '  puts("hi");' });
     expect(context.editorState.codeSections).toEqual({ code: '  puts("hi");' });
     expect(context.editorState.code).toContain('  puts("hi");');
   });

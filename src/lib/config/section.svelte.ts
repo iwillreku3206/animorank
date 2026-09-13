@@ -21,3 +21,13 @@ export abstract class ConfigSection<
 
   abstract get optionsForm(): OptionsForm;
 }
+
+/**
+ * A concrete config section class, e.g. `PluginsConfigSection`. Passing the
+ * class itself (see `AppConfig.getSection`) ties the returned instance to the
+ * section it was registered as, instead of a caller-side cast. `id` is the
+ * static key the class is registered under (and stored in the config JSON).
+ */
+export type ConfigSectionClass<T extends ConfigSection = ConfigSection> = (new (_data: JsonValue | undefined) => T) & {
+  id: string;
+};

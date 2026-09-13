@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from 'vitest';
 import { ServiceRegistry } from '.';
+import { Registrar } from './registrar';
 import { RegistryProvider } from './registryProvider';
 
 class TestService {}
@@ -117,5 +119,84 @@ describe('RegistryProvider registry ids', () => {
     expect(() => provider.addLazy('animorank', 'test', async () => new TestRegistry())).toThrow(/already exists/);
     provider.addLazy('animorank', 'lazy2', async () => new TestRegistry());
     expect(() => provider.addLazy('animorank', 'lazy2', async () => new TestRegistry())).toThrow(/already exists/);
+  });
+});
+
+describe('RegistryProvider registration tracking', () => {
+  it('reports the namespace each registry was registered under', () => {
+    const provider = new ExposedProvider();
+    provider.add(new TestRegistry());
+    provider.add(new OtherRegistry(), 'plugin-a');
+    provider.addLazy('plugin-b', 'later', async () => new TestRegistry());
+
+    expect(provider.registeredBy('animorank:test')).toBe('animorank');
+    expect(provider.registeredBy('plugin-a:other')).toBe('plugin-a');
+    // The registry's own id names it when it matches exactly one registry.
+    expect(provider.registeredBy('other')).toBe('plugin-a');
+    // A lazily registered registry knows its registrant before it is loaded.
+    expect(provider.registeredBy('plugin-b:later')).toBe('plugin-b');
+    expect(provider.registeredBy('missing')).toBeUndefined();
+  });
+
+  it('attributes keys registered without a namespace to the registry namespace', async () => {
+    const provider = new ExposedProvider();
+    const registry = new TestRegistry();
+    provider.add(registry, 'plugin-a');
+
+    expect(registry.registeredBy('test')).toBe('plugin-a');
+    expect(provider.findRegistry('plugin-a:test')).toBe(registry);
+    expect(provider.findRegistry('test')).toBe(registry);
+  });
+
+  it('loads a registry through the registry resolver when it is registered nowhere', async () => {
+    const provider = new ExposedProvider();
+    const asked: string[] = [];
+    provider.setRegistryResolver(async (id) => {
+      asked.push(id);
+      provider.add(new OtherRegistry(), 'plugin-a');
+    });
+
+    await expect(provider.getRegistryById('plugin-a:other')).resolves.toBeInstanceOf(OtherRegistry);
+    expect(asked).toEqual(['plugin-a:other']);
+  });
+
+  it('throws for an unknown id when the resolver cannot provide it', async () => {
+    const provider = new ExposedProvider();
+    let calls = 0;
+    provider.setRegistryResolver(async () => {
+      calls += 1;
+    });
+
+    await expect(provider.getRegistryById('animorank:missing')).rejects.toThrow(/not found/);
+    expect(calls).toBe(1);
+  });
+
+  it('installs the miss resolver on registries registered later', async () => {
+    const provider = new ExposedProvider();
+    const asked: string[] = [];
+    provider.setRegistryMissResolver(async (registry, key) => {
+      asked.push(`${registry.id}:${key}`);
+    });
+
+    const registry = new TestRegistry();
+    provider.add(registry);
+
+    await expect(registry.getInstance('late')).rejects.toThrow(/not found/);
+    expect(asked).toEqual(['test:late']);
+  });
+
+  it('installs the writers resolver on registries registered later', async () => {
+    const provider = new ExposedProvider();
+    const asked: string[] = [];
+    provider.setRegistryWritersResolver(async (registry) => {
+      asked.push(registry.id);
+      new Registrar(registry, '', 'plugin-a').register('late', TestService);
+    });
+
+    const registry = new TestRegistry();
+    provider.add(registry);
+
+    await expect(registry.loadKeys()).resolves.toContain('late');
+    expect(asked).toEqual(['test']);
   });
 });

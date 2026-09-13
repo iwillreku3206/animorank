@@ -1,4 +1,4 @@
-import { ServiceRegistry, type ClassServiceOf } from '$lib/registry';
+import { ServiceRegistry } from '$lib/registry';
 import type { JsonValue } from '@zenstackhq/orm';
 import type { ConfigSection } from './section.svelte';
 import { WebConfigSection } from './sections/web';
@@ -15,11 +15,7 @@ export class ConfigSectionRegistry extends ServiceRegistry<
 
   constructor() {
     super();
-    this.registerSection(WebConfigSection);
-    this.registerSection(PluginsConfigSection);
-  }
-
-  registerSection(section: ClassServiceOf<typeof this>) {
-    this.register(section.id, section);
+    super.register(WebConfigSection.id, WebConfigSection);
+    super.register(PluginsConfigSection.id, PluginsConfigSection);
   }
 }

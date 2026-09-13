@@ -1,8 +1,9 @@
+import { ServerAnimoRankAPI } from '$lib/api/server';
+import { browser } from '$app/environment';
 import { Logger } from '$lib/logging/logger';
 import { ServerRegistryProvider } from '$lib/registry/server';
 import fs from 'fs/promises';
 import path from 'path';
-import { pathToFileURL } from 'url';
 import { PluginManifestSchema } from './manifest';
 import { LoadedPlugin, type PluginServerModule } from './loadedPlugin';
 
@@ -29,13 +30,50 @@ function errorMessage(error: unknown): string {
 }
 
 /**
+ * A runtime plugin's server-side scripts, as read from its package.
+ *
+ * `global` is the plugin's shared entry; it runs before `server`, the same
+ * order the browser uses. Only `global` is optional.
+ */
+async function readServerScripts(dir: string): Promise<{ global?: string; server: string }> {
+  const server = await readScript(path.join(dir, 'server.js'));
+  if (server === undefined) throw new Error(`server.js is missing in plugin at ${dir}`);
+  return { global: await readScript(path.join(dir, 'global.js')), server };
+}
+
+/**
+ * Import a plugin script from its source through a data URL rather than its
+ * file path: the dev server owns module resolution for the paths it knows, and
+ * resolving a plugin path through it would tie a runtime plugin to the build
+ * tool. A data URL is resolved by the runtime itself, so a plugin directory
+ * stays an ordinary part of the filesystem.
+ */
+async function importSource(source: string): Promise<UnknownModule> {
+  const url = `data:text/javascript;base64,${Buffer.from(source, 'utf8').toString('base64')}`;
+  return (await import(/* @vite-ignore */ url)) as UnknownModule;
+}
+
+/** A plugin script's module namespace, narrowed to what the loader needs. */
+type UnknownModule = PluginServerModule & Record<string, unknown>;
+
+/** The source of an optional plugin script; `undefined` when the plugin does not ship it. */
+async function readScript(file: string): Promise<string | undefined> {
+  try {
+    return await fs.readFile(file, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
+    throw error;
+  }
+}
+
+/**
  * Roots that hold prebuilt plugin packages. `prefix` is the root as seen from
  * this file and MUST stay in sync with the literal glob patterns below (Vite
  * only accepts literal `import.meta.glob` patterns, so they cannot reference
  * these entries directly).
  */
 const PREBUILT_PLUGIN_ROOTS: ReadonlyArray<{ prefix: string; label: string }> = [
-  { prefix: '../../plugins/', label: 'src/plugins' },
+  { prefix: '../plugins/', label: 'src/lib/plugins' },
   { prefix: '../../../plugins/', label: 'plugins' }
 ];
 
@@ -43,25 +81,32 @@ const PREBUILT_PLUGIN_ROOTS: ReadonlyArray<{ prefix: string; label: string }> = 
  * Compile-time sources of every prebuilt plugin, gathered by Vite at dev
  * server startup / build time rather than read from disk at runtime. Each
  * plugin is a subdirectory of one of the roots above containing
- * `manifest.json`, `server.ts`, `client.ts` and an optional `static/` folder.
- * Plugin web files are imported as raw text so their bytes can be served
+ * `manifest.json`, `server.ts`, `client.ts` and an optional `client/` folder.
+ * Plugin client files are imported as raw text so their bytes can be served
  * through the LoadedPlugin `files` map; `server.ts` is imported as a module.
  * Note that files added after startup are only picked up on the next server
  * restart, as the glob import list is static.
  */
 const prebuiltManifestSources = import.meta.glob<string>(
-  ['../../plugins/*/manifest.json', '../../../plugins/*/manifest.json'],
+  ['../plugins/*/manifest.json', '../../../plugins/*/manifest.json'],
   { eager: true, import: 'default', query: '?raw' }
 );
 
 const prebuiltWebSources = import.meta.glob<string>(
-  ['../../plugins/*/{client.ts,static/**/*}', '../../../plugins/*/{client.ts,static/**/*}'],
+  [
+    '../plugins/*/{client.ts,client/**/*}',
+    '../../../plugins/*/{client.ts,client/**/*}',
+    '../plugins/*/global.ts',
+    '../../../plugins/*/global.ts'
+  ],
   { eager: true, import: 'default', query: '?raw' }
 );
 
 const prebuiltServerModules = import.meta.glob<PluginServerModule>(
-  ['../../plugins/*/server.ts', '../../../plugins/*/server.ts'],
-  { eager: true }
+  ['../plugins/*/server.ts', '../../../plugins/*/server.ts'],
+  {
+    eager: true
+  }
 );
 
 /** The plugin package a glob key belongs to: display label, root key and directory name. */
@@ -75,11 +120,13 @@ function prebuiltPluginPackageOf(key: string): { label: string; rootKey: string;
 }
 
 function collectPrebuiltPluginDescriptors(): PrebuiltPluginDescriptor[] {
+  // A package counts as prebuilt only when it compiles in with the app, i.e.
+  // it ships the TypeScript entries. Directories holding runtime (.js)
+  // plugins are deliberately ignored here — they are the dynamic loader's.
   const packages = new Map<string, { label: string; dir: string }>();
   for (const key of [
-    ...Object.keys(prebuiltManifestSources),
-    ...Object.keys(prebuiltWebSources),
-    ...Object.keys(prebuiltServerModules)
+    ...Object.keys(prebuiltServerModules),
+    ...Object.keys(prebuiltWebSources).filter((key) => key.endsWith('/client.ts'))
   ]) {
     const pkg = prebuiltPluginPackageOf(key);
     if (pkg) packages.set(pkg.rootKey, { label: pkg.label, dir: pkg.dir });
@@ -115,9 +162,13 @@ function collectPrebuiltPluginDescriptors(): PrebuiltPluginDescriptor[] {
     }
 
     const files = new Map<string, Buffer>([['client.ts', Buffer.from(client)]]);
-    const staticPrefix = at('static/');
+    const globalSource = prebuiltWebSources[at('global.ts')];
+    if (globalSource !== undefined) {
+      files.set('global.ts', Buffer.from(globalSource));
+    }
+    const clientPrefix = at('client/');
     for (const key of Object.keys(prebuiltWebSources)
-      .filter((key) => key.startsWith(staticPrefix))
+      .filter((key) => key.startsWith(clientPrefix))
       .sort()) {
       files.set(key.slice(rootKey.length + 1), Buffer.from(prebuiltWebSources[key]));
     }
@@ -134,11 +185,21 @@ export class PluginLoader {
   private plugins: Map<string, LoadedPlugin> = new Map();
   private loggerPromise: Promise<Logger> | null = null;
 
+  public constructor() {
+    // Loading reads the filesystem and executes plugin scripts, so it belongs
+    // to the server; the browser loads plugins through `ClientPluginLoader`.
+    if (browser) {
+      throw new Error('Plugins can only be loaded on the server');
+    }
+  }
+
   /**
    * Load every plugin package in `pluginDir` at runtime. Each plugin is a
    * subdirectory containing manifest.json, client.js, server.js and an
-   * optional static/ folder. Broken entries are logged and skipped so one bad
-   * third-party plugin cannot prevent the rest from loading.
+   * optional client/ folder whose files are served to the browser. Broken
+   * entries are logged and skipped so one bad third-party plugin cannot
+   * prevent the rest from loading; a plugin whose `init` throws, however,
+   * aborts the load.
    *
    * @returns the newly loaded plugins, in no particular order
    */
@@ -149,16 +210,19 @@ export class PluginLoader {
     await Promise.all(
       (await fs.readdir(pluginDir)).sort().map(async (dirname) => {
         const dir = path.join(pluginDir, dirname);
+        let plugin: LoadedPlugin;
         try {
           if (!(await fs.stat(dir)).isDirectory()) {
             logger.warning(`Non-directory detected in plugin directory: ${dirname}`);
             return;
           }
-          const plugin = await this.loadDynamicPlugin(dir);
-          if (this.register(plugin, logger)) loaded.push(plugin);
+          plugin = await this.loadDynamicPlugin(dir);
         } catch (error) {
           logger.error(`Failed to load plugin "${dirname}": ${errorMessage(error)}`);
+          return;
         }
+        await this.initialize(plugin);
+        if (this.register(plugin, logger)) loaded.push(plugin);
       })
     );
 
@@ -166,15 +230,28 @@ export class PluginLoader {
   }
 
   private async loadDynamicPlugin(dir: string): Promise<LoadedPlugin> {
-    const [manifest, client, staticFiles, server] = await Promise.all([
+    // A prebuilt package ships `server.ts` and is compiled in with the app;
+    // the dynamic loader owns only the runtime (.js) packages.
+    if (await this.isPrebuiltPackage(dir)) {
+      throw new Error(`${dir} is a prebuilt plugin package and is loaded by the app`);
+    }
+
+    const [manifest, client, clientFiles, scripts] = await Promise.all([
       this.readManifest(dir),
       this.readPluginFile(dir, 'client.js'),
-      this.readStaticFiles(dir),
-      import(pathToFileURL(path.join(dir, 'server.js')).href) as Promise<PluginServerModule>
+      this.readClientFiles(dir),
+      readServerScripts(dir)
     ]);
 
+    // The shared entry runs before the per-side one, exactly as on the client.
+    if (scripts.global !== undefined) await importSource(scripts.global);
+    const server = await importSource(scripts.server);
+
     const files = new Map<string, Buffer>([['client.js', client]]);
-    for (const [relPath, content] of staticFiles) {
+    if (scripts.global !== undefined) {
+      files.set('global.js', Buffer.from(scripts.global, 'utf8'));
+    }
+    for (const [relPath, content] of clientFiles) {
       files.set(relPath, content);
     }
 
@@ -183,9 +260,9 @@ export class PluginLoader {
 
   /**
    * Load the app's prebuilt plugins. Prebuilt plugins ship with the app:
-   * each package lives in its own directory under `src/plugins/` or the
+   * each package lives in its own directory under `src/lib/plugins/` or the
    * repository-root `plugins/`, containing `manifest.json`, `server.ts`,
-   * `client.ts` and an optional `static/` folder. They are wired in at
+   * `client.ts` and an optional `client/` folder. They are wired in at
    * compile time via Vite glob imports (HMR-capable in the dev server)
    * instead of being read from disk at runtime.
    *
@@ -204,6 +281,7 @@ export class PluginLoader {
 
     for (const { manifest, files, server } of plugins) {
       const plugin = new LoadedPlugin('prebuilt', PluginManifestSchema.parse(manifest), files, server);
+      await this.initialize(plugin);
       if (this.register(plugin, logger)) loaded.push(plugin);
     }
 
@@ -213,6 +291,28 @@ export class PluginLoader {
   /** The plugin registered under the manifest id, if one is loaded. */
   public getPlugin(id: string): LoadedPlugin | undefined {
     return this.plugins.get(id);
+  }
+
+  /** Every loaded plugin, in registration order. */
+  public getPlugins(): LoadedPlugin[] {
+    return [...this.plugins.values()];
+  }
+
+  /**
+   * Instantiate the plugin, hand it its API and run its server entry point.
+   * A plugin that cannot initialize aborts the load.
+   */
+  private async initialize(plugin: LoadedPlugin): Promise<void> {
+    const Plugin = plugin.server.default;
+    if (!Plugin) return;
+    if (typeof Plugin !== 'function') {
+      throw new Error(`Plugin "${plugin.manifest.id}" does not default-export a ServerPlugin class`);
+    }
+    const instance = new Plugin();
+    if (typeof instance.init !== 'function') {
+      throw new Error(`Plugin "${plugin.manifest.id}" has no init() to run`);
+    }
+    await instance.init(new ServerAnimoRankAPI(plugin.manifest.id));
   }
 
   private register(plugin: LoadedPlugin, logger: Logger): boolean {
@@ -234,10 +334,10 @@ export class PluginLoader {
     }
   }
 
-  /** Optional static/ tree of a plugin, keyed by the path relative to its root. */
-  private async readStaticFiles(dir: string): Promise<Map<string, Buffer>> {
+  /** The plugin's client/ folder, keyed by the path relative to the plugin root (e.g. `client/helper.js`). */
+  private async readClientFiles(dir: string): Promise<Map<string, Buffer>> {
     const files = new Map<string, Buffer>();
-    await this.readTree(path.join(dir, 'static'), 'static', files);
+    await this.readTree(path.join(dir, 'client'), 'client', files);
     return files;
   }
 
@@ -270,6 +370,20 @@ export class PluginLoader {
         throw new Error(`${name} is missing in plugin at ${dir}`, { cause: error });
       }
       throw error;
+    }
+  }
+
+  /** Whether a directory is a prebuilt package (TypeScript entries) rather than a runtime plugin. */
+  private async isPrebuiltPackage(dir: string): Promise<boolean> {
+    return (await this.exists(path.join(dir, 'server.ts'))) && (await this.exists(path.join(dir, 'client.ts')));
+  }
+
+  private async exists(file: string): Promise<boolean> {
+    try {
+      await fs.stat(file);
+      return true;
+    } catch {
+      return false;
     }
   }
 

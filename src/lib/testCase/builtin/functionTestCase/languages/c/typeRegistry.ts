@@ -14,10 +14,10 @@ export class CTypeRegistry extends LanguageTypeRegistry<CFunctionTestCase, CType
   constructor() {
     super();
 
-    this.registerType(CInteger);
-    this.registerType(CFloat);
-    this.registerType(CStringType);
-    this.registerType(CPointer);
-    this.registerType(CVoid);
+    super.register(CInteger.type.id(), CInteger);
+    super.register(CFloat.type.id(), CFloat);
+    super.register(CStringType.type.id(), CStringType);
+    super.register(CPointer.type.id(), CPointer);
+    super.register(CVoid.type.id(), CVoid);
   }
 }

@@ -1,0 +1,9 @@
+{
+  "id": "array-types",
+  "manifestVersion": "0",
+  "name": "Array Data Types",
+  "author": "AnimoRank",
+  "version": "1.0.0",
+  "description": "Adds an array data type for function test cases, with string, integer and float elements.",
+  "category": ["data-types"]
+}

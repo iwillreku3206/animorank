@@ -4,6 +4,7 @@ import { db } from '$lib/zenstack';
 import { ServerRegistryProvider } from '$lib/registry/server';
 import { TagService } from '$lib/tag';
 import { groupBy } from '$lib/utils/groupBy';
+import { readUuidParam } from '$lib/utils/params';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
   const session = await locals.auth();
@@ -11,7 +12,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   const problemSet = await db.problemSet.findUnique({
     where: {
-      id: params.id,
+      id: readUuidParam(params.id),
       collaborators: { some: { collaborator_id: session.user.id } }
     },
     include: {

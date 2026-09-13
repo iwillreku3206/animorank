@@ -12,8 +12,8 @@ export class GreaterThanOperatorTypeRegistry extends OperatorTypeRegistry<Greate
 
   constructor() {
     super();
-    this.registerType(Integer.create(), GreaterThanInteger);
-    this.registerType(Float.create(), GreaterThanFloat);
-    this.registerType(Pointer.create(), GreaterThanPointer);
+    super.register(Integer.id(), GreaterThanInteger);
+    super.register(Float.id(), GreaterThanFloat);
+    super.register(Pointer.id(), GreaterThanPointer);
   }
 }

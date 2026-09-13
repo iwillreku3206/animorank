@@ -8,6 +8,6 @@ export class FunctionTestCaseLanguageRegistry extends TestCaseLanguageRegistry<S
 
   constructor() {
     super();
-    this.registerLanguage(new CLanguage(), CFunctionTestCase);
+    super.register(CLanguage.id, CFunctionTestCase);
   }
 }

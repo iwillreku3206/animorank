@@ -1,6 +1,6 @@
 import type { IntoJsonValue } from '$lib/types/utils';
 import { TypeSchema, type Type } from './type.svelte';
-import { ServiceRegistry, type ClassServiceOf } from '$lib/registry';
+import { ServiceRegistry } from '$lib/registry';
 import type z from 'zod';
 import { Integer } from './types/int';
 import { Float } from './types/float';
@@ -17,15 +17,11 @@ export class TypeRegistry extends ServiceRegistry<
 
   constructor() {
     super();
-    this.registerType(Integer);
-    this.registerType(Float);
-    this.registerType(StringType);
-    this.registerType(Pointer);
-    this.registerType(VoidType);
-  }
-
-  public registerType(type: ClassServiceOf<this>): void {
-    super.register(type.id(), type);
+    super.register(Integer.id(), Integer);
+    super.register(Float.id(), Float);
+    super.register(StringType.id(), StringType);
+    super.register(Pointer.id(), Pointer);
+    super.register(VoidType.id(), VoidType);
   }
 
   public async from(serialized: z.infer<typeof TypeSchema>): Promise<Type> {

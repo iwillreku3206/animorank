@@ -1,6 +1,6 @@
 import path from 'path';
 import fs from 'fs/promises';
-import type { ConfigSection } from './section.svelte';
+import type { ConfigSection, ConfigSectionClass } from './section.svelte';
 import { GlobalRegistryProvider } from '$lib/registry/global';
 import { ConfigSectionRegistry } from './registry';
 import type { JsonValue } from '@zenstackhq/orm';
@@ -36,5 +36,15 @@ export class AppConfig {
   public async save() {
     const json = JSON.stringify(this.sections, null, 2);
     return fs.writeFile(this.path, json);
+  }
+
+  /**
+   * The instance of one config section, hydrated from the config JSON. Pass
+   * the section class itself, e.g. `getSection(PluginsConfigSection)`, so the
+   * result is typed; `undefined` when this config holds no such section.
+   */
+  public getSection<T extends ConfigSection>(type: ConfigSectionClass<T>): T | undefined {
+    const section = this.sections[type.id];
+    return section instanceof type ? section : undefined;
   }
 }

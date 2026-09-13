@@ -5,6 +5,7 @@ import { TestCaseService } from '$lib/testCase/testCaseService';
 import { ServerRegistryProvider } from '$lib/registry/server';
 import { TagService } from '$lib/tag';
 import { toJsonValue } from '$lib/types/utils';
+import { readUuidParam } from '$lib/utils/params';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
   const session = await locals.auth();
@@ -15,7 +16,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   const problemResult = await db.problem.findUnique({
     where: {
-      id: params.slug,
+      id: readUuidParam(params.slug),
       problem_set: {
         OR: [
           { collaborators: { some: { collaborator_id: session.user.id } } },

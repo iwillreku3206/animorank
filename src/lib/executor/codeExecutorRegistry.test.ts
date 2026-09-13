@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CodeExecutorRegistry } from './codeExecutorRegistry';
 import { Judge0Executor } from './judge0';
+import { Registrar } from '$lib/registry/registrar';
 import { CLanguage } from '$lib/language/c';
 
 describe('CodeExecutorRegistry', () => {
@@ -36,5 +37,25 @@ describe('CodeExecutorRegistry', () => {
 
     await expect(registry.getDefaultForLanguage(new CLanguage())).resolves.toBeInstanceOf(Judge0Executor);
     await expect(registry.getDefaultForLanguage(new FakeLanguage())).resolves.toBeUndefined();
+  });
+
+  it('keeps the language map in sync for plugin registrations through a registrar', async () => {
+    const registry = new CodeExecutorRegistry();
+
+    class CustomLanguage extends CLanguage {
+      public static override id = 'custom';
+    }
+    class CustomExecutor extends Judge0Executor {
+      public static override id = 'custom';
+      public static override languages() {
+        return [new CustomLanguage()];
+      }
+    }
+
+    new Registrar(registry, 'plugin-a').register('custom', CustomExecutor);
+
+    expect(registry.keys()).toEqual(['default', 'plugin-a:custom']);
+    await expect(registry.getDefaultForLanguage(new CustomLanguage())).resolves.toBeInstanceOf(CustomExecutor);
+    await expect(registry.getDefaultForLanguage(new CLanguage())).resolves.toBeInstanceOf(Judge0Executor);
   });
 });

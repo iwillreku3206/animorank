@@ -1,5 +1,5 @@
 import type { PluginManifest } from './manifest';
-import type { ServerPlugin } from './plugin';
+import type { ServerPlugin } from './serverPlugin';
 
 /**
  * How a plugin is made available to the app:
@@ -12,22 +12,22 @@ export type PluginType = 'prebuilt' | 'dynamic';
 /**
  * The eagerly imported module namespace of a plugin's server entry
  * (`server.js` for dynamic plugins, `server.ts` for prebuilt plugins).
- * Its default export is expected to be (or conform to) the plugin's
- * {@link ServerPlugin}.
+ * Its default export is the plugin's {@link ServerPlugin} class, which the
+ * loader instantiates and initializes.
  */
 export interface PluginServerModule {
-  default?: ServerPlugin;
+  default?: new () => ServerPlugin;
 }
 
 export class LoadedPlugin {
   public readonly type: PluginType;
   public readonly manifest: PluginManifest;
   /**
-   * Contents of the plugin's web-facing files — the client entry and every
-   * static asset — keyed by the path relative to the plugin root
-   * (e.g. `client.js`, `static/other.js`). The directory structure is
-   * preserved so the client entry can use relative imports such as
-   * `./static/other.js` that resolve through this map.
+   * Contents of the plugin's browser-facing files — the client entry
+   * (`client.js` / `client.ts`) and everything under the plugin's `client/`
+   * folder — keyed by the path relative to the plugin root (e.g. `client.js`,
+   * `client/helper.js`). The directory structure is preserved so the entry can
+   * import its own files by relative path.
    */
   public readonly files: Map<string, Buffer>;
   /** Module namespace of the eagerly imported server entry. */

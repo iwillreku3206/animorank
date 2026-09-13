@@ -1,6 +1,6 @@
 import type { AddPanelPositionOptions } from 'dockview-core';
 import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
-import { ClientServiceProvider } from '$lib/services/clientServiceProvider';
+import { ClientRegistryProvider } from '$lib/registry/client';
 import { TelemetryService } from '$lib/telemetry/telemetryService';
 import type { Problem, Slot } from '$lib/problem';
 import type { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
@@ -22,6 +22,12 @@ export interface SolveWindowContextInitial {
   problem: Problem;
   practiceSession: ClientPracticeSession;
   language: string;
+  /**
+   * The session's telemetry sink. Optional: {@link SolveWindowContext.create}
+   * resolves it from the client registry when it is not supplied (the solve page
+   * does not hold one yet; a test injects its own).
+   */
+  telemetry?: TelemetryService;
 }
 
 /**
@@ -69,7 +75,22 @@ export class SolveWindowContext {
    */
   public openWindow: OpenWindow = async () => {};
 
-  constructor(initial: SolveWindowContextInitial) {
+  /**
+   * Build a context for a solve page. The telemetry service is a client-registry
+   * service rather than server load data, so it has to be resolved here — and
+   * since that resolution is asynchronous, a page that needs the context before
+   * it renders the dock builds it through this factory and gates on the result.
+   * A caller that already holds a service (a test) passes it in `telemetry`
+   * instead, which skips the registry lookup.
+   */
+  public static async create(initialValues: SolveWindowContextInitial): Promise<SolveWindowContext> {
+    const telemetry =
+      initialValues.telemetry ??
+      (await ClientRegistryProvider.instance().getService(TelemetryService, initialValues.practiceSession.id));
+    return new SolveWindowContext({ ...initialValues, telemetry });
+  }
+
+  private constructor(initial: SolveWindowContextInitial) {
     this.problem = initial.problem;
     this.practiceSession = initial.practiceSession;
     this.language = initial.language;
@@ -81,7 +102,9 @@ export class SolveWindowContext {
       code: previousCode.fullCode,
       sections: Object.fromEntries(previousCode.sections.map((section) => [section.slot.label, section.code]))
     });
-    this.telemetry = ClientServiceProvider.instance().getService(TelemetryService, initial.practiceSession.id);
+    // The factory always resolves it; the optional input exists only so the
+    // factory can accept a caller-supplied service.
+    this.telemetry = initial.telemetry!;
     this.autosave = new AutoSave(() => this.saveCode(), $state.snapshot(this.editorState.codeSections));
   }
 

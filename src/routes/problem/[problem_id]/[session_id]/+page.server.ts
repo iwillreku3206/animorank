@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 import { ServerRegistryProvider } from '$lib/registry/server';
 import { ProblemService } from '$lib/problem/problemService';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
+import { readUuidParam } from '$lib/utils/params';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
   const session = await locals.auth();
@@ -13,11 +14,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   const problemService = await registryProvider.getService(ProblemService);
   const practiceSessionService = await registryProvider.getService(PracticeSessionService);
 
+  // `problem_id` was validated by the parent loader that redirected here.
   const problem = await problemService.findById({ id: params.problem_id, user: session.user });
   if (!problem) throw error(404, { message: 'Not Found' });
 
   const practiceSession = await practiceSessionService.findById({
-    id: params.session_id,
+    id: readUuidParam(params.session_id),
     user: session.user
   });
   if (!practiceSession) throw redirect(302, `/problem/${params.problem_id}`);

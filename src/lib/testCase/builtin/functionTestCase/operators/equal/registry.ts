@@ -14,9 +14,9 @@ export class EqualOperatorTypeRegistry extends OperatorTypeRegistry<EqualOperato
 
   constructor() {
     super();
-    this.registerType(Integer.create(), EqualInteger);
-    this.registerType(Float.create(), EqualFloat);
-    this.registerType(StringType.create(), EqualString);
-    this.registerType(Pointer.create(), EqualPointer);
+    super.register(Integer.id(), EqualInteger);
+    super.register(Float.id(), EqualFloat);
+    super.register(StringType.id(), EqualString);
+    super.register(Pointer.id(), EqualPointer);
   }
 }

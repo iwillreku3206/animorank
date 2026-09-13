@@ -8,6 +8,6 @@ export class StdioTestCaseLanguageRegistry extends TestCaseLanguageRegistry<Serv
 
   constructor() {
     super();
-    this.registerLanguage(new CLanguage(), CStdioTestCase);
+    super.register(CLanguage.id, CStdioTestCase);
   }
 }

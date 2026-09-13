@@ -9,6 +9,7 @@ import { serializeExtensionData, type FunctionTestCaseProblemData } from '$lib/t
 import { saveProblem, updateTestCase } from './api';
 import { getContext, setContext, untrack } from 'svelte';
 import { toJsonValue } from '$lib/types/utils';
+import deepEqual from 'deep-equal';
 
 export interface InitialValues {
   problem: ProblemModel;
@@ -25,9 +26,14 @@ export class ProblemEditorWindowContext {
   public testCases: TestCase[] = $state([]);
   public topics: string[] = $state([]);
 
-  private problemAutosave: AutoSave<ProblemModel> = $state() as unknown as AutoSave<ProblemModel>;
-  private testCaseAutosave: AutoSave<ProblemTestCase[]> = $state() as unknown as AutoSave<ProblemTestCase[]>;
-  private topicsAutosave: AutoSave<string[]> = $state() as unknown as AutoSave<string[]>;
+  // Plain fields, deliberately not `$state`: `AutoSave.state` is itself
+  // reactive for the UI, and making the holder reactive would put the
+  // autosave's own bookkeeping (state, timeoutId, lastSave) into the
+  // dependency set of the effect that calls `save()` — whose writes would
+  // then re-run that effect on every debounce, forever.
+  private problemAutosave: AutoSave<ProblemModel>;
+  private testCaseAutosave: AutoSave<ProblemTestCase[]>;
+  private topicsAutosave: AutoSave<string[]>;
 
   private _cleanup: () => void;
 
@@ -70,7 +76,8 @@ export class ProblemEditorWindowContext {
 
     this._cleanup = $effect.root(() => {
       $effect(() => {
-        this.problemAutosave.save($state.snapshot(this.problem.model) as unknown as ProblemModel);
+        const snapshot = $state.snapshot(this.problem.model) as unknown as ProblemModel;
+        this.problemAutosave.save(snapshot);
       });
       $effect(() => {
         this.testCaseAutosave.save(this.testCases.map((tc) => this.serializeTestCase(tc)));
@@ -80,11 +87,14 @@ export class ProblemEditorWindowContext {
       });
       // Keep the serialized extension_data in sync with the function data state.
       $effect(() => {
+        const serialized = serializeExtensionData(this.functionData);
         const prev = untrack(() => this.problem.extension_data as Record<string, unknown>);
-        this.problem.extension_data = {
-          ...prev,
-          builtin_testCase_function: serializeExtensionData(this.functionData)
-        };
+        // Only write when the value actually changes. Writing an unchanged
+        // `extension_data` re-invalidates this effect (it reads the field), and
+        // because the sibling effects share this root, that re-runs all of them.
+        if (!deepEqual(prev['builtin_testCase_function'], serialized, { strict: true })) {
+          this.problem.extension_data = { ...prev, builtin_testCase_function: serialized };
+        }
       });
       // Fill in default values for parameters added to function definitions.
       $effect(() => {
@@ -97,6 +107,10 @@ export class ProblemEditorWindowContext {
     });
   }
 
+  /**
+   * Dev-only: report what changed between successive problem snapshots, so the
+   * write that keeps re-running the autosave effect is named rather than guessed.
+   */
   /**
    * Add an empty function definition keyed by uuid. The details (name,
    * symbol, parameters, return types) are filled in through the editor binds.

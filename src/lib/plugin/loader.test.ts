@@ -2,16 +2,19 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import type { ServerAnimoRankAPI } from '$lib/api/server';
+import { LanguageRegistry } from '$lib/language/languageRegistry';
 import { PluginLoader } from './loader';
 import { LoadedPlugin } from './loadedPlugin';
 import type { PluginServerModule } from './loadedPlugin';
 import type { PluginManifest } from './manifest';
-import { ServerPlugin } from './plugin';
+import { ServerPlugin } from './serverPlugin';
 
 let root: string;
 
 beforeEach(async () => {
   root = await fs.mkdtemp(path.join(os.tmpdir(), 'plugin-loader-'));
+  PrebuiltServerPlugin.lastInstance = null;
 });
 
 afterEach(async () => {
@@ -29,9 +32,8 @@ function validManifest(id: string): string {
   } satisfies PluginManifest);
 }
 
-const CLIENT_JS = "import './static/other.js';\nconsole.log('client');\n";
+const CLIENT_JS = "import './client/other.js';\nconsole.log('client');\n";
 const SERVER_JS = 'export default class TestServerPlugin {\n  async init() {}\n}\n';
-
 async function writeFiles(rel: string, files: Record<string, string>): Promise<string> {
   const dir = path.join(root, rel);
   for (const [file, content] of Object.entries(files)) {
@@ -43,7 +45,24 @@ async function writeFiles(rel: string, files: Record<string, string>): Promise<s
 }
 
 class PrebuiltServerPlugin extends ServerPlugin {
-  public async init() {}
+  public static lastInstance: PrebuiltServerPlugin | null = null;
+  public receivedApi: ServerAnimoRankAPI | null = null;
+
+  public async init(api: ServerAnimoRankAPI) {
+    PrebuiltServerPlugin.lastInstance = this;
+    this.receivedApi = api;
+  }
+}
+
+/** Load a single descriptor holding {@link PrebuiltServerPlugin} and hand back the instance the loader initialized. */
+async function loadPrebuilt(id: string): Promise<PrebuiltServerPlugin> {
+  const loader = new PluginLoader();
+  const loaded = await loader.loadPrebuiltPlugins([
+    { manifest: JSON.parse(validManifest(id)), files: new Map(), server: { default: PrebuiltServerPlugin } }
+  ]);
+  expect(loaded).toHaveLength(1);
+  expect(PrebuiltServerPlugin.lastInstance).toBeInstanceOf(PrebuiltServerPlugin);
+  return PrebuiltServerPlugin.lastInstance!;
 }
 
 describe('PluginLoader dynamic plugins', () => {
@@ -53,8 +72,8 @@ describe('PluginLoader dynamic plugins', () => {
       'client.js': CLIENT_JS,
       'server.js': SERVER_JS,
       'package.json': '{"type": "module"}\n',
-      'static/other.js': 'export const helper = 1;\n',
-      'static/sub/style.css': 'body { color: red; }\n'
+      'client/other.js': 'export const helper = 1;\n',
+      'client/sub/style.css': 'body { color: red; }\n'
     });
 
     const loader = new PluginLoader();
@@ -82,16 +101,16 @@ describe('PluginLoader dynamic plugins', () => {
       'client.js': CLIENT_JS,
       'server.js': SERVER_JS,
       'package.json': '{"type": "module"}\n',
-      'static/other.js': 'export const helper = 1;\n',
-      'static/sub/style.css': 'body { color: red; }\n'
+      'client/other.js': 'export const helper = 1;\n',
+      'client/sub/style.css': 'body { color: red; }\n'
     });
 
     const [plugin] = await new PluginLoader().loadDynamicPlugins(root);
 
-    expect([...plugin.files.keys()].sort()).toEqual(['client.js', 'static/other.js', 'static/sub/style.css']);
+    expect([...plugin.files.keys()].sort()).toEqual(['client.js', 'client/other.js', 'client/sub/style.css']);
     expect(plugin.files.get('client.js')?.toString('utf8')).toBe(CLIENT_JS);
-    expect(plugin.files.get('static/other.js')?.toString('utf8')).toBe('export const helper = 1;\n');
-    expect(plugin.files.get('static/sub/style.css')?.toString('utf8')).toBe('body { color: red; }\n');
+    expect(plugin.files.get('client/other.js')?.toString('utf8')).toBe('export const helper = 1;\n');
+    expect(plugin.files.get('client/sub/style.css')?.toString('utf8')).toBe('body { color: red; }\n');
   });
 
   it('dynamic-imports server.js and exposes the module namespace', async () => {
@@ -105,12 +124,47 @@ describe('PluginLoader dynamic plugins', () => {
     const [plugin] = await new PluginLoader().loadDynamicPlugins(root);
 
     expect(plugin.server).toBeDefined();
-    // The fixture default-exports a ServerPlugin class; instantiate to reach init.
-    const ServerPluginClass = plugin.server.default as unknown as new () => { init: () => Promise<void> };
-    expect(typeof new ServerPluginClass().init).toBe('function');
+    // The fixture default-exports a ServerPlugin class; the loader instantiates it.
+    const ServerPluginClass = plugin.server.default;
+    expect(ServerPluginClass).toBeTypeOf('function');
+    expect(typeof new ServerPluginClass!().init).toBe('function');
   });
 
-  it('handles plugins without a static folder', async () => {
+  it('runs the shared global.js entry before server.js and serves it', async () => {
+    const order: string[] = [];
+    Reflect.set(globalThis, '__pluginOrder', order);
+    await writeFiles('ordered', {
+      'manifest.json': validManifest('ordered-plugin'),
+      'package.json': '{"type": "module"}\n',
+      'client.js': CLIENT_JS,
+      'global.js': "globalThis.__pluginOrder.push('global');\nexport const shared = 1;\n",
+      'server.js':
+        "globalThis.__pluginOrder.push('server');\n" +
+        "export default class OrderedServerPlugin {\n  async init() { globalThis.__pluginOrder.push('init'); }\n}\n"
+    });
+
+    const [plugin] = await new PluginLoader().loadDynamicPlugins(root);
+
+    expect(order).toEqual(['global', 'server', 'init']);
+    // The shared entry is public: the browser imports it before the client entry.
+    expect(plugin.files.get('global.js')?.toString('utf8')).toContain('__pluginOrder');
+    Reflect.deleteProperty(globalThis, '__pluginOrder');
+  });
+
+  it('handles a plugin without a shared entry', async () => {
+    await writeFiles('plain', {
+      'manifest.json': validManifest('plain-plugin'),
+      'package.json': '{"type": "module"}\n',
+      'client.js': CLIENT_JS,
+      'server.js': SERVER_JS
+    });
+
+    const [plugin] = await new PluginLoader().loadDynamicPlugins(root);
+
+    expect(plugin.files.has('global.js')).toBe(false);
+  });
+
+  it('handles plugins without a client folder', async () => {
     await writeFiles('sample', {
       'manifest.json': validManifest('bare-plugin'),
       'client.js': CLIENT_JS,
@@ -186,6 +240,37 @@ describe('PluginLoader dynamic plugins', () => {
   it('rejects when the plugin directory does not exist', async () => {
     await expect(new PluginLoader().loadDynamicPlugins(path.join(root, 'missing'))).rejects.toThrow();
   });
+
+  it('rejects the whole load when a plugin init throws', async () => {
+    await writeFiles('good', {
+      'manifest.json': validManifest('good-plugin'),
+      'package.json': '{"type": "module"}\n',
+      'client.js': CLIENT_JS,
+      'server.js': SERVER_JS
+    });
+    await writeFiles('failing', {
+      'manifest.json': validManifest('failing-plugin'),
+      'package.json': '{"type": "module"}\n',
+      'client.js': CLIENT_JS,
+      'server.js': 'export default class FailingPlugin {\n  async init() { throw new Error("init failed"); }\n}\n'
+    });
+
+    await expect(new PluginLoader().loadDynamicPlugins(root)).rejects.toThrow('init failed');
+  });
+
+  it('hands the plugin its API on init', async () => {
+    await writeFiles('sample', {
+      'manifest.json': validManifest('api-plugin'),
+      'package.json': '{"type": "module"}\n',
+      'client.js': CLIENT_JS,
+      'server.js':
+        'export default class ApiPlugin {\n  async init(api) { globalThis.__apiPluginId = api.serverRegistryProviderRegistrar.id; }\n}\n'
+    });
+
+    await new PluginLoader().loadDynamicPlugins(root);
+
+    expect(Reflect.get(globalThis, '__apiPluginId')).toBe('api-plugin');
+  });
 });
 
 describe('PluginLoader prebuilt plugins', () => {
@@ -193,18 +278,23 @@ describe('PluginLoader prebuilt plugins', () => {
     const loader = new PluginLoader();
     const loaded = await loader.loadPrebuiltPlugins();
 
+    // The app ships its own plugin; an empty list means the glob roots missed it.
+    expect(loaded.map((plugin) => plugin.manifest.id)).toContain('array-types');
+
     for (const plugin of loaded) {
       expect(plugin.type).toBe('prebuilt');
       expect(loader.getPlugin(plugin.manifest.id)).toBe(plugin);
+      // Its browser-facing files travel with it, so the route can serve them.
+      expect(plugin.files.has('client.ts')).toBe(true);
     }
   });
 
   it('wraps compile-time descriptors into LoadedPlugins and registers them', async () => {
     const files = new Map<string, Buffer>([
       ['client.ts', Buffer.from("console.log('hi');\n")],
-      ['static/data.json', Buffer.from('{"a":1}\n')]
+      ['client/data.json', Buffer.from('{"a":1}\n')]
     ]);
-    const server = { default: new PrebuiltServerPlugin() } satisfies PluginServerModule;
+    const server = { default: PrebuiltServerPlugin } satisfies PluginServerModule;
 
     const loader = new PluginLoader();
     const loaded = await loader.loadPrebuiltPlugins([
@@ -217,8 +307,33 @@ describe('PluginLoader prebuilt plugins', () => {
     expect(plugin.manifest.id).toBe('built-in-plugin');
     expect(plugin.files).toBe(files);
     expect(plugin.server).toBe(server);
-    expect(plugin.server.default).toBeInstanceOf(ServerPlugin);
     expect(loader.getPlugin('built-in-plugin')).toBe(plugin);
+  });
+
+  it('hands the prebuilt plugin its API on init', async () => {
+    const instance = await loadPrebuilt('built-in-plugin');
+
+    expect(instance).toBeInstanceOf(PrebuiltServerPlugin);
+    expect(instance.receivedApi?.serverRegistryProviderRegistrar.id).toBe('built-in-plugin');
+    expect(instance.receivedApi?.globalRegistryProvider.getRegistry(LanguageRegistry).keys()).toContain('c');
+  });
+
+  it('fails fast when a prebuilt plugin cannot initialize', async () => {
+    class FailingPrebuiltPlugin extends ServerPlugin {
+      public async init(): Promise<void> {
+        throw new Error('init failed');
+      }
+    }
+
+    await expect(
+      new PluginLoader().loadPrebuiltPlugins([
+        {
+          manifest: JSON.parse(validManifest('failing-plugin')),
+          files: new Map(),
+          server: { default: FailingPrebuiltPlugin }
+        }
+      ])
+    ).rejects.toThrow('init failed');
   });
 
   it('fails fast on an invalid manifest (compile-time data is trusted)', async () => {
@@ -228,7 +343,7 @@ describe('PluginLoader prebuilt plugins', () => {
         {
           manifest: { id: '', manifestVersion: 'nope' },
           files: new Map(),
-          server: { default: new PrebuiltServerPlugin() }
+          server: { default: PrebuiltServerPlugin }
         }
       ])
     ).rejects.toThrow();
@@ -249,7 +364,7 @@ describe('PluginLoader prebuilt plugins', () => {
       {
         manifest: JSON.parse(validManifest('dup-plugin')),
         files: new Map(),
-        server: { default: new PrebuiltServerPlugin() }
+        server: { default: PrebuiltServerPlugin }
       }
     ]);
 

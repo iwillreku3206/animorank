@@ -267,7 +267,8 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
     // made every default comparison on such functions fail at run time with
     // "Service string not found".
     const registry = GlobalRegistryProvider.instance().getRegistry(OperatorRegistry);
-    const keys = registry.keys();
+    // Plugin operators count as candidates: load them before choosing.
+    const keys = await registry.loadKeys();
     const defaultKey = keys.includes('equal') ? 'equal' : keys[0];
     if (!defaultKey) return;
 

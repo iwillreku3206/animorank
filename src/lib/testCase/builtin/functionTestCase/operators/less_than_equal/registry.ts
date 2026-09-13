@@ -12,8 +12,8 @@ export class LessThanEqualOperatorTypeRegistry extends OperatorTypeRegistry<Less
 
   constructor() {
     super();
-    this.registerType(Integer.create(), LessThanEqualInteger);
-    this.registerType(Float.create(), LessThanEqualFloat);
-    this.registerType(Pointer.create(), LessThanEqualPointer);
+    super.register(Integer.id(), LessThanEqualInteger);
+    super.register(Float.id(), LessThanEqualFloat);
+    super.register(Pointer.id(), LessThanEqualPointer);
   }
 }

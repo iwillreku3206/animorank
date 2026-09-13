@@ -8,6 +8,6 @@ export class CustomTestCaseLanguageRegistry extends TestCaseLanguageRegistry<Ser
 
   constructor() {
     super();
-    this.registerLanguage(new CLanguage(), CCustomTestCase);
+    super.register(CLanguage.id, CCustomTestCase);
   }
 }
