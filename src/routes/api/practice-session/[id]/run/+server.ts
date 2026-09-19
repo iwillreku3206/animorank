@@ -35,6 +35,11 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
     user: session.user
   });
   if (!practiceSession) return error(404, 'Practice session not found');
+  // `findById` resolves a session by id alone, unlike the service's update and
+  // delete paths which also filter on student_id. Without this check any signed-in
+  // user could run another student's session -- and, now that submissions are
+  // persisted, copy that student's source into their own history.
+  if (practiceSession.studentId !== session.user.id) return error(403, 'Unauthorized');
 
   const problem = await problemService.findById({
     id: practiceSession.problemId,
@@ -51,8 +56,11 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   const { test_type } = parsedData;
   const language = new LanguageRegistry().getInstance(problem.model.language.toLowerCase());
   const executor = serviceProvider.getService(CodeExecutor);
+  // Hoisted: the getter re-runs slot parsing on every access, and the recorded
+  // submission needs the assembled form from the same read.
+  const previousCode = practiceSession.previousCode;
   const state = {
-    sections: Object.fromEntries(practiceSession.previousCode.sections.map((s) => [s.slot.label, s.code]))
+    sections: Object.fromEntries(previousCode.sections.map((s) => [s.slot.label, s.code]))
   };
   const selected = testCases.filter((tc) => (test_type === 'public' ? tc.testCase.model.public : true));
 
@@ -79,11 +87,32 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 
   const allSuccess = results.reduce((prev, next) => prev && next.success, true);
 
-  if (test_type === 'all' && allSuccess) {
-    await db.practiceSession.update({
-      where: { id: params.id, student_id: session.user.id },
+  if (test_type === 'all') {
+    // The completion latch is written first so that a failure to record the
+    // history entry can never cost a student credit for a problem they solved.
+    if (allSuccess) {
+      await db.practiceSession.update({
+        where: { id: params.id, student_id: session.user.id },
+        data: {
+          done: true
+        }
+      });
+    }
+
+    // Every Submit is recorded, pass or fail -- the failed attempts are most of
+    // what makes a history worth reading. Only aggregate counts are stored, so a
+    // history row cannot reveal WHICH hidden tests failed.
+    await db.submission.create({
       data: {
-        done: true
+        student_id: practiceSession.studentId,
+        problem_id: problem.id,
+        passed: allSuccess,
+        tests_passed: results.filter((result) => result.success).length,
+        tests_total: results.length,
+        code: state.sections,
+        // The program as compiled. `code` alone is only the editable slots, so
+        // rebuilding it later would depend on a template that may have changed.
+        full_code: previousCode.fullCode
       }
     });
   }

@@ -30,6 +30,7 @@ export type Account = $ModelResult<$Schema, "Account">;
 export type Session = $ModelResult<$Schema, "Session">;
 export type VerificationToken = $ModelResult<$Schema, "VerificationToken">;
 export type Authenticator = $ModelResult<$Schema, "Authenticator">;
+export type Submission = $ModelResult<$Schema, "Submission">;
 export const Language = $schema.enums.Language.values;
 export type Language = (typeof Language)[keyof typeof Language];
 export const TagType = $schema.enums.TagType.values;

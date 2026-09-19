@@ -1,0 +1,48 @@
+import "./problem.zmodel"
+import "./user.zmodel"
+
+/**
+ * One recorded Submit press: the code that was sent, and how it scored.
+ *
+ * Deliberately keyed on the student and the problem rather than on the
+ * practice session that produced it. A student's submissions are a single
+ * historic list per problem, and hanging them off a session would make that
+ * list a two-hop lookup that fragments whenever a new session is created.
+ *
+ * Only aggregate counts are stored -- never per-test results. A history row
+ * therefore cannot leak which hidden tests failed, because that detail is
+ * never written in the first place.
+ */
+model Submission {
+  id           String   @id @default(uuid()) @db.Uuid
+
+  student_id   String   @db.Uuid
+  student      Student  @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  problem_id   String   @db.Uuid
+  problem      Problem  @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+
+  /** Whether every test passed -- the same verdict that latches the session's `done`. */
+  passed       Boolean
+  tests_passed Int
+  tests_total  Int
+
+  /**
+   * Slot label to source: what the student actually authored, and the shape the
+   * editor would need to restore an attempt.
+   */
+  code         Json
+  /**
+   * The assembled program as it was compiled -- for a slots problem, the
+   * problem's template with `code` spliced in.
+   *
+   * Stored rather than reassembled on read because `Problem.starter_code` is
+   * mutable: rebuilding an old attempt from a template that has since been
+   * edited yields a program the student never wrote, beside a verdict that no
+   * longer describes it.
+   */
+  full_code    String
+
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([student_id, problem_id, created_at])
+}
