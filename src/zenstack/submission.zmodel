@@ -50,7 +50,19 @@ model Submission {
    */
   full_code    String
 
-  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  /**
+   * Millisecond precision, unlike every other timestamp in the schema, because
+   * this column is also the history's pagination cursor.
+   *
+   * The cursor round trips through JSON, and both a JS `Date` and
+   * `toISOString()` stop at milliseconds. Stored at the usual `(6)`, a row
+   * written at `.123456` comes back to the client as `.123` and the `lt` that
+   * asks for the next page no longer excludes it -- so the boundary row is
+   * served on two consecutive pages, and the keyed `{#each}` rendering the
+   * list throws on the duplicate id. Storing what the wire can carry keeps the
+   * cursor exact instead.
+   */
+  created_at   DateTime @default(now()) @db.Timestamptz(3)
 
   @@index([student_id, problem_id, created_at])
 }

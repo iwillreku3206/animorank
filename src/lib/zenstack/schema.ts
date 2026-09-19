@@ -1356,7 +1356,7 @@ export class SchemaType implements SchemaDef {
                 created_at: {
                     name: "created_at",
                     type: "DateTime",
-                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(6) }] }] as readonly AttributeApplication[],
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(3) }] }] as readonly AttributeApplication[],
                     default: ExpressionUtils.call("now") as FieldDefault
                 }
             },

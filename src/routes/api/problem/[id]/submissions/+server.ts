@@ -37,6 +37,12 @@ export const GET: RequestHandler = async ({ locals, params, url }) => {
     where: {
       student_id: session.user.id,
       problem_id: params.id,
+      // Exclusive, and exact only because `created_at` is stored at
+      // millisecond precision -- the most a `Date` survives the trip back out
+      // here carrying. At the schema's usual TIMESTAMPTZ(6) the truncated
+      // cursor would fail to exclude the row it came from, and the boundary
+      // row would be served on two consecutive pages. See the field comment in
+      // src/zenstack/submission.zmodel.
       ...(query.before && { created_at: { lt: query.before } })
     },
     // `code` is deliberately absent: the list renders verdicts only, and a page
