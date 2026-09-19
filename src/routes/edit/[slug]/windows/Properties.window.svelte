@@ -22,35 +22,41 @@
   }
 </script>
 
-<h2 class="text-2xl font-bold">Subject</h2>
-<TagSelect
-  bind:selectedTagId={context.problem.model.subject_id}
-  tags={tags.SubjectTag}
-  placeholder="Select a subject"
-/>
-
-<h2 class="text-2xl font-bold">Difficulty</h2>
-<TagSelect
-  bind:selectedTagId={context.problem.model.difficulty_id}
-  tags={tags.DifficultyTag}
-  placeholder="Select a difficulty"
-/>
-
-<h2 class="text-2xl font-bold">Topics</h2>
-<div class="daisy-tags-wrapper w-full">
-  <Tags
-    bind:tags={getTags, setTags}
-    onlyAutocomplete={true}
-    autoComplete={tags.TopicTag?.map((t) => t.label) || []}
-    onlyUnique={true}
+<!-- `h-full` bounds the window to its dockview panel and `overflow-y-auto`
+     scrolls the controls inside it. Without this the section grew to its
+     content height and the group clipped the overflow, so the lower fields
+     were unreachable in a short panel. -->
+<div class="h-full overflow-y-auto">
+  <h2 class="text-2xl font-bold">Subject</h2>
+  <TagSelect
+    bind:selectedTagId={context.problem.model.subject_id}
+    tags={tags.SubjectTag}
+    placeholder="Select a subject"
   />
-</div>
 
-<h2 class="text-2xl font-bold">Slots</h2>
-<Checkbox
-  class="checkbox-xs checkbox-primary rounded-xl!"
-  bind:checked={context.problem.model.uses_slots}>Enable slots</Checkbox
->
+  <h2 class="text-2xl font-bold">Difficulty</h2>
+  <TagSelect
+    bind:selectedTagId={context.problem.model.difficulty_id}
+    tags={tags.DifficultyTag}
+    placeholder="Select a difficulty"
+  />
+
+  <h2 class="text-2xl font-bold">Topics</h2>
+  <div class="daisy-tags-wrapper w-full">
+    <Tags
+      bind:tags={getTags, setTags}
+      onlyAutocomplete={true}
+      autoComplete={tags.TopicTag?.map((t) => t.label) || []}
+      onlyUnique={true}
+    />
+  </div>
+
+  <h2 class="text-2xl font-bold">Slots</h2>
+  <Checkbox
+    class="checkbox-xs checkbox-primary rounded-xl!"
+    bind:checked={context.problem.model.uses_slots}>Enable slots</Checkbox
+  >
+</div>
 
 <style
   lang="postcss"
