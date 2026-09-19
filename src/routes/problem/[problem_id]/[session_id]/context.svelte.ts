@@ -65,7 +65,8 @@ export class SolveWindowContext {
   public customRunResult: CustomRunResponse | null = $state(null);
   /**
    * Why the last run, submit or custom run could not be carried out. Cleared at
-   * the start of the next attempt, and by the student dismissing it.
+   * the start of the next attempt, by the next edit to the code, and by the
+   * student dismissing it.
    *
    * Distinct from a failing test: this is the attempt not happening at all, so
    * there is no result panel to put it in.
@@ -76,6 +77,15 @@ export class SolveWindowContext {
    * attempt shows up in the history without the student reopening the panel.
    */
   public submissionsVersion: number = $state(0);
+  /**
+   * Whether the last Submit reached the student's history.
+   *
+   * The grading still stands when this is false -- the server keeps a verdict
+   * it has already computed rather than failing the request over a lost
+   * history row. But the panel refetches on every Submit, so without this it
+   * would show a list quietly missing the attempt that just ran.
+   */
+  public lastSubmissionRecorded: boolean = $state(true);
 
   private readonly autosave: AutoSave<Record<string, string>>;
 
@@ -115,6 +125,11 @@ export class SolveWindowContext {
 
   /** Queue a debounced save. Call whenever the code sections change. */
   public scheduleSave(): void {
+    // The standing error described an attempt on code that has now changed, so
+    // it no longer describes anything on screen. Leaving it up outlasts the
+    // problem it reported -- a student who reconnects and carries on typing
+    // would keep reading that their changes could not be saved.
+    this.runError = null;
     this.autosave.save($state.snapshot(this.editorState.codeSections));
   }
 
@@ -149,6 +164,7 @@ export class SolveWindowContext {
 
   public async submit(): Promise<void> {
     this.runError = null;
+    this.lastSubmissionRecorded = true;
     this.editorState.locked = true;
     try {
       if (!(await this.forceSave())) {
@@ -162,8 +178,13 @@ export class SolveWindowContext {
       // success is computed server-side over all tests, including hidden ones
       this.testSubmitted = results.success;
       this.selectedTest = results.results.length > 0 ? 0 : -1;
+      // Absent means the server never said -- an older build, say. Only an
+      // explicit `false` is a report that the row was lost.
+      this.lastSubmissionRecorded = results.recorded !== false;
       // The server records the submission before it responds, so by here the new
-      // row is durable and the history can safely refetch.
+      // row is durable and the history can safely refetch. Bumped even when the
+      // row was lost: the earlier rows are still worth refreshing, and the
+      // panel explains the gap rather than hiding it.
       this.submissionsVersion += 1;
       this.openWindow('test_cases', { direction: 'below', referencePanel: 'code_editor' });
     } catch (error) {

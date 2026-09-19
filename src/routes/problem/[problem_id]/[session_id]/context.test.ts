@@ -313,3 +313,88 @@ describe('SolveWindowContext failed attempts', () => {
     expect(context.runError).toBe('Could not reach the grader');
   });
 });
+
+// A Submit whose grading stood but whose history row was lost. The server keeps
+// the verdict rather than failing the request, so the only trace of the loss is
+// `recorded` on the response -- without it the history panel refetches and shows
+// a list quietly missing the attempt the student just watched run.
+describe('SolveWindowContext submission recording', () => {
+  const graded = (recorded?: boolean) =>
+    ({
+      success: true,
+      results: [{ success: true, testCaseInfo: { public: true } }],
+      ...(recorded !== undefined && { recorded })
+    }) as unknown as TestRunResponse;
+
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('starts out assuming the history is complete', () => {
+    expect(makeContext({ code: '  puts("hi");' }).lastSubmissionRecorded).toBe(true);
+  });
+
+  it('flags a submit the server could not record', async () => {
+    vi.mocked(submit).mockResolvedValue(graded(false));
+    const context = makeContext({ code: '  puts("hi");' });
+
+    await context.submit();
+
+    expect(context.lastSubmissionRecorded).toBe(false);
+    // The grading itself stood, so this is not a failed attempt: the results
+    // are shown as usual and no error banner goes up.
+    expect(context.runError).toBeNull();
+    expect(context.testSubmitted).toBe(true);
+    // Still bumped: the earlier rows are worth refreshing even though this
+    // attempt is missing from them.
+    expect(context.submissionsVersion).toBe(1);
+  });
+
+  it('leaves the flag alone for a submit that was recorded', async () => {
+    vi.mocked(submit).mockResolvedValue(graded(true));
+    const context = makeContext({ code: '  puts("hi");' });
+
+    await context.submit();
+
+    expect(context.lastSubmissionRecorded).toBe(true);
+  });
+
+  it('treats a response with no recorded field as recorded', async () => {
+    // An older server build never says. Only an explicit `false` is a report
+    // that a row was lost, so silence must not raise the warning.
+    vi.mocked(submit).mockResolvedValue(graded());
+    const context = makeContext({ code: '  puts("hi");' });
+
+    await context.submit();
+
+    expect(context.lastSubmissionRecorded).toBe(true);
+  });
+
+  it('clears the flag when a later submit records cleanly', async () => {
+    const context = makeContext({ code: '  puts("hi");' });
+
+    vi.mocked(submit).mockResolvedValue(graded(false));
+    await context.submit();
+    expect(context.lastSubmissionRecorded).toBe(false);
+
+    // The warning belongs to one attempt, not to the panel for the rest of the
+    // session: a clean Submit afterwards has to take it back down.
+    vi.mocked(submit).mockResolvedValue(graded(true));
+    await context.submit();
+    expect(context.lastSubmissionRecorded).toBe(true);
+  });
+});
+
+describe('SolveWindowContext run error lifetime', () => {
+  it('drops a standing error once the code changes', () => {
+    const context = makeContext({ code: '  puts("hi");' });
+    context.runError = 'Your latest changes could not be saved.';
+
+    context.scheduleSave();
+
+    // The error described an attempt on code that has since moved on. Left up,
+    // it outlasts the problem it reported -- a student who reconnects and keeps
+    // typing would go on reading that their work could not be saved.
+    expect(context.runError).toBeNull();
+  });
+});

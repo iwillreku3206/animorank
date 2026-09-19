@@ -182,6 +182,16 @@
   {:else}
     <!-- List: every attempt at this problem, newest first, across all sessions. -->
     <div class="flex-1 overflow-y-auto">
+      <!-- The run was graded and its verdict stands; only the history row was
+           lost. Sits above every branch below, the empty state included: a
+           first Submit that failed to record leaves no other trace of itself,
+           and "No submissions yet" would be the only thing on screen. -->
+      {#if !context.lastSubmissionRecorded}
+        <p class="border-b border-base-content/10 px-3 py-2 text-xs text-warning">
+          Your most recent attempt was graded, but could not be added to this history.
+        </p>
+      {/if}
+
       {#if loading}
         <p class="p-4 text-sm text-base-content/60">Loading submissions…</p>
       {:else if listError}

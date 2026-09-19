@@ -8,6 +8,7 @@ import type { ProblemTestCase } from '$lib/zenstack/models';
 export type TestRunResponse = {
   results: (TestCaseResult<FunctionTestCaseRunInfo> & { testCase?: TestCase })[];
   success: boolean;
+  recorded?: boolean;
 };
 
 function hydrateResults(
@@ -89,7 +90,8 @@ export async function submit(session_id: string, problem: Problem): Promise<Test
 
   return {
     success: res.success,
-    results: hydrateResults(res.results, problem)
+    results: hydrateResults(res.results, problem),
+    recorded: res.recorded
   };
 }
 

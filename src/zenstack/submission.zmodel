@@ -12,6 +12,14 @@ import "./user.zmodel"
  * Only aggregate counts are stored -- never per-test results. A history row
  * therefore cannot leak which hidden tests failed, because that detail is
  * never written in the first place.
+ *
+ * Recording is best-effort, not guaranteed. The run endpoint writes this row
+ * inside a try/catch, because a lost history entry is a smaller harm than
+ * throwing away a grading result the student has already waited for. A Submit
+ * whose row could not be written reports `recorded: false` to the client, and
+ * the history panel says so rather than showing a list silently missing it.
+ * So treat this table as a near-complete record, not an authoritative count of
+ * how many times a student pressed Submit.
  */
 model Submission {
   id           String   @id @default(uuid()) @db.Uuid

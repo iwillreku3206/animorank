@@ -87,6 +87,15 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 
   const allSuccess = results.reduce((prev, next) => prev && next.success, true);
 
+  /**
+   * Whether this run reached the student's history, for a Submit that tried.
+   *
+   * Left undefined for a plain Run, which never writes a history row -- an
+   * absent field says "not applicable" where `false` would say "we tried and
+   * lost it", and only the second is worth telling the student about.
+   */
+  let recorded: boolean | undefined;
+
   if (test_type === 'all') {
     // The completion latch is written first so that a failure to record the
     // history entry can never cost a student credit for a problem they solved.
@@ -121,7 +130,12 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
           full_code: previousCode.fullCode
         }
       });
+      recorded = true;
     } catch (submissionError) {
+      // Reported to the client rather than only logged: the student's history
+      // panel refetches on every Submit, and without this it would render a
+      // list quietly missing the attempt they just watched run.
+      recorded = false;
       console.error('Failed to record submission', submissionError);
     }
   }
@@ -133,6 +147,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   // no compilerOutput. Public results carry the full details.
   return successObject({
     success: allSuccess,
-    results
+    results,
+    ...(recorded !== undefined && { recorded })
   });
 };
