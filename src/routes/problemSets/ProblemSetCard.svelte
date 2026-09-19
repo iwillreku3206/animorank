@@ -93,7 +93,7 @@
   </div>
 
   <!-- Description (YFM markup from the instructor editor, rendered) -->
-  <div class="flex-1 text-sm text-base-content/70 line-clamp-3 overflow-hidden">
+  <div class="card-description flex-1 text-sm text-base-content/70 line-clamp-3 overflow-hidden">
     <YfmStaticView
       html={transform(problemSet.description ?? '', {
         allowHTML: true,
@@ -126,3 +126,15 @@
     ></progress>
   </div>
 </div>
+
+<style>
+  /* The title's stretched ::after covers the whole card, so a link the instructor
+     wrote into the description sits underneath it and opens the set instead of
+     itself. Lift them the way every other nested link on the card is lifted.
+     YfmStaticView renders through React, so the rule has to be :global to reach
+     markup Svelte never compiled. */
+  .card-description :global(a) {
+    position: relative;
+    z-index: 10;
+  }
+</style>
