@@ -299,6 +299,32 @@ describe('SolveWindowContext failed attempts', () => {
     expect(context.runError).toBeNull();
   });
 
+  // Regression: undoing back to the saved revision used to leave run and submit
+  // permanently blocked. The failed write's result stayed on the autosave chain,
+  // so every later attempt was told the code could not be saved -- about code
+  // the server had held all along, and while the status bar read 'saved'.
+  it('runs again once the code is undone back to what the server holds', async () => {
+    // Only ever 500: a second write would fail too, so this passing proves no
+    // second write was needed rather than that a retry happened to succeed.
+    respondWith(500);
+    vi.mocked(runTestCases).mockResolvedValue(result(true));
+    const context = makeContext({ code: '  puts("first");' });
+
+    context.editorState.codeSections = { code: '  puts("second");' };
+    await context.run();
+    expect(runTestCases).not.toHaveBeenCalled();
+    expect(context.runError).not.toBeNull();
+
+    // The student undoes their change, putting the editor back to the revision
+    // the page loaded with -- which the server has had since before the failure.
+    context.editorState.codeSections = { code: '  puts("first");' };
+    await context.run();
+
+    expect(runTestCases).toHaveBeenCalledTimes(1);
+    expect(context.runError).toBeNull();
+    expect(context.editorState.locked).toBe(false);
+  });
+
   it.each([
     ['run', (context: ReturnType<typeof makeContext>) => context.run(), runTestCases],
     ['submit', (context: ReturnType<typeof makeContext>) => context.submit(), submit]

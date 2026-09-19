@@ -68,7 +68,7 @@ export class ProblemSetEditorWindowContext {
     this.collaborators = initialValues.collaborators;
     this.tags = initialValues.tags;
 
-    this.autosave = new AutoSave(() => this.persist(), this.draft());
+    this.autosave = new AutoSave((draft) => this.persist(draft), this.draft());
 
     this._cleanup = $effect.root(() => {
       $effect(() => {
@@ -90,8 +90,17 @@ export class ProblemSetEditorWindowContext {
     };
   }
 
-  private async persist(): Promise<void> {
-    await saveProblemSet(this.problemSet.id, this.draft());
+  /**
+   * Writes one revision of the draft. `draft` is the snapshot the autosave
+   * queued, not a fresh read of the editor -- writes are serialised, so a
+   * re-read here would send whatever the instructor had typed by the time this
+   * write reached the front of the queue while the autosave recorded the older
+   * queued snapshot as its baseline. Reverting to that snapshot would then
+   * dedup against a value the server never received, leaving the editor
+   * reading 'saved' over text the instructor had already undone.
+   */
+  private async persist(draft: ProblemSetDraft): Promise<void> {
+    await saveProblemSet(this.problemSet.id, draft);
   }
 
   /** The autosave state, for the editor status indicator. */

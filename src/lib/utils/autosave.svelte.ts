@@ -29,9 +29,13 @@ export class AutoSave<T> {
   private pending: Promise<boolean> = Promise.resolve(true);
 
   /**
-   * The newest data handed to a write, landed or not. The dedup checks read
-   * this rather than `lastSave`, which lags a round trip behind and would wave
-   * a redundant copy of an in-flight write into the queue.
+   * The newest data handed to a write, landed or not.
+   *
+   * What stops a redundant copy of an in-flight write being queued behind it:
+   * `lastSave` lags a round trip behind and would wave one through. The two
+   * answer different questions -- this one "is this already on its way", and
+   * `lastSave` "does the server already hold this" -- and `_save` asks them in
+   * that order from the outside in.
    */
   private queued: T;
 
@@ -84,10 +88,24 @@ export class AutoSave<T> {
 
   private _save(data: T): Promise<boolean> {
     this.clearTimeout();
+
+    // Already landed. `lastSave` only advances on a write the server confirmed,
+    // and with nothing outstanding there is no queued write that could replace
+    // it, so the server holds exactly this data and the answer is yes.
+    //
+    // Answered from state rather than from the chain because the chain reports
+    // its last write, which is not always about this data: after a failed save
+    // the tail resolves `false` forever, so a student who undid their way back
+    // to the saved revision was told their code could not be saved -- while the
+    // status bar, reading `outstanding`, said 'saved' in the same breath. Run
+    // and submit stayed blocked until they typed something new.
+    if (this.outstanding === 0 && deepEqual(data, this.lastSave)) return Promise.resolve(true);
+
     if (deepEqual(data, this.queued)) {
-      // Already sent, or already waiting its turn. Hand back the chain anyway:
-      // a caller forcing a save is about to act on the server's copy, so it has
-      // to wait for this code to land even when another call is what sent it.
+      // Sent but not yet landed, or waiting its turn behind another write. Hand
+      // back the chain: a caller forcing a save is about to act on the server's
+      // copy, so it has to wait for this code to land even when another call is
+      // what sent it.
       return this.pending;
     }
 

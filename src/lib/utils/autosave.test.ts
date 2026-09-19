@@ -235,6 +235,90 @@ describe('AutoSave', () => {
     expect(autosave.state).toBe('saved');
   });
 
+  // Regression: the dedup branch used to answer every "is this saved?" question
+  // by replaying the write chain's last result. After a failure that result is
+  // `false` and never changes, so a student who undid their way back to the
+  // saved revision was told their code could not be saved -- while the status
+  // bar said 'saved' at the same moment -- and run and submit stayed blocked
+  // until they typed something new.
+  describe('after a failed write, once the code is back to what the server holds', () => {
+    const revertedToLastSave = async () => {
+      const server = makeServer();
+      const autosave = new AutoSave<Code>(server.callback, { body: 'start' });
+
+      const failed = autosave.forceSave({ body: 'a' });
+      await flush();
+      server.fail(0, new Error('offline'));
+      await expect(failed).resolves.toBe(false);
+
+      // The student undoes back to the revision the server confirmed on load.
+      autosave.save({ body: 'start' });
+      await vi.advanceTimersByTimeAsync(3000);
+      await flush();
+
+      return { server, autosave };
+    };
+
+    it('reports the code as saved', async () => {
+      const { autosave } = await revertedToLastSave();
+
+      expect(await autosave.forceSave({ body: 'start' })).toBe(true);
+    });
+
+    it('agrees with the status bar', async () => {
+      // These two are read side by side in the solve view -- the status bar
+      // from `state`, the alert from what `forceSave` resolved to. Disagreeing
+      // put both on screen at once, each contradicting the other.
+      const { autosave } = await revertedToLastSave();
+
+      expect(autosave.state).toBe('saved');
+      expect(await autosave.forceSave({ body: 'start' })).toBe(true);
+    });
+
+    it('sends nothing, because the server already has it', async () => {
+      const { server, autosave } = await revertedToLastSave();
+
+      await autosave.forceSave({ body: 'start' });
+
+      expect(server.callback).toHaveBeenCalledTimes(1);
+      expect(server.callback).toHaveBeenCalledWith({ body: 'a' });
+    });
+
+    it('stays saved however many times it is asked', async () => {
+      // The stuck state survived repeat presses: nothing about asking again
+      // moved the chain off the failure it was still reporting.
+      const { autosave } = await revertedToLastSave();
+
+      expect(await autosave.forceSave({ body: 'start' })).toBe(true);
+      expect(await autosave.forceSave({ body: 'start' })).toBe(true);
+      expect(await autosave.forceSave({ body: 'start' })).toBe(true);
+    });
+  });
+
+  it('still waits for a write that is genuinely in flight', async () => {
+    // The guard above must not short-cut a duplicate of a write still on the
+    // wire: `lastSave` has not advanced to it yet, so the chain is the only
+    // thing that knows when it lands.
+    const server = makeServer();
+    const autosave = new AutoSave<Code>(server.callback, { body: 'start' });
+
+    autosave.save({ body: 'a' });
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(server.entered).toBe(1);
+
+    let settled = false;
+    const forced = autosave.forceSave({ body: 'a' }).then((landed) => {
+      settled = true;
+      return landed;
+    });
+    await flush();
+    expect(settled).toBe(false);
+
+    server.land(0);
+    await expect(forced).resolves.toBe(true);
+    expect(server.callback).toHaveBeenCalledTimes(1);
+  });
+
   it('skips a write when nothing changed', async () => {
     const server = makeServer();
     const autosave = new AutoSave<Code>(server.callback, { body: 'start' });
