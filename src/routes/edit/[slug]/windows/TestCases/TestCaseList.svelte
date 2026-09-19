@@ -4,7 +4,7 @@
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import EyeIcon from '@iconify-svelte/fa6-solid/eye';
   import EyeSlashIcon from '@iconify-svelte/fa6-solid/eye-slash';
-  import deleteIcon from '$lib/assets/delete.svg';
+  import TrashIcon from '@iconify-svelte/fa6-solid/trash';
   import type { TestCase } from '$lib/testCase/testCase.svelte';
   import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
   import TestCaseEditorMount from './TestCaseEditorMount.svelte';
@@ -84,10 +84,8 @@
               onclick={() => onDelete(testCase.model.id)}
               disabled={!!deletesDisabled[testCase.model.id]}
             >
-              <img
-                src={deleteIcon}
-                alt="Delete Icon"
-                class={`${!deletesDisabled[testCase.model.id] ? 'red-svg' : 'disabled-svg'} h-full w-full`}
+              <TrashIcon
+                class={`${!deletesDisabled[testCase.model.id] ? 'text-error' : 'text-base-content/40'} h-4 w-4`}
               />
             </Button>
           </div>
@@ -105,15 +103,3 @@
     Add Test Case
   </Button>
 </div>
-
-<style>
-  .red-svg {
-    filter: brightness(0) saturate(100%) invert(17%) sepia(80%) saturate(5957%) hue-rotate(6deg) brightness(107%)
-      contrast(134%);
-  }
-
-  .disabled-svg {
-    filter: brightness(0) saturate(100%) invert(25%) sepia(7%) saturate(0%) hue-rotate(158deg) brightness(92%)
-      contrast(87%);
-  }
-</style>

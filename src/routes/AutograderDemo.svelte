@@ -1,6 +1,8 @@
 <script lang="ts">
   import { fade } from 'svelte/transition';
   import Button from '$lib/components/ui/buttons/Button.svelte';
+  import CheckIcon from '@iconify-svelte/fa6-solid/check';
+  import PlayIcon from '@iconify-svelte/fa6-solid/play';
   import { coursePrograms } from './coursePrograms';
 
   let {
@@ -141,18 +143,10 @@
 </script>
 
 {#snippet checkIcon(cls: string)}
-  <svg
+  <CheckIcon
     class={cls}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="3"
-    stroke-linecap="round"
-    stroke-linejoin="round"
     aria-hidden="true"
-  >
-    <path d="M20 6 9 17l-5-5" />
-  </svg>
+  />
 {/snippet}
 
 <div
@@ -177,14 +171,10 @@
         {#if busy}
           <span class="loading loading-spinner loading-xs"></span>
         {:else}
-          <svg
+          <PlayIcon
             class="h-3 w-3"
-            viewBox="0 0 24 24"
-            fill="currentColor"
             aria-hidden="true"
-          >
-            <path d="M8 5v14l11-7z" />
-          </svg>
+          />
         {/if}
         Run
       </Button>
