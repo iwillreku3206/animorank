@@ -31,6 +31,26 @@ function hydrateResults(
   });
 }
 
+/**
+ * The error behind a non-2xx response.
+ *
+ * `fetch` only rejects on network failure, so every 4xx/5xx has to be raised by
+ * hand -- without this the body's absent `results` reaches `hydrateResults` and
+ * throws there instead, far from the cause. `$lib/response` sends `{ error }`,
+ * whose value is a string for hand-written failures and a zod issue object for a
+ * rejected body, so only the string form is worth showing.
+ */
+async function failure(response: Response, action: string): Promise<Error> {
+  let detail = `${response.status} ${response.statusText}`.trim();
+  try {
+    const body = await response.json();
+    if (typeof body?.error === 'string') detail = body.error;
+  } catch {
+    // Not JSON -- a proxy error page, say. The status line is all there is.
+  }
+  return new Error(`${action}: ${detail}`);
+}
+
 export async function runTestCases(session_id: string, problem: Problem): Promise<TestRunResponse> {
   const req = await fetch(`/api/practice-session/${session_id}/run`, {
     method: 'POST',
@@ -41,6 +61,8 @@ export async function runTestCases(session_id: string, problem: Problem): Promis
       'content-type': 'application/json'
     }
   });
+
+  if (!req.ok) throw await failure(req, 'Could not run your code');
 
   const res = await req.json();
 
@@ -60,6 +82,8 @@ export async function submit(session_id: string, problem: Problem): Promise<Test
       'content-type': 'application/json'
     }
   });
+
+  if (!req.ok) throw await failure(req, 'Could not submit your code');
 
   const res = (await req.json()) as TestRunResponse;
 
@@ -84,6 +108,8 @@ export async function runCustomInput(session_id: string, stdin: string): Promise
       'content-type': 'application/json'
     }
   });
+
+  if (!req.ok) throw await failure(req, 'Could not run your code');
 
   const res = await req.json();
   return res as CustomRunResponse;

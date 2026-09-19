@@ -21,8 +21,12 @@ export class AutoSave<T> {
    * whichever arrives last, so two in flight at once can land out of order and
    * leave it holding the older revision -- with the newer write already
    * resolved and its caller free to run against code the server never kept.
+   *
+   * Resolves to whether the write landed, never rejects. Keeping the chain on
+   * its success track matters: a rejected tail would poison every write linked
+   * onto it afterwards, and the debounced path has no caller to catch it.
    */
-  private pending: Promise<void> = Promise.resolve();
+  private pending: Promise<boolean> = Promise.resolve(true);
 
   /**
    * The newest data handed to a write, landed or not. The dedup checks read
@@ -59,7 +63,14 @@ export class AutoSave<T> {
     }, this.delayInMilliseconds);
   }
 
-  public forceSave(data: T): Promise<void> {
+  /**
+   * Persist immediately, resolving to whether the server holds this code.
+   *
+   * Callers that are about to act on the server's copy -- run, submit -- have
+   * to know, because the server grades what it holds. A `false` here means
+   * grading would report on code the student can see they did not write.
+   */
+  public forceSave(data: T): Promise<boolean> {
     this.clearTimeout();
     return this._save(data);
   }
@@ -71,7 +82,7 @@ export class AutoSave<T> {
     }
   }
 
-  private _save(data: T): Promise<void> {
+  private _save(data: T): Promise<boolean> {
     this.clearTimeout();
     if (deepEqual(data, this.queued)) {
       // Already sent, or already waiting its turn. Hand back the chain anyway:
@@ -89,8 +100,11 @@ export class AutoSave<T> {
     return write;
   }
 
-  /** Runs one write, once the writes queued ahead of it have finished. */
-  private async write(data: T): Promise<void> {
+  /**
+   * Runs one write, once the writes queued ahead of it have finished, and
+   * reports whether it landed.
+   */
+  private async write(data: T): Promise<boolean> {
     try {
       await this.callback(data);
       // Only advance the baseline on success, so a failed save is retried by
@@ -101,17 +115,20 @@ export class AutoSave<T> {
       // 'saved' would tell the student their latest keystrokes are persisted
       // while they are still on the wire.
       if (this.outstanding === 0) this.state = 'saved';
+      return true;
     } catch (error) {
       this.outstanding -= 1;
-      // Swallowed rather than rethrown: `run` and `submit` await `forceSave`,
-      // and a rejection would strand the editor locked. The 'error' state is
-      // how a failed save reaches the student.
+      // Reported as `false` rather than rethrown. A rejection here would reject
+      // the chain tail every later write links onto, and the debounced path
+      // fires with no caller to catch it. The 'error' state is how this reaches
+      // the student; the return value is how it reaches `run` and `submit`.
       this.state = 'error';
       console.error(error);
       // Nothing landed, so drop the dedup baseline back and let the next change
       // retry this data -- unless something newer is queued behind it, which is
       // the newer baseline and has to stand.
       if (deepEqual(this.queued, data)) this.queued = this.lastSave;
+      return false;
     }
   }
 }

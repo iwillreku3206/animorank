@@ -229,3 +229,87 @@ describe('SolveWindowContext saved state', () => {
     expect(practiceSession.getPreviousState().code).toEqual({ code: '  puts("first");' });
   });
 });
+
+// Regression: an attempt that could not happen used to be indistinguishable
+// from one that did. A failed save still graded, against the revision the
+// server held; a failed run threw past `locked = false`, leaving the editor
+// read-only behind a spinner that only a page reload cleared.
+describe('SolveWindowContext failed attempts', () => {
+  const result = (success: boolean) =>
+    ({
+      success,
+      results: [{ success, testCaseInfo: { public: true } }]
+    }) as unknown as TestRunResponse;
+
+  const respondWith = (...statuses: number[]) => {
+    let call = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('{}', { status: statuses[Math.min(call++, statuses.length - 1)] }))
+    );
+  };
+
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetAllMocks();
+  });
+
+  it('does not grade a submit whose save failed', async () => {
+    respondWith(500);
+    const context = makeContext({ code: '  puts("first");' });
+
+    context.editorState.codeSections = { code: '  puts("second");' };
+    await context.submit();
+
+    expect(submit).not.toHaveBeenCalled();
+    expect(context.runError).not.toBeNull();
+    expect(context.editorState.locked).toBe(false);
+  });
+
+  it('does not run code whose save failed', async () => {
+    respondWith(500);
+    const context = makeContext({ code: '  puts("first");' });
+
+    context.editorState.codeSections = { code: '  puts("second");' };
+    await context.run();
+
+    expect(runTestCases).not.toHaveBeenCalled();
+    expect(context.runError).not.toBeNull();
+    expect(context.editorState.locked).toBe(false);
+  });
+
+  // A single failed save heals itself: the dedup baseline rolls back, so the
+  // next attempt retries the write before grading.
+  it('submits once a retry of the failed save lands', async () => {
+    respondWith(500, 200);
+    vi.mocked(submit).mockResolvedValue(result(true));
+    const context = makeContext({ code: '  puts("first");' });
+
+    context.editorState.codeSections = { code: '  puts("second");' };
+    await context.submit();
+    expect(submit).not.toHaveBeenCalled();
+
+    await context.submit();
+
+    expect(submit).toHaveBeenCalledTimes(1);
+    expect(context.runError).toBeNull();
+  });
+
+  it.each([
+    ['run', (context: ReturnType<typeof makeContext>) => context.run(), runTestCases],
+    ['submit', (context: ReturnType<typeof makeContext>) => context.submit(), submit]
+  ])('unlocks the editor when the %s request fails', async (_label, attempt, api) => {
+    respondWith(200);
+    vi.mocked(api).mockRejectedValue(new Error('Could not reach the grader'));
+    const context = makeContext({ code: '  puts("hi");' });
+
+    await attempt(context);
+
+    expect(context.editorState.locked).toBe(false);
+    expect(context.runError).toBe('Could not reach the grader');
+  });
+});

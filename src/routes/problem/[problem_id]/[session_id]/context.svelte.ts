@@ -12,6 +12,19 @@ import {
   type TestRunResponse
 } from '$lib/practiceSession/api';
 
+/**
+ * Shown when an attempt is abandoned because the code could not be persisted.
+ *
+ * The server grades the revision it holds, so going ahead after a failed save
+ * would report a verdict on code the student can see they did not write -- and
+ * on submit, record that verdict in their history permanently.
+ */
+const unsavedMessage = (verb: string) =>
+  `Your latest changes could not be saved, so they were not ${verb}. Check your connection and try again.`;
+
+/** The message a failed attempt should show, for a rejection that isn't an Error. */
+const messageOf = (error: unknown, fallback: string): string => (error instanceof Error ? error.message : fallback);
+
 /** Opens (or focuses) a window in the dockview, optionally placing it. */
 export type OpenWindow = (_key: string, _positions?: AddPanelPositionOptions | AddPanelPositionOptions[]) => void;
 
@@ -50,6 +63,14 @@ export class SolveWindowContext {
   public testSubmitted: boolean = $state(false);
   public customRunLoading: boolean = $state(false);
   public customRunResult: CustomRunResponse | null = $state(null);
+  /**
+   * Why the last run, submit or custom run could not be carried out. Cleared at
+   * the start of the next attempt, and by the student dismissing it.
+   *
+   * Distinct from a failing test: this is the attempt not happening at all, so
+   * there is no result panel to put it in.
+   */
+  public runError: string | null = $state(null);
   /**
    * Bumped once per Submit. The submissions window watches this so a new
    * attempt shows up in the history without the student reopening the panel.
@@ -98,45 +119,75 @@ export class SolveWindowContext {
   }
 
   /** Persist immediately, bypassing the debounce (Ctrl+S, run, submit). */
-  public forceSave(): Promise<void> {
+  public forceSave(): Promise<boolean> {
     return this.autosave.forceSave($state.snapshot(this.editorState.codeSections));
   }
 
   public async run(): Promise<void> {
+    this.runError = null;
     this.editorState.locked = true;
-    await this.forceSave();
-    const results = await runTestCases(this.practiceSession.id, this.problem);
-    this.testCaseResults = results;
-    this.lastTestType = 'run';
-    this.testSubmitted = false;
-    this.selectedTest = results.results.length > 0 ? 0 : -1;
-    this.editorState.locked = false;
-    this.openWindow('test_cases', { direction: 'below', referencePanel: 'code_editor' });
+    try {
+      if (!(await this.forceSave())) {
+        this.runError = unsavedMessage('run');
+        return;
+      }
+      const results = await runTestCases(this.practiceSession.id, this.problem);
+      this.testCaseResults = results;
+      this.lastTestType = 'run';
+      this.testSubmitted = false;
+      this.selectedTest = results.results.length > 0 ? 0 : -1;
+      this.openWindow('test_cases', { direction: 'below', referencePanel: 'code_editor' });
+    } catch (error) {
+      this.runError = messageOf(error, 'Could not run your code.');
+    } finally {
+      // Released in `finally` rather than on the success path: a throw anywhere
+      // above would otherwise leave the editor read-only behind a spinner that
+      // never clears, with no way back but a page reload.
+      this.editorState.locked = false;
+    }
   }
 
   public async submit(): Promise<void> {
+    this.runError = null;
     this.editorState.locked = true;
-    await this.forceSave();
-    const results = await submit(this.practiceSession.id, this.problem);
-    this.testCaseResults = results;
-    this.lastTestType = 'submit';
+    try {
+      if (!(await this.forceSave())) {
+        this.runError = unsavedMessage('submitted');
+        return;
+      }
+      const results = await submit(this.practiceSession.id, this.problem);
+      this.testCaseResults = results;
+      this.lastTestType = 'submit';
 
-    // success is computed server-side over all tests, including hidden ones
-    this.testSubmitted = results.success;
-    this.selectedTest = results.results.length > 0 ? 0 : -1;
-    this.editorState.locked = false;
-    // The server records the submission before it responds, so by here the new
-    // row is durable and the history can safely refetch.
-    this.submissionsVersion += 1;
-    this.openWindow('test_cases', { direction: 'below', referencePanel: 'code_editor' });
+      // success is computed server-side over all tests, including hidden ones
+      this.testSubmitted = results.success;
+      this.selectedTest = results.results.length > 0 ? 0 : -1;
+      // The server records the submission before it responds, so by here the new
+      // row is durable and the history can safely refetch.
+      this.submissionsVersion += 1;
+      this.openWindow('test_cases', { direction: 'below', referencePanel: 'code_editor' });
+    } catch (error) {
+      this.runError = messageOf(error, 'Could not submit your code.');
+    } finally {
+      this.editorState.locked = false;
+    }
   }
 
   public async customRun(stdin: string): Promise<void> {
+    this.runError = null;
     this.customRunLoading = true;
     this.customRunResult = null;
-    await this.forceSave();
-    this.customRunResult = await runCustomInput(this.practiceSession.id, stdin);
-    this.customRunLoading = false;
+    try {
+      if (!(await this.forceSave())) {
+        this.runError = unsavedMessage('run');
+        return;
+      }
+      this.customRunResult = await runCustomInput(this.practiceSession.id, stdin);
+    } catch (error) {
+      this.runError = messageOf(error, 'Could not run your code.');
+    } finally {
+      this.customRunLoading = false;
+    }
   }
 
   /**

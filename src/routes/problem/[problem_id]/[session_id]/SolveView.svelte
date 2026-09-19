@@ -3,6 +3,8 @@
   import { createHotkey } from '@tanstack/svelte-hotkeys';
   import { beforeNavigate, goto } from '$app/navigation';
   import DockviewWindow from '$lib/window/DockviewWindow.svelte';
+  import Alert from '$lib/components/ui/alerts/Alert.svelte';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
   import SolveToolbar from './SolveToolbar.svelte';
   import { discardSavedLayouts, type DockviewWindowManager } from '$lib/window/dockviewWindowManager';
   import type { DefaultLayout } from '$lib/window/layout';
@@ -109,6 +111,20 @@
     user={data.user}
     neighbors={data.neighbors}
   />
+
+  <!-- An attempt that never ran. A failing test reports itself in the results
+       panel; this is the case where there is no result to show. -->
+  {#if context.runError}
+    <Alert class="alert-error mx-2 mt-2 shrink-0 py-2">
+      <span class="text-sm">{context.runError}</span>
+      <Button
+        class="btn-ghost btn-xs"
+        onclick={() => (context.runError = null)}
+      >
+        Dismiss
+      </Button>
+    </Alert>
+  {/if}
 
   <DockviewWindow
     bind:context

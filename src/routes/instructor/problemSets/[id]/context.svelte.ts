@@ -99,8 +99,12 @@ export class ProblemSetEditorWindowContext {
     return this.autosave.state;
   }
 
-  /** Persist immediately, bypassing the debounce. */
-  public forceSave(): Promise<void> {
+  /**
+   * Persist immediately, bypassing the debounce, resolving to whether the
+   * server holds the draft. Nothing here acts on the answer yet -- unlike the
+   * solve view, no action downstream reads the server's copy back.
+   */
+  public forceSave(): Promise<boolean> {
     return this.autosave.forceSave(this.draft());
   }
 
