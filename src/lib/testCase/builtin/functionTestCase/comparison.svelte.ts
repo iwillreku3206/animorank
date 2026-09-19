@@ -82,11 +82,11 @@ export class Comparison {
   /**
    * Constructs with a default type and operator
    */
-  static create(type: Type, operator: Operator) {
+  static create(type: Type, operator: Operator, symbol: Symbol = 'return') {
     return new Comparison({
       value: type.defaultValue(),
       operator,
-      symbol: 'return'
+      symbol
     });
   }
 

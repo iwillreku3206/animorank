@@ -7,7 +7,7 @@ export class ClientRegistryProvider extends RegistryProvider {
   private static _instance: ClientRegistryProvider | null;
 
   private constructor() {
-    super();
+    super('client');
     // Client-runtime registries (never imported by server-only modules).
     this.registerServiceRegistry(TelemetryService, new TelemetryRegistry());
     this.registerRegistry(new SolveWindowRegistry());

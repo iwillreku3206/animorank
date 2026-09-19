@@ -8,6 +8,7 @@
   import { Problem } from '$lib/problem';
   import { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
   import { ClientRegistryProvider } from '$lib/registry/client';
+  import { ClientPluginLoader } from '$lib/plugin/clientLoader';
   import { SolveWindowRegistry } from './windowRegistry';
   import { SolveWindowContext } from './context.svelte';
   import type { PageProps } from './$types';
@@ -62,9 +63,16 @@
   // The dock mounts only once the context exists, so the manager is built with
   // the real context on its first mount; this effect then hands the context the
   // manager's `openWindow`, which is what lets windows be opened imperatively.
+  // The plugins that answer this page's hook are told about it here, after
+  // their `openWindow` is usable, and only once.
+  let notified = false;
   $effect(() => {
     if (!manager || !context) return;
     context.openWindow = manager.openWindow.bind(manager);
+
+    if (notified) return;
+    notified = true;
+    void ClientPluginLoader.instance().notifyPageHook('onSolvePageLoad', context);
   });
 
   // Debounced autosave: every edit to the code sections queues a save, which the

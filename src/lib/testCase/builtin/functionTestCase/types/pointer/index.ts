@@ -1,4 +1,5 @@
 import { type Form } from '$lib/form';
+import type { ComponentType } from 'svelte';
 import type { JsonValue } from '@zenstackhq/orm';
 import type { IntoJsonValue } from '$lib/types/utils';
 import { GlobalRegistryProvider } from '$lib/registry/global';
@@ -9,6 +10,7 @@ import { TypeValue } from '../../typeValue.svelte';
 import type z from 'zod';
 import PointerDisplay from './PointerDisplay.svelte';
 import PointerEditor from './PointerEditor.svelte';
+import ArrowPointerIcon from '@iconify-svelte/fa6-solid/arrow-pointer';
 import { Integer } from '../int';
 import { VoidType } from '../void';
 
@@ -100,9 +102,16 @@ export class Pointer extends Type<JsonValue, Form, { target: Type }> {
     return new TypeValue(this, this.targetType.defaultValue().value);
   }
 
-  get displayName(): string {
-    return 'Pointer';
+  get staticName(): string {
+    return 'pointer';
   }
+
+  /** The C spelling: the target's detail followed by its pointer star. */
+  get detailedName(): string {
+    return `${this.targetType.detailedName}*`;
+  }
+
+  static icon: ComponentType = ArrowPointerIcon;
 
   get optionsForm() {
     return buildPointerOptions();

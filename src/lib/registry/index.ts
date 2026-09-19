@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { RegistryDomain } from './registryProvider';
+import { findItemPlugin, findRegistryWriters } from './clientPlugins';
+
 type Service<T, C extends unknown[], S> =
   | { classObject: (new (..._args: C) => T) & S; singleton: false }
   | { instance: T; singleton: true }
@@ -46,10 +49,8 @@ export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
   private _origins = new Map<string, string>();
   /** Namespace applied to keys registered without an explicit origin: the registry's own. */
   private _defaultOrigin: string | null = null;
-  /** Loads whatever provides a key that is not registered yet; see {@link setMissResolver}. */
-  private _missResolver: ((_registry: ServiceRegistry<any, any[], any>, _key: string) => Promise<void>) | null = null;
-  /** Loads every plugin that writes to this registry; see {@link loadKeys}. */
-  private _writersResolver: ((_registry: ServiceRegistry<any, any[], any>) => Promise<void>) | null = null;
+  /** Domain the registry is served in, as the plugin API names it; see {@link setProviderContext}. */
+  private _domain: RegistryDomain | null = null;
 
   constructor(serviceRegistryOptions?: ServiceRegistryOptions) {
     this.options = serviceRegistryOptions || {};
@@ -152,16 +153,19 @@ export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
   }
 
   /**
-   * The service registered under a key. When there is none, the miss resolver
-   * (see {@link setMissResolver}) gets a chance to load a provider — a plugin —
-   * before the lookup is retried once.
+   * The service registered under a key. When there is none and the registry is
+   * served by a provider, a browser loads the plugin that provides the key (see
+   * {@link findItemPlugin}) before the lookup is retried once; on the server a
+   * miss is final.
    */
   private async _resolve(key: string): Promise<Exclude<Service<T, C, S>, { singleton: 'lazy' }> | undefined> {
     const service = await this._resolveLazy(key);
-    if (service !== undefined || !this._missResolver) {
+    if (service !== undefined) {
       return service;
     }
-    await this._missResolver(this, key);
+    if (this._domain) {
+      await findItemPlugin(this._domain, this.id, key);
+    }
     return this._resolveLazy(key);
   }
 
@@ -170,13 +174,16 @@ export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
   }
 
   /**
-   * The keys of this registry after loading every plugin that writes to it
-   * (see {@link setWritersResolver}). Asking for "everything in the registry"
-   * is the one request a single-key lookup cannot express, so it gets its own
-   * async entry point: {@link keys} cannot wait for a plugin.
+   * The keys of this registry after loading the plugins that write to it (see
+   * {@link findRegistryWriters}): asking for "everything in the registry" is
+   * the one request a single-key lookup cannot express, so it gets its own
+   * async entry point: {@link keys} cannot wait for a plugin. On the server
+   * every plugin is already loaded, so the keys are simply current.
    */
   public async loadKeys(): Promise<string[]> {
-    await this._writersResolver?.(this);
+    if (this._domain) {
+      await findRegistryWriters(this._domain, this.id);
+    }
     return this.keys();
   }
 
@@ -205,27 +212,14 @@ export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
     return this._origins.get(key) ?? this._defaultOrigin ?? undefined;
   }
 
-  /** Namespace applied to keys registered without one; set by the provider holding the registry. */
-  public setDefaultOrigin(origin: string): void {
+  /**
+   * Attach the provider context: the domain the registry is served in — what a
+   * browser attributes a miss to — and the namespace keys registered without
+   * one are attributed to. Set by the provider that registers the registry.
+   */
+  public setProviderContext(domain: RegistryDomain, origin: string): void {
+    this._domain = domain;
     this._defaultOrigin = origin;
-  }
-
-  /**
-   * Resolver called with a key that is not registered (e.g. one a plugin
-   * provides); after it resolves, the lookup is retried once. Set by a
-   * provider that can load plugins on demand.
-   */
-  public setMissResolver(resolver: (_registry: ServiceRegistry<T, C, S>, _key: string) => Promise<void>): void {
-    this._missResolver = resolver;
-  }
-
-  /**
-   * Resolver called by {@link loadKeys}: it should load every plugin that can
-   * write into this registry, so an enumeration sees all of them. Set by a
-   * provider that can load plugins on demand.
-   */
-  public setWritersResolver(resolver: (_registry: ServiceRegistry<T, C, S>) => Promise<void>): void {
-    this._writersResolver = resolver;
   }
 
   public async getStatic(key: string): Promise<S> {

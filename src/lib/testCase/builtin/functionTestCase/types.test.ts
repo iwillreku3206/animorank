@@ -1,7 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { Problem } from '$lib/problem';
 import type { Problem as ProblemModel } from '$lib/zenstack/models';
-import { parseExtensionData, parseSymbol, serializeExtensionData } from './types';
+import { canCompareReturn, parseExtensionData, parseSymbol, serializeExtensionData, type Function } from './types';
+import { VoidType } from './types/void';
+import { Integer } from './types/int';
+
+describe('canCompareReturn', () => {
+  const fn = (returnType: Function['returnType']) =>
+    ({ name: 'f', symbol: '', parameters: [], returnType }) as Function;
+
+  it('is false when there is no value to compare', () => {
+    expect(canCompareReturn(fn([VoidType.create()]))).toBe(false);
+    expect(canCompareReturn(fn([null]))).toBe(false);
+    expect(canCompareReturn(fn([]))).toBe(false);
+    expect(canCompareReturn(undefined)).toBe(false);
+  });
+
+  it('is true for a value-returning function', () => {
+    expect(canCompareReturn(fn([Integer.create()]))).toBe(true);
+  });
+});
 
 describe('parseSymbol', () => {
   it('accepts valid symbols', () => {

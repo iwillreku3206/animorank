@@ -2,8 +2,10 @@ import { ServerAnimoRankAPI } from '$lib/api/server';
 import { browser } from '$app/environment';
 import { Logger } from '$lib/logging/logger';
 import { ServerRegistryProvider } from '$lib/registry/server';
+import { errorMessage } from '$lib/utils/errorMessage';
 import fs from 'fs/promises';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import { PluginManifestSchema } from './manifest';
 import { LoadedPlugin, type PluginServerModule } from './loadedPlugin';
 
@@ -23,10 +25,6 @@ export interface PrebuiltPluginDescriptor {
   manifest: unknown;
   files: Map<string, Buffer>;
   server: PluginServerModule;
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 /**
@@ -181,6 +179,14 @@ function collectPrebuiltPluginDescriptors(): PrebuiltPluginDescriptor[] {
 
 const prebuiltPluginDescriptors = collectPrebuiltPluginDescriptors();
 
+/**
+ * The app's prebuilt plugins, initialized once per process: their descriptors
+ * are fixed at compile time and their entries register into process-wide
+ * registries, so a second initialization would collide with the first. Every
+ * loader gets the plugins the first one initialized.
+ */
+let appPrebuiltPlugins: Promise<LoadedPlugin[]> | null = null;
+
 export class PluginLoader {
   private plugins: Map<string, LoadedPlugin> = new Map();
   private loggerPromise: Promise<Logger> | null = null;
@@ -255,37 +261,63 @@ export class PluginLoader {
       files.set(relPath, content);
     }
 
-    return new LoadedPlugin('dynamic', manifest, files, server);
+    // A dynamic plugin's own files sit next to its entries: the URL its
+    // scripts load the rest of the plugin from (see `AnimoRankAPI.import`).
+    const filesUrl = pathToFileURL(dir).href + '/';
+    return new LoadedPlugin('dynamic', manifest, files, server, filesUrl);
   }
 
   /**
-   * Load the app's prebuilt plugins. Prebuilt plugins ship with the app:
-   * each package lives in its own directory under `src/lib/plugins/` or the
+   * Load the app's prebuilt plugins. Builtin plugins ship with the app: each
+   * package lives in its own directory under `src/lib/plugins/` or the
    * repository-root `plugins/`, containing `manifest.json`, `server.ts`,
-   * `client.ts` and an optional `client/` folder. They are wired in at
-   * compile time via Vite glob imports (HMR-capable in the dev server)
-   * instead of being read from disk at runtime.
+   * `client.ts` and an optional `client/` folder. This side of the plugin —
+   * what runs on the server — is wired in at compile time via Vite glob
+   * imports (HMR-capable in the dev server) instead of being read from disk at
+   * runtime; the package's client entries are compiled by the app's build and
+   * served by the plugin route (see `scripts/prebuiltPluginEntries.ts`).
    *
-   * Pass an explicit descriptor list to override the glob-discovered
-   * defaults (tests, bespoke wiring). Every manifest is validated and the
-   * plugin is registered under its manifest id; invalid packages are
-   * programmer errors and fail the whole load.
+   * Pass an explicit descriptor list to load those instead (tests, bespoke
+   * wiring), which leaves the app's own set untouched. The app's set
+   * initializes once per process — its entries register into process-wide
+   * registries — and a loader asking for it later gets the plugins the first
+   * one initialized. Every manifest is validated and the plugin is registered
+   * under its manifest id; invalid packages are programmer errors and fail the
+   * whole load.
    *
-   * @returns the newly loaded plugins
+   * @returns the plugins this loader holds
    */
-  public async loadPrebuiltPlugins(
-    plugins: PrebuiltPluginDescriptor[] = prebuiltPluginDescriptors
-  ): Promise<LoadedPlugin[]> {
+  public async loadPrebuiltPlugins(plugins?: PrebuiltPluginDescriptor[]): Promise<LoadedPlugin[]> {
     const logger = await this.getLogger();
     const loaded: LoadedPlugin[] = [];
 
-    for (const { manifest, files, server } of plugins) {
-      const plugin = new LoadedPlugin('prebuilt', PluginManifestSchema.parse(manifest), files, server);
-      await this.initialize(plugin);
+    const prebuilt =
+      plugins === undefined
+        ? await (appPrebuiltPlugins ??= this.initializePrebuilt(prebuiltPluginDescriptors).catch((error: unknown) => {
+            // A failed load is not cached: the next loader retries it.
+            appPrebuiltPlugins = null;
+            throw error;
+          }))
+        : await this.initializePrebuilt(plugins);
+
+    for (const plugin of prebuilt) {
       if (this.register(plugin, logger)) loaded.push(plugin);
     }
 
     return loaded;
+  }
+
+  /** Initialize the given descriptors in order; a plugin that cannot initialize aborts the load. */
+  private async initializePrebuilt(plugins: PrebuiltPluginDescriptor[]): Promise<LoadedPlugin[]> {
+    const initialized: LoadedPlugin[] = [];
+
+    for (const { manifest, files, server } of plugins) {
+      const plugin = new LoadedPlugin('prebuilt', PluginManifestSchema.parse(manifest), files, server);
+      await this.initialize(plugin);
+      initialized.push(plugin);
+    }
+
+    return initialized;
   }
 
   /** The plugin registered under the manifest id, if one is loaded. */
@@ -312,7 +344,7 @@ export class PluginLoader {
     if (typeof instance.init !== 'function') {
       throw new Error(`Plugin "${plugin.manifest.id}" has no init() to run`);
     }
-    await instance.init(new ServerAnimoRankAPI(plugin.manifest.id));
+    await instance.init(new ServerAnimoRankAPI(plugin.manifest.id, plugin.filesUrl));
   }
 
   private register(plugin: LoadedPlugin, logger: Logger): boolean {

@@ -1,6 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ServiceRegistry } from '.';
 import { Registrar } from './registrar';
+
+// The finder would fail the test if a lookup ever asked it to load a plugin:
+// only a browser loads plugins, so a miss on the server is final (see
+// clientPlugins.ts).
+vi.mock('$lib/plugin/clientPluginFinder', () => ({
+  ClientPluginFinder: {
+    instance: () => {
+      throw new Error('the server must not load plugins');
+    }
+  }
+}));
 
 class CountingService {
   public static instances = 0;
@@ -127,55 +138,32 @@ describe('ServiceRegistry registration tracking', () => {
     const registry = new CountingServiceRegistry();
     expect(registry.registeredBy('lazy')).toBeUndefined();
 
-    registry.setDefaultOrigin('animorank');
+    registry.setProviderContext('global', 'animorank');
     expect(registry.registeredBy('lazy')).toBe('animorank');
     // A key that was never registered stays unknown.
     expect(registry.registeredBy('missing')).toBeUndefined();
   });
 
-  it('lets the miss resolver provide a key and retries the lookup once', async () => {
+  it('does not load plugins for a key that is missing', async () => {
     const registry = new CountingServiceRegistry();
-    const asked: string[] = [];
-    registry.setMissResolver(async (target, key) => {
-      asked.push(key);
-      new Registrar(target, '', 'plugin-a').register(key, CountingService);
-    });
-
-    await expect(registry.getInstance('late')).resolves.toBeInstanceOf(CountingService);
-    expect(asked).toEqual(['late']);
-    expect(registry.registeredBy('late')).toBe('plugin-a');
-  });
-
-  it('reports the missing key when the miss resolver cannot provide it', async () => {
-    const registry = new CountingServiceRegistry();
-    let calls = 0;
-    registry.setMissResolver(async () => {
-      calls += 1;
-    });
+    registry.setProviderContext('global', 'animorank');
 
     await expect(registry.getInstance('missing')).rejects.toThrow('Missing service missing');
-    expect(calls).toBe(1);
   });
 
   it('reports the namespaces that wrote into the registry', () => {
     const registry = new CountingServiceRegistry();
-    registry.setDefaultOrigin('animorank');
+    registry.setProviderContext('global', 'animorank');
     new Registrar(registry, 'plugin-a').register('mine', CountingService);
     new Registrar(registry, '', 'plugin-b').register('plain', CountingService);
 
     expect(registry.writers().sort()).toEqual(['animorank', 'plugin-a', 'plugin-b']);
   });
 
-  it('loads the writers before reporting every key', async () => {
+  it('enumerates the keys it has without loading plugins', async () => {
     const registry = new CountingServiceRegistry();
-    let calls = 0;
-    registry.setWritersResolver(async (target) => {
-      calls += 1;
-      new Registrar(target, '', 'plugin-a').register('extra', CountingService);
-    });
+    registry.setProviderContext('global', 'animorank');
 
-    expect(registry.keys()).not.toContain('extra');
-    await expect(registry.loadKeys()).resolves.toContain('extra');
-    expect(calls).toBe(1);
+    await expect(registry.loadKeys()).resolves.toEqual(['lazy']);
   });
 });

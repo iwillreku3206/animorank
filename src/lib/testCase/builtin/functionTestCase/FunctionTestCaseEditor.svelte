@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { FunctionTestCase } from './functionTestCase.svelte';
-  import type { FunctionTestCaseProblemData, Symbol } from './types';
+  import { canCompareReturn, type FunctionTestCaseProblemData, type Symbol } from './types';
   import { GlobalRegistryProvider } from '$lib/registry/global';
   import { OperatorRegistry } from './operatorRegistry';
   import Button from '$lib/components/ui/buttons/Button.svelte';
@@ -20,6 +20,8 @@
     });
   });
   let availableFunctions = $derived(Object.entries(problemData.functions).map(([id, fn]) => ({ id, name: fn.name })));
+  /** The selected function's definition, as the Functions window last saved it. */
+  const selectedFunction = $derived(problemData.functions[testCase.data.function]);
   let availableOperators = $state<string[]>([]);
   let operatorNames = $state<Record<string, string>>({});
   $effect(() => {
@@ -36,10 +38,13 @@
   });
 
   let availableSymbols = $derived([
-    { value: 'return' as Symbol, label: 'return' },
+    // A void (or untyped) return has no value to compare, so `return` is shown
+    // disabled rather than dropped: the author can still compare a parameter.
+    { value: 'return' as Symbol, label: 'return', disabled: !canCompareReturn(selectedFunction) },
     ...testCase.data.parameters.map((p, i) => ({
       value: `param${i}` as Symbol,
-      label: p.name || `param${i}`
+      label: p.name || `param${i}`,
+      disabled: false
     }))
   ]);
 </script>
@@ -103,8 +108,11 @@
                 void testCase.setComparisonSymbol(i, (e.target as HTMLSelectElement).value as Symbol);
               }}
             >
-              {#each availableSymbols as sym (sym)}
-                <option value={sym.value}>{sym.label}</option>
+              {#each availableSymbols as sym (sym.value)}
+                <option
+                  value={sym.value}
+                  disabled={sym.disabled}>{sym.label}</option
+                >
               {/each}
             </Select>
             {#if availableOperators.length > 0}

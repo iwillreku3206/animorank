@@ -5,6 +5,7 @@ import type { TestCaseEditor, TestCaseDisplay } from '$lib/testCase/types';
 import z from 'zod';
 import { Comparison, getComparisonSchema } from './comparison.svelte';
 import {
+  canCompareReturn,
   ParameterValueSchema,
   parseSymbol,
   type FunctionTestCaseProblemData,
@@ -253,12 +254,14 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
   }
 
   public async addComparison(): Promise<void> {
-    const fn = (await this.problem.functionData()).functions[this.data.function];
-    const returnType = fn?.returnType[0];
-    // Void returns (and missing/untyped return slots) cannot be compared:
-    // the harness never emits a return export file for them, so the
-    // comparison could never run.
-    if (!returnType || returnType.isVoid) return;
+    const functions = await this.problem.functionData();
+    const fn = functions.functions[this.data.function];
+    // Void returns (and missing/untyped return slots) cannot be compared: the
+    // harness never emits a return export file for them. A comparison is still
+    // created — the symbol menu disables `return` for such a function — and
+    // compares the first parameter instead, which is what parameters are for
+    // (out-values and pointers).
+    const symbol: Symbol = canCompareReturn(fn) ? 'return' : 'param0';
 
     // Default to `equal`: it is the only operator registered for every value
     // type (int/float/string/pointer), so a comparison created for a
@@ -272,8 +275,13 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
     const defaultKey = keys.includes('equal') ? 'equal' : keys[0];
     if (!defaultKey) return;
 
+    // The symbol's type is missing when the function has no parameters (or the
+    // parameter it names is untyped): there is no value to build yet.
+    const type = await this.symbolType(symbol, functions);
+    if (!type) return;
+
     const operator = (await registry.getStatic(defaultKey)).create();
-    const comparison = Comparison.create(returnType, operator);
+    const comparison = Comparison.create(type, operator, symbol);
     this.data = { ...this.data, comparisons: [...this.data.comparisons, comparison] };
   }
 

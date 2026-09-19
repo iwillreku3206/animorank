@@ -3,24 +3,24 @@ import os from 'os';
 import path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { isHttpError } from '@sveltejs/kit';
-import { GET as getCatalog } from '../../routes/plugins/+server';
+import { GET as getDescriptor } from '../../routes/plugins/[id]/+server';
 import { GET as getFile } from '../../routes/plugins/[id]/[...file]/+server';
 import { LoadedPlugin } from './loadedPlugin';
 
 type FileEvent = Parameters<typeof getFile>[0];
-type CatalogEvent = Parameters<typeof getCatalog>[0];
+type DescriptorEvent = Parameters<typeof getDescriptor>[0];
 
 const plugins: LoadedPlugin[] = [];
 
 // The routes read the loaded registry; stand it in so the handlers run for real
 // against a plugin loaded from a temp directory.
-vi.mock('$lib/plugin/serverService', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./serverService')>();
+vi.mock('$lib/plugin/serverPluginService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./serverPluginService')>();
   return {
     ...actual,
     ServerPluginService: {
       instance: () => ({
-        getClientCatalog: async () => actual.dynamicClientCatalogOf(plugins),
+        getClientDescriptor: async (id: string) => actual.clientDescriptorOf(plugins, id),
         readPluginFile: async (id: string, file: string) => actual.pluginFileOf(plugins, id, file)
       })
     }
@@ -48,6 +48,7 @@ beforeEach(async () => {
     })
   );
   await fs.writeFile(path.join(dir, 'client.js'), "import './client/helper.js';\n");
+  await fs.writeFile(path.join(dir, 'global.js'), 'export const shared = 1;\n');
   await fs.writeFile(path.join(dir, 'client/helper.js'), 'export const helper = 1;\n');
   await fs.writeFile(path.join(dir, 'client/helper.ts'), 'export const helper = 1;\n');
   await fs.writeFile(path.join(dir, 'client/style.css'), '.demo { color: red; }\n');
@@ -72,12 +73,12 @@ function event(id: string, file: string): FileEvent {
   } as unknown as FileEvent;
 }
 
-function catalogEvent(): CatalogEvent {
+function descriptorEvent(id: string): DescriptorEvent {
   return {
-    params: {},
-    request: new Request('http://localhost/plugins'),
-    url: new URL('http://localhost/plugins')
-  } as unknown as CatalogEvent;
+    params: { id },
+    request: new Request(`http://localhost/plugins/${id}`),
+    url: new URL(`http://localhost/plugins/${id}`)
+  } as unknown as DescriptorEvent;
 }
 
 describe('plugin file route', () => {
@@ -87,6 +88,13 @@ describe('plugin file route', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('text/javascript');
     await expect(response.text()).resolves.toBe("import './client/helper.js';\n");
+  });
+
+  it('serves the shared entry the descriptor names', async () => {
+    const response = await getFile(event('demo', 'global.js'));
+
+    expect(response.status).toBe(200);
+    await expect(response.text()).resolves.toContain('shared');
   });
 
   it('serves nested assets with a content type from their extension', async () => {
@@ -133,13 +141,24 @@ describe('plugin file route', () => {
   });
 });
 
-describe('plugin catalog route', () => {
-  it('lists the plugins the browser may load', async () => {
-    const response = await getCatalog(catalogEvent());
-    const body = (await response.json()) as { plugins: { id: string; clientUrl: string }[] };
+describe('plugin descriptor route', () => {
+  it('describes the files the browser runs for one plugin', async () => {
+    const response = await getDescriptor(descriptorEvent('demo'));
+    const body = (await response.json()) as { id: string; name: string; clientUrl: string; globalUrl?: string };
 
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('application/json');
-    expect(body.plugins).toEqual([expect.objectContaining({ id: 'demo', clientUrl: '/plugins/demo/client.js' })]);
+    expect(body).toMatchObject({
+      id: 'demo',
+      name: 'Demo Plugin',
+      clientUrl: '/plugins/demo/client.js',
+      globalUrl: '/plugins/demo/global.js'
+    });
+  });
+
+  it('404s for a plugin it does not serve', async () => {
+    await expect(getDescriptor(descriptorEvent('other'))).rejects.toSatisfy(
+      (error: unknown) => isHttpError(error) && error.status === 404
+    );
   });
 });

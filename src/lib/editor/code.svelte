@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, untrack } from 'svelte';
+  import { onDestroy, onMount, untrack } from 'svelte';
   import { browser } from '$app/environment';
   import { type monaco } from '$lib/monaco';
   import {
@@ -47,87 +47,101 @@
 
   let editorContainer = $state<HTMLDivElement>();
   let editor: monaco.editor.IStandaloneCodeEditor | undefined = $state();
+  let monacoApi = $state<monaco>();
+  let model: monaco.editor.ITextModel | undefined;
+  let changeHook: monaco.IDisposable | undefined;
+  let cursorHook: monaco.IDisposable | undefined;
 
   onMount(() => {
     if (!browser) return;
+    void import('$lib/monaco').then((module) => (monacoApi = module.monaco));
+  });
 
-    let model: monaco.editor.ITextModel | undefined;
-    let changeHook: monaco.IDisposable | undefined;
-    let cursorHook: monaco.IDisposable | undefined;
-    const init = import('$lib/monaco').then(({ monaco }) => {
-      if (!editorContainer) return;
-      const monacoEditor = monaco.editor.create(editorContainer, {
-        ...BASE_MONACO_OPTIONS,
-        ...toMonacoEditorOptions(editorSettings.current),
-        value: currentCode,
-        language
-      });
-      editor = monacoEditor;
-      model = monacoEditor.getModel() ?? undefined;
-      if (!model) return;
+  /**
+   * Create the editor as soon as both the module and the container exist.
+   * Creating it inside the import callback instead meant a component whose
+   * container was not bound yet (mounting while detached, e.g. a window built
+   * before its panel is attached) bailed out and showed "Loading Editor..."
+   * forever. The `created` flag is deliberately not `$state`: this effect
+   * reads it, and a state write would re-run the effect and tear down the
+   * editor it just made.
+   */
+  let created = false;
+  $effect(() => {
+    const container = editorContainer;
+    const loaded = monacoApi;
+    if (created || !container || !loaded) return;
+    created = true;
 
-      // Ported from the legacy telemetry TextInputHook: the constrained plugin
-      // applies an outside edit and instantly undoes it. The revert surfaces
-      // as a cursor change with reason `Undo` immediately followed by the
-      // undo's content change (a real user undo has the change first). Show
-      // Monaco's inline message on that signature.
-      let undoSignal = false;
+    const monacoEditor = loaded.editor.create(container, {
+      ...BASE_MONACO_OPTIONS,
+      ...toMonacoEditorOptions(editorSettings.current),
+      value: currentCode,
+      language
+    });
+    editor = monacoEditor;
+    model = monacoEditor.getModel() ?? undefined;
+    if (!model) return;
 
-      changeHook = model.onDidChangeContent(() => {
-        if (undoSignal) {
-          undoSignal = false;
-          monacoEditor
-            .getContribution('editor.contrib.messageController')
-            // @ts-expect-error EditorContributions cannot be type narrowed down
-            ?.showMessage('Cannot edit this area', monacoEditor.getPosition());
-        }
-      });
+    // Ported from the legacy telemetry TextInputHook: the constrained plugin
+    // applies an outside edit and instantly undoes it. The revert surfaces
+    // as a cursor change with reason `Undo` immediately followed by the
+    // undo's content change (a real user undo has the change first). Show
+    // Monaco's inline message on that signature.
+    let undoSignal = false;
 
-      cursorHook = monacoEditor.onDidChangeCursorPosition((e) => {
-        if (e.reason === monaco.editor.CursorChangeReason.Undo) {
-          undoSignal = true;
-          setTimeout(() => {
-            undoSignal = false;
-          }, 10);
-        }
-      });
-
-      if (options.useSections) {
-        // Legacy behavior: the whole template is shown, but only the slot
-        // ranges are editable; edits are written back per-slot.
-        const constrained = constrainedEditor(monaco);
-        constrained.initializeIn(editor);
-        constrained.addRestrictionsTo(
-          model,
-          slotRanges.map(({ range, label }) => ({ range, label, allowMultiline: true }))
-        );
-
-        // @ts-expect-error Added by non-TypeScript plugin
-        model.toggleHighlightOfEditableAreas({
-          cssClassForSingleLine: 'customClass--singleLine',
-          cssClassForMultiLine: 'customClass--multiLine'
-        });
-
-        // @ts-expect-error Added by non-TypeScript plugin
-        model.onDidChangeContentInEditableRange((newCode: Record<string, string>) => {
-          editorState.sections = { ...editorState.sections, ...newCode };
-        });
-      } else {
-        editor.onDidChangeModelContent(() => {
-          if (!editor) return;
-          editorState.sections = { ...editorState.sections, body: editor.getValue() };
-        });
+    changeHook = model.onDidChangeContent(() => {
+      if (undoSignal) {
+        undoSignal = false;
+        monacoEditor
+          .getContribution('editor.contrib.messageController')
+          // @ts-expect-error EditorContributions cannot be type narrowed down
+          ?.showMessage('Cannot edit this area', monacoEditor.getPosition());
       }
     });
 
-    return () => {
-      init.then(() => {
-        changeHook?.dispose();
-        cursorHook?.dispose();
-        editor?.dispose();
-        model?.dispose();
+    cursorHook = monacoEditor.onDidChangeCursorPosition((e) => {
+      if (e.reason === loaded.editor.CursorChangeReason.Undo) {
+        undoSignal = true;
+        setTimeout(() => {
+          undoSignal = false;
+        }, 10);
+      }
+    });
+
+    if (options.useSections) {
+      // Legacy behavior: the whole template is shown, but only the slot
+      // ranges are editable; edits are written back per-slot.
+      const constrained = constrainedEditor(loaded);
+      constrained.initializeIn(monacoEditor);
+      constrained.addRestrictionsTo(
+        model,
+        slotRanges.map(({ range, label }) => ({ range, label, allowMultiline: true }))
+      );
+
+      // @ts-expect-error Added by non-TypeScript plugin
+      model.toggleHighlightOfEditableAreas({
+        cssClassForSingleLine: 'customClass--singleLine',
+        cssClassForMultiLine: 'customClass--multiLine'
       });
-    };
+
+      // @ts-expect-error Added by non-TypeScript plugin
+      model.onDidChangeContentInEditableRange((newCode: Record<string, string>) => {
+        editorState.sections = { ...editorState.sections, ...newCode };
+      });
+    } else {
+      monacoEditor.onDidChangeModelContent(() => {
+        if (!editor) return;
+        editorState.sections = { ...editorState.sections, body: editor.getValue() };
+      });
+    }
+  });
+
+  onDestroy(() => {
+    changeHook?.dispose();
+    cursorHook?.dispose();
+    editor?.dispose();
+    model?.dispose();
   });
 
   // Live user settings. `editor` is state, so this also runs once the editor
@@ -158,7 +172,7 @@
           next[section.slot.label] = editorState.sections[section.slot.label] ?? '';
         }
         (
-          model as unknown as { updateValueInEditableRanges: (values: Record<string, string>) => void }
+          model as unknown as { updateValueInEditableRanges: (_values: Record<string, string>) => void }
         ).updateValueInEditableRanges(next);
         return;
       }
@@ -176,12 +190,17 @@
   });
 </script>
 
-<div
-  class="{rest.class} w-full h-full min-h-64"
-  bind:this={editorContainer}
->
+<div class="{rest.class} relative w-full h-full min-h-64 overflow-hidden">
+  <!-- Monaco measures this layer, and `absolute inset-0` keeps it pinned to the
+       host's box: the editor's own DOM never contributes to the host's height,
+       so an `automaticLayout` pass can never feed back into the next one (the
+       editor resizing its container, which resizes the editor...). -->
+  <div
+    class="absolute inset-0"
+    bind:this={editorContainer}
+  ></div>
   {#if !editor}
-    <p class="content-center w-full h-full text-grey-400">Loading Editor...</p>
+    <p class="absolute inset-0 content-center text-grey-400">Loading Editor...</p>
   {/if}
 </div>
 

@@ -6,6 +6,7 @@ import { loadEnv, type Plugin } from 'vite';
 import fs from 'node:fs';
 import path from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
+import { prebuiltPluginEntries } from './scripts/prebuiltPluginEntries';
 
 /** The plugin folder named by the global config, if the config file exists and names one. */
 function readConfiguredPluginDir(): string | undefined {
@@ -23,7 +24,9 @@ function readConfiguredPluginDir(): string | undefined {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const plugins = [monacoEditorEsmPlugin(), sveltekit(), tailwindcss()];
+  // The prebuilt plugin entries plugin goes last: it names the client build's
+  // plugin chunks after seeing the entry file pattern SvelteKit configured.
+  const plugins = [monacoEditorEsmPlugin(), sveltekit(), tailwindcss(), prebuiltPluginEntries()];
 
   if (env.SSL_DEV_SERVER === 'true') plugins.push(mkcert() as Plugin);
 

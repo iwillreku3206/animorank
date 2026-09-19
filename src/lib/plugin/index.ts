@@ -3,12 +3,6 @@ export { LoadedPlugin, type PluginServerModule, type PluginType } from './loaded
 export { ServerPlugin } from './serverPlugin';
 export { ClientPlugin } from './clientPlugin';
 export { ClientPluginLoader } from './clientLoader';
-export { ServerPluginService } from './serverService';
-export {
-  PLUGIN_ROUTE_PREFIX,
-  clientEntryOf,
-  pluginFileUrl,
-  type PluginCatalog,
-  type PluginClientDescriptor
-} from './catalog';
+export { ServerPluginService } from './serverPluginService';
+export { PLUGIN_ROUTE_PREFIX, pluginFileUrl, type PluginClientDescriptor } from './catalog';
 export { PluginManifestSchema, type PluginManifest } from './manifest';

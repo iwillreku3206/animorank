@@ -1,9 +1,12 @@
 import { type Form } from '$lib/form';
+import type { ComponentType } from 'svelte';
 import type { JsonValue } from '@zenstackhq/orm';
 import type { IntoJsonValue } from '$lib/types/utils';
 import { GlobalRegistryProvider } from '$lib/registry/global';
-import { Type } from '$lib/testCase/builtin/functionTestCase/type.svelte';
+import { Type, TypeSchema } from '$lib/testCase/builtin/functionTestCase/type.svelte';
+import type z from 'zod';
 import type { ValueDisplay, ValueEditor } from '$lib/testCase/builtin/functionTestCase/types';
+import ListIcon from '@iconify-svelte/fa6-solid/list';
 import { TypeRegistry } from '$lib/testCase/builtin/functionTestCase/typeRegistry';
 import { TypeValue } from '$lib/testCase/builtin/functionTestCase/typeValue.svelte';
 import { StringType } from '$lib/testCase/builtin/functionTestCase/types/string';
@@ -27,24 +30,27 @@ const arrayOptions = {
 
 /**
  * The element type an array hydrates to, from whatever its options carry: a
- * live `Type` (constructed here or rebuilt by the type editor), or the
- * serialized form the server receives (`{ type, options }`). A type that is not
+ * live `Type` (constructed here or rebuilt by the type editor), a type id, or
+ * the serialized `{ type, options }` the server receives. A serialized element
+ * is rebuilt through the registry so its own options survive — an element of
+ * `{ type: 'int', options: { size: 64 } }` stays int64. A type that is not
  * registered (or no longer is) falls back to string, so a test case written
  * against a removed type still opens.
  */
 export async function resolveElementType(element: unknown): Promise<Type> {
   if (element instanceof Type) return element;
-  const id =
-    typeof element === 'string'
-      ? element
-      : element !== null && typeof element === 'object' && 'type' in element && typeof element.type === 'string'
-        ? element.type
-        : undefined;
 
   const registry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
-  if (id !== undefined) {
+  if (typeof element === 'string') {
     try {
-      return (await registry.getStatic(id)).create();
+      return (await registry.getStatic(element)).create();
+    } catch {
+      // fall through to the default
+    }
+  }
+  if (element !== null && typeof element === 'object' && 'type' in element) {
+    try {
+      return await registry.from(element as z.infer<typeof TypeSchema>);
     } catch {
       // fall through to the default
     }
@@ -58,16 +64,6 @@ const floatElement = /^-?(\d+(\.\d*)?|\.\d+)(e[+-]?\d+)?$/i;
 /** The element option a raw (serialized or in-memory) options value carries. */
 function elementOption(options: unknown): unknown {
   return options !== null && typeof options === 'object' && 'element' in options ? options.element : undefined;
-}
-
-/** The element type id an array's options name, whether or not the type can be resolved. */
-export function elementIdOf(element: unknown): string {
-  if (element instanceof Type) return element.id;
-  if (typeof element === 'string') return element;
-  if (element !== null && typeof element === 'object' && 'type' in element && typeof element.type === 'string') {
-    return element.type;
-  }
-  return StringType.id();
 }
 
 /**
@@ -103,12 +99,12 @@ export class ArrayType extends Type<
 
   /** The element type id, as registered. */
   public elementId(): string {
-    return elementIdOf(this.options.element);
+    return this.elementType.id;
   }
 
-  /** The element type, resolved through the type registry. */
-  public async elementType(): Promise<Type> {
-    return resolveElementType(this.options.element);
+  /** The element type, nested in the options as a live instance. */
+  public get elementType(): Type {
+    return this.options.element;
   }
 
   public async validateValue(data: JsonValue): Promise<true | Error> {
@@ -116,13 +112,13 @@ export class ArrayType extends Type<
 
     // Every element is carried as text (the wire format is textual), so an
     // element that is not a string is never a valid element.
-    const element = await resolveElementType(this.options.element);
+    const element = this.elementType;
     const numeric = element.id === Float.id() || element.id === Integer.id();
     const validator = element.id === Float.id() ? floatElement : integerElement;
 
     for (const [index, item] of data.entries()) {
       if (typeof item !== 'string' || (numeric && !validator.test(item))) {
-        return new Error(`Element ${index} (${JSON.stringify(item)}) is not a valid ${element.displayName}`);
+        return new Error(`Element ${index} (${JSON.stringify(item)}) is not a valid ${element.detailedName}`);
       }
     }
     return true;
@@ -132,9 +128,16 @@ export class ArrayType extends Type<
     return new TypeValue(this, []);
   }
 
-  get displayName(): string {
-    return `Array of ${this.elementId()}`;
+  get staticName(): string {
+    return 'array';
   }
+
+  /** The C spelling of an array of this element, e.g. `char*[]` or `int32[]`. */
+  get detailedName(): string {
+    return `${this.options.element.detailedName}[]`;
+  }
+
+  static icon: ComponentType = ListIcon;
 
   get optionsForm() {
     return arrayOptions;
@@ -167,20 +170,5 @@ export class ArrayType extends Type<
   get valueForm(): ValueEditor {
     if (!ArrayType.components) throw new Error('The array type has no value editor on this runtime');
     return ArrayType.components.valueForm;
-  }
-}
-
-/**
- * Register a definition without failing when it is already registered. A
- * registry rejects a duplicate key, and the same definition is registered by
- * whichever runtime needs it; a second attempt is a no-op rather than an error.
- *
- * @param register the registration to attempt
- */
-export function registerOnce(register: () => void): void {
-  try {
-    register();
-  } catch (error) {
-    if (!(error instanceof Error) || !error.message.includes('already exists')) throw error;
   }
 }

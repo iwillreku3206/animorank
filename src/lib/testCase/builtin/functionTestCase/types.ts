@@ -75,6 +75,16 @@ export const FunctionSchema = z.object({
 });
 
 /**
+ * Whether a function's return value can be compared. The harness never emits a
+ * return export file for `void` (nor for an untyped return slot), so a `return`
+ * comparison on such a function could never run.
+ */
+export function canCompareReturn(fn: Function | undefined): boolean {
+  const returnType = fn?.returnType[0];
+  return Boolean(returnType && !returnType.isVoid);
+}
+
+/**
  * @description Defines a function input parameter
  */
 export type ParameterValue<T extends Type = Type> = {

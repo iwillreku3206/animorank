@@ -1,4 +1,5 @@
 import { extractZodSchema, type Form } from '$lib/form';
+import type { ComponentType } from 'svelte';
 import type { JsonValue } from '@zenstackhq/orm';
 import { z } from 'zod';
 import { Type } from '../../type.svelte';
@@ -7,6 +8,7 @@ import { TypeValue } from '../../typeValue.svelte';
 import { SerializableBigInt } from '$lib/types/serializableBigInt';
 import IntegerDisplay from './IntegerDisplay.svelte';
 import IntegerEditor from './IntegerEditor.svelte';
+import HashtagIcon from '@iconify-svelte/fa6-solid/hashtag';
 import type { IntoJsonValue } from '$lib/types/utils';
 
 const integerOptions = {
@@ -96,7 +98,7 @@ export class Integer extends Type<Value, typeof integerOptions> {
     const min = signed === false ? 0n : -(1n << (bits - 1n));
     const max = signed === false ? (1n << bits) - 1n : (1n << (bits - 1n)) - 1n;
     if (value < min || value > max) {
-      return new Error(`Value ${value} is out of range for ${this.displayName} (${min}..${max})`);
+      return new Error(`Value ${value} is out of range for ${this.detailedName} (${min}..${max})`);
     }
 
     return true;
@@ -105,12 +107,18 @@ export class Integer extends Type<Value, typeof integerOptions> {
     return new TypeValue(this, { value: '0' });
   }
 
-  get displayName(): string {
+  get staticName(): string {
+    return 'int';
+  }
+
+  get detailedName(): string {
     const { size, signed } = this.options;
     if (signed === false) return `uint${size}`;
     if (signed === true) return `signed int${size}`;
     return `int${size}`;
   }
+
+  static icon: ComponentType = HashtagIcon;
 
   get optionsForm() {
     return integerOptions;

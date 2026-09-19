@@ -9,14 +9,15 @@ import { LessThanOperatorTypeRegistry } from '$lib/testCase/builtin/functionTest
 import { LessThanEqualOperatorTypeRegistry } from '$lib/testCase/builtin/functionTestCase/operators/less_than_equal/registry';
 import { WithinRangeOperatorTypeRegistry } from '$lib/testCase/builtin/functionTestCase/operators/within_range/registry';
 import { RegistryProvider } from './registryProvider';
-import { ConfigSectionRegistry } from '$lib/config/registry';
+import { AppConfig } from '$lib/config/config';
+import { AppConfigRegistry, ConfigSectionRegistry } from '$lib/config/registry';
 import { LanguageRegistry } from '$lib/language/languageRegistry';
 
 export class GlobalRegistryProvider extends RegistryProvider {
   private static _instance: GlobalRegistryProvider | null;
 
   private constructor() {
-    super();
+    super('global');
     // Shared/builtin registries reachable from client components and server code.
     this.registerRegistry(new TestCaseRegistry());
     this.registerRegistry(new OperatorRegistry());
@@ -28,7 +29,10 @@ export class GlobalRegistryProvider extends RegistryProvider {
     this.registerRegistry(new LessThanOperatorTypeRegistry());
     this.registerRegistry(new LessThanEqualOperatorTypeRegistry());
     this.registerRegistry(new WithinRangeOperatorTypeRegistry());
-    this.registerRegistry(new ConfigSectionRegistry());
+    // The app config every consumer reads, hydrated through the section
+    // registry; the file behind it is read on first access.
+    const configSections = this.registerRegistry(new ConfigSectionRegistry());
+    this.registerServiceRegistry(AppConfig, new AppConfigRegistry(configSections));
     this.registerRegistry(new LanguageRegistry());
   }
 

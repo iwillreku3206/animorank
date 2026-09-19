@@ -20,7 +20,7 @@ export class ServerRegistryProvider extends RegistryProvider {
   private static _instance: ServerRegistryProvider | null;
 
   private constructor() {
-    super();
+    super('server');
     // Registries and services for server-side execution.
     this.registerServiceRegistry(Logger, new LoggerRegistry());
     this.registerServiceRegistry(CodeExecutor, new CodeExecutorRegistry());

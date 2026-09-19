@@ -1,4 +1,5 @@
 import { extractZodSchema, type Form } from '$lib/form';
+import type { ComponentType } from 'svelte';
 import type { JsonValue } from '@zenstackhq/orm';
 import { z } from 'zod';
 import { Type } from '../../type.svelte';
@@ -7,6 +8,7 @@ import { TypeValue } from '../../typeValue.svelte';
 import type { IntoJsonValue } from '$lib/types/utils';
 import StringDisplay from './StringDisplay.svelte';
 import StringEditor from './StringEditor.svelte';
+import FontIcon from '@iconify-svelte/fa6-solid/font';
 
 const stringOptions = {
   fields: {}
@@ -40,9 +42,16 @@ export class StringType extends Type<Value, typeof stringOptions> {
     return new TypeValue(this, { value: '' });
   }
 
-  get displayName(): string {
-    return 'String';
+  get staticName(): string {
+    return 'string';
   }
+
+  /** A string value crosses the harness boundary as a C string. */
+  get detailedName(): string {
+    return 'char*';
+  }
+
+  static icon: ComponentType = FontIcon;
 
   get optionsForm() {
     return stringOptions;

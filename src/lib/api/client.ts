@@ -9,9 +9,10 @@ export class ClientAnimoRankAPI extends AnimoRankAPI {
   public readonly clientRegistryProvider: ReadOnlyRegistryProvider;
   public readonly clientRegistryProviderRegistrar: RegistryProviderRegistrar;
 
-  public constructor(pluginId: string) {
+  /** @param pluginFilesUrl the URL the plugin's files are served under, ending in `/`; see {@link AnimoRankAPI.import} */
+  public constructor(pluginId: string, pluginFilesUrl: string) {
     const provider = ClientRegistryProvider.instance();
-    super(GlobalRegistryProvider.instance(), pluginId);
+    super(GlobalRegistryProvider.instance(), pluginId, pluginFilesUrl);
     this.clientRegistryProvider = new ReadOnlyRegistryProvider(provider);
     this.clientRegistryProviderRegistrar = new RegistryProviderRegistrar(provider, pluginId);
   }

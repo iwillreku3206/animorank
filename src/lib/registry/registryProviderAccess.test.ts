@@ -8,6 +8,13 @@ class ProbeService {
   public static displayName = 'ProbeService';
 }
 
+/** A bare provider: what the app's own providers extend. */
+class TestProvider extends RegistryProvider {
+  public constructor() {
+    super('global');
+  }
+}
+
 class ProbeRegistry extends ServiceRegistry<ProbeService, [], typeof ProbeService> {
   public id = 'probe';
   public constructor() {
@@ -22,7 +29,7 @@ class LazyProbeRegistry extends ServiceRegistry<ProbeService, [], typeof ProbeSe
 
 describe('RegistryProviderRegistrar', () => {
   it('registers a registry under the plugin namespace and by its class', async () => {
-    const provider = new RegistryProvider();
+    const provider = new TestProvider();
     const registry = new ProbeRegistry();
     const registered = new RegistryProviderRegistrar(provider, 'plugin-a').registerRegistry(registry);
 
@@ -32,7 +39,7 @@ describe('RegistryProviderRegistrar', () => {
   });
 
   it('registers a service registry that getService resolves', async () => {
-    const provider = new RegistryProvider();
+    const provider = new TestProvider();
     const registry = new ProbeRegistry();
     new RegistryProviderRegistrar(provider, 'plugin-a').registerServiceRegistry(ProbeService, registry);
 
@@ -41,7 +48,7 @@ describe('RegistryProviderRegistrar', () => {
   });
 
   it('registers a lazy registry that loads once', async () => {
-    const provider = new RegistryProvider();
+    const provider = new TestProvider();
     let loads = 0;
     new RegistryProviderRegistrar(provider, 'plugin-a').registerRegistryLazy('lazy', async () => {
       loads += 1;
@@ -58,7 +65,7 @@ describe('RegistryProviderRegistrar', () => {
   });
 
   it('hands out namespaced registrars for registries the provider already holds', async () => {
-    const provider = new RegistryProvider();
+    const provider = new TestProvider();
     const registry = new ProbeRegistry();
     new RegistryProviderRegistrar(provider, 'plugin-a').registerRegistry(registry);
 
@@ -69,7 +76,7 @@ describe('RegistryProviderRegistrar', () => {
   });
 
   it('keeps registries of different plugins apart', async () => {
-    const provider = new RegistryProvider();
+    const provider = new TestProvider();
     new RegistryProviderRegistrar(provider, 'plugin-a').registerRegistry(new ProbeRegistry());
     new RegistryProviderRegistrar(provider, 'plugin-b').registerRegistry(new ProbeRegistry());
 
@@ -80,7 +87,7 @@ describe('RegistryProviderRegistrar', () => {
 
 describe('ReadOnlyRegistryProvider', () => {
   it('reads registries through read-only views', async () => {
-    const provider = new RegistryProvider();
+    const provider = new TestProvider();
     const registry = new ProbeRegistry();
     new RegistryProviderRegistrar(provider, 'plugin-a').registerRegistry(registry);
     const readOnly = new ReadOnlyRegistryProvider(provider);
@@ -91,7 +98,7 @@ describe('ReadOnlyRegistryProvider', () => {
   });
 
   it('does not expose registry registration', () => {
-    const readOnly = new ReadOnlyRegistryProvider(new RegistryProvider());
+    const readOnly = new ReadOnlyRegistryProvider(new TestProvider());
     expect('registerRegistry' in readOnly).toBe(false);
     expect('registerServiceRegistry' in readOnly).toBe(false);
     expect('registerRegistryLazy' in readOnly).toBe(false);

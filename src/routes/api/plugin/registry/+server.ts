@@ -2,7 +2,6 @@ import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { providerForDomain } from '../domains';
 
-// Attribution reflects the plugins loaded in this process: runtime state.
 export const prerender = false;
 
 /**

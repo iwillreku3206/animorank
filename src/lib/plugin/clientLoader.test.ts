@@ -1,18 +1,19 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import http from 'node:http';
 import vm from 'node:vm';
 import type { AddressInfo } from 'node:net';
 import {
   ClientPluginLoader,
-  prebuiltPluginDescriptors,
   type PluginClientModule,
-  type PluginModuleImporter
+  type PluginModuleImporter,
+  type ClientPluginLoaderOptions
 } from './clientLoader';
+import type { PluginPageHookContexts } from './clientPlugin';
 import type { PluginClientDescriptor } from './catalog';
 
-/** A plugin module the test server serves, plus how often the browser evaluated it. */
+/** A plugin the test server serves, plus how often the browser evaluated it. */
 interface ServedPlugin {
-  descriptor: PluginClientDescriptor;
+  id: string;
   code: string;
   loaded: number;
   /** Whether the plugin also ships the shared `global.js` entry. */
@@ -21,37 +22,65 @@ interface ServedPlugin {
 
 let server: http.Server;
 let origin: string;
-let catalogRequests = 0;
-let catalogFails = false;
+let descriptorRequests: string[] = [];
+let descriptorFails = false;
 const served = new Map<string, ServedPlugin>();
 
 function serve(id: string, code: string, shared = false): ServedPlugin {
-  const plugin: ServedPlugin = {
-    descriptor: {
-      id,
-      manifestVersion: '0',
-      name: `Plugin ${id}`,
-      author: 'tester',
-      version: '1.0.0',
-      category: ['test'],
-      clientUrl: `/plugins/${id}/client.js`,
-      globalUrl: shared ? `/plugins/${id}/global.js` : undefined
-    },
-    code,
-    loaded: 0,
-    shared
-  };
+  const plugin: ServedPlugin = { id, code, loaded: 0, shared };
   served.set(id, plugin);
   return plugin;
 }
 
-/** Plugin module that records its initialization so the test can read it back. */
+/** The descriptor the plugin route serves for one plugin, as the app's route builds it. */
+function descriptorFor(plugin: ServedPlugin): PluginClientDescriptor {
+  return {
+    id: plugin.id,
+    manifestVersion: '0',
+    name: `Plugin ${plugin.id}`,
+    author: 'tester',
+    version: '1.0.0',
+    category: ['test'],
+    clientUrl: `/plugins/${plugin.id}/client.js`,
+    globalUrl: plugin.shared ? `/plugins/${plugin.id}/global.js` : undefined
+  };
+}
+
+/**
+ * Plugin module that records its initialization so the test can read it back.
+ * The record is written from `init` itself, so importing the module without
+ * initializing it (which is how a page hook checks a plugin's class) does not
+ * look like a load.
+ */
 function recordingPlugin(id: string): string {
-  return `globalThis.__pluginInits = (globalThis.__pluginInits ?? []).concat('${id}');
-export default class TestClientPlugin {
+  return `export default class TestClientPlugin {
   async init(api) {
+    globalThis.__pluginInits = (globalThis.__pluginInits ?? []).concat('${id}');
     globalThis.__lastApi = api;
   }
+}
+`;
+}
+
+/**
+ * Plugin module whose class overrides the named page hooks; every call records
+ * `id:hook:context name`, and a hook named in `failing` throws after recording.
+ * Initialization is recorded from `init` itself — importing the module to check
+ * its class is not loading it.
+ */
+function hookingPlugin(id: string, hooks: readonly string[], failing: readonly string[] = []): string {
+  const bodies = hooks.map(
+    (hook) => `  ${hook}(context) {
+    globalThis.__hookCalls = (globalThis.__hookCalls ?? []).concat('${id}:${hook}:' + context.name);${
+      failing.includes(hook) ? "\n    throw new Error('the hook failed');" : ''
+    }
+  }`
+  );
+  return `export default class TestClientPlugin {
+  async init() {
+    globalThis.__pluginInits = (globalThis.__pluginInits ?? []).concat('${id}');
+  }
+${bodies.join('\n')}
 }
 `;
 }
@@ -84,8 +113,8 @@ const browserImport: PluginModuleImporter = async (url) => {
   return evaluateModule(await response.text());
 };
 
-function loader(): ClientPluginLoader {
-  return new ClientPluginLoader({ catalogUrl: `${origin}/plugins`, importModule: browserImport });
+function loader(options: Partial<ClientPluginLoaderOptions> = {}): ClientPluginLoader {
+  return new ClientPluginLoader({ routeBase: `${origin}/plugins`, importModule: browserImport, ...options });
 }
 
 /** Entry points the loader has imported, in order. */
@@ -95,22 +124,33 @@ function inits(): string[] {
   return Reflect.get(globalThis, '__pluginInits') ?? [];
 }
 
+/** Every page hook call a fixture plugin recorded. */
+function hookCalls(): string[] {
+  return Reflect.get(globalThis, '__hookCalls') ?? [];
+}
+
 beforeAll(async () => {
   server = http.createServer((request, response) => {
     const url = new URL(request.url ?? '/', 'http://localhost');
-    if (url.pathname === '/plugins') {
-      catalogRequests += 1;
-      if (catalogFails) {
+    const [, , id, file] = url.pathname.split('/');
+    const plugin = served.get(id);
+
+    // No file names the plugin itself: the descriptor the client loads it by.
+    if (file === undefined) {
+      descriptorRequests.push(id);
+      if (descriptorFails) {
         response.writeHead(500).end('boom');
         return;
       }
+      if (!plugin) {
+        response.writeHead(404).end('not found');
+        return;
+      }
       response.writeHead(200, { 'content-type': 'application/json' });
-      response.end(JSON.stringify({ plugins: [...served.values()].map((plugin) => plugin.descriptor) }));
+      response.end(JSON.stringify(descriptorFor(plugin)));
       return;
     }
 
-    const [, , id, file] = url.pathname.split('/');
-    const plugin = served.get(id);
     if (!plugin || (file !== 'client.js' && file !== 'global.js')) {
       response.writeHead(404).end('not found');
       return;
@@ -131,6 +171,10 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 describe('ClientPluginLoader', () => {
@@ -181,45 +225,29 @@ describe('ClientPluginLoader', () => {
     expect(plugin.loaded).toBe(1);
   });
 
-  it('fetches the catalog once and caches it', async () => {
-    serve('catalog-plugin', recordingPlugin('catalog-plugin'));
+  it("asks the route for a plugin's descriptor once per id", async () => {
+    serve('descriptor-plugin', recordingPlugin('descriptor-plugin'));
     const plugins = loader();
 
-    catalogRequests = 0;
-    const first = await plugins.catalog();
-    const second = await plugins.catalog();
+    descriptorRequests = [];
+    await Promise.all([plugins.getPlugin('descriptor-plugin'), plugins.getPlugin('descriptor-plugin')]);
 
-    expect(catalogRequests).toBe(1);
-    expect(second).toEqual(first);
-    expect(first.map((plugin) => plugin.id)).toContain('catalog-plugin');
+    expect(descriptorRequests).toEqual(['descriptor-plugin']);
   });
 
   it('returns undefined for a plugin the server does not offer', async () => {
     await expect(loader().getPlugin('nope')).resolves.toBeUndefined();
   });
 
-  it('retries a failed catalog fetch instead of caching the failure', async () => {
+  it('retries a failed descriptor request instead of caching the failure', async () => {
+    serve('retry-descriptor', recordingPlugin('retry-descriptor'));
     const plugins = loader();
-    catalogFails = true;
-    await expect(plugins.catalog()).rejects.toThrow(/plugin catalog/);
-    catalogFails = false;
 
-    await expect(plugins.catalog()).resolves.toBeInstanceOf(Array);
-  });
+    descriptorFails = true;
+    await expect(plugins.getPlugin('retry-descriptor')).rejects.toThrow(/Failed to load plugin/);
+    descriptorFails = false;
 
-  it('loads the dynamic plugins through loadAll', async () => {
-    serve('all-a', recordingPlugin('all-a'));
-    serve('all-b', recordingPlugin('all-b'));
-    const plugins = new ClientPluginLoader({
-      catalogUrl: `${origin}/plugins`,
-      importModule: browserImport,
-      prebuilt: []
-    });
-
-    const loaded = await plugins.loadAll();
-
-    expect(loaded.length).toBeGreaterThanOrEqual(2);
-    expect(inits()).toEqual(expect.arrayContaining(['all-a', 'all-b']));
+    await expect(plugins.getPlugin('retry-descriptor')).resolves.toBeDefined();
   });
 
   it('rejects a client entry that has no default export', async () => {
@@ -238,38 +266,51 @@ describe('ClientPluginLoader', () => {
     await expect(plugins.getPlugin('retry-plugin')).resolves.toBeDefined();
   });
 
-  it('loads a prebuilt plugin from its Vite module path, never the plugin route', async () => {
+  it('imports the entries the descriptor names, wherever they are served', async () => {
+    // A prebuilt plugin's entries are chunks of the app's client build, not
+    // files of the plugin route; the loader fetches whatever the descriptor
+    // names and knows no path of its own.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              id: 'prebuilt-plugin',
+              manifestVersion: '0',
+              name: 'Builtin',
+              author: 'app',
+              version: '1.0.0',
+              category: ['test'],
+              clientUrl: '/app/immutable/chunks/prebuilt-client.js',
+              globalUrl: '/app/immutable/chunks/prebuilt-global.js'
+            } satisfies PluginClientDescriptor),
+            { status: 200 }
+          )
+      )
+    );
+    const urls: string[] = [];
     const plugins = new ClientPluginLoader({
-      catalogUrl: `${origin}/plugins`,
-      prebuilt: [
-        {
-          id: 'bundled-plugin',
-          manifestVersion: '0',
-          name: 'Bundled',
-          author: 'app',
-          version: '1.0.0',
-          category: ['test'],
-          modulePath: '../../../plugins/bundled-plugin/client.ts'
-        }
-      ],
-      importModule: async (path) => {
-        expect(path).toBe('../../../plugins/bundled-plugin/client.ts');
-        return evaluateModule(recordingPlugin('bundled-plugin'));
+      importModule: async (url) => {
+        urls.push(url);
+        return {
+          default: class {
+            async init() {}
+          }
+        } as never;
       }
     });
 
-    const plugin = await plugins.getPlugin('bundled-plugin');
+    await expect(plugins.getPlugin('prebuilt-plugin')).resolves.toBeDefined();
 
-    expect(plugin).toBeDefined();
-    expect(inits()).toContain('bundled-plugin');
+    expect(urls).toEqual(['/app/immutable/chunks/prebuilt-global.js', '/app/immutable/chunks/prebuilt-client.js']);
   });
 
   it("runs a dynamic plugin's shared entry before its client entry", async () => {
     order = [];
     serve('global-plugin', recordingPlugin('global-plugin'), true);
     const plugins = new ClientPluginLoader({
-      catalogUrl: `${origin}/plugins`,
-      prebuilt: [],
+      routeBase: `${origin}/plugins`,
       importModule: async (path) => {
         order.push(path.endsWith('global.js') ? 'global' : 'client');
         return {
@@ -280,86 +321,72 @@ describe('ClientPluginLoader', () => {
       }
     });
 
-    const descriptor = (await plugins.catalog()).find((plugin) => plugin.id === 'global-plugin');
-    expect(descriptor?.globalUrl).toBe('/plugins/global-plugin/global.js');
-
     await plugins.getPlugin('global-plugin');
     expect(order).toEqual(['global', 'client']);
   });
-
-  it("runs a prebuilt plugin's shared entry before its client entry", async () => {
-    order = [];
-    const plugins = new ClientPluginLoader({
-      catalogUrl: `${origin}/plugins`,
-      prebuilt: [
-        {
-          id: 'prebuilt-global',
-          manifestVersion: '0',
-          name: 'Bundled',
-          author: 'app',
-          version: '1.0.0',
-          category: ['test'],
-          modulePath: 'virtual/client.ts',
-          loadGlobal: async () => {
-            order.push('global');
-          }
-        }
-      ],
-      importModule: async () => {
-        order.push('client');
-        return {
-          default: class {
-            async init() {}
-          }
-        } as never;
-      }
-    });
-
-    await plugins.getPlugin('prebuilt-global');
-
-    expect(order).toEqual(['global', 'client']);
-  });
-
-  it('prefers a prebuilt plugin over a dynamic one with the same id', async () => {
-    serve('shared-id', recordingPlugin('shared-id'));
-
-    const plugins = new ClientPluginLoader({
-      catalogUrl: `${origin}/plugins`,
-      prebuilt: [
-        {
-          id: 'shared-id',
-          manifestVersion: '0',
-          name: 'Bundled',
-          author: 'app',
-          version: '1.0.0',
-          category: ['test'],
-          modulePath: 'virtual'
-        }
-      ],
-      importModule: async () => ({ default: class extends class {} {} as never }) as never
-    });
-
-    const catalog = await plugins.catalog();
-
-    expect(catalog.filter((plugin) => plugin.id === 'shared-id')).toHaveLength(1);
-    expect(catalog.find((plugin) => plugin.id === 'shared-id')?.modulePath).toBe('virtual');
-  });
 });
 
-describe('prebuiltPluginDescriptors', () => {
-  it('resolves every app plugin to a Vite module path, never to a plugin-route URL', () => {
-    const descriptors = prebuiltPluginDescriptors();
+/**
+ * Page hooks: which plugins a page loads, and which of them are told the page
+ * has loaded. A plugin answers a page by overriding its hook, and the class is
+ * all the loader needs to decide — a plugin that leaves the hook alone is
+ * never initialized for that page.
+ */
+describe('ClientPluginLoader page hooks', () => {
+  const solvePage = { name: 'the solve page' } as unknown as PluginPageHookContexts['onSolvePageLoad'];
 
-    // The app's own plugin ships here; an empty list means the globs missed it.
-    const arrayTypes = descriptors.find((descriptor) => descriptor.id === 'array-types');
-    expect(arrayTypes?.modulePath).toMatch(/\/plugins\/array-types\/client\.ts$/);
-    expect(arrayTypes?.loadGlobal).toBeTypeOf('function');
+  it('loads the plugins that answer the hook, and calls each with the context', async () => {
+    serve('solver', hookingPlugin('solver', ['onSolvePageLoad']));
+    serve('editor-plugin', hookingPlugin('editor-plugin', ['onProblemEditorLoad']));
+    const plugins = loader({ prebuiltPlugins: () => ['solver', 'editor-plugin'] });
 
-    for (const descriptor of descriptors) {
-      // Prebuilt plugins are bundled with the app, so they must not go through
-      // the plugin route, which exists for dynamically loaded plugins only.
-      expect(descriptor.modulePath).toMatch(/\/plugins\/[^/]+\/client\.ts$/);
-      expect(descriptor.clientUrl).toBeUndefined();
-    }
+    await plugins.notifyPageHook('onSolvePageLoad', solvePage);
+
+    expect(inits()).toContain('solver');
+    expect(inits()).not.toContain('editor-plugin');
+    expect(hookCalls()).toEqual(['solver:onSolvePageLoad:the solve page']);
+  });
+
+  it('leaves a plugin that does not answer the hook unloaded', async () => {
+    serve('plain-plugin', recordingPlugin('plain-plugin'));
+    const plugins = loader({ prebuiltPlugins: () => ['plain-plugin'] });
+
+    await plugins.notifyPageHook('onSolvePageLoad', solvePage);
+
+    expect(inits()).not.toContain('plain-plugin');
+    expect(hookCalls()).not.toContain('plain-plugin:onSolvePageLoad:the solve page');
+  });
+
+  it('tells a plugin that was already loaded', async () => {
+    serve('loaded-solver', hookingPlugin('loaded-solver', ['onSolvePageLoad']));
+    const plugins = loader();
+
+    await plugins.getPlugin('loaded-solver');
+    await plugins.notifyPageHook('onSolvePageLoad', solvePage);
+
+    expect(hookCalls()).toContain('loaded-solver:onSolvePageLoad:the solve page');
+  });
+
+  it('keeps a failing hook from stopping the other plugins', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    serve('failing-solver', hookingPlugin('failing-solver', ['onSolvePageLoad'], ['onSolvePageLoad']));
+    serve('working-solver', hookingPlugin('working-solver', ['onSolvePageLoad']));
+    const plugins = loader({ prebuiltPlugins: () => ['failing-solver', 'working-solver'] });
+
+    await plugins.notifyPageHook('onSolvePageLoad', solvePage);
+
+    expect(hookCalls()).toContain('working-solver:onSolvePageLoad:the solve page');
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it('passes over a plugin the route does not serve', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const plugins = loader({ prebuiltPlugins: () => ['not-served'] });
+
+    await expect(plugins.notifyPageHook('onSolvePageLoad', solvePage)).resolves.toBeUndefined();
+
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 });

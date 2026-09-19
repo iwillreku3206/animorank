@@ -32,16 +32,25 @@ export class LoadedPlugin {
   public readonly files: Map<string, Buffer>;
   /** Module namespace of the eagerly imported server entry. */
   public readonly server: PluginServerModule;
+  /**
+   * URL the plugin's own files live under, ending in `/`, for a plugin whose
+   * files are there to read — a dynamic plugin's directory. `undefined` for a
+   * prebuilt plugin, whose code is compiled into the app. The plugin's API
+   * resolves file imports against it (see `AnimoRankAPI.import`).
+   */
+  public readonly filesUrl: string | undefined;
 
   public constructor(
     type: PluginType,
     manifest: PluginManifest,
     files: Map<string, Buffer>,
-    server: PluginServerModule
+    server: PluginServerModule,
+    filesUrl?: string
   ) {
     this.type = type;
     this.manifest = manifest;
     this.files = files;
     this.server = server;
+    this.filesUrl = filesUrl;
   }
 }

@@ -1,4 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import fs from 'fs/promises';
+import os from 'os';
+import path from 'path';
+import { pathToFileURL } from 'url';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ClientAnimoRankAPI } from './client';
 import { ServerAnimoRankAPI } from './server';
 import { GlobalRegistryProvider } from '$lib/registry/global';
@@ -59,7 +63,7 @@ describe('ServerAnimoRankAPI', () => {
 
 describe('ClientAnimoRankAPI', () => {
   it('registers registries into the client registry provider', () => {
-    const api = new ClientAnimoRankAPI('probe-plugin');
+    const api = new ClientAnimoRankAPI('probe-plugin', '/plugins/probe-plugin/');
     const registry = new ClientProbeRegistry();
     api.clientRegistryProviderRegistrar.registerRegistry(registry);
 
@@ -68,16 +72,79 @@ describe('ClientAnimoRankAPI', () => {
   });
 
   it('exposes the global pair like the server API does', () => {
-    const api = new ClientAnimoRankAPI('probe-plugin');
+    const api = new ClientAnimoRankAPI('probe-plugin', '/plugins/probe-plugin/');
 
     expect(api.globalRegistryProviderRegistrar.id).toBe('probe-plugin');
     expect(api.globalRegistryProvider.getRegistry(LanguageRegistry).keys()).toContain('c');
   });
 
   it('does not reach server-only registries', () => {
-    const api = new ClientAnimoRankAPI('probe-plugin');
+    const api = new ClientAnimoRankAPI('probe-plugin', '/plugins/probe-plugin/');
 
     expect(ServerRegistryProvider.instance().getRegistry(LoggerRegistry)).toBeInstanceOf(LoggerRegistry);
     expect(() => api.clientRegistryProvider.getRegistry(LoggerRegistry)).toThrow(/ServiceRegistry not found/);
+  });
+});
+
+/**
+ * The base class resolves a plugin's file imports for both sides; the server
+ * API is the one that can reach real files here.
+ */
+describe('AnimoRankAPI.import', () => {
+  let root: string;
+
+  beforeEach(async () => {
+    root = await fs.mkdtemp(path.join(os.tmpdir(), 'plugin-files-'));
+  });
+
+  afterEach(async () => {
+    await fs.rm(root, { recursive: true, force: true });
+  });
+
+  it('imports a file of the plugin by its path within the plugin', async () => {
+    await fs.mkdir(path.join(root, 'lib'));
+    // The plugin directory is not a package, so a module it ships is named as one.
+    await fs.writeFile(path.join(root, 'lib', 'helper.mjs'), 'export const greeting = "hello from the plugin";\n');
+    const api = new ServerAnimoRankAPI('probe-plugin', pathToFileURL(root).href + '/');
+
+    const helper = await api.import<{ greeting: string }>('./lib/helper.mjs');
+
+    expect(helper.greeting).toBe('hello from the plugin');
+  });
+
+  it('takes a path without the leading `./`, through the client API too', async () => {
+    await fs.writeFile(path.join(root, 'helper.mjs'), 'export const greeting = "hi from the client";\n');
+    const api = new ClientAnimoRankAPI('probe-plugin', pathToFileURL(root).href + '/');
+
+    const helper = await api.import<{ greeting: string }>('helper.mjs');
+
+    expect(helper.greeting).toBe('hi from the client');
+  });
+
+  it('refuses a path within the plugin when the plugin has no files of its own', async () => {
+    // A prebuilt plugin is compiled into the app: its files are not the plugin's to load.
+    const api = new ServerAnimoRankAPI('probe-plugin');
+
+    await expect(api.import('lib/helper.mjs')).rejects.toThrow(/statically/);
+  });
+
+  it('imports a file the plugin names by an absolute path, without files of its own', async () => {
+    await fs.writeFile(path.join(root, 'shared.mjs'), 'export const origin = "a local file";\n');
+    // No files URL: the path names its own location, so nothing of the plugin is needed.
+    const api = new ServerAnimoRankAPI('probe-plugin');
+
+    const shared = await api.import<{ origin: string }>(path.join(root, 'shared.mjs'));
+
+    expect(shared.origin).toBe('a local file');
+  });
+
+  it('imports a file the plugin names by URL, not the plugin’s own', async () => {
+    await fs.writeFile(path.join(root, 'shared.mjs'), 'export const origin = "a local file";\n');
+    // A files URL that does not exist: a path that names its own location never uses it.
+    const api = new ServerAnimoRankAPI('probe-plugin', '/plugin/files/that/do/not/exist/');
+
+    const shared = await api.import<{ origin: string }>(pathToFileURL(path.join(root, 'shared.mjs')).href);
+
+    expect(shared.origin).toBe('a local file');
   });
 });

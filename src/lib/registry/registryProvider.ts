@@ -1,23 +1,30 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ServiceRegistry } from '.';
+import { findRegistryPlugin } from './clientPlugins';
 
 export type AbstractConstructor<T = any> = abstract new (..._args: any[]) => T;
 
+/** The registry providers a plugin can register into, as the plugin API names them. */
+export type RegistryDomain = 'client' | 'global' | 'server';
+
+/** The domains a browser loads plugins for: the client and global providers live there. */
+export type ClientRegistryDomain = Exclude<RegistryDomain, 'server'>;
+
 export class RegistryProvider {
+  /** Which provider family this is, as the plugin API names it; see {@link RegistryDomain}. */
+  public readonly domain: RegistryDomain;
+
   protected _registries = new Map<AbstractConstructor<any>, ServiceRegistry<any, any[], any>>();
   private _registryIds = new Map<string, ServiceRegistry<any, any[], any>>();
   private _lazyRegistries = new Map<string, () => Promise<ServiceRegistry<any, any[], any>>>();
   private _inflightRegistries = new Map<string, Promise<ServiceRegistry<any, any[], any>>>();
   /** The namespace (plugin id) each registry was registered under; see {@link registeredBy}. */
   private _registryOrigins = new Map<string, string>();
-  /** Loads whatever provides a registry that is registered nowhere yet; see {@link setRegistryResolver}. */
-  private _registryResolver: ((_registryId: string) => Promise<void>) | null = null;
-  /** Miss resolver installed on every registry of this provider; see {@link setRegistryMissResolver}. */
-  private _registryMissResolver: ((_registry: ServiceRegistry<any, any[], any>, _key: string) => Promise<void>) | null =
-    null;
-  /** Writers resolver installed on every registry of this provider; see {@link setRegistryWritersResolver}. */
-  private _registryWritersResolver: ((_registry: ServiceRegistry<any, any[], any>) => Promise<void>) | null = null;
+
+  /** @param domain the domain this provider's registries are named by, as a plugin registers into it. */
+  protected constructor(domain: RegistryDomain) {
+    this.domain = domain;
+  }
 
   public async getService<T, C extends any[]>(service: AbstractConstructor<T>, ...args: C): Promise<T> {
     const serviceRegistry = this._registries.get(service);
@@ -43,9 +50,10 @@ export class RegistryProvider {
    * Look up a registry by its fully-qualified key of the form `namespace:id`
    * (e.g. `animorank:test_case`). Resolves eagerly registered registries and
    * lazily registered ones (loading at most once; concurrent lookups share a
-   * single load). When the id is registered nowhere, the registry resolver
-   * (see {@link setRegistryResolver}) gets a chance to load a provider — a
-   * plugin — before the lookup is retried once. Throws when the key stays unknown.
+   * single load). When the id is registered nowhere, a browser loads the
+   * plugin that provides it (see {@link findRegistryPlugin}) before the lookup
+   * is retried once; on the server a miss is final. Throws when the key stays
+   * unknown.
    */
   public async getRegistryById<T extends ServiceRegistry<any, any[], any>>(qualifiedId: string): Promise<T> {
     const registry = await this._lookupRegistry(qualifiedId);
@@ -53,12 +61,10 @@ export class RegistryProvider {
       return registry as T;
     }
 
-    if (this._registryResolver) {
-      await this._registryResolver(qualifiedId);
-      const loaded = await this._lookupRegistry(qualifiedId);
-      if (loaded) {
-        return loaded as T;
-      }
+    await findRegistryPlugin(this.domain, qualifiedId);
+    const loaded = await this._lookupRegistry(qualifiedId);
+    if (loaded) {
+      return loaded as T;
     }
     throw new Error(`Registry with id '${qualifiedId}' not found`);
   }
@@ -128,49 +134,13 @@ export class RegistryProvider {
   }
 
   /**
-   * Resolver called with an id `getRegistryById` cannot resolve; it should load
-   * whatever provides that registry (e.g. a plugin), after which the lookup is
-   * retried once. Set by the client, where plugins load on first use.
-   */
-  public setRegistryResolver(resolver: (registryId: string) => Promise<void>): void {
-    this._registryResolver = resolver;
-  }
-
-  /** Installs a miss resolver on every registry of this provider, present and future. */
-  public setRegistryMissResolver(
-    resolver: (registry: ServiceRegistry<any, any[], any>, key: string) => Promise<void>
-  ): void {
-    this._registryMissResolver = resolver;
-    for (const registry of this._registryIds.values()) {
-      registry.setMissResolver(resolver);
-    }
-  }
-
-  /**
-   * Installs a writers resolver on every registry of this provider, present and
-   * future: it loads the plugins that write to a registry when its full key
-   * set is requested (see `ServiceRegistry.loadKeys`).
-   */
-  public setRegistryWritersResolver(resolver: (registry: ServiceRegistry<any, any[], any>) => Promise<void>): void {
-    this._registryWritersResolver = resolver;
-    for (const registry of this._registryIds.values()) {
-      registry.setWritersResolver(resolver);
-    }
-  }
-
-  /**
-   * The lazy-loading hooks every registry of this provider carries: the
-   * namespace it was registered under and the resolvers installed on the
-   * provider. Registries added after the resolvers were set get them here.
+   * The context every registry of this provider carries: the domain it is
+   * served in — what a browser attributes a miss to, see
+   * {@link ServiceRegistry.setProviderContext} — and the namespace its own keys
+   * are attributed to. Registries registered later get it here too.
    */
   private _prepareRegistry(registry: ServiceRegistry<any, any[], any>, origin: string): void {
-    registry.setDefaultOrigin(origin);
-    if (this._registryMissResolver) {
-      registry.setMissResolver(this._registryMissResolver);
-    }
-    if (this._registryWritersResolver) {
-      registry.setWritersResolver(this._registryWritersResolver);
-    }
+    registry.setProviderContext(this.domain, origin);
   }
 
   /** Register a service instance; `getService` resolves it forever after. */

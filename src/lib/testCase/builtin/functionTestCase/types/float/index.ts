@@ -1,4 +1,5 @@
 import { extractZodSchema, type Form } from '$lib/form';
+import type { ComponentType } from 'svelte';
 import type { JsonValue } from '@zenstackhq/orm';
 import { z } from 'zod';
 import { Type } from '../../type.svelte';
@@ -7,6 +8,7 @@ import { TypeValue } from '../../typeValue.svelte';
 import type { IntoJsonValue } from '$lib/types/utils';
 import FloatDisplay from './FloatDisplay.svelte';
 import FloatEditor from './FloatEditor.svelte';
+import CalculatorIcon from '@iconify-svelte/fa6-solid/calculator';
 
 const floatOptions = {
   fields: {
@@ -68,9 +70,15 @@ export class Float extends Type<Value, typeof floatOptions> {
     return new TypeValue(this, { value: '0' });
   }
 
-  get displayName(): string {
-    return 'Floating Point';
+  get staticName(): string {
+    return 'float';
   }
+
+  get detailedName(): string {
+    return `float${this.options.size}`;
+  }
+
+  static icon: ComponentType = CalculatorIcon;
 
   get optionsForm() {
     return floatOptions;

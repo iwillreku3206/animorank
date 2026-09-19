@@ -153,6 +153,7 @@ describe('ServerFunctionTestCase', () => {
 
     await testCase.addComparison();
     expect(testCase.data.comparisons).toHaveLength(1);
+    expect(testCase.data.comparisons[0].symbol).toBe('return');
     expect(testCase.data.comparisons[0].operator.id).toBe('equal');
   });
 
@@ -180,7 +181,37 @@ describe('ServerFunctionTestCase', () => {
     expect(testCase.data.comparisons[0].operator.id).toBe('equal');
   });
 
-  it('addComparison adds nothing for void-returning functions', async () => {
+  it('addComparison compares the first parameter for void-returning functions', async () => {
+    const voidProblem = {
+      ...problemModel,
+      extension_data: {
+        builtin_testCase_function: {
+          functions: {
+            fn1: {
+              name: 'sort',
+              parameters: [{ name: 'xs', type: { type: 'pointer', options: { target: 'int' } } }],
+              returnType: [{ type: 'void', options: {} }]
+            }
+          }
+        }
+      }
+    } as unknown as ProblemModel;
+    const testCaseModel = {
+      ...makeTestCaseModel(),
+      data: { function: 'fn1', parameters: [], comparisons: [] }
+    } as unknown as ProblemTestCase;
+    const testCase = await FunctionTestCase.from(testCaseModel, new Problem(voidProblem));
+
+    // The harness never emits a return file for void, so the comparison falls
+    // back to the first parameter (void functions compare their out-values);
+    // the editor shows `return` disabled for such a function.
+    await testCase.addComparison();
+    expect(testCase.data.comparisons).toHaveLength(1);
+    expect(testCase.data.comparisons[0].symbol).toBe('param0');
+    expect(testCase.data.comparisons[0].operator.id).toBe('equal');
+  });
+
+  it('addComparison adds nothing when no symbol can be compared', async () => {
     const voidProblem = {
       ...problemModel,
       extension_data: {
@@ -197,8 +228,7 @@ describe('ServerFunctionTestCase', () => {
     } as unknown as ProblemTestCase;
     const testCase = await FunctionTestCase.from(testCaseModel, new Problem(voidProblem));
 
-    // The harness never emits a return file for void, so such a comparison
-    // could never run; it must not be creatable.
+    // No return value and no parameters: there is no type to build a value from.
     await testCase.addComparison();
     expect(testCase.data.comparisons).toHaveLength(0);
   });

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { AppConfig } from '$lib/config/config';
 import { PluginsConfigSection } from '$lib/config/sections/plugins';
 import { GlobalRegistryProvider } from '$lib/registry/global';
-import { ServerPluginService } from './serverService';
+import { ServerPluginService } from './serverPluginService';
 import type { PluginManifest } from './manifest';
 
 let root: string;
@@ -63,16 +63,48 @@ function service(): ServerPluginService {
 }
 
 describe('ServerPluginService', () => {
-  it('serves the catalog of loaded plugins that ship a client entry', async () => {
+  it('describes a loaded dynamic plugin and the files the browser runs for it', async () => {
     await configurePluginDir('plugins');
     await writePlugin('plugin-a');
-    await writePlugin('server-only', { 'server.js': 'export default class P { async init() {} }\n' });
+    await writePlugin('plugin-b', {
+      'client.js': "import './client/helper.js';\n",
+      'global.js': 'export const shared = 1;\n',
+      'client/helper.js': 'export const helper = 1;\n'
+    });
+    const plugins = service();
 
-    const catalog = await service().getClientCatalog();
+    const plugin = await plugins.getClientDescriptor('plugin-a');
+    const shared = await plugins.getClientDescriptor('plugin-b');
 
-    expect(catalog.map((plugin) => plugin.id)).toEqual(['plugin-a']);
-    expect(catalog[0].clientUrl).toBe('/plugins/plugin-a/client.js');
-    expect(catalog[0].name).toBe('Plugin plugin-a');
+    expect(plugin).toMatchObject({
+      id: 'plugin-a',
+      name: 'Plugin plugin-a',
+      clientUrl: '/plugins/plugin-a/client.js'
+    });
+    // Only a plugin that ships the shared entry is told to run one.
+    expect(plugin?.globalUrl).toBeUndefined();
+    expect(shared?.globalUrl).toBe('/plugins/plugin-b/global.js');
+  });
+
+  it('describes a prebuilt plugin with the entries the app build emitted', async () => {
+    await configurePluginDir('plugins');
+    await writePlugin('plugin-a');
+    const plugins = service();
+
+    // The app ships array-types: its client entry is a compiled module of the
+    // client build, and Vite resolved the URLs the route hands the browser.
+    const prebuilt = await plugins.getClientDescriptor('array-types');
+
+    expect(prebuilt?.name).toBe('Array Data Types');
+    expect(prebuilt?.clientUrl).toMatch(/plugins\/array-types\/client\.ts$/);
+    expect(prebuilt?.globalUrl).toMatch(/plugins\/array-types\/global\.ts$/);
+  });
+
+  it('describes no plugin it does not have loaded', async () => {
+    await configurePluginDir('plugins');
+    await writePlugin('plugin-a');
+
+    await expect(service().getClientDescriptor('other-plugin')).resolves.toBeUndefined();
   });
 
   it('reads the client surface of a plugin and nothing else', async () => {
@@ -121,7 +153,7 @@ describe('ServerPluginService', () => {
   it('fails when the configured plugin folder does not exist', async () => {
     await configurePluginDir('missing-folder');
 
-    await expect(service().getClientCatalog()).rejects.toThrow(/does not exist/);
+    await expect(service().getClientDescriptor('plugin-a')).rejects.toThrow(/does not exist/);
   });
 
   it('loads lazily and caches the loader', async () => {

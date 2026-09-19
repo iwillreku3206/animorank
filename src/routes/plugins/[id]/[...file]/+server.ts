@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { ServerPluginService } from '$lib/plugin/serverService';
+import { ServerPluginService } from '$lib/plugin/serverPluginService';
 import { pluginFileContentType } from '$lib/plugin/catalog';
 
 // The public face of the plugin registry: files are read from loaded plugins,

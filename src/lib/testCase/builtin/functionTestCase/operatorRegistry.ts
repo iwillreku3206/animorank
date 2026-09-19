@@ -9,10 +9,13 @@ import { EqualOperator } from './operators/equal';
 import { NotEqualOperator } from './operators/not_equal';
 import { WithinRangeOperator } from './operators/within_range';
 import type z from 'zod';
+import type { IntoJsonValue } from '$lib/types/utils';
 
 export class OperatorRegistry extends ServiceRegistry<
   Operator,
-  [any],
+  // This is handled at runtime, operators should check if the data is valid.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [IntoJsonValue | any],
   {
     id(): string;
     create(): Operator;

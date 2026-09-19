@@ -1,52 +1,40 @@
 import path from 'path';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync } from 'fs';
 import { GlobalRegistryProvider } from '$lib/registry/global';
 import { AppConfig } from '$lib/config/config';
 import { PluginsConfigSection } from '$lib/config/sections/plugins';
 import { PluginLoader } from './loader';
 import type { LoadedPlugin } from './loadedPlugin';
 import {
+  PLUGIN_CLIENT_ENTRY,
   PLUGIN_GLOBAL_ENTRY,
-  clientEntryOf,
   isServablePluginFile,
   pluginFileUrl,
   type PluginClientDescriptor
 } from './catalog';
-
-/** Where the app keeps its global config, relative to the process root (see `AppConfig`). */
-const CONFIG_FILE = 'config.json';
-
-/** The plugin folder named by a config file, if the file exists and names one. */
-function readConfigPluginDir(configPath: string): string | undefined {
-  try {
-    const raw = JSON.parse(readFileSync(configPath, 'utf8')) as { plugins?: { pluginDir?: unknown } };
-    const dir = raw.plugins?.pluginDir;
-    return typeof dir === 'string' && dir.trim() ? dir : undefined;
-  } catch {
-    // No config file: nothing is configured.
-    return undefined;
-  }
-}
+import { prebuiltClientEntries } from './prebuiltClientEntries';
 
 /**
- * Descriptors for every dynamically loaded plugin that ships a client entry:
- * what the browser loads from the plugin route. Prebuilt plugins ship with the
- * app and are imported through Vite instead, so they have no URL here.
+ * The descriptor of one loaded plugin: the files the browser runs for it, and
+ * where it fetches them. A dynamically loaded plugin's files are served by the
+ * plugin route; a prebuilt plugin's code belongs to the app's client build,
+ * where Vite resolved the URLs of its entries. Either way the client is told
+ * about a plugin only when it asks for it by id — the plugins of this server
+ * are never listed.
  */
-export function dynamicClientCatalogOf(plugins: LoadedPlugin[]): PluginClientDescriptor[] {
-  return plugins
-    .filter((plugin) => plugin.type === 'dynamic')
-    .flatMap((plugin) => {
-      const entry = clientEntryOf(plugin.files);
-      if (!entry) return [];
-      // The shared entry, when the plugin ships one, runs before the client
-      // entry on both sides; the browser fetches it from the same route.
-      const globalUrl = plugin.files.has(PLUGIN_GLOBAL_ENTRY)
-        ? pluginFileUrl(plugin.manifest.id, PLUGIN_GLOBAL_ENTRY)
-        : undefined;
-      return [{ ...plugin.manifest, clientUrl: pluginFileUrl(plugin.manifest.id, entry), globalUrl }];
-    })
-    .sort((a, b) => a.id.localeCompare(b.id));
+export function clientDescriptorOf(plugins: LoadedPlugin[], id: string): PluginClientDescriptor | undefined {
+  const plugin = plugins.find((candidate) => candidate.manifest.id === id);
+  if (!plugin) return undefined;
+
+  if (plugin.type === 'prebuilt') {
+    const entries = prebuiltClientEntries(id);
+    return entries ? { ...plugin.manifest, clientUrl: entries.client, globalUrl: entries.global } : undefined;
+  }
+
+  // The shared entry, when the plugin ships one, runs before the client
+  // entry on both sides; the browser fetches it from the same route.
+  const globalUrl = plugin.files.has(PLUGIN_GLOBAL_ENTRY) ? pluginFileUrl(id, PLUGIN_GLOBAL_ENTRY) : undefined;
+  return { ...plugin.manifest, clientUrl: pluginFileUrl(id, PLUGIN_CLIENT_ENTRY), globalUrl };
 }
 
 /**
@@ -63,8 +51,8 @@ export function pluginFileOf(plugins: LoadedPlugin[], id: string, file: string):
 
 /**
  * The server's plugin registry: loads the app's plugins once and serves them
- * to the rest of the app — the public plugin routes (catalog and files) and
- * any code that gates on a plugin being present.
+ * to the rest of the app — the public plugin routes (one plugin's descriptor
+ * and its files) and any code that gates on a plugin being present.
  *
  * Loading is lazy: nothing is read from disk until the first call. A failed
  * load is not cached, so a plugin directory that is created or repaired later
@@ -91,9 +79,9 @@ export class ServerPluginService {
     return this.loaderPromise;
   }
 
-  /** Descriptors for every loaded dynamic plugin that ships a client entry; see {@link dynamicClientCatalogOf}. */
-  public async getClientCatalog(): Promise<PluginClientDescriptor[]> {
-    return dynamicClientCatalogOf((await this.getLoader()).getPlugins());
+  /** One loaded plugin's descriptor, or `undefined`; see {@link clientDescriptorOf}. */
+  public async getClientDescriptor(id: string): Promise<PluginClientDescriptor | undefined> {
+    return clientDescriptorOf((await this.getLoader()).getPlugins(), id);
   }
 
   /** One file shipped by a loaded plugin, or `undefined`; see {@link pluginFileOf}. */
@@ -124,15 +112,12 @@ export class ServerPluginService {
     return configured ? path.resolve(this._root, configured) : undefined;
   }
 
-  /** The configured plugin directory, from the loaded config when there is one, else from the config file. */
+  /** The plugin folder the app config names, or `undefined` when it names none. */
   private async configuredPluginDir(): Promise<string | undefined> {
-    try {
-      const config = (await GlobalRegistryProvider.instance().getService(AppConfig)) as AppConfig;
-      const section = config.getSection(PluginsConfigSection);
-      if (section) return section.data?.pluginDir;
-    } catch {
-      // No config is registered: fall back to reading the config file itself.
-    }
-    return readConfigPluginDir(path.join(this._root, CONFIG_FILE));
+    const config = await GlobalRegistryProvider.instance().getService(AppConfig);
+    const dir = config.getSection(PluginsConfigSection)?.data?.pluginDir;
+    // The config file is operator-edited JSON, hydrated without validation:
+    // anything but a string names no folder.
+    return typeof dir === 'string' ? dir : undefined;
   }
 }

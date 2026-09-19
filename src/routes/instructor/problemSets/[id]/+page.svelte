@@ -9,6 +9,7 @@
   import YfmStaticView from '$lib/components/content/YfmStaticView.svelte';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
+  import { ClientPluginLoader } from '$lib/plugin/clientLoader';
   import type { Window } from '$lib/window';
   import ProblemListItem from './ProblemListItem.svelte';
   import { ProblemSetEditorWindowRegistry } from './windowRegistry';
@@ -94,6 +95,8 @@
     for (const { id } of tabs) {
       windowMap[id] = await windowRegistry.getInstance(id, context);
     }
+    // The page is built: tell the plugins that answer this page's hook about it.
+    await ClientPluginLoader.instance().notifyPageHook('onProblemSetEditorLoad', context);
   });
 
   onDestroy(() => {

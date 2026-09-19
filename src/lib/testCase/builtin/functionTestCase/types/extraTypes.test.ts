@@ -6,7 +6,34 @@ import { VoidType } from './void';
 import { Integer } from './int';
 import { LessThanOperator } from '../operators/less_than';
 import { TypeValue } from '../typeValue.svelte';
+import type { Type } from '../type.svelte';
 import type { JsonValue } from '@zenstackhq/orm';
+
+describe('type display names', () => {
+  it('labels every type as `static (detailed)`, lowercase, with an icon', () => {
+    const cases: Array<[Type, string]> = [
+      [Integer.create(), 'int (int32)'],
+      [new Integer({ size: 64, signed: false }), 'int (uint64)'],
+      [new Integer({ size: 8, signed: true }), 'int (signed int8)'],
+      [Float.create(), 'float (float32)'],
+      [new Float({ size: 64 }), 'float (float64)'],
+      [StringType.create(), 'string (char*)'],
+      [VoidType.create(), 'void (void)'],
+      [Pointer.create(), 'pointer (int32*)'],
+      [new Pointer({ target: Pointer.create() }), 'pointer (int32**)']
+    ];
+
+    for (const [type, name] of cases) {
+      expect(type.displayName).toBe(name);
+      expect(type.displayName).toBe(type.displayName.toLowerCase());
+    }
+
+    // Icons are declared by the type itself, not by an instance's options.
+    for (const typeClass of [Integer, Float, StringType, VoidType, Pointer]) {
+      expect(typeClass.icon).toBeDefined();
+    }
+  });
+});
 
 describe('Integer', () => {
   it('validates integer values against the int32 bounds by default', async () => {

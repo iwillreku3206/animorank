@@ -4,14 +4,15 @@ import otherTypes from 'mime/types/other.js';
 import type { PluginType } from './loadedPlugin';
 import type { PluginManifest } from './manifest';
 
-/** URL prefix of the public route that serves dynamically loaded plugin files (see `src/routes/plugins`). */
+/** URL prefix of the public route that serves one dynamically loaded plugin and its files (see `src/routes/plugins`). */
 export const PLUGIN_ROUTE_PREFIX = '/plugins';
 
 /**
- * Where a plugin's browser code lives: the `client.js` entry at the plugin
- * root, plus a `client/` folder holding every file the browser needs (the
- * plugin's own modules and assets). Everything under `client/` is served
- * as-is, so the entry can import its files by relative path.
+ * Where a dynamically loaded plugin's browser code lives: the `client.js`
+ * entry at the plugin root, plus a `client/` folder holding every file the
+ * browser needs (the plugin's own modules and assets). Everything under
+ * `client/` is served as-is, so the entry can import its files by relative
+ * path.
  */
 export const PLUGIN_CLIENT_ENTRY = 'client.js';
 
@@ -19,38 +20,19 @@ export const PLUGIN_CLIENT_ENTRY = 'client.js';
 export const PLUGIN_GLOBAL_ENTRY = 'global.js';
 
 /** Prefix of the served client folder. */
-export const PLUGIN_CLIENT_FOLDER = 'client/';
-
-/** Client entry file names, in resolution order: prebuilt plugins ship `client.ts`, dynamic ones `client.js`. */
-export const PLUGIN_CLIENT_ENTRIES: readonly string[] = ['client.ts', PLUGIN_CLIENT_ENTRY];
+const PLUGIN_CLIENT_FOLDER = 'client/';
 
 /**
- * One plugin as the client sees it before its code is loaded.
- *
- * The manifest always describes the plugin; where its code comes from depends
- * on how the plugin is shipped. A `clientUrl` is served by the plugin route
- * (dynamically loaded plugins, read from disk at runtime); a `modulePath` is
- * imported through Vite, which bundles prebuilt plugins that ship with the app.
+ * One plugin as the client sees it before its code is loaded: what the plugin
+ * is, and the files the browser runs for it. The URLs are whatever serves the
+ * plugin's code — the plugin route for a dynamically loaded plugin, the app's
+ * client build for a prebuilt one — so the client never needs a path of its own.
  */
 export interface PluginClientDescriptor extends PluginManifest {
   /** URL of the plugin's client module, e.g. `/plugins/foo/client.js`. */
-  clientUrl?: string;
-  /** Module path of the plugin's client entry, e.g. `../../../plugins/foo/client.ts`. */
-  modulePath?: string;
+  clientUrl: string;
   /** URL of the plugin's shared entry; runs before the client entry. */
   globalUrl?: string;
-  /** Imports the plugin's shared entry; runs before the client entry. */
-  loadGlobal?: () => Promise<unknown>;
-}
-
-/** The `GET /plugins` response: the catalog a client-side loader discovers plugins from. */
-export interface PluginCatalog {
-  plugins: PluginClientDescriptor[];
-}
-
-/** The client entry file of a plugin, resolved from the files it ships; `undefined` when it has no client side. */
-export function clientEntryOf(files: ReadonlyMap<string, unknown>): string | undefined {
-  return PLUGIN_CLIENT_ENTRIES.find((entry) => files.has(entry));
 }
 
 /**

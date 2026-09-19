@@ -18,17 +18,21 @@ import { CodeExecutor } from '$lib/executor';
 import type { ExecutionRequest, ExecutionResult } from '$lib/executor/types';
 
 /**
- * Load the plugin the way the loader does: instantiate the entry's plugin class
- * and let it register against the app's registries.
+ * Load the plugin the way the server loader does: instantiate the server
+ * entry's plugin class and let it register against the app's registries.
+ *
+ * The registrations are process-wide, so the entry runs once per process
+ * however many tests ask for it: a second install is a duplicate, not a no-op.
  */
-async function installPluginEntries(): Promise<void> {
-  const { ClientAnimoRankAPI } = await import('$lib/api/client');
-  const { ServerAnimoRankAPI } = await import('$lib/api/server');
-  const { default: ClientEntry } = await import('./client');
-  const { default: ServerEntry } = await import('./server');
+let serverEntryInstalled: Promise<void> | null = null;
 
-  await new ClientEntry().init(new ClientAnimoRankAPI('array-types'));
-  await new ServerEntry().init(new ServerAnimoRankAPI('array-types'));
+function installServerEntry(): Promise<void> {
+  return (serverEntryInstalled ??= (async () => {
+    const { ServerAnimoRankAPI } = await import('$lib/api/server');
+    const { default: ServerEntry } = await import('./server');
+
+    await new ServerEntry().init(new ServerAnimoRankAPI('array-types'));
+  })());
 }
 
 /** A fresh registry of the kind the app uses, so the test never mutates the app's own. */
@@ -45,8 +49,8 @@ function cTypeRegistry(): CTypeRegistry {
 
 /** Register the plugin's types the way its entries do: un-namespaced, so ids stay plain. */
 function register(registry: AnyRegistry, key: string, value: unknown): void {
-  // A registry rejects duplicate keys, so registering twice is a no-op here:
-  // the app's registries are process-wide and the entries register at import.
+  // Each definition is registered once per process; one already in the registry
+  // is the same definition, so a second registration would only throw.
   if (registry.keys().includes(key)) return;
   new Registrar(registry, '').register(key, value as never);
 }
@@ -64,8 +68,8 @@ describe('array type', () => {
     const type = ArrayType.create();
 
     expect(type.elementId()).toBe('string');
-    expect(type.displayName).toBe('Array of string');
-    expect((await type.elementType()).id).toBe('string');
+    expect(type.displayName).toBe('array (char*[])');
+    expect(type.elementType.id).toBe('string');
   });
 
   it('accepts any array of strings for string elements', async () => {
@@ -266,8 +270,8 @@ describe.skipIf(!gccAvailable)('array C round-trip with gcc', () => {
 
 describe('registration through the plugin entries', () => {
   it('makes the array resolvable as a type and as a C language type', async () => {
-    // The entries register against the app's process-wide registries the way
-    // the loader runs them; a fresh registry of each kind shows what they add.
+    // The entries register un-namespaced, the way the loader runs them; a
+    // fresh registry of each kind shows what they add.
     const types = typeRegistry();
     const languageTypes = cTypeRegistry();
     expect(types.keys()).not.toContain('array');
@@ -287,9 +291,9 @@ describe('registration through the plugin entries', () => {
   });
 
   it('registers the same type the app-wide registries then hold', async () => {
-    // The entries are plugin classes; the loader instantiates each and runs its
-    // `init`, which is what registers against the app's singletons.
-    await installPluginEntries();
+    // The entry is a plugin class; the server loader instantiates it and runs
+    // its `init`, which is what registers against the app's singletons.
+    await installServerEntry();
 
     const appTypes = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
     const appLanguageTypes = ServerRegistryProvider.instance().getRegistry(CTypeRegistry);
@@ -305,7 +309,7 @@ describe.skipIf(!gccAvailable)('array type through the function test case pipeli
   // The pipeline resolves the type through the app's registries, so the plugin
   // must be loaded exactly as the loader loads it.
   beforeAll(async () => {
-    await installPluginEntries();
+    await installServerEntry();
   });
 
   const arrayOfStrings = { type: 'array', options: { element: { type: 'string', options: {} } } };

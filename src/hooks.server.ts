@@ -3,11 +3,12 @@ import { building } from '$app/environment';
 import { handle as authHandle } from '$lib/auth';
 import { Logger } from '$lib/logging/logger';
 import { ServerRegistryProvider } from '$lib/registry/server';
-import { ServerPluginService } from '$lib/plugin/serverService';
+import { ServerPluginService } from '$lib/plugin/serverPluginService';
 
 /**
  * Load every plugin when the server starts, so no request waits on plugin
- * loading. The browser loads plugins lazily instead (see `hooks.client.ts`).
+ * loading. The browser loads plugins lazily instead, when a lookup misses a
+ * registry or one of its items (see `src/lib/registry/clientPlugins.ts`).
  */
 export const init: ServerInit = async () => {
   // This hook runs while a build prerenders too; plugins are runtime state, and

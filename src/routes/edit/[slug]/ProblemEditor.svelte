@@ -3,6 +3,7 @@
   import DockviewWindow from '$lib/window/DockviewWindow.svelte';
   import type { DefaultLayout } from '$lib/window/layout';
   import { ClientRegistryProvider } from '$lib/registry/client';
+  import { ClientPluginLoader } from '$lib/plugin/clientLoader';
   import { ProblemEditorWindowRegistry } from './windowRegistry';
   import { ProblemEditorWindowContext } from './context.svelte';
   import type { PageProps } from './$types';
@@ -54,6 +55,7 @@
       }
       context = created;
       initializing = false;
+      void ClientPluginLoader.instance().notifyPageHook('onProblemEditorLoad', created);
     });
   });
 
