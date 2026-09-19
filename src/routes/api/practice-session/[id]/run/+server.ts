@@ -10,6 +10,7 @@ import { ProblemService } from '$lib/problem/problemService';
 import { TestCaseService } from '$lib/testCase/testCaseService';
 import { LanguageRegistry } from '$lib/language/languageRegistry';
 import { CodeExecutor } from '$lib/executor';
+import { Logger } from '$lib/logging/logger';
 
 const runValidator = z.object({
   test_type: z.enum(['public', 'all']).default('public')
@@ -136,7 +137,11 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
       // panel refetches on every Submit, and without this it would render a
       // list quietly missing the attempt they just watched run.
       recorded = false;
-      console.error('Failed to record submission', submissionError);
+      // Swallowed here, so the file logger is the only trace this leaves --
+      // `handleError` never sees a caught throw.
+      const detail =
+        submissionError instanceof Error ? (submissionError.stack ?? submissionError.message) : String(submissionError);
+      serviceProvider.getService(Logger, 'api/practice-session/run').error(`Failed to record submission: ${detail}`);
     }
   }
 
