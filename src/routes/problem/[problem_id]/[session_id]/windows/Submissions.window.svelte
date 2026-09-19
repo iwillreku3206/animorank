@@ -17,6 +17,12 @@
   let submissions = $state<SubmissionSummary[]>([]);
   let hasMore = $state(false);
   let listError = $state<string | null>(null);
+  /**
+   * Pagination failures are held apart from `listError`, which stands in place
+   * of the list. The pages already loaded are still good, so a failed request
+   * for the next one belongs beside the button that asked for it.
+   */
+  let moreError = $state<string | null>(null);
   let loading = $state(true);
   let loadingMore = $state(false);
 
@@ -38,6 +44,7 @@
 
     loading = true;
     listError = null;
+    moreError = null;
     try {
       const page = await fetchSubmissions(problemId);
       // A newer Submit landed while this request was in flight. Its reload will
@@ -57,12 +64,13 @@
     if (!last || loadingMore) return;
 
     loadingMore = true;
+    moreError = null;
     try {
       const page = await fetchSubmissions(problemId, { before: last.created_at });
       submissions = [...submissions, ...page.submissions];
       hasMore = page.hasMore;
     } catch (error) {
-      listError = error instanceof Error ? error.message : 'Failed to load more submissions';
+      moreError = error instanceof Error ? error.message : 'Failed to load more submissions';
     } finally {
       loadingMore = false;
     }
@@ -77,6 +85,10 @@
       // A second click while this was in flight wins, so drop a stale response.
       if (selectedId === summary.id) selected = detail;
     } catch (error) {
+      // Same staleness guard as the success path above: without it a slow
+      // failure for one submission lands on whichever one is open by then, and
+      // `detailError` outranks `selected` in the template.
+      if (selectedId !== summary.id) return;
       detailError = error instanceof Error ? error.message : 'Failed to load this submission';
     }
   }
@@ -218,6 +230,10 @@
             </li>
           {/each}
         </ul>
+
+        {#if moreError}
+          <p class="px-3 pt-3 text-sm text-error">{moreError}</p>
+        {/if}
 
         {#if hasMore}
           <div class="p-3">
