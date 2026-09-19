@@ -471,11 +471,18 @@ export class ProblemSetService {
           .select('ProblemSet.id')
           // A set can have several collaborators, so the alphabetically first of
           // them stands in as the author the set is filed under. Lowercased so
-          // the ordering is case-insensitive, and coalesced so a nameless
-          // account sorts at the top rather than drifting to an ends-of-list
-          // NULL position.
+          // the ordering is case-insensitive.
+          //
+          // The coalesce sits OUTSIDE the aggregate on purpose. `min` already
+          // skips NULLs, so a set with any named collaborator files under the
+          // first of those names. Coalescing inside would score a nameless
+          // account as '' and drag the whole set to the top of the listing even
+          // when it has perfectly well-named collaborators alongside. Only a set
+          // with no named collaborator at all falls back to '', which is the
+          // top-of-list position intended for it rather than an ends-of-list
+          // NULL.
           .select((eb) =>
-            eb.fn.min<string>(eb.fn.coalesce(eb.fn<string>('lower', ['User.name']), eb.val(''))).as('author_name')
+            eb.fn.coalesce(eb.fn.min<string>(eb.fn<string>('lower', ['User.name'])), eb.val('')).as('author_name')
           )
       )
       .with('difficulty_order', (db) =>
