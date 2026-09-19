@@ -37,7 +37,19 @@
     })
   );
 
-  onMount(() => discardSavedLayouts('problem-editor-'));
+  // Every superseded layout key, cleared on the way past. A saved layout wins
+  // over the default one, so a browser still holding an old key would keep its
+  // stale arrangement and never see panels that later defaults introduce --
+  // which is why each change to `defaultLayout` comes with a new key, dated the
+  // day it landed. Drop each entry once its date is far enough back that every
+  // browser holding the key has since loaded the page and had it swept.
+  //
+  // `problem-editor:v` covers the whole retired `v<number>` convention in one
+  // prefix, because a dated key never starts with it. The colon separator is
+  // load-bearing: with hyphens the live key would start with `problem-editor-`
+  // and this sweep would delete it on every mount.
+  const SUPERSEDED_LAYOUT_KEYS = ['problem-editor-', 'problem-editor:v'];
+  onMount(() => SUPERSEDED_LAYOUT_KEYS.forEach((key) => discardSavedLayouts(key)));
 
   onDestroy(() => {
     context.cleanup();
@@ -49,5 +61,5 @@ save status: {context.autosaveStatus}
   bind:context
   {windowRegistry}
   {defaultLayout}
-  storageKey={`problem-editor:v2:${data.problem.id}`}
+  storageKey={`problem-editor:2026-09-18:${data.problem.id}`}
 />

@@ -31,7 +31,10 @@
 
   const defaultLayout: DefaultLayout = {
     panes: [
-      { orientation: 'vertical', children: ['problem_info'] },
+      {
+        orientation: 'vertical',
+        children: [{ tabs: ['problem_info', 'submissions'], active: 'problem_info' }]
+      },
       {
         orientation: 'vertical',
         children: ['code_editor', { tabs: ['test_cases', 'custom_code'], active: 'test_cases' }],
@@ -75,11 +78,18 @@
     });
   });
 
-  // The solve layout was once saved per problem, under `solve-layout-v2-<id>`.
-  // The single `v3` key the dockview now uses orphans those entries, so clear
-  // them out of the student's browser on the way past. Drop this once the keys
-  // have had time to disappear from the browsers still holding them.
-  onMount(() => discardSavedLayouts('solve-layout-v2-'));
+  // Every superseded layout key, cleared on the way past. A saved layout wins
+  // over the default one, so a browser still holding an old key would keep its
+  // stale arrangement and never see panels that later defaults introduce --
+  // which is why each change to `defaultLayout` comes with a new key, dated the
+  // day it landed. Drop each entry once its date is far enough back that every
+  // browser holding the key has since loaded the page and had it swept.
+  //
+  // `solve-layout-v` covers the whole retired `v<number>` convention in one
+  // prefix -- `solve-layout-v2-<id>` (the only one saved per problem) through
+  // `solve-layout-v5` -- because a dated key never starts with it.
+  const SUPERSEDED_LAYOUT_KEYS = ['solve-layout-v'];
+  onMount(() => SUPERSEDED_LAYOUT_KEYS.forEach((key) => discardSavedLayouts(key)));
 
   onMount(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -104,7 +114,7 @@
     bind:context
     {windowRegistry}
     {defaultLayout}
-    storageKey="solve-layout-v3"
+    storageKey="solve-layout-2026-09-18"
     bind:manager
   />
 </div>
