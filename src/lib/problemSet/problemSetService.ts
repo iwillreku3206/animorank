@@ -460,6 +460,23 @@ export class ProblemSetService {
             eb.case().when('ProblemSetBookmark.user_id', 'is', null).then(false).else(true).end().as('bookmarked')
           )
       )
+      .with('author_order', (db) =>
+        db
+          .selectFrom('ProblemSet')
+          .leftJoin('ProblemSetCollaborator', 'ProblemSetCollaborator.problem_set_id', 'ProblemSet.id')
+          .leftJoin('Teacher', 'Teacher.id', 'ProblemSetCollaborator.collaborator_id')
+          .leftJoin('User', 'User.id', 'Teacher.id')
+          .groupBy('ProblemSet.id')
+          .select('ProblemSet.id')
+          // A set can have several collaborators, so the alphabetically first of
+          // them stands in as the author the set is filed under. Lowercased so
+          // the ordering is case-insensitive, and coalesced so a nameless
+          // account sorts at the top rather than drifting to an ends-of-list
+          // NULL position.
+          .select((eb) =>
+            eb.fn.min<string>(eb.fn.coalesce(eb.fn<string>('lower', ['User.name']), eb.val(''))).as('author_name')
+          )
+      )
       .with('difficulty_order', (db) =>
         db
           .selectFrom('ProblemSet')
@@ -476,6 +493,7 @@ export class ProblemSetService {
       .innerJoin('collaborators', 'collaborators.id', 'ProblemSet.id')
       .innerJoin('bookmarked', 'bookmarked.id', 'ProblemSet.id')
       .innerJoin('difficulty_order', 'difficulty_order.id', 'ProblemSet.id')
+      .innerJoin('author_order', 'author_order.id', 'ProblemSet.id')
       .select((eb) => eb.fn.countAll().over().as('total_count'))
       .select('ProblemSet.id')
       .select('ProblemSet.title')
@@ -483,6 +501,7 @@ export class ProblemSetService {
       .select('ProblemSet.description')
       .select('ProblemSet.auto_accept')
       .select('ProblemSet.is_global')
+      .select('ProblemSet.featured_rank')
       .select('bookmarked.id')
       .select((eb) => eb.ref('solved_amounts.count_finished').as('progress_finished'))
       .select((eb) => eb.ref('solved_amounts.count_unfinished').as('progress_unfinished'))
@@ -602,7 +621,22 @@ export class ProblemSetService {
     const sortColumn = options.sort?.by ? SORT_COLUMN[options.sort.by] : undefined;
     if (sortColumn) {
       query = query.orderBy(sortColumn, options.sort?.order || 'asc');
+    } else {
+      // Featured sets lead the catalogue's default listing: curated rank first,
+      // unfeatured sets (NULL) last. Only the default listing, though — once the
+      // user picks a sort they have stated an order explicitly, and a curated set
+      // jumping that queue would read as a bug rather than a recommendation.
+      query = query.orderBy('ProblemSet.featured_rank', (ob) => ob.asc().nullsLast());
     }
+
+    // The default order, and the tiebreak under any explicit sort: authors A-Z,
+    // then that author's sets A-Z by title. Listing it last also keeps paging
+    // stable, since without a total order Postgres is free to return the same
+    // row on two different pages. The trailing `id` makes the order total.
+    query = query
+      .orderBy('author_order.author_name', 'asc')
+      .orderBy((eb) => eb.fn<string>('lower', ['ProblemSet.title']), 'asc')
+      .orderBy('ProblemSet.id', 'asc');
 
     query = query.limit(pageSize).offset((page - 1) * pageSize);
 
@@ -640,7 +674,8 @@ export class ProblemSetService {
             id: c[0],
             name: c[1]
           })) || [],
-        bookmarked: ps.bookmarked
+        bookmarked: ps.bookmarked,
+        featured: ps.featured_rank !== null
       };
 
       if (options.studentProgress) {

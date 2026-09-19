@@ -1,5 +1,6 @@
 <script lang="ts">
   import TagChip from '$lib/components/ui/TagChip.svelte';
+  import FeaturedBadge from '$lib/components/ui/FeaturedBadge.svelte';
   import BookmarkIcon from '@iconify-svelte/fa6-regular/bookmark';
   import BookmarkIconSolid from '@iconify-svelte/fa6-solid/bookmark';
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
@@ -84,6 +85,9 @@
 
     <!-- Tags -->
     <div class="flex flex-row flex-wrap gap-2 max-h-7 overflow-hidden">
+      {#if problemSet.featured}
+        <FeaturedBadge />
+      {/if}
       {#each problemSet.tags as tag (tag.id)}
         <TagChip
           {tag}

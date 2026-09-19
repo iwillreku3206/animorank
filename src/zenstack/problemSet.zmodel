@@ -25,6 +25,12 @@ model ProblemSet {
   auto_accept   Boolean                  @default(false)
   is_global     Boolean                  @default(false)
 
+  // Curated position in the catalogue's default listing, lowest rank first.
+  // NULL means not featured. Written only by scripts/featureProblemSet.ts and
+  // deliberately absent from the problem set's PUT validator — a set is
+  // featured by an operator, never by its own collaborators.
+  featured_rank Int?
+
   difficulty_id String?                  @db.Uuid
   difficulty    DifficultyTag?           @relation(fields: [difficulty_id], references: [id], onDelete: SetNull)
   subject_id    String?                  @db.Uuid

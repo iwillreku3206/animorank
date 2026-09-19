@@ -1,5 +1,6 @@
 <script lang="ts">
   import TagChip from '$lib/components/ui/TagChip.svelte';
+  import FeaturedBadge from '$lib/components/ui/FeaturedBadge.svelte';
   import BookmarkIcon from '@iconify-svelte/fa6-regular/bookmark';
   import BookmarkIconSolid from '@iconify-svelte/fa6-solid/bookmark';
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
@@ -58,6 +59,10 @@
         {/if}
       </p>
     </div>
+
+    {#if problemSet.featured}
+      <FeaturedBadge />
+    {/if}
 
     <!-- Bookmark button -->
     <Button

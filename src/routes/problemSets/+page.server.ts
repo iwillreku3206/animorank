@@ -48,6 +48,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     owners: ps.authors,
     description: ps.description || '',
     bookmarked: ps.bookmarked,
+    featured: ps.featured,
     progress: {
       finished: ps.studentProgress.finished,
       total: ps.studentProgress.total
