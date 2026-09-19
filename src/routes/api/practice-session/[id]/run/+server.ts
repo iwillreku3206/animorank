@@ -102,19 +102,28 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
     // Every Submit is recorded, pass or fail -- the failed attempts are most of
     // what makes a history worth reading. Only aggregate counts are stored, so a
     // history row cannot reveal WHICH hidden tests failed.
-    await db.submission.create({
-      data: {
-        student_id: practiceSession.studentId,
-        problem_id: problem.id,
-        passed: allSuccess,
-        tests_passed: results.filter((result) => result.success).length,
-        tests_total: results.length,
-        code: state.sections,
-        // The program as compiled. `code` alone is only the editable slots, so
-        // rebuilding it later would depend on a template that may have changed.
-        full_code: previousCode.fullCode
-      }
-    });
+    //
+    // Guarded for the same reason the latch is written first: the history is a
+    // record of the run, not part of it. Letting a failed insert 500 the
+    // request would throw away a grading result the student has already waited
+    // for -- and leave the session marked done with no verdict on screen.
+    try {
+      await db.submission.create({
+        data: {
+          student_id: practiceSession.studentId,
+          problem_id: problem.id,
+          passed: allSuccess,
+          tests_passed: results.filter((result) => result.success).length,
+          tests_total: results.length,
+          code: state.sections,
+          // The program as compiled. `code` alone is only the editable slots, so
+          // rebuilding it later would depend on a template that may have changed.
+          full_code: previousCode.fullCode
+        }
+      });
+    } catch (submissionError) {
+      console.error('Failed to record submission', submissionError);
+    }
   }
 
   // Hidden test results are sent to the client as bare
