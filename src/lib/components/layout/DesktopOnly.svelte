@@ -22,6 +22,13 @@
    * from the page-load snapshot of the session, silently throwing away
    * everything typed since. Narrowing the viewport after the fact only covers
    * the workspace with the notice below, so nothing is torn down.
+   *
+   * Starting `false` costs desktop users a frame: the children are absent from
+   * the server-rendered markup and only appear once `onMount` has run. That is
+   * accepted rather than overlooked. The workspace is Monaco and dockview, both
+   * client-only, so there was never meaningful markup to server-render; and
+   * rendering the children regardless would boot both on phones that will only
+   * ever see the notice.
    */
   let mounted = $state(false);
 
