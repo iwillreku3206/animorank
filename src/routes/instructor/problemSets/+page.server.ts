@@ -37,6 +37,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
       creators: filters.creators,
       creatorMatchAll: filters.creatorMatchAll,
       bookmarked: filters.bookmarked,
+      featured: filters.featured,
       search
     },
     page,

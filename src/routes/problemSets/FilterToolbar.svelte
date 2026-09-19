@@ -8,6 +8,7 @@
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import Badge from '$lib/components/ui/badges/Badge.svelte';
   import XIcon from '@iconify-svelte/fa6-solid/xmark';
+  import StarIcon from '@iconify-svelte/fa6-solid/star';
 
   let {
     filters,
@@ -105,8 +106,20 @@
     <Button
       class="btn-sm {filters.bookmarked ? 'btn-primary' : 'btn-ghost'}"
       onclick={() => editNow((f) => (f.bookmarked = !f.bookmarked))}
+      aria-pressed={filters.bookmarked}
     >
       Bookmarked
+    </Button>
+    <Button
+      class="btn-sm gap-1 {filters.featured ? 'btn-primary' : 'btn-ghost'}"
+      onclick={() => editNow((f) => (f.featured = !f.featured))}
+      aria-pressed={filters.featured}
+    >
+      <StarIcon
+        class="w-3 h-3"
+        aria-hidden="true"
+      />
+      Featured
     </Button>
 
     {#if hasAnyFilter(filters)}

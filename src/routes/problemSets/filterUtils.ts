@@ -46,14 +46,15 @@ export function selectionCount(filters: Filters, tagIds: string[]): number {
   return tagIds.filter((id) => filters.include.includes(id) || filters.exclude.includes(id)).length;
 }
 
-/** Whether any filter (tags, status, creator, bookmark) is active. */
+/** Whether any filter (tags, status, creator, bookmark, featured) is active. */
 export function hasAnyFilter(filters: Filters): boolean {
   return (
     filters.include.length > 0 ||
     filters.exclude.length > 0 ||
     filters.statuses.length > 0 ||
     filters.creators.length > 0 ||
-    filters.bookmarked
+    filters.bookmarked ||
+    filters.featured
   );
 }
 
@@ -70,7 +71,8 @@ export function emptyFilters(): Filters {
     statuses: [],
     creators: [],
     creatorMatchAll: false,
-    bookmarked: false
+    bookmarked: false,
+    featured: false
   };
 }
 
@@ -89,7 +91,8 @@ export function parseFilters(params: URLSearchParams): Filters {
     statuses,
     creators: params.getAll('creator'),
     creatorMatchAll: params.get('creatorMatch') === 'all',
-    bookmarked: params.get('bookmarked') === 'true'
+    bookmarked: params.get('bookmarked') === 'true',
+    featured: params.get('featured') === 'true'
   };
 }
 
@@ -122,6 +125,7 @@ export function serializeQuery(state: QueryState): string {
   for (const id of state.filters.creators) params.append('creator', id);
   if (state.filters.creatorMatchAll) params.set('creatorMatch', 'all');
   if (state.filters.bookmarked) params.set('bookmarked', 'true');
+  if (state.filters.featured) params.set('featured', 'true');
   if (state.search) params.set('search', state.search);
   if (state.sortBy) params.set('sortBy', state.sortBy);
   if (state.sortDesc) params.set('sortOrder', 'desc');

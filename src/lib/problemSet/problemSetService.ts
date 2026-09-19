@@ -84,6 +84,7 @@ export interface FindByFilterOptions {
     creators?: string[];
     creatorMatchAll?: boolean;
     bookmarked?: boolean;
+    featured?: boolean;
   };
   sort?: {
     by: SortType;
@@ -543,6 +544,13 @@ export class ProblemSetService {
 
     if (options.filters?.bookmarked) {
       query = query.where((eb) => eb('bookmarked.bookmarked', '=', eb.lit(true)));
+    }
+
+    // `featured` is not a column: a set is featured when it has been given a
+    // featured_rank, which is also what the card badge reads. See the default
+    // ordering below, which sorts by that same rank.
+    if (options.filters?.featured) {
+      query = query.where((eb) => eb('ProblemSet.featured_rank', 'is not', null));
     }
 
     if (options.filters?.search) {
