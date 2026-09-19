@@ -25,7 +25,7 @@ const STARTER_CODE = [
 
 const user = { id: 'student-1' } as User;
 
-const makeContext = (savedCode: Record<string, string>) => {
+const makeSession = (savedCode: Record<string, string>) => {
   const problem = new Problem({
     id: 'problem-1',
     name: 'Slots problem',
@@ -51,6 +51,11 @@ const makeContext = (savedCode: Record<string, string>) => {
     user
   );
 
+  return { problem, practiceSession };
+};
+
+const makeContext = (savedCode: Record<string, string>) => {
+  const { problem, practiceSession } = makeSession(savedCode);
   return new SolveWindowContext({ problem, practiceSession, language: 'c' });
 };
 
@@ -157,5 +162,70 @@ describe('SolveWindowContext submissions', () => {
     expect(context.testSubmitted).toBe(false);
     expect(context.lastTestType).toBe('run');
     expect(context.editorState.locked).toBe(false);
+  });
+});
+
+// Regression: `previous_state` is captured when the page loads and used to stay
+// frozen there for the life of the page. Anything that rebuilt the context from
+// it afterwards -- a remount of the solve view when the viewport crossed the
+// desktop breakpoint, a hot reload in dev -- reseeded the editor with the code
+// as it stood on page load. A student could autosave successfully for an hour
+// and still lose all of it the moment they zoomed the page.
+describe('SolveWindowContext saved state', () => {
+  const okResponse = { ok: true, status: 200, statusText: 'OK' };
+
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okResponse));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('advances the session so a context rebuilt from it starts from the saved code', async () => {
+    const { problem, practiceSession } = makeSession({ code: '  puts("first");' });
+    const context = new SolveWindowContext({ problem, practiceSession, language: 'c' });
+
+    context.editorState.codeSections = { code: '  puts("second");' };
+    await context.forceSave();
+    expect(context.saveState).toBe('saved');
+
+    const rebuilt = new SolveWindowContext({ problem, practiceSession, language: 'c' });
+    expect(rebuilt.editorState.codeSections).toEqual({ code: '  puts("second");' });
+    expect(rebuilt.editorState.code).toContain('  puts("second");');
+  });
+
+  it('records what was sent, not what was typed while the request was in flight', async () => {
+    const { problem, practiceSession } = makeSession({ code: '  puts("first");' });
+    const context = new SolveWindowContext({ problem, practiceSession, language: 'c' });
+
+    // Resolve the save only once a later keystroke has landed, so re-reading
+    // the editor after the await would pick up code the server never saw.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(() => {
+        context.editorState.codeSections = { code: '  puts("third");' };
+        return Promise.resolve(okResponse);
+      })
+    );
+
+    context.editorState.codeSections = { code: '  puts("second");' };
+    await context.forceSave();
+
+    expect(practiceSession.getPreviousState().code).toEqual({ code: '  puts("second");' });
+  });
+
+  it('leaves the session untouched when the server rejects the save', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500, statusText: 'Server Error' }));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { problem, practiceSession } = makeSession({ code: '  puts("first");' });
+    const context = new SolveWindowContext({ problem, practiceSession, language: 'c' });
+
+    context.editorState.codeSections = { code: '  puts("second");' };
+    await context.forceSave();
+
+    expect(context.saveState).toBe('error');
+    expect(practiceSession.getPreviousState().code).toEqual({ code: '  puts("first");' });
   });
 });

@@ -50,6 +50,11 @@ export class SolveWindowContext {
   public testSubmitted: boolean = $state(false);
   public customRunLoading: boolean = $state(false);
   public customRunResult: CustomRunResponse | null = $state(null);
+  /**
+   * Bumped once per Submit. The submissions window watches this so a new
+   * attempt shows up in the history without the student reopening the panel.
+   */
+  public submissionsVersion: number = $state(0);
 
   private readonly autosave: AutoSave<Record<string, string>>;
 
@@ -79,7 +84,7 @@ export class SolveWindowContext {
       sections: Object.fromEntries(previousCode.sections.map((section) => [section.slot.label, section.code]))
     });
     this.telemetry = ClientServiceProvider.instance().getService(TelemetryService, initial.practiceSession.id);
-    this.autosave = new AutoSave(() => this.saveCode(), $state.snapshot(this.editorState.codeSections));
+    this.autosave = new AutoSave((code) => this.saveCode(code), $state.snapshot(this.editorState.codeSections));
   }
 
   /** The current autosave state, for the editor status bar. */
@@ -120,6 +125,9 @@ export class SolveWindowContext {
     this.testSubmitted = results.success;
     this.selectedTest = results.results.length > 0 ? 0 : -1;
     this.editorState.locked = false;
+    // The server records the submission before it responds, so by here the new
+    // row is durable and the history can safely refetch.
+    this.submissionsVersion += 1;
     this.openWindow('test_cases', { direction: 'below', referencePanel: 'code_editor' });
   }
 
@@ -131,12 +139,17 @@ export class SolveWindowContext {
     this.customRunLoading = false;
   }
 
-  private async saveCode(): Promise<void> {
+  /**
+   * Writes one revision of the code. `code` is the snapshot the autosave
+   * queued, not a fresh read of the editor -- re-reading here would send
+   * whatever the student had typed by the time this write reached the front of
+   * the queue, and the session would be credited with code the autosave never
+   * accounted for.
+   */
+  private async saveCode(code: Record<string, string>): Promise<void> {
     const response = await fetch(`/api/practice-session/${this.practiceSession.id}`, {
       method: 'PUT',
-      body: JSON.stringify({
-        code: $state.snapshot(this.editorState.codeSections)
-      }),
+      body: JSON.stringify({ code }),
       headers: { 'content-type': 'application/json' }
     });
     // `fetch` only rejects on network failure, so a 4xx/5xx has to be raised by
@@ -144,6 +157,10 @@ export class SolveWindowContext {
     if (!response.ok) {
       throw new Error(`Failed to save code: ${response.status} ${response.statusText}`);
     }
+    // The server holds this code now, so advance the client's copy of the
+    // session to match. Without this the model keeps the page-load state
+    // forever, and anything reseeding from it later reverts the student's work.
+    this.practiceSession.recordSavedCode(code);
     // The session state is persisted: flush collated telemetry into the
     // session history alongside it, instead of on its own timer.
     void this.telemetry.flush();
