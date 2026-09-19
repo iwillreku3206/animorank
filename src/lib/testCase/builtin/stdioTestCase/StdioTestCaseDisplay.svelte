@@ -2,6 +2,7 @@
   import type { TestCaseResult } from '$lib/testCase/types';
   import type { StdioTestCaseRunInfo } from './stdioTestCase.svelte';
   import ValueField from '../shared/ValueField.svelte';
+  import { segmentOutput } from '../shared/whitespace';
   import HiddenTestCase from '../shared/HiddenTestCase.svelte';
 
   let { testCaseResult }: { testCaseResult: TestCaseResult<StdioTestCaseRunInfo> } = $props();
@@ -34,14 +35,22 @@
       value={testInput(testCaseResult)}
       placeholder="(no input)"
     />
+    <!-- The two compared outputs, shown in full and unaltered. The segments
+         only draw glyphs over trailing whitespace, which a <pre> renders
+         invisibly; how forgiving the grader was is a separate question, and
+         not one these boxes answer. -->
     <ValueField
       label="Expected output"
       value={testCaseResult.runInfo.expected}
+      segments={segmentOutput(testCaseResult.runInfo.expected)}
+      wrap={false}
       placeholder="(no output)"
     />
     <ValueField
       label="Actual output"
       value={testCaseResult.runInfo.actual}
+      segments={segmentOutput(testCaseResult.runInfo.actual)}
+      wrap={false}
       placeholder="(no output)"
     />
   </div>

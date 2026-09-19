@@ -53,9 +53,18 @@
   // Long multi-line output — the case where the <pre> blocks have to hold up.
   const multiline = result('5\n', '1\n1 1\n1 2 1\n1 3 3 1\n1 4 6 4 1\n', '1\n1 1\n1 2 1\n1 3 3 1\n1 4 6 4 0\n', false);
 
-  // Trailing-whitespace mismatch: the two blocks look identical on screen,
-  // which is exactly the case worth designing for.
+  // Trailing-whitespace mismatch. The two outputs differ only in whitespace a
+  // <pre> cannot show, so the glyphs are the only thing making the difference
+  // findable at all.
   const whitespaceOnly = result('1 2\n', '3\n', '3 \n', false);
+
+  // The missing final newline, under a strict test case. Before the glyphs
+  // these two boxes rendered at identical heights next to a red failure.
+  const trailingNewline = result('3 4\n', '7', '7\n', false);
+
+  // Trailing whitespace on interior lines, which only per-line trimming
+  // forgives -- and which nothing on screen showed before.
+  const trailingPerLine = result('3\n', '1\n2\n3\n', '1 \n2\t\n3\n', false);
 
   const noOutput = result('7\n', '49\n', '', false);
 
@@ -92,6 +101,14 @@
 
 <Story name="Whitespace-Only Difference">
   {#snippet template()}{@render pane(whitespaceOnly)}{/snippet}
+</Story>
+
+<Story name="Missing Final Newline">
+  {#snippet template()}{@render pane(trailingNewline)}{/snippet}
+</Story>
+
+<Story name="Trailing Whitespace Per Line">
+  {#snippet template()}{@render pane(trailingPerLine)}{/snippet}
 </Story>
 
 <Story name="No Output">

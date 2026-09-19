@@ -5,6 +5,8 @@ import type { Problem as ProblemModel, ProblemTestCase } from '$lib/zenstack/mod
 import { CLanguage } from '$lib/language/c';
 import { CodeExecutor } from '$lib/executor';
 import type { ExecutionRequest, ExecutionResult } from '$lib/executor/types';
+import { outputMatches, type WhitespaceMode } from './stdioTestCase.svelte';
+import { toJsonValue } from '$lib/types/utils';
 
 const problemModel = {
   id: 'problem-1',
@@ -49,7 +51,31 @@ const stub = new StubExecutor();
 describe('ServerStdioTestCase', () => {
   it('hydrates the old schema data from the model', () => {
     const serverTestCase = ServerTestCaseRegistry.instance().from(makeTestCaseModel(), new Problem(problemModel));
-    expect(serverTestCase.testCase.data).toEqual({ input: '5\n', output: '25\n' });
+    // A row written before the mode existed hydrates with the default rather
+    // than with the field missing, so nothing has to be backfilled.
+    expect(serverTestCase.testCase.data).toEqual({ input: '5\n', output: '25\n', whitespace: 'strict' });
+  });
+
+  it('survives the round trip the editor autosave performs', () => {
+    const model = makeTestCaseModel({ data: { input: '', output: '25', whitespace: 'trim_output' } });
+    const serverTestCase = ServerTestCaseRegistry.instance().from(model, new Problem(problemModel));
+
+    // This is literally what the editor writes back to the row on every
+    // keystroke. `toJsonValue` throws on an undefined member, so a mode that
+    // hydrated wrong would break saving outright rather than quietly.
+    expect(toJsonValue(serverTestCase.testCase.data)).toEqual({
+      input: '',
+      output: '25',
+      whitespace: 'trim_output'
+    });
+  });
+
+  it('carries the whitespace mode through hydration', () => {
+    const model = makeTestCaseModel({ data: { input: '', output: '25', whitespace: 'trim_lines' } });
+    const serverTestCase = ServerTestCaseRegistry.instance().from(model, new Problem(problemModel));
+    // The editor autosaves whatever hydration produced. A field dropped here
+    // is silently deleted from the row on the instructor's next keystroke.
+    expect(serverTestCase.testCase.data).toEqual({ input: '', output: '25', whitespace: 'trim_lines' });
   });
 
   it('compiles the submission and feeds the test input on stdin', async () => {
@@ -203,5 +229,110 @@ describe('ServerStdioTestCase', () => {
     });
 
     expect(result).toEqual({ success: false, testCaseInfo: { public: false } });
+  });
+});
+
+const MODES = ['strict', 'trim_output', 'trim_lines'] as const satisfies readonly WhitespaceMode[];
+
+// Each row states what the pair should do under strict / trim_output /
+// trim_lines, so reading across a row shows exactly what each mode forgives.
+const comparisonCases: Array<{
+  name: string;
+  expected: string;
+  actual: string;
+  matches: [boolean, boolean, boolean];
+}> = [
+  { name: 'identical outputs', expected: '25\n', actual: '25\n', matches: [true, true, true] },
+  { name: 'both empty', expected: '', actual: '', matches: [true, true, true] },
+
+  // The case this whole feature exists for: the program prints a closing
+  // newline, the expected output was typed into a textarea without one.
+  { name: 'missing final newline', expected: '25', actual: '25\n', matches: [false, true, true] },
+  { name: 'extra blank lines at the end', expected: '25', actual: '25\n\n\n', matches: [false, true, true] },
+  { name: 'trailing spaces at the end', expected: '25', actual: '25   ', matches: [false, true, true] },
+  { name: 'trailing CRLF', expected: '25', actual: '25\r\n', matches: [false, true, true] },
+  { name: 'whitespace-only against empty', expected: '', actual: '\n  \n', matches: [false, true, true] },
+
+  // Only per-line trimming reaches whitespace at the end of an interior line.
+  { name: 'trailing space on an interior line', expected: '1\n2\n', actual: '1 \n2\n', matches: [false, false, true] },
+  {
+    name: 'trailing space and tab on every line',
+    expected: 'a\nb\nc',
+    actual: 'a \nb\t\nc ',
+    matches: [false, false, true]
+  },
+  {
+    name: 'interior trailing space plus missing final newline',
+    expected: '1\n2',
+    actual: '1 \n2\n',
+    matches: [false, false, true]
+  },
+
+  // Nothing forgives whitespace that is not at the end of something.
+  { name: 'leading whitespace', expected: '25', actual: ' 25', matches: [false, false, false] },
+  { name: 'interior double space', expected: '1 2', actual: '1  2', matches: [false, false, false] },
+  { name: 'extra interior blank line', expected: '1\n2', actual: '1\n\n2', matches: [false, false, false] },
+  { name: 'genuinely different values', expected: '25', actual: '26', matches: [false, false, false] }
+];
+
+describe('outputMatches', () => {
+  it.each(comparisonCases)('$name', ({ expected, actual, matches }) => {
+    MODES.forEach((mode, i) => {
+      expect({ mode, matches: outputMatches(expected, actual, mode) }).toEqual({ mode, matches: matches[i] });
+    });
+  });
+
+  it('never gets stricter as the mode loosens', () => {
+    // The ladder is the promise the editor makes to an instructor: moving down
+    // the list only ever forgives more. A future edit that breaks it (say, a
+    // per-line trim that stops dropping trailing blank lines) fails here
+    // rather than quietly failing students.
+    const violations = comparisonCases.flatMap(({ name, expected, actual }) => {
+      const results = MODES.map((mode) => outputMatches(expected, actual, mode));
+      return MODES.flatMap((mode, i) =>
+        i > 0 && results[i - 1] && !results[i] ? [`${name}: ${MODES[i - 1]} accepted it but ${mode} rejected it`] : []
+      );
+    });
+
+    expect(violations).toEqual([]);
+  });
+});
+
+describe('the mode reaches the verdict', () => {
+  const ranWith = async (stdout: string, expected: string, whitespace?: WhitespaceMode) => {
+    class OutputExecutor extends CodeExecutor {
+      public async execute(): Promise<ExecutionResult> {
+        return {
+          processOutputs: [{ exitCode: 0 }, { exitCode: 0, stdout: Buffer.from(stdout) }],
+          fileOutputs: []
+        };
+      }
+    }
+    const model = makeTestCaseModel({ data: { input: '', output: expected, ...(whitespace && { whitespace }) } });
+    const serverTestCase = ServerTestCaseRegistry.instance().from(model, new Problem(problemModel));
+    return serverTestCase.run(new CLanguage(), new OutputExecutor(), { sections: { body: '' } });
+  };
+
+  it('grades as strict when the data carries no mode', async () => {
+    // Every test case written before the mode existed lands here.
+    expect(await ranWith('25\n', '25')).toMatchObject({ success: false });
+  });
+
+  it('honours trim_output from the test case data', async () => {
+    expect(await ranWith('25\n', '25', 'trim_output')).toMatchObject({ success: true });
+    expect(await ranWith('1 \n2\n', '1\n2', 'trim_output')).toMatchObject({ success: false });
+  });
+
+  it('honours trim_lines from the test case data', async () => {
+    expect(await ranWith('1 \n2\n', '1\n2', 'trim_lines')).toMatchObject({ success: true });
+  });
+
+  it('reports the raw stdout whatever the mode forgives', async () => {
+    // The display shows what the program actually printed; only the verdict
+    // bends.
+    expect(await ranWith('25\n\n', '25', 'trim_output')).toMatchObject({
+      success: true,
+      runInfo: { expected: '25', actual: '25\n\n' }
+    });
   });
 });
