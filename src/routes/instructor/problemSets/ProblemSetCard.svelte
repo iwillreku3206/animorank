@@ -1,5 +1,6 @@
 <script lang="ts">
   import TagChip from '$lib/components/ui/TagChip.svelte';
+  import FeaturedBadge from '$lib/components/ui/FeaturedBadge.svelte';
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
   import YfmStaticView from '$lib/components/content/YfmStaticView.svelte';
@@ -78,6 +79,9 @@
   <div class="flex flex-row items-end gap-4">
     <div class="flex flex-1 flex-wrap items-center gap-2 text-sm text-base-content/70">
       <span>{problemSet.problemCount} problem{problemSet.problemCount === 1 ? '' : 's'}</span>
+      {#if problemSet.featured}
+        <FeaturedBadge />
+      {/if}
       {#if problemSet.is_global}
         <span class="badge badge-sm badge-outline">Global</span>
       {/if}

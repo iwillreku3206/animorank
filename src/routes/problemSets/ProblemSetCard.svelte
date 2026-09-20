@@ -1,11 +1,6 @@
 <script lang="ts">
   import TagChip from '$lib/components/ui/TagChip.svelte';
-  import BookmarkIcon from '@iconify-svelte/fa6-regular/bookmark';
-  import BookmarkIconSolid from '@iconify-svelte/fa6-solid/bookmark';
-  import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
-  import { removeBookmark, toggleBookmark } from './bookmark';
-  import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
-  import Button from '$lib/components/ui/buttons/Button.svelte';
+  import FeaturedBadge from '$lib/components/ui/FeaturedBadge.svelte';
   import type { PageProps } from './$types';
   import transform from '@diplodoc/transform';
   import YfmStaticView from '$lib/components/content/YfmStaticView.svelte';
@@ -17,28 +12,17 @@
   type ProblemSet = PageProps['data']['problemSets'][number];
 
   /** The problem set data displayed in this card. */
-  let { problemSet = $bindable() }: { problemSet: ProblemSet } = $props();
+  let { problemSet }: { problemSet: ProblemSet } = $props();
 
   /** Display name of the problem set's author(s). */
   const ownerName = $derived(problemSet.owners.map((o) => o.name).join(', '));
-
-  /**
-   * Toggle the bookmarked state for this problem set.
-   */
-  async function handleBookmarkClick() {
-    if (problemSet.bookmarked) {
-      await removeBookmark(problemSet.id);
-      problemSet.bookmarked = false;
-    } else {
-      await toggleBookmark(problemSet.id);
-      problemSet.bookmarked = true;
-    }
-  }
 </script>
 
-<!-- Card container -->
-<div class="relative w-full flex flex-col gap-4 bg-base-200 hover:bg-base-100/70 rounded-lg p-6 max-h-96">
-  <!-- Header: breadcrumb + bookmark icon -->
+<!-- Card container. Tapping anywhere that is not a nested link opens the problem set. -->
+<div
+  class="relative w-full flex flex-col gap-4 bg-base-200 hover:bg-base-100/70 active:bg-base-100 transition-colors duration-250 touch-manipulation rounded-lg p-6 max-h-96"
+>
+  <!-- Header: breadcrumb + featured badge -->
   <div class="flex items-center gap-4">
     <!-- Subject category -->
     <div class="flex-1">
@@ -48,7 +32,7 @@
       >
         Courses / {#if problemSet.subject}
           <a
-            class="transition-colors duration-250 hover:text-primary"
+            class="relative z-10 transition-colors duration-250 hover:text-primary"
             href="/problemSets?tag={problemSet.subject.id}"
           >
             {problemSet.subject?.label}
@@ -59,40 +43,25 @@
       </p>
     </div>
 
-    <!-- Bookmark button -->
-    <Button
-      type="button"
-      class="btn-ghost btn-square p-0 w-4 h-4"
-      onclick={handleBookmarkClick}
-      aria-label={problemSet.bookmarked
-        ? `Remove ${problemSet.title} from bookmarks`
-        : `Add ${problemSet.title} to bookmarks`}
-      aria-pressed={problemSet.bookmarked}
-    >
-      {#if problemSet.bookmarked}
-        <BookmarkIconSolid
-          class="w-4 h-4"
-          aria-hidden="true"
-        />
-      {:else}
-        <BookmarkIcon
-          class="w-4 h-4"
-          aria-hidden="true"
-        />
-      {/if}
-    </Button>
+    {#if problemSet.featured}
+      <FeaturedBadge />
+    {/if}
   </div>
 
   <!-- Title + author -->
   <div class="flex flex-col gap-1">
-    <!-- Title -->
-    <h2 class="font-display text-xl font-semibold line-clamp-2 overflow-hidden">
+    <!-- Title. Its stretched ::after is what makes the card itself clickable. -->
+    <h2 class="font-display text-xl font-semibold">
       <a
-        class="hover:text-primary transition-colors duration-250"
+        class="block after:absolute after:inset-0 after:rounded-lg after:content-['']"
         href="/problemSets/{problemSet.id}"
         aria-label={`${problemSet.title}`}
       >
-        {problemSet.title}
+        <!-- Tint is on the span: the link's ::after spans the whole card, so a hover on
+             the link (or the h2) would follow it and fire from anywhere on the card. -->
+        <span class="relative z-10 block line-clamp-2 overflow-hidden transition-colors duration-250 hover:text-primary"
+          >{problemSet.title}</span
+        >
       </a>
     </h2>
 
@@ -104,7 +73,7 @@
       {#each problemSet.owners as owner, i (owner.id)}
         <a
           href="/problemSets?creator={owner.id}"
-          class="transition-colors duration-250 hover:text-primary"
+          class="relative z-10 transition-colors duration-250 hover:text-primary"
         >
           {owner.name}
         </a>{i === problemSet.owners.length - 1 ? '' : ', '}
@@ -118,12 +87,13 @@
       <TagChip
         {tag}
         href="/problemSets?tag={tag.id}"
+        class="badge-sm badge-soft relative z-10"
       />
     {/each}
   </div>
 
   <!-- Description (YFM markup from the instructor editor, rendered) -->
-  <div class="flex-1 text-sm text-base-content/70 line-clamp-3 overflow-hidden">
+  <div class="card-description flex-1 text-sm text-base-content/70 line-clamp-3 overflow-hidden">
     <YfmStaticView
       html={transform(problemSet.description ?? '', {
         allowHTML: true,
@@ -137,38 +107,34 @@
     />
   </div>
 
-  <!-- Footer: progress row and details button -->
-  <div class="flex flex-row gap-8">
-    <div class="flex-1 flex-col gap-2">
-      <!-- Progress text -->
-      <div class="flex justify-between gap-4 text-sm text-base-content">
-        <span> Progress </span>
-        <span>
-          {problemSet.progress.finished}/{problemSet.progress.total} problem{problemSet.progress.total === 1 ? '' : 's'}
-        </span>
-      </div>
-
-      <!-- Progress bar -->
-      <progress
-        class="progress h-2 w-full bg-neutral problemSetProgress"
-        value={problemSet.progress.finished}
-        max={problemSet.progress.total}
-        aria-label={`${Math.round((problemSet.progress.finished / problemSet.progress.total) * 100)}% progress`}
-      ></progress>
+  <!-- Footer: progress row -->
+  <div class="flex flex-col gap-2">
+    <!-- Progress text -->
+    <div class="flex justify-between gap-4 text-sm text-base-content">
+      <span> Progress </span>
+      <span>
+        {problemSet.progress.finished}/{problemSet.progress.total} problem{problemSet.progress.total === 1 ? '' : 's'}
+      </span>
     </div>
 
-    <!-- Details button -->
-    <div class="flex">
-      <ButtonLink
-        href="/problemSets/{problemSet.id}"
-        class="btn-square btn-primary btn-outline inline-flex items-center gap-2"
-        aria-label={`Open ${problemSet.title} problem set details`}
-      >
-        <ArrowRightIcon
-          class="w-4 h-4"
-          aria-hidden="true"
-        />
-      </ButtonLink>
-    </div>
+    <!-- Progress bar -->
+    <progress
+      class="progress h-2 w-full bg-neutral problemSetProgress"
+      value={problemSet.progress.finished}
+      max={problemSet.progress.total}
+      aria-label={`${Math.round((problemSet.progress.finished / problemSet.progress.total) * 100)}% progress`}
+    ></progress>
   </div>
 </div>
+
+<style>
+  /* The title's stretched ::after covers the whole card, so a link the instructor
+     wrote into the description sits underneath it and opens the set instead of
+     itself. Lift them the way every other nested link on the card is lifted.
+     YfmStaticView renders through React, so the rule has to be :global to reach
+     markup Svelte never compiled. */
+  .card-description :global(a) {
+    position: relative;
+    z-index: 10;
+  }
+</style>

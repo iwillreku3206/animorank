@@ -34,6 +34,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
       creators: filters.creators,
       creatorMatchAll: filters.creatorMatchAll,
       bookmarked: filters.bookmarked,
+      featured: filters.featured,
       search
     },
     page,
@@ -48,6 +49,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     owners: ps.authors,
     description: ps.description || '',
     bookmarked: ps.bookmarked,
+    featured: ps.featured,
     progress: {
       finished: ps.studentProgress.finished,
       total: ps.studentProgress.total

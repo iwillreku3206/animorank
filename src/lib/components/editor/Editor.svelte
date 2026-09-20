@@ -6,7 +6,7 @@
 
   let editor = $state<HTMLDivElement>();
   let root = $state<ReactDOM.Root>();
-  let { text = $bindable() }: { text: string } = $props();
+  let { text = $bindable(), class: className = '' }: { text: string; class?: string } = $props();
 
   onMount(() => {
     import('./Editor.tsx').then((module) => {
@@ -28,7 +28,12 @@
   export const getContent = () => {};
 </script>
 
-<div bind:this={editor}>Loading Editor...</div>
+<div
+  class={className}
+  bind:this={editor}
+>
+  Loading Editor...
+</div>
 
 <style>
 </style>

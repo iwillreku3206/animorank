@@ -277,6 +277,12 @@ export class SchemaType implements SchemaDef {
                     array: true,
                     relation: { opposite: "problem" }
                 },
+                submissions: {
+                    name: "submissions",
+                    type: "Submission",
+                    array: true,
+                    relation: { opposite: "problem" }
+                },
                 test_cases: {
                     name: "test_cases",
                     type: "ProblemTestCase",
@@ -429,6 +435,11 @@ export class SchemaType implements SchemaDef {
                     type: "Boolean",
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
                     default: false as FieldDefault
+                },
+                featured_rank: {
+                    name: "featured_rank",
+                    type: "Int",
+                    optional: true
                 },
                 difficulty_id: {
                     name: "difficulty_id",
@@ -914,6 +925,12 @@ export class SchemaType implements SchemaDef {
                     type: "Subscription",
                     array: true,
                     relation: { opposite: "student" }
+                },
+                submissions: {
+                    name: "submissions",
+                    type: "Submission",
+                    array: true,
+                    relation: { opposite: "student" }
                 }
             },
             idFields: ["id"],
@@ -1276,6 +1293,79 @@ export class SchemaType implements SchemaDef {
             uniqueFields: {
                 credentialID: { type: "String" },
                 userId_credentialID: { userId: { type: "String" }, credentialID: { type: "String" } }
+            }
+        },
+        Submission: {
+            name: "Submission",
+            fields: {
+                id: {
+                    name: "id",
+                    type: "String",
+                    id: true,
+                    attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("uuid") as FieldDefault
+                },
+                student_id: {
+                    name: "student_id",
+                    type: "String",
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "student"
+                    ] as readonly string[]
+                },
+                student: {
+                    name: "student",
+                    type: "Student",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("student_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "submissions", fields: ["student_id"], references: ["id"], onDelete: "Cascade" }
+                },
+                problem_id: {
+                    name: "problem_id",
+                    type: "String",
+                    attributes: [{ name: "@db.Uuid" }] as readonly AttributeApplication[],
+                    foreignKeyFor: [
+                        "problem"
+                    ] as readonly string[]
+                },
+                problem: {
+                    name: "problem",
+                    type: "Problem",
+                    attributes: [{ name: "@relation", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("problem_id")]) }, { name: "references", value: ExpressionUtils.array("String", [ExpressionUtils.field("id")]) }, { name: "onDelete", value: ExpressionUtils.literal("Cascade") }] }] as readonly AttributeApplication[],
+                    relation: { opposite: "submissions", fields: ["problem_id"], references: ["id"], onDelete: "Cascade" }
+                },
+                passed: {
+                    name: "passed",
+                    type: "Boolean"
+                },
+                tests_passed: {
+                    name: "tests_passed",
+                    type: "Int"
+                },
+                tests_total: {
+                    name: "tests_total",
+                    type: "Int"
+                },
+                code: {
+                    name: "code",
+                    type: "Json"
+                },
+                full_code: {
+                    name: "full_code",
+                    type: "String"
+                },
+                created_at: {
+                    name: "created_at",
+                    type: "DateTime",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("now") }] }, { name: "@db.Timestamptz", args: [{ name: "x", value: ExpressionUtils.literal(3) }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("now") as FieldDefault
+                }
+            },
+            attributes: [
+                { name: "@@index", args: [{ name: "fields", value: ExpressionUtils.array("String", [ExpressionUtils.field("student_id"), ExpressionUtils.field("problem_id"), ExpressionUtils.field("created_at")]) }] }
+            ] as readonly AttributeApplication[],
+            idFields: ["id"],
+            uniqueFields: {
+                id: { type: "String" }
             }
         }
     } as const;

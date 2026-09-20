@@ -1,12 +1,4 @@
-/**
- * `fetch` only rejects on network failure, so a 4xx/5xx has to be raised by
- * hand or the caller treats a refused write as a success.
- */
-async function assertOk(response: Response, what: string): Promise<void> {
-  if (!response.ok) {
-    throw new Error(`${what} failed: ${response.status} ${response.statusText}`);
-  }
-}
+import { errorFrom } from '$lib/response';
 
 /** Create an empty problem set and return its id. */
 export async function createProblemSet(title: string): Promise<string> {
@@ -15,12 +7,12 @@ export async function createProblemSet(title: string): Promise<string> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title })
   });
-  await assertOk(response, 'Creating problem set');
+  if (!response.ok) throw await errorFrom(response, 'Creating problem set failed');
   const { id } = await response.json();
   return id;
 }
 
 export async function deleteProblemSet(problemSetId: string): Promise<void> {
   const response = await fetch(`/api/problem-set/${problemSetId}`, { method: 'DELETE' });
-  await assertOk(response, 'Deleting problem set');
+  if (!response.ok) throw await errorFrom(response, 'Deleting problem set failed');
 }

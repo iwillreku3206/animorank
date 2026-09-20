@@ -24,6 +24,8 @@ export class CustomTestCase extends TestCase<CustomTestCaseData, CustomTestCaseR
     return 'custom';
   }
 
+  static displayName = 'Custom Tests';
+
   static async create(problem: Problem) {
     const res = await fetch('/api/test-case', {
       method: 'POST',

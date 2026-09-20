@@ -19,6 +19,9 @@
   import { page } from '$app/state';
   import { onDestroy } from 'svelte';
   import Button from '$lib/components/ui/buttons/Button.svelte';
+  import Dropdown from '$lib/components/ui/dropdowns/Dropdown.svelte';
+  import DropdownItem from '$lib/components/ui/dropdowns/DropdownItem.svelte';
+  import DropdownSeparator from '$lib/components/ui/dropdowns/DropdownSeparator.svelte';
   import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
   import Seo from '$lib/components/layout/Seo.svelte';
 
@@ -214,68 +217,65 @@
     </div>
 
     <div class="flex gap-2">
-      <div class="dropdown dropdown-end flex-1 sm:flex-none">
-        <Button
-          tabindex={0}
-          class="w-full justify-start gap-2 whitespace-nowrap sm:w-56"
-        >
-          {#if sortBy}
-            {#if sortDesc}
-              <SortDescIcon class="h-4 w-4 opacity-70" />
-            {:else}
-              <SortAscIcon class="h-4 w-4 opacity-70" />
+      <Dropdown
+        label="Sort options"
+        class="w-64"
+      >
+        {#snippet trigger(props)}
+          <Button
+            {...props}
+            class="w-full justify-start gap-2 whitespace-nowrap sm:w-56 flex-1 sm:flex-none"
+          >
+            {#if sortBy}
+              {#if sortDesc}
+                <SortDescIcon class="h-4 w-4 opacity-70" />
+              {:else}
+                <SortAscIcon class="h-4 w-4 opacity-70" />
+              {/if}
             {/if}
-          {/if}
-          Sort{currentSortLabel ? `: ${currentSortLabel}` : ''}
-          <DownArrowIcon class="ms-auto h-3 w-3 shrink-0 opacity-40" />
-        </Button>
+            Sort{currentSortLabel ? `: ${currentSortLabel}` : ''}
+            <DownArrowIcon class="ms-auto h-3 w-3 shrink-0 opacity-40" />
+          </Button>
+        {/snippet}
 
-        <div
-          tabindex="-1"
-          class="dropdown-content z-50 mt-2 w-64 rounded-box border border-base-content/10 bg-base-100 p-1.5 shadow-xl"
-        >
-          <ul class="flex flex-col gap-0.5">
-            {#each SORT_OPTIONS as opt (opt.value)}
-              <li>
-                <button
-                  class="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm transition-colors outline-none hover:bg-base-200 focus-visible:bg-base-200 {sortBy ===
-                  opt.value
-                    ? 'font-medium text-primary'
-                    : 'text-base-content/70'}"
-                  onclick={() => setSort(opt.value, sortDesc)}
-                  aria-pressed={sortBy === opt.value}
-                >
-                  {opt.label}
-                  {#if sortBy === opt.value}
-                    <CheckIcon class="h-3.5 w-3.5" />
-                  {/if}
-                </button>
-              </li>
-            {/each}
-          </ul>
+        {#each SORT_OPTIONS as opt (opt.value)}
+          <!-- closeOnSelect={false}: picking a field then flipping direction is
+               one gesture, so the menu stays put as it did before. -->
+          <DropdownItem
+            closeOnSelect={false}
+            onSelect={() => setSort(opt.value, sortDesc)}
+            class={sortBy === opt.value
+              ? 'justify-between font-medium text-primary'
+              : 'justify-between text-base-content/70'}
+          >
+            {opt.label}
+            {#if sortBy === opt.value}
+              <CheckIcon class="h-3.5 w-3.5" />
+            {/if}
+          </DropdownItem>
+        {/each}
 
-          <div class="my-1.5 border-t border-base-content/10"></div>
+        <DropdownSeparator />
 
-          <div class="join w-full">
-            <Button
-              class="join-item btn-sm flex-1 {sortDesc ? '' : 'btn-primary'}"
-              disabled={!sortBy}
-              onclick={() => setSort(sortBy, false)}
-              aria-pressed={!sortDesc}
-            >
-              <SortAscIcon class="h-3.5 w-3.5" /> Asc
-            </Button>
-            <Button
-              class="join-item btn-sm flex-1 {sortDesc ? 'btn-primary' : ''}"
-              disabled={!sortBy}
-              onclick={() => setSort(sortBy, true)}
-              aria-pressed={sortDesc}
-            >
-              <SortDescIcon class="h-3.5 w-3.5" /> Desc
-            </Button>
-          </div>
+        <div class="join w-full">
+          <Button
+            class="join-item btn-sm flex-1 {sortDesc ? '' : 'btn-primary'}"
+            disabled={!sortBy}
+            onclick={() => setSort(sortBy, false)}
+            aria-pressed={!sortDesc}
+          >
+            <SortAscIcon class="h-3.5 w-3.5" /> Asc
+          </Button>
+          <Button
+            class="join-item btn-sm flex-1 {sortDesc ? 'btn-primary' : ''}"
+            disabled={!sortBy}
+            onclick={() => setSort(sortBy, true)}
+            aria-pressed={sortDesc}
+          >
+            <SortDescIcon class="h-3.5 w-3.5" /> Desc
+          </Button>
         </div>
-      </div>
+      </Dropdown>
 
       <div
         class="join"

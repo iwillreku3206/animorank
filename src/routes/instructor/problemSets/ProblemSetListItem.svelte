@@ -1,5 +1,6 @@
 <script lang="ts">
   import TagChip from '$lib/components/ui/TagChip.svelte';
+  import FeaturedBadge from '$lib/components/ui/FeaturedBadge.svelte';
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
   import ProblemSetActions from './ProblemSetActions.svelte';
@@ -38,6 +39,9 @@
       <span class="text-sm text-base-content/70">
         {problemSet.problemCount} problem{problemSet.problemCount === 1 ? '' : 's'}
       </span>
+      {#if problemSet.featured}
+        <FeaturedBadge />
+      {/if}
       {#if problemSet.is_global}
         <span class="badge badge-sm badge-outline">Global</span>
       {/if}

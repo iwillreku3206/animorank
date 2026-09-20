@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '$lib/components/ui/buttons/Button.svelte';
   import DynamicForm from '$lib/components/ui/inputs/DynamicForm.svelte';
   import Select from '$lib/components/ui/selects/Select.svelte';
   import type { Type } from './type.svelte';
@@ -53,13 +54,13 @@
       >
         <div class="flex items-center justify-between mb-2">
           <span class="text-xs font-medium text-base-content/70">Options for {type.displayName}</span>
-          <button
+          <Button
             type="button"
-            class="btn btn-xs btn-primary"
+            class="btn-xs btn-primary"
             onclick={() => (document.activeElement as HTMLElement)?.blur()}
           >
             Done
-          </button>
+          </Button>
         </div>
         <DynamicForm
           class="min-w-min"

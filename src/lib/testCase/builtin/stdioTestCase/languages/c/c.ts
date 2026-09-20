@@ -1,15 +1,11 @@
 import { CodeEditorState } from '$lib/editor/code';
-import { type ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 import { CodeExecutor } from '$lib/executor';
-import { TestCaseLanguage } from '$lib/testCase/testCaseLanguage.server';
-import type { TestCaseResult } from '$lib/testCase/types';
 import { type IntoJsonValue } from '$lib/types/utils';
 import { parseSlots } from '$lib/utils/parseSlots';
-import type { ServerStdioTestCase } from '../../stdioTestCase.server';
-import type { StdioTestCaseRunInfo } from '../../stdioTestCase.svelte';
+import { StdioTestCaseLanguage, type StdioRunOutcome } from '../../stdioTestCaseLanguage.server';
 
-export class CStdioTestCase extends TestCaseLanguage<ServerStdioTestCase> {
-  public async execute(executor: CodeExecutor, state: IntoJsonValue): Promise<TestCaseResult<StdioTestCaseRunInfo>> {
+export class CStdioTestCase extends StdioTestCaseLanguage {
+  protected async runProgram(executor: CodeExecutor, state: IntoJsonValue): Promise<StdioRunOutcome> {
     const codeState = new CodeEditorState(state);
     const { problem, data } = this.testCase.testCase;
     const previousCode = problem.uses_slots
@@ -25,26 +21,16 @@ export class CStdioTestCase extends TestCaseLanguage<ServerStdioTestCase> {
       ]
     });
 
+    // Judge0 collapses a timeout into a single entry with no exit code, so the
+    // run slot can be missing entirely; an absent exit code fails in grading.
     const compile = result.processOutputs[0];
     const run = result.processOutputs[1];
-    const actual = run?.stdout?.toString('utf8') ?? '';
-    const success = compile?.exitCode === 0 && run?.exitCode === 0 && actual === data.output;
-    const compilerOutput = compile?.exitCode !== 0 ? compile?.stderr?.toString('utf8') : undefined;
 
-    if (this.testCase.testCase.model.public === true) {
-      return {
-        success,
-        runInfo: { expected: data.output, actual },
-        testCaseInfo: this.testCase.testCase.model as TestCaseModel & { public: true },
-        compilerOutput
-      };
-    } else {
-      // Hidden results carry no details: not the model (which contains
-      // `data` — the expected output), no runInfo, nothing but the flag.
-      return {
-        success,
-        testCaseInfo: { public: false }
-      };
-    }
+    return {
+      stdout: run?.stdout?.toString('utf8') ?? '',
+      runExitCode: run?.exitCode,
+      compileExitCode: compile?.exitCode,
+      compilerOutput: compile?.exitCode !== 0 ? compile?.stderr?.toString('utf8') : undefined
+    };
   }
 }

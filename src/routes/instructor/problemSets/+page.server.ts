@@ -37,6 +37,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
       creators: filters.creators,
       creatorMatchAll: filters.creatorMatchAll,
       bookmarked: filters.bookmarked,
+      featured: filters.featured,
       search
     },
     page,
@@ -51,6 +52,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     owners: ps.authors,
     description: ps.description || '',
     bookmarked: ps.bookmarked,
+    featured: ps.featured,
     subject: ps.subject,
     problemCount: ps.problemCount,
     is_global: ps.is_global,

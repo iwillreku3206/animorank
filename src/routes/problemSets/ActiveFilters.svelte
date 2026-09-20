@@ -42,7 +42,7 @@
   };
 
   // One normalized chip per active filter, so the markup is a single loop
-  // regardless of the underlying source (tag / status / creator / bookmark).
+  // regardless of the underlying source (tag / status / creator / bookmark / featured).
   type Chip = {
     key: string;
     /** Category prefix shown in muted text; empty for chips that need none. */
@@ -96,6 +96,17 @@
             category: '',
             value: 'Bookmarked',
             remove: () => edit((f) => (f.bookmarked = false))
+          }
+        ]
+      : []),
+
+    ...(filters.featured
+      ? [
+          {
+            key: 'featured',
+            category: '',
+            value: 'Featured',
+            remove: () => edit((f) => (f.featured = false))
           }
         ]
       : [])

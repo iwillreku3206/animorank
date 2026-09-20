@@ -1,0 +1,68 @@
+import "./problem.zmodel"
+import "./user.zmodel"
+
+/**
+ * One recorded Submit press: the code that was sent, and how it scored.
+ *
+ * Deliberately keyed on the student and the problem rather than on the
+ * practice session that produced it. A student's submissions are a single
+ * historic list per problem, and hanging them off a session would make that
+ * list a two-hop lookup that fragments whenever a new session is created.
+ *
+ * Only aggregate counts are stored -- never per-test results. A history row
+ * therefore cannot leak which hidden tests failed, because that detail is
+ * never written in the first place.
+ *
+ * Recording is best-effort, not guaranteed. The run endpoint writes this row
+ * inside a try/catch, because a lost history entry is a smaller harm than
+ * throwing away a grading result the student has already waited for. A Submit
+ * whose row could not be written reports `recorded: false` to the client, and
+ * the history panel says so rather than showing a list silently missing it.
+ * So treat this table as a near-complete record, not an authoritative count of
+ * how many times a student pressed Submit.
+ */
+model Submission {
+  id           String   @id @default(uuid()) @db.Uuid
+
+  student_id   String   @db.Uuid
+  student      Student  @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  problem_id   String   @db.Uuid
+  problem      Problem  @relation(fields: [problem_id], references: [id], onDelete: Cascade)
+
+  /** Whether every test passed -- the same verdict that latches the session's `done`. */
+  passed       Boolean
+  tests_passed Int
+  tests_total  Int
+
+  /**
+   * Slot label to source: what the student actually authored, and the shape the
+   * editor would need to restore an attempt.
+   */
+  code         Json
+  /**
+   * The assembled program as it was compiled -- for a slots problem, the
+   * problem's template with `code` spliced in.
+   *
+   * Stored rather than reassembled on read because `Problem.starter_code` is
+   * mutable: rebuilding an old attempt from a template that has since been
+   * edited yields a program the student never wrote, beside a verdict that no
+   * longer describes it.
+   */
+  full_code    String
+
+  /**
+   * Millisecond precision, unlike every other timestamp in the schema, because
+   * this column is also the history's pagination cursor.
+   *
+   * The cursor round trips through JSON, and both a JS `Date` and
+   * `toISOString()` stop at milliseconds. Stored at the usual `(6)`, a row
+   * written at `.123456` comes back to the client as `.123` and the `lt` that
+   * asks for the next page no longer excludes it -- so the boundary row is
+   * served on two consecutive pages, and the keyed `{#each}` rendering the
+   * list throws on the duplicate id. Storing what the wire can carry keeps the
+   * cursor exact instead.
+   */
+  created_at   DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([student_id, problem_id, created_at])
+}

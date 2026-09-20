@@ -46,7 +46,7 @@
       class="label"
       for="window__general__title"
     >
-      <span class="label-text font-bold">Problem Set Title</span>
+      <span class="font-bold">Problem Set Title</span>
     </label>
     <TextInput
       id="window__general__title"
@@ -63,7 +63,7 @@
       class="label"
       id="window__general__subject_label"
     >
-      <span class="label-text font-bold">Course Assignment</span>
+      <span class="font-bold">Course Assignment</span>
     </div>
     <div class="dropdown block">
       <div
@@ -105,7 +105,7 @@
       class="label"
       for="window__general__difficulty"
     >
-      <span class="label-text font-bold">Difficulty</span>
+      <span class="font-bold">Difficulty</span>
     </label>
     <Select
       id="window__general__difficulty"
@@ -120,7 +120,7 @@
   </div>
 
   <div class="form-control w-full">
-    <div class="label"><span class="label-text font-bold">Topics</span></div>
+    <div class="label"><span class="font-bold">Topics</span></div>
     <div class="flex flex-wrap gap-2">
       {#each topicTags as tag (tag.id)}
         <ClickableBadge
@@ -143,7 +143,7 @@
   </div>
 
   <div class="form-control w-full">
-    <div class="label"><span class="label-text font-bold">Description</span></div>
+    <div class="label"><span class="font-bold">Description</span></div>
     <Editor bind:text={context.problemSet.description} />
   </div>
 </section>

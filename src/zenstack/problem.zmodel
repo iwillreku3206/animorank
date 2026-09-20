@@ -2,6 +2,7 @@ import "testCase.zmodel"
 import "problemSet.zmodel"
 import "tag.zmodel"
 import "practiceSession.zmodel"
+import "submission.zmodel"
 
 enum Language {
   C
@@ -37,6 +38,7 @@ model Problem {
   problem_set       ProblemSet        @relation(fields: [problem_set_id], references: [id], onDelete: Cascade)
 
   practice_sessions PracticeSession[]
+  submissions       Submission[]
 
   test_cases        ProblemTestCase[]
 

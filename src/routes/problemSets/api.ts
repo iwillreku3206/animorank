@@ -38,4 +38,6 @@ export interface Filters {
   creators: string[];
   creatorMatchAll: boolean;
   bookmarked: boolean;
+  /** Limit results to curated (featured) sets. */
+  featured: boolean;
 }

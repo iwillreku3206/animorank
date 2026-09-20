@@ -11,6 +11,7 @@ export class TestCaseRegistry extends ServiceRegistry<
   [TestCaseModel, Problem],
   {
     id(): string;
+    displayName: string;
     // eslint-disable-next-line no-unused-vars
     create(problem: Problem): Promise<TestCase>;
   }

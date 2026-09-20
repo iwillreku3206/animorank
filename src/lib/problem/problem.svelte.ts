@@ -50,6 +50,10 @@ export class Problem {
     return this.model.name;
   }
 
+  get problem_set_id(): string {
+    return this.model.problem_set_id;
+  }
+
   get description(): string {
     return this.model.description;
   }
@@ -85,4 +89,13 @@ export class Problem {
   get functionData(): FunctionTestCaseProblemData {
     return parseExtensionData(this);
   }
+}
+
+export interface ProblemLink {
+  id: string;
+  name: string;
+}
+
+export function toProblemLink(problem: Problem | null): ProblemLink | null {
+  return problem && { id: problem.id, name: problem.name };
 }

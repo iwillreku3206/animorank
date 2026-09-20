@@ -1,11 +1,13 @@
 import "problemSet.zmodel"
 import "practiceSession.zmodel"
+import "submission.zmodel"
 
 model Student {
   id                String            @id @default(uuid()) @db.Uuid
   user              User              @relation(fields: [id], references: [id], onDelete: Cascade)
   practice_sessions PracticeSession[]
   subscription      Subscription[]
+  submissions       Submission[]
 }
 
 model Teacher {

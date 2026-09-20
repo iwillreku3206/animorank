@@ -69,6 +69,20 @@ export abstract class PracticeSession {
     return this.getPreviousState().code[section];
   }
 
+  /**
+   * Record code that the server has confirmed it stored.
+   *
+   * `previous_state` arrives with the page load and is never refreshed, so
+   * anything that rebuilds itself from `previousCode` later in the session --
+   * a remount of the solve view, a dev-server hot reload -- would otherwise
+   * seed from the code as it stood when the page opened and silently discard
+   * everything typed since. Call this only after a save the server accepted,
+   * so a failed write is never mistaken for persisted.
+   */
+  public recordSavedCode(code: Record<string, string>): void {
+    this.model.previous_state = { ...this.getPreviousState(), code: { ...code } };
+  }
+
   // Getters for model fields
 
   get id(): string {
