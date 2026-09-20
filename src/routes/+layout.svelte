@@ -19,10 +19,22 @@
   }
 
   let { data, children }: Props = $props();
+
+  const SOLVE_ROUTE = '/problem/[problem_id]/[session_id]';
+
+  /**
+   * Routes that fill the viewport themselves, so a footer below them would
+   * either be unreachable or fight the page's own scroll container.
+   *
+   * Matched on route id rather than a pathname prefix: `/problem` as a prefix
+   * also swallowed `/problemSets`, which stripped the footer off the problem
+   * set catalogue and detail pages.
+   */
+  const FULL_BLEED_ROUTES = new Set([SOLVE_ROUTE, '/edit/[slug]']);
 </script>
 
 <div class="flex flex-col min-h-screen bg-base-300 text-base-content">
-  {#if page.route.id !== '/problem/[problem_id]/[session_id]'}
+  {#if page.route.id !== SOLVE_ROUTE}
     <Navbar user={data.user} />
   {/if}
 
@@ -30,7 +42,7 @@
     {@render children?.()}
   </div>
 
-  {#if !page.url.pathname.startsWith('/edit') && !page.url.pathname.startsWith('/problem')}
+  {#if !FULL_BLEED_ROUTES.has(page.route.id ?? '')}
     <Footer />
   {/if}
 </div>
