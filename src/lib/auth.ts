@@ -52,10 +52,10 @@ export const { handle } = SvelteKitAuth({
   },
   events: {
     async signIn({ user }) {
-      if (!user.email || !user.id) return;
+      if (!user.email || !user.id) return false as unknown as void;
       const teacher = await db.teacherList.findUnique({ where: { email: user.email } });
 
-      if (!teacher && !user.email.endsWith('@dlsu.edu.ph')) return;
+      if (!teacher && !user.email.endsWith('@dlsu.edu.ph')) return false as unknown as void;
 
       const obj = { id: user.id };
       if (teacher) {
