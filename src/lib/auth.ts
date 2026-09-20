@@ -53,10 +53,12 @@ export const { handle } = SvelteKitAuth({
   events: {
     async signIn({ user }) {
       if (!user.email || !user.id) return;
-      const dbUser = await db.teacherList.findUnique({ where: { email: user.email } });
+      const teacher = await db.teacherList.findUnique({ where: { email: user.email } });
+
+      if (!teacher && !user.email.endsWith('@dlsu.edu.ph')) return;
 
       const obj = { id: user.id };
-      if (dbUser) {
+      if (teacher) {
         await db.teacher.upsert({ create: obj, update: {}, where: obj });
       } else {
         await db.student.upsert({ create: obj, update: {}, where: obj });
