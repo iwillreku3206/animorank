@@ -1,3 +1,5 @@
+import { errorFrom } from '$lib/response';
+
 /** One row of a problem's submission history, without its source. */
 export type SubmissionSummary = {
   id: string;
@@ -38,7 +40,7 @@ export async function fetchSubmissions(
 
   const suffix = query.size > 0 ? `?${query}` : '';
   const response = await fetch(`/api/problem/${problem_id}/submissions${suffix}`);
-  if (!response.ok) throw new Error(`Failed to load submissions: ${response.status}`);
+  if (!response.ok) throw await errorFrom(response, 'Failed to load submissions');
 
   return (await response.json()) as SubmissionPage;
 }
@@ -46,7 +48,7 @@ export async function fetchSubmissions(
 /** One submission with its source, fetched when the student opens it. */
 export async function fetchSubmission(problem_id: string, submission_id: string): Promise<SubmissionDetail> {
   const response = await fetch(`/api/problem/${problem_id}/submissions/${submission_id}`);
-  if (!response.ok) throw new Error(`Failed to load submission: ${response.status}`);
+  if (!response.ok) throw await errorFrom(response, 'Failed to load submission');
 
   const { submission } = (await response.json()) as { submission: SubmissionDetail };
   return submission;

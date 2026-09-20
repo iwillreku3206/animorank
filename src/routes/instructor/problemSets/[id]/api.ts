@@ -1,14 +1,5 @@
 import type { Problem, ProblemSet } from '$lib/zenstack/models';
-
-/**
- * `fetch` only rejects on network failure, so a 4xx/5xx has to be raised by
- * hand — otherwise the autosave reports a rejected save as 'saved'.
- */
-async function assertOk(response: Response, what: string): Promise<void> {
-  if (!response.ok) {
-    throw new Error(`${what} failed: ${response.status} ${response.statusText}`);
-  }
-}
+import { errorFrom } from '$lib/response';
 
 export type SaveProblemSetPayload = Partial<Omit<ProblemSet, 'id'>> & {
   topic_ids?: string[];
@@ -28,7 +19,7 @@ export async function saveProblemSet(problemSetId: string, updates: SaveProblemS
       topic_ids: updates.topic_ids
     })
   });
-  await assertOk(response, 'Saving problem set');
+  if (!response.ok) throw await errorFrom(response, 'Saving problem set failed');
 }
 
 export async function addProblem(problemSetId: string): Promise<Problem> {
@@ -37,7 +28,7 @@ export async function addProblem(problemSetId: string): Promise<Problem> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ problemSet: problemSetId })
   });
-  await assertOk(response, 'Adding problem');
+  if (!response.ok) throw await errorFrom(response, 'Adding problem failed');
   return response.json();
 }
 
@@ -57,10 +48,10 @@ export async function saveProblem(problemId: string, updates: UpdateProblemPaylo
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(updates)
   });
-  await assertOk(response, 'Saving problem');
+  if (!response.ok) throw await errorFrom(response, 'Saving problem failed');
 }
 
 export async function deleteProblem(problemId: string): Promise<void> {
   const response = await fetch(`/api/problem/${problemId}`, { method: 'DELETE' });
-  await assertOk(response, 'Deleting problem');
+  if (!response.ok) throw await errorFrom(response, 'Deleting problem failed');
 }
