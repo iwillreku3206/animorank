@@ -47,7 +47,7 @@
 
   let editorContainer = $state<HTMLDivElement>();
   let editor: monaco.editor.IStandaloneCodeEditor | undefined = $state();
-  let monacoApi = $state<monaco>();
+  let monacoApi = $state<typeof monaco>();
   let model: monaco.editor.ITextModel | undefined;
   let changeHook: monaco.IDisposable | undefined;
   let cursorHook: monaco.IDisposable | undefined;

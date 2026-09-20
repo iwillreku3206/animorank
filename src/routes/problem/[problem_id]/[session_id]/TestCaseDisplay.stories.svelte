@@ -16,6 +16,7 @@
   import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
   import type { Problem as ProblemModel, ProblemTestCase } from '$lib/zenstack/models';
   import type { TestRunResponse } from '$lib/practiceSession/api';
+  import { ServerRegistryProvider } from '$lib/registry/server';
 
   type Result = TestRunResponse['results'][number];
 
@@ -46,7 +47,7 @@
     }
   } as unknown as ProblemModel);
 
-  const registry = TestCaseRegistry.instance();
+  const registry = ServerRegistryProvider.instance().getRegistry(TestCaseRegistry);
 
   function functionModel(id: string, arg: string): ProblemTestCase {
     return {
@@ -73,13 +74,13 @@
   }
 
   /** Same shape the API layer produces: hydrated testCase + hydrated runInfo. */
-  function result(
+  async function result(
     model: ProblemTestCase,
     runInfo: unknown,
     success: boolean,
     extra: { failureReason?: string; compilerOutput?: string } = {}
-  ): Result {
-    const testCase = registry.from(model, problem);
+  ): Promise<Result> {
+    const testCase = await registry.from(model, problem);
     return {
       success,
       testCaseInfo: { ...model, public: true },
@@ -109,29 +110,33 @@
   const mixed: TestRunResponse = {
     success: false,
     results: [
-      result(functionModel('tc-1', '5'), comparison('25', '25', true), true),
-      result(functionModel('tc-2', '7'), comparison('49', '14', false), false),
-      result(functionModel('tc-3', '9'), { failure: 'timeout' }, false)
+      await result(functionModel('tc-1', '5'), comparison('25', '25', true), true),
+      await result(functionModel('tc-2', '7'), comparison('49', '14', false), false),
+      await result(functionModel('tc-3', '9'), { failure: 'timeout' }, false)
     ]
   };
 
   const stdio: TestRunResponse = {
     success: false,
     results: [
-      result(stdioModel('tc-1', '3 4\n', '7\n'), { expected: '7\n', actual: '7\n' }, true),
-      result(stdioModel('tc-2', '10 20\n', '30\n'), { expected: '30\n', actual: '1030\n' }, false)
+      await result(stdioModel('tc-1', '3 4\n', '7\n'), { expected: '7\n', actual: '7\n' }, true),
+      await result(stdioModel('tc-2', '10 20\n', '30\n'), { expected: '30\n', actual: '1030\n' }, false)
     ]
   };
 
   const failures: TestRunResponse = {
     success: false,
     results: [
-      result(functionModel('tc-1', '1'), { failure: 'compile_error' }, false, {
+      await result(functionModel('tc-1', '1'), { failure: 'compile_error' }, false, {
         compilerOutput: 'main.c:3:5: error: expected ";" before "}" token'
       }),
-      result(functionModel('tc-2', '2'), { failure: 'run_error', exitCode: 139, stderr: 'Segmentation fault' }, false),
-      result(functionModel('tc-3', '3'), { failure: 'output_not_generated' }, false),
-      result(functionModel('tc-4', '4'), { failure: 'timeout' }, false)
+      await result(
+        functionModel('tc-2', '2'),
+        { failure: 'run_error', exitCode: 139, stderr: 'Segmentation fault' },
+        false
+      ),
+      await result(functionModel('tc-3', '3'), { failure: 'output_not_generated' }, false),
+      await result(functionModel('tc-4', '4'), { failure: 'timeout' }, false)
     ]
   };
 
@@ -142,12 +147,12 @@
   const submitMixed: TestRunResponse = {
     success: false,
     results: [
-      result(functionModel('tc-1', '5'), comparison('25', '25', true), true),
-      result(functionModel('tc-2', '7'), comparison('49', '14', false), false),
-      result(functionModel('tc-3', '8'), { failure: 'compile_error' }, false),
-      result(functionModel('tc-4', '9'), { failure: 'timeout' }, false),
-      result(functionModel('tc-5', '10'), { failure: 'run_error', exitCode: 139 }, false),
-      result(functionModel('tc-6', '11'), { failure: 'output_not_generated' }, false),
+      await result(functionModel('tc-1', '5'), comparison('25', '25', true), true),
+      await result(functionModel('tc-2', '7'), comparison('49', '14', false), false),
+      await result(functionModel('tc-3', '8'), { failure: 'compile_error' }, false),
+      await result(functionModel('tc-4', '9'), { failure: 'timeout' }, false),
+      await result(functionModel('tc-5', '10'), { failure: 'run_error', exitCode: 139 }, false),
+      await result(functionModel('tc-6', '11'), { failure: 'output_not_generated' }, false),
       hidden(true),
       hidden(false)
     ]

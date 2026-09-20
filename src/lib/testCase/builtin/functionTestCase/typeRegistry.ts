@@ -7,11 +7,13 @@ import { Float } from './types/float';
 import { StringType } from './types/string';
 import { Pointer } from './types/pointer';
 import { VoidType } from './types/void';
+import type { Component, ComponentType } from 'svelte';
 
 export class TypeRegistry extends ServiceRegistry<
   Type,
   [IntoJsonValue],
-  { create(): Type; id(): string; from?(options: unknown): Promise<Type> }
+  // eslint-disable-next-line no-unused-vars
+  { create(): Type; id(): string; from?(options: unknown): Promise<Type>; icon?: Component | ComponentType | undefined }
 > {
   public id = 'test_case.function.type';
 

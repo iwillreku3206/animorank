@@ -34,6 +34,10 @@
   const initialValues = {
     problem,
     practiceSession,
+
+    // We intentionally capture the initial values here
+    // eslint-disable-next-line svelte/no-unused-svelte-ignore
+    // svelte-ignore state_referenced_locally
     language: data.problem.language.toLowerCase()
   };
 
@@ -87,9 +91,9 @@
 
   onMount(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (!context || untrack(() => context.saveState) !== 'saved') {
+      if (!context || untrack(() => context!.saveState) !== 'saved') {
         e.preventDefault();
-        e.returnValue = '';
+        return '';
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);

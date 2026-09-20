@@ -39,9 +39,18 @@
   // The props are read once, here — not inside the effect — so the effect has no
   // dependency at all and cannot re-run itself.
   const initialValues = {
+    // We intentionally capture initial values here
+    // eslint-disable-next-line svelte/no-unused-svelte-ignore
+    // svelte-ignore state_referenced_locally
     problem: data.problem,
+    // eslint-disable-next-line svelte/no-unused-svelte-ignore
+    // svelte-ignore state_referenced_locally
     testCases: data.testCases,
+    // eslint-disable-next-line svelte/no-unused-svelte-ignore
+    // svelte-ignore state_referenced_locally
     tags: data.tags,
+    // eslint-disable-next-line svelte/no-unused-svelte-ignore
+    // svelte-ignore state_referenced_locally
     topics: data.topics
   };
 

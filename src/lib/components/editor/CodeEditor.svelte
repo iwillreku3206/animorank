@@ -124,7 +124,7 @@
   });
 
   /** The loaded Monaco namespace; the editor is created once it and the container exist. */
-  let monacoApi = $state<monaco>();
+  let monacoApi = $state<typeof monaco>();
 
   /**
    * Create the editor as soon as both the module and the container exist.
@@ -152,9 +152,13 @@
       language
     });
 
-    monacoModel = monacoInstance.getModel() || undefined;
+    if (!monacoInstance) {
+      console.warn('Monaco was not instantiated properly');
+    }
 
-    monacoInstance.onDidChangeModelContent(() => {
+    monacoModel = monacoInstance!.getModel() || undefined;
+
+    monacoInstance!.onDidChangeModelContent(() => {
       code = monacoInstance?.getValue() || '';
     });
 
