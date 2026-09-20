@@ -12,6 +12,7 @@
 
   import type { Component } from 'svelte';
   import type { Form, FormFieldType, FormValue } from '$lib/form';
+  import type { Type } from '$lib/testCase/builtin/functionTestCase/type.svelte';
   import type { IntoJsonValue } from '$lib/types/utils';
 
   type Props = { form: T; value: FormValue<T>; class?: string };
@@ -42,8 +43,9 @@
         const field = form.fields[id];
         // `??` would clobber a legitimate `default: null` (e.g. the int
         // `signed` option); only undefined means "not filled yet".
-        (value[id as keyof T['fields']] as (typeof defaults)[FormFieldType]) =
-          field.default !== undefined ? field.default : defaults[field.type];
+        (value[id as keyof T['fields']] as (typeof defaults)[FormFieldType]) = (
+          field.default !== undefined ? field.default : defaults[field.type]
+        ) as (typeof defaults)[FormFieldType];
       }
     }
   });
@@ -147,7 +149,9 @@
       {@const opts = field.options.map((opt) =>
         typeof opt === 'string'
           ? { label: opt, value: opt, icon: undefined as Component | undefined }
-          : { ...opt, value: String(opt.value) }
+          : typeof opt === 'number'
+            ? { label: String(opt), value: String(opt), icon: undefined as Component | undefined }
+            : { ...opt, value: String(opt.value) }
       )}
       {@const hasIcon = opts.some((opt) => opt.icon)}
       {@const selectedOpt = opts.find((opt) => opt.value === String(value[id]))}
@@ -321,7 +325,7 @@
       <fieldset class="fieldset">
         <span class="label">{field.label}</span>
         <TypeEditorField
-          bind:type={(value as FormValue<Form>)[id]}
+          bind:type={(value as FormValue<Form>)[id] as Type}
           excludeTypeIds={field.excludeTypeIds}
         />
       </fieldset>

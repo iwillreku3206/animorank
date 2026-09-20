@@ -92,11 +92,16 @@ export class Pointer extends Type<JsonValue, Form, { target: Type }> {
     return buildPointerOptions();
   }
 
-  get valueDisplay(): ValueDisplay<this> {
-    return PointerDisplay as unknown as ValueDisplay<this>;
+  // Unlike the leaf types, Pointer adds public members of its own (targetType),
+  // so `this`-typed getters could not satisfy the base's ValueEditor<this>
+  // slots under Svelte's contravariant Component props; type them against the
+  // base Type instead (the components still receive the concrete value at
+  // runtime).
+  get valueDisplay(): ValueDisplay<Type> {
+    return PointerDisplay as unknown as ValueDisplay<Type>;
   }
 
-  get valueForm(): ValueEditor<this> {
-    return PointerEditor as unknown as ValueEditor<this>;
+  get valueForm(): ValueEditor<Type> {
+    return PointerEditor as unknown as ValueEditor<Type>;
   }
 }

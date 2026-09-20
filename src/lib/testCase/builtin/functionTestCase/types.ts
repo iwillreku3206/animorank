@@ -1,4 +1,4 @@
-import type { Component } from 'react';
+import type { Component } from 'svelte';
 import { TypeSchema, type Type } from './type.svelte';
 import { TypeValueSchema, type TypeValue } from './typeValue.svelte';
 import z from 'zod';

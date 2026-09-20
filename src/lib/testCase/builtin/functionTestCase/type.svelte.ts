@@ -61,9 +61,13 @@ export abstract class Type<
   abstract get displayName(): string;
 
   abstract get optionsForm(): OptionsForm;
-  abstract get valueForm(): ValueEditor<Type>;
+  // Typed via `this` (not the raw `Type`) so every subclass's
+  // `ValueEditor<this>`/`ValueDisplay<this>` override stays assignable:
+  // Svelte's `Component` is invariant in its props, unlike the React
+  // `Component` type these were previously declared against.
+  abstract get valueForm(): ValueEditor<this>;
 
-  abstract get valueDisplay(): ValueDisplay<Type>;
+  abstract get valueDisplay(): ValueDisplay<this>;
 }
 
 export const TypeSchema = z.object({
