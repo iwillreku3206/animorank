@@ -48,14 +48,12 @@ export const { handle } = SvelteKitAuth({
       session.user.hasAcceptedTOS = dbUser.hasAcceptedTOS;
 
       return session;
-    }
-  },
-  events: {
+    },
     async signIn({ user }) {
-      if (!user.email || !user.id) return false as unknown as void;
+      if (!user.email || !user.id) return false;
       const teacher = await db.teacherList.findUnique({ where: { email: user.email } });
 
-      if (!teacher && !user.email.endsWith('@dlsu.edu.ph')) return false as unknown as void;
+      if (!teacher && !user.email.endsWith('@dlsu.edu.ph')) return false;
 
       const obj = { id: user.id };
       if (teacher) {
@@ -63,6 +61,8 @@ export const { handle } = SvelteKitAuth({
       } else {
         await db.student.upsert({ create: obj, update: {}, where: obj });
       }
+
+      return true;
     }
   },
   trustHost: true
