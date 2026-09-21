@@ -4,6 +4,7 @@
   import { discardSavedLayouts } from '$lib/window/dockviewWindowManager';
   import type { DefaultLayout } from '$lib/window/layout';
   import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
+  import EditorToolbar from './EditorToolbar.svelte';
   import { ProblemEditorWindowRegistry } from './windowRegistry';
   import { testCaseWindowId } from './windows/TestCases.window';
   import { ProblemEditorWindowContext } from './context.svelte';
@@ -56,10 +57,17 @@
   });
 </script>
 
-save status: {context.autosaveStatus}
-<DockviewWindow
-  bind:context
-  {windowRegistry}
-  {defaultLayout}
-  storageKey={`problem-editor:2026-09-18:${data.problem.id}`}
-/>
+<div class="flex flex-1 flex-col min-h-0">
+  <EditorToolbar
+    {context}
+    user={data.user}
+    neighbors={data.neighbors}
+  />
+
+  <DockviewWindow
+    bind:context
+    {windowRegistry}
+    {defaultLayout}
+    storageKey={`problem-editor:2026-09-18:${data.problem.id}`}
+  />
+</div>

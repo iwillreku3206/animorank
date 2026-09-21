@@ -48,8 +48,8 @@
   const trimOutput = testCase('tc-trim-output', '3 4\n', '7', 'trim_output');
   const trimLines = testCase('tc-trim-lines', '5\n', '1\n1 1\n1 2 1\n', 'trim_lines');
 
-  // A row written before the mode existed: hydration supplies 'strict', so the
-  // group is never left with nothing selected.
+  // A row written before the mode existed: hydration supplies the default, so
+  // the group is never left with nothing selected.
   const legacy = new StdioTestCase(
     {
       id: 'tc-legacy',

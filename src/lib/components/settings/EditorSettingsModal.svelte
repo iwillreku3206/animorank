@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import Select from '$lib/components/ui/selects/Select.svelte';
+  import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
   import Toggle from '$lib/components/ui/toggles/Toggle.svelte';
   import PaletteIcon from '@iconify-svelte/fa6-solid/palette';
   import IndentIcon from '@iconify-svelte/fa6-solid/indent';
@@ -37,6 +38,29 @@
   // Bound directly, so every change applies to the live editors behind the
   // dialog and persists on its own — there is no save step.
   let settings = $derived(editorSettings.current);
+
+  // The font-size box holds a draft and applies only on blur or Enter. Binding
+  // it straight to `settings.fontSize` would apply every keystroke: clearing the
+  // field to retype it, or typing the "7" on the way to "72", would resize every
+  // open editor mid-edit, because settings take effect live with no save step.
+  //
+  // Writable $derived rather than $state: typing overwrites the draft, and any
+  // change from elsewhere — dragging the slider, Reset to defaults — recomputes
+  // it back to the real value.
+  let fontSizeDraft = $derived(String(settings.fontSize));
+
+  function commitFontSize() {
+    const typed = fontSizeDraft.trim();
+    const parsed = Number(typed);
+    if (typed !== '' && Number.isFinite(parsed)) {
+      settings.fontSize = Math.min(FONT_SIZE_MAX, Math.max(FONT_SIZE_MIN, Math.round(parsed)));
+    }
+    // Redraw from the value that actually took effect, so "abc" or "500" snaps
+    // back rather than sitting in the box as if it applied. The derived can't do
+    // this alone: a rejected edit leaves `fontSize` untouched, so it never
+    // recomputes.
+    fontSizeDraft = String(settings.fontSize);
+  }
 
   // Adding a category is one entry here plus one `{#if}` branch in the pane;
   // the dialog's size never changes, which is the point of the rail.
@@ -97,7 +121,12 @@
 
 <dialog
   bind:this={dialog}
-  onclose={() => (open = false)}
+  onclose={() => {
+    open = false;
+    // Esc closes the dialog without blurring the font-size box, which would
+    // otherwise leave an uncommitted number sitting there on reopen.
+    fontSizeDraft = String(settings.fontSize);
+  }}
   onclick={(e) => {
     if (e.target === dialog) dialog?.close();
   }}
@@ -165,16 +194,34 @@
             <div class="flex items-center gap-3">
               <input
                 type="range"
-                class="range range-primary range-xs w-40"
+                class="range range-primary range-xs w-32"
                 aria-label="Font size"
                 min={FONT_SIZE_MIN}
                 max={FONT_SIZE_MAX}
                 step="1"
                 bind:value={settings.fontSize}
               />
-              <span class="w-9 text-right font-mono text-xs tabular-nums text-base-content/70">
-                {settings.fontSize}px
-              </span>
+              <!-- `text` with a numeric inputmode, not `number`: the spinner arrows
+                   crowd a field this size, and the clamp to the supported range is
+                   ours to apply on commit anyway. -->
+              <TextInput
+                class="input-sm w-[5.5rem] font-mono text-xs tabular-nums"
+                type="text"
+                inputmode="numeric"
+                aria-label="Font size in pixels"
+                bind:value={fontSizeDraft}
+                onblur={commitFontSize}
+                onkeydown={(e) => {
+                  if (e.key !== 'Enter') return;
+                  // Enter would submit-and-close in a <dialog>; commit instead.
+                  e.preventDefault();
+                  commitFontSize();
+                }}
+              >
+                {#snippet trailing()}
+                  <span class="text-xs text-base-content/50">px</span>
+                {/snippet}
+              </TextInput>
             </div>
           {/snippet}
           {@render row('Font size', undefined, fontSizeControl)}

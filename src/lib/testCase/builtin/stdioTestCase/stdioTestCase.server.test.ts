@@ -53,7 +53,7 @@ describe('ServerStdioTestCase', () => {
     const serverTestCase = ServerTestCaseRegistry.instance().from(makeTestCaseModel(), new Problem(problemModel));
     // A row written before the mode existed hydrates with the default rather
     // than with the field missing, so nothing has to be backfilled.
-    expect(serverTestCase.testCase.data).toEqual({ input: '5\n', output: '25\n', whitespace: 'strict' });
+    expect(serverTestCase.testCase.data).toEqual({ input: '5\n', output: '25\n', whitespace: 'trim_output' });
   });
 
   it('survives the round trip the editor autosave performs', () => {
@@ -313,9 +313,13 @@ describe('the mode reaches the verdict', () => {
     return serverTestCase.run(new CLanguage(), new OutputExecutor(), { sections: { body: '' } });
   };
 
-  it('grades as strict when the data carries no mode', async () => {
-    // Every test case written before the mode existed lands here.
-    expect(await ranWith('25\n', '25')).toMatchObject({ success: false });
+  it('grades as trim_output when the data carries no mode', async () => {
+    // Every test case written before the mode existed lands here, and so does
+    // any data assigned without going through the schema.
+    expect(await ranWith('25\n', '25')).toMatchObject({ success: true });
+    // Only the end of the output is forgiven: an interior line's trailing
+    // space still fails, which is what separates the default from trim_lines.
+    expect(await ranWith('1 \n2\n', '1\n2')).toMatchObject({ success: false });
   });
 
   it('honours trim_output from the test case data', async () => {
