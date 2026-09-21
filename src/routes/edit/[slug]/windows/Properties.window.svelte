@@ -27,13 +27,6 @@
      content height and the group clipped the overflow, so the lower fields
      were unreachable in a short panel. -->
 <div class="h-full overflow-y-auto">
-  <h2 class="text-2xl font-bold">Subject</h2>
-  <TagSelect
-    bind:selectedTagId={context.problem.model.subject_id}
-    tags={tags.SubjectTag}
-    placeholder="Select a subject"
-  />
-
   <h2 class="text-2xl font-bold">Difficulty</h2>
   <TagSelect
     bind:selectedTagId={context.problem.model.difficulty_id}

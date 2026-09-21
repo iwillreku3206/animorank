@@ -12,7 +12,9 @@
     backHref="/instructor/problemSets"
     backLabel="Back to your problem sets"
   >
-    <ProblemEditor {...props} />
+    {#key props.data.problem.id}
+      <ProblemEditor {...props} />
+    {/key}
   </DesktopOnly>
 </main>
 <!--  bind:problem

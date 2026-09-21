@@ -27,7 +27,7 @@ export class ServerStdioTestCase extends ServerTestCase<StdioTestCaseData, Stdio
     const data: StdioTestCaseData = {
       input: '',
       output: '',
-      whitespace: 'strict'
+      whitespace: 'trim_output'
     };
     return new ServerStdioTestCase(await ServerTestCase.createModel('stdio', problem, data), problem);
   }
@@ -47,7 +47,7 @@ export class ServerStdioTestCase extends ServerTestCase<StdioTestCaseData, Stdio
   }
 
   private whitespaceMode(): WhitespaceMode {
-    return this.testCase.data.whitespace ?? 'strict';
+    return this.testCase.data.whitespace ?? 'trim_output';
   }
 
   /**

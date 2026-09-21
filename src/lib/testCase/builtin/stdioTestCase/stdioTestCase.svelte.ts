@@ -12,7 +12,7 @@ import type { Problem } from '$lib/problem';
  * level also matches at every looser level, so an instructor moving down the
  * list never gets a stricter result.
  */
-export const WhitespaceModeSchema = z.enum(['strict', 'trim_output', 'trim_lines']).default('strict');
+export const WhitespaceModeSchema = z.enum(['strict', 'trim_output', 'trim_lines']).default('trim_output');
 export type WhitespaceMode = z.infer<typeof WhitespaceModeSchema>;
 
 /**
@@ -31,8 +31,11 @@ export type StdioTestCaseData = {
   output: string;
   /**
    * Optional because `data` can be assigned directly, without going through
-   * the schema that supplies the default. Absent reads as 'strict', which is
-   * how every test case written before the mode existed was graded.
+   * the schema that supplies the default. Absent reads as 'trim_output': a
+   * trailing newline the expected output was typed without is a mismatch
+   * nobody means, so forgiving it is the better starting point. Test cases
+   * written before the mode existed were graded strictly, and loosening them
+   * can only turn a failing run into a passing one, never the reverse.
    */
   whitespace?: WhitespaceMode;
 };
