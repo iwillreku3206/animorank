@@ -120,7 +120,6 @@
         enables features such as submission history and progress tracking.
       </p>
       <p>
-        The Services are operated as part of a thesis research study on programming education at De La Salle University.
         Your anonymized interaction data may be analyzed to study learning patterns, evaluate educational interventions,
         and advance understanding of how students learn to program. All personally identifiable information is removed
         prior to research analysis, as described in the Data Anonymization section below.

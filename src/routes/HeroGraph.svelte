@@ -17,7 +17,7 @@
   import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
   // ---- data: topics, subtopics, and their relations (see ./heroGraphNodes) ----
-  import { TOPICS, RELATIONS, TOPIC_ANCHORS } from './heroGraphNodes';
+  import { TOPICS, RELATIONS, PREREQS, TOPIC_ANCHORS } from './heroGraphNodes';
 
   // flattened, de-duped list of subtopics (small nodes)
   const SUBTOPICS = Array.from(new Set(Object.values(RELATIONS).flat()));
@@ -31,6 +31,9 @@
   for (const [topic, subtopics] of Object.entries(RELATIONS)) {
     for (const s of subtopics) link(topic, s);
   }
+  // Prerequisites are topic <-> topic, so focusing a topic also lights up the
+  // topics it leads to (and the ones it builds on).
+  for (const [a, b] of PREREQS) link(a, b);
 
   type Kind = 'course' | 'topic';
   type Node = { id: string; label: string; kind: Kind; x: number; y: number };
@@ -85,8 +88,12 @@
 
   const NODES = buildNodes();
 
-  // unique edges (course -> topic)
-  const EDGES = Object.entries(RELATIONS).flatMap(([course, topics]) => topics.map((t) => ({ a: course, b: t })));
+  // unique edges: the topic -> topic prerequisite spine, then topic -> subtopic
+  // membership. No pair appears in both lists, so the {#each} keys stay unique.
+  const EDGES = [
+    ...PREREQS.map(([a, b]) => ({ a, b })),
+    ...Object.entries(RELATIONS).flatMap(([topic, subs]) => subs.map((s) => ({ a: topic, b: s })))
+  ];
 </script>
 
 <script lang="ts">

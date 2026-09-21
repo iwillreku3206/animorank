@@ -147,7 +147,7 @@
   noindex
 />
 
-<main class="app-gutter pt-4 flex flex-col gap-4">
+<main class="app-gutter pt-4 pb-12 flex flex-col gap-4">
   <!-- Top bar: search + sort + view. Stacks into two rows on phones, single row
        from sm up. -->
   <div class="flex flex-col gap-2 sm:flex-row sm:items-center">

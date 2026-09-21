@@ -161,7 +161,7 @@
   noindex
 />
 
-<main class="app-gutter flex flex-col gap-4 pt-4">
+<main class="app-gutter flex flex-col gap-4 pt-4 pb-12">
   <!-- Create -->
   <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
     <TextInput

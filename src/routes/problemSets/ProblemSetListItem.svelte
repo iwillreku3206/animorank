@@ -1,6 +1,7 @@
 <script lang="ts">
   import TagChip from '$lib/components/ui/TagChip.svelte';
-  import FeaturedBadge from '$lib/components/ui/FeaturedBadge.svelte';
+  import ClickableBadge from '$lib/components/ui/badges/ClickableBadge.svelte';
+  import StarIcon from '@iconify-svelte/fa6-solid/star';
   import type { PageProps } from './$types';
 
   type ProblemSet = PageProps['data']['problemSets'][number];
@@ -71,8 +72,21 @@
 
     <!-- Tags -->
     <div class="flex flex-row flex-wrap gap-2 max-h-7 overflow-hidden">
+      <!-- Featured sets lead the *default* listing only, so this badge doubles as the
+           explanation for why this one sits above its neighbours before any sort is
+           picked. Clicking it filters the catalogue down to featured sets. -->
       {#if problemSet.featured}
-        <FeaturedBadge />
+        <ClickableBadge
+          href="/problemSets?featured=true"
+          class="badge-sm badge-primary gap-1 relative z-10"
+          aria-label="Show only featured problem sets"
+        >
+          <StarIcon
+            class="h-3 w-3"
+            aria-hidden="true"
+          />
+          Featured
+        </ClickableBadge>
       {/if}
       {#each problemSet.tags as tag (tag.id)}
         <TagChip

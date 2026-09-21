@@ -1,6 +1,7 @@
 <script lang="ts">
   import TagChip from '$lib/components/ui/TagChip.svelte';
-  import FeaturedBadge from '$lib/components/ui/FeaturedBadge.svelte';
+  import ClickableBadge from '$lib/components/ui/badges/ClickableBadge.svelte';
+  import StarIcon from '@iconify-svelte/fa6-solid/star';
   import type { PageProps } from './$types';
   import transform from '@diplodoc/transform';
   import YfmStaticView from '$lib/components/content/YfmStaticView.svelte';
@@ -43,8 +44,21 @@
       </p>
     </div>
 
+    <!-- Featured sets lead the *default* listing only, so this badge doubles as the
+         explanation for why this one sits above its neighbours before any sort is
+         picked. Clicking it filters the catalogue down to featured sets. -->
     {#if problemSet.featured}
-      <FeaturedBadge />
+      <ClickableBadge
+        href="/problemSets?featured=true"
+        class="badge-sm badge-primary gap-1 relative z-10"
+        aria-label="Show only featured problem sets"
+      >
+        <StarIcon
+          class="h-3 w-3"
+          aria-hidden="true"
+        />
+        Featured
+      </ClickableBadge>
     {/if}
   </div>
 
@@ -110,7 +124,7 @@
   <!-- Footer: progress row -->
   <div class="flex flex-col gap-2">
     <!-- Progress text -->
-    <div class="flex justify-between gap-4 text-sm text-base-content">
+    <div class="flex justify-between gap-4 text-sm text-base-content/70">
       <span> Progress </span>
       <span>
         {problemSet.progress.finished}/{problemSet.progress.total} problem{problemSet.progress.total === 1 ? '' : 's'}
@@ -128,11 +142,6 @@
 </div>
 
 <style>
-  /* The title's stretched ::after covers the whole card, so a link the instructor
-     wrote into the description sits underneath it and opens the set instead of
-     itself. Lift them the way every other nested link on the card is lifted.
-     YfmStaticView renders through React, so the rule has to be :global to reach
-     markup Svelte never compiled. */
   .card-description :global(a) {
     position: relative;
     z-index: 10;
