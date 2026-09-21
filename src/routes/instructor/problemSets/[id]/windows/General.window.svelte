@@ -51,7 +51,7 @@
     <TextInput
       id="window__general__title"
       type="text"
-      class="input-bordered w-full"
+      class="w-full"
       bind:value={context.problemSet.title}
     />
   </div>
@@ -78,13 +78,14 @@
         tabindex="-1"
         class="dropdown-content menu bg-base-100 rounded-box z-1 w-64 p-2 shadow-sm"
       >
-        <label class="input">
-          <SearchIcon class="w-4 h-4" />
-          <input
-            bind:value={subjectSearch}
-            aria-label="Search subjects"
-          />
-        </label>
+        <TextInput
+          bind:value={subjectSearch}
+          aria-label="Search subjects"
+        >
+          {#snippet leading()}
+            <SearchIcon />
+          {/snippet}
+        </TextInput>
         {#if subjectsSearched.length > 0}
           {#each subjectsSearched as tag (tag.id)}
             <li>
