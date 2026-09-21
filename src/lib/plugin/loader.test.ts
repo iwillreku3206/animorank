@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { ServerAnimoRankAPI } from '$lib/api/server';
+import { GlobalRegistryProvider } from '$lib/registry/global';
 import { LanguageRegistry } from '$lib/language/languageRegistry';
 import { PluginLoader } from './loader';
 import { LoadedPlugin } from './loadedPlugin';
@@ -270,6 +271,36 @@ describe('PluginLoader dynamic plugins', () => {
     await new PluginLoader().loadDynamicPlugins(root);
 
     expect(Reflect.get(globalThis, '__apiPluginId')).toBe('api-plugin');
+  });
+
+  it('lets a plugin that cannot import app classes wire a registry by id', async () => {
+    // This script is exactly what a runtime plugin can be: no imports at all,
+    // because a `data:` URL resolves none. The registry is named by id, and the
+    // only class involved is the plugin's own.
+    await writeFiles('by-id', {
+      'manifest.json': validManifest('by-id-plugin'),
+      'package.json': '{"type": "module"}\n',
+      'client.js': CLIENT_JS,
+      'server.js': [
+        "class PluginLanguage { static id = 'pluginlang'; }",
+        'export default class ByIdPlugin {',
+        '  async init(api) {',
+        "    const registrar = await api.globalRegistryProviderRegistrar.getRegistrarById('language');",
+        "    registrar.register('pluginlang', PluginLanguage);",
+        '  }',
+        '}'
+      ].join('\n')
+    });
+
+    await new PluginLoader().loadDynamicPlugins(root);
+
+    const registry = GlobalRegistryProvider.instance().getRegistry(LanguageRegistry);
+    expect(registry.keys()).toContain('by-id-plugin:pluginlang');
+    expect(registry.registeredBy('by-id-plugin:pluginlang')).toBe('by-id-plugin');
+
+    // The plugin's own class, reached through the app's registry by id alone.
+    const registered = (await registry.getStatic('by-id-plugin:pluginlang')) as unknown as { id: string };
+    expect(registered.id).toBe('pluginlang');
   });
 });
 

@@ -104,7 +104,7 @@ export class Integer extends Type<Value, typeof integerOptions> {
     return true;
   }
   public defaultValue(): TypeValue<this> {
-    return new TypeValue(this, { value: '0' });
+    return TypeValue.assumedValid(this, { value: '0' });
   }
 
   get staticName(): string {

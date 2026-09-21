@@ -12,6 +12,13 @@ const ABSOLUTE_SPECIFIER = /^(?:[a-z][a-z0-9+.-]*:|\/)/i;
  * stamps the plugin id onto every registry id and key it writes). This base
  * carries the global-provider pair; runtime subclasses add their own
  * provider's pair. {@link import} loads a module for the plugin.
+ *
+ * A plugin wires into a registry through a registrar, and it can name that
+ * registry either by class — how a prebuilt plugin does it, since it is
+ * compiled with the app and shares its classes — or by id, through
+ * `getRegistrarById`. The id is the way in for a dynamically loaded plugin,
+ * whose scripts run from a URL and cannot import app classes: the app resolves
+ * the id to the registry and hands back a registrar for it.
  */
 export abstract class AnimoRankAPI {
   public readonly globalRegistryProvider: ReadOnlyRegistryProvider;

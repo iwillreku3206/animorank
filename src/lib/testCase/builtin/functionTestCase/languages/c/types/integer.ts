@@ -5,7 +5,8 @@ import type { CExecutionContext } from '../executionContext';
 
 export class CInteger extends CType<Integer> {
   public async readFromPrint(printed: string): Promise<TypeValue<Integer>> {
-    return new TypeValue(this.type, { value: printed });
+    // The program printed this: it is data from outside, so it is checked.
+    return await TypeValue.create(this.type, { value: printed });
   }
   static type = Integer;
 

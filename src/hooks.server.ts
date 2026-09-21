@@ -37,22 +37,30 @@ export const handle: Handle = async ({ event, resolve }) => {
 };
 
 export const handleError: HandleServerError = async ({ error }) => {
-  const registryProvider = ServerRegistryProvider.instance();
-  const logger = await registryProvider.getService(Logger, 'webserver');
+  // Reporting a crash must not itself be able to crash: the logger is reached
+  // through the registry provider, and anything that goes wrong on the way —
+  // a registry that is missing, a logger that throws while writing — falls back
+  // to the console, which needs nothing of the app to work.
+  try {
+    const registryProvider = ServerRegistryProvider.instance();
+    const logger = await registryProvider.getService(Logger, 'webserver');
 
-  // Non-Error throws can be circular or BigInt-containing objects that
-  // JSON.stringify itself crashes on — never let the error handler throw.
-  let detail: string;
-  if (error instanceof Error) {
-    detail = error.stack ?? error.message;
-  } else {
-    try {
-      detail = JSON.stringify(error);
-    } catch {
-      detail = String(error);
-    }
+    logger.error('CRASH ERROR: ' + crashDetail(error));
+  } catch (loggingError) {
+    console.error('CRASH ERROR (could not be logged):', error, loggingError);
   }
-  logger.error('CRASH ERROR: ' + detail);
 
   return { message: 'Internal Error' };
 };
+
+/** A crash's detail, built without assuming anything about what was thrown. */
+function crashDetail(error: unknown): string {
+  if (error instanceof Error) return error.stack ?? error.message;
+  // Non-Error throws can be circular or BigInt-containing objects that
+  // JSON.stringify itself crashes on — never let the error handler throw.
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}

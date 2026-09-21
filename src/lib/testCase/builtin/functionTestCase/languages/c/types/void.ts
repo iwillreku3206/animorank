@@ -7,7 +7,7 @@ export class CVoid extends CType<VoidType> {
   static type = VoidType;
 
   public async readFromPrint(_printed: string): Promise<TypeValue<VoidType>> {
-    return new TypeValue(this.type, {});
+    return TypeValue.assumedValid(this.type, {});
   }
 
   public async generateParameterDefinition(_symbol: string): Promise<string> {

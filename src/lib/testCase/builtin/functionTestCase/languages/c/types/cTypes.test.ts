@@ -13,7 +13,7 @@ const language = {} as unknown as CFunctionTestCase;
 
 const intType = (options: { size: number; signed: boolean | null }) => new Integer(options);
 const intValue = (options: { size: number; signed: boolean | null }, value: string) =>
-  new TypeValue(intType(options), { value });
+  TypeValue.assumedValid(intType(options), { value });
 
 async function emitted(block: (ctx: CExecutionContext) => Promise<void>): Promise<string> {
   const ctx = new CExecutionContext();

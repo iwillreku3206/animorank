@@ -17,6 +17,12 @@ export class AppConfig {
 
   private sections: Sections;
 
+  /**
+   * The write in flight, if one is: saves are chained onto it so two of them
+   * can never be mid-write at the same time (see {@link save}).
+   */
+  private saving: Promise<void> = Promise.resolve();
+
   // Public so the class can be used as a provider key; `AppConfigRegistry`
   // (see `$lib/config/registry`) is the canonical way to build the instance
   // the app shares.
@@ -43,10 +49,23 @@ export class AppConfig {
     return new AppConfig(configPath, hydrated);
   }
 
-  public async save() {
-    const { writeFile } = await configFileSystem();
-    const json = JSON.stringify(this.sections, null, 2);
-    return writeFile(this.path, json);
+  /**
+   * Write the config file. The JSON is taken here, synchronously, so a save
+   * always writes the state at the moment it was asked to; the write itself is
+   * queued behind any other save, and lands through a temporary file and a
+   * rename, so a reader (or a crash) never sees a half-written config.
+   *
+   * A section nothing configured is left out of the file rather than written as
+   * nothing, which is what makes a load-and-save round trip change nothing.
+   *
+   * A failed save rejects its own callers and leaves the queue usable: the
+   * next save still runs.
+   */
+  public save(): Promise<void> {
+    const json = JSON.stringify(configuredSections(this.sections), null, 2);
+    const write = this.saving.then(() => writeFileAtomically(this.path, json));
+    this.saving = write.catch(() => undefined);
+    return write;
   }
 
   /**
@@ -69,6 +88,29 @@ async function readConfigFile(configPath: string): Promise<Record<string, JsonVa
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
     throw error;
   }
+}
+
+/**
+ * The sections a save writes: those holding data. A section with nothing in it
+ * cannot be represented as JSON (`toJsonValue` refuses `undefined`), and leaving
+ * it out is what the file means by not naming it — so a load-and-save round trip
+ * keeps an unconfigured section unconfigured.
+ */
+function configuredSections(sections: Sections): Sections {
+  return Object.fromEntries(Object.entries(sections).filter(([, section]) => section.data !== undefined));
+}
+
+/**
+ * Write `contents` to `file` so the file is only ever seen whole: the bytes go
+ * to a temporary sibling first, and the rename that publishes them is atomic
+ * within a directory. The temporary name is fixed, which is safe because saves
+ * are serialized (see {@link AppConfig.save}).
+ */
+async function writeFileAtomically(file: string, contents: string): Promise<void> {
+  const { writeFile, rename } = await configFileSystem();
+  const temporary = `${file}.tmp`;
+  await writeFile(temporary, contents);
+  await rename(temporary, file);
 }
 
 /**

@@ -104,7 +104,7 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
         Comparison.from({
           symbol: parseSymbol(comparison.symbol),
           operator: await opRegistry.from(comparison.operator),
-          value: new TypeValue(await typeRegistry.from(comparison.value), comparison.value.data)
+          value: await TypeValue.create(await typeRegistry.from(comparison.value), comparison.value.data)
         })
       )
     );
@@ -122,7 +122,7 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
         return {
           id: parameter.id,
           name: parameter.name,
-          value: new TypeValue(type, parameter.value.data)
+          value: await TypeValue.create(type, parameter.value.data)
         };
       })
     );
@@ -192,7 +192,10 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
         return {
           id,
           name: p.name,
-          value: sameType ? existing.value : new TypeValue(p.type!, existing.value.value)
+          // Re-typed under a definition that just changed: this is an edit in
+          // progress, not data from outside, so it is not validated here — a
+          // check that threw would break the effect that runs this.
+          value: sameType ? existing.value : TypeValue.assumedValid(p.type!, existing.value.value)
         };
       });
 
@@ -309,7 +312,7 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
     type Serialized = { type: string; options: unknown; data: JsonValue };
     const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
     const hydrate = async (v: unknown): Promise<TypeValue> =>
-      new TypeValue(
+      await TypeValue.create(
         await typeRegistry.from({ type: (v as Serialized).type, options: (v as Serialized).options }),
         (v as Serialized).data
       );

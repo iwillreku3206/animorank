@@ -13,6 +13,18 @@ import { StringType } from '$lib/testCase/builtin/functionTestCase/types/string'
 import { Float } from '$lib/testCase/builtin/functionTestCase/types/float';
 import { Integer } from '$lib/testCase/builtin/functionTestCase/types/int';
 import { VoidType } from '$lib/testCase/builtin/functionTestCase/types/void';
+import { elementText } from './elementText';
+
+/** Elements a freshly created array holds. */
+const DEFAULT_LENGTH = 3;
+
+/**
+ * Most elements an array may declare. Generated code initializes every slot, so
+ * the length bounds the harness source too. The options form enforces the same
+ * bound; a value outside it — hand-edited JSON, a length written before the
+ * bound existed — is no declaration at all, so it falls back to the default.
+ */
+const MAX_LENGTH = 64;
 
 /** Options form with a TypeEditor for the element type; see {@link ArrayType} for what it accepts. */
 const arrayOptions = {
@@ -24,6 +36,15 @@ const arrayOptions = {
       // wire format: neither is supported end to end.
       excludeTypeIds: [VoidType.id(), 'array'],
       default: StringType.create()
+    },
+    length: {
+      label: 'Length',
+      description: 'Number of elements the array holds.',
+      type: 'number',
+      isInteger: true,
+      min: 1,
+      max: MAX_LENGTH,
+      default: DEFAULT_LENGTH
     }
   }
 } as const satisfies Form;
@@ -66,16 +87,33 @@ function elementOption(options: unknown): unknown {
   return options !== null && typeof options === 'object' && 'element' in options ? options.element : undefined;
 }
 
+/** The length option a raw (serialized or in-memory) options value carries. */
+function lengthOption(options: unknown): unknown {
+  return options !== null && typeof options === 'object' && 'length' in options ? options.length : undefined;
+}
+
+/** The declared element count an options value carries, normalized; the default when it names none. */
+function declaredLength(value: unknown): number {
+  const parsed = typeof value === 'string' ? Number(value) : value;
+  if (typeof parsed !== 'number' || !Number.isInteger(parsed) || parsed < 1 || parsed > MAX_LENGTH) {
+    return DEFAULT_LENGTH;
+  }
+  return parsed;
+}
+
 /**
- * An array of values sharing one element type.
+ * An array of values sharing one element type, holding a fixed number of them.
  *
  * The value is the JSON encoding of the elements (`['a', 'b']`), matching how
  * the scalar types carry their value as `{ value }`; elements are strings on
  * the wire, so an integer or float array holds each element's decimal text.
+ * The value always holds exactly {@link length} elements — that is what makes
+ * the generated C a plain array rather than a sentinel-terminated one, and it
+ * is what `validateValue` enforces.
  *
  * The element is a `Type` instance, as the type editor binds, and serializes
- * through it: the wire form is `{ element: { type, options } }`, which the
- * server reads without needing the element's class.
+ * through it: the wire form is `{ element: { type, options }, length }`, which
+ * the server reads without needing the element's class.
  *
  * This module stays free of components so the server can import it; the two
  * entries provide the concrete class (see `client/arrayType.ts`).
@@ -85,16 +123,19 @@ export class ArrayType extends Type<
   typeof arrayOptions,
   // The type editor binds a live `Type`; the serialized form is a plain object,
   // so the declared type names what the code works with.
-  { element: Type }
+  { element: Type; length: number }
 > {
   static id(): string {
     return 'array';
   }
 
-  constructor(options: IntoJsonValue | { element?: Type }) {
+  constructor(options: IntoJsonValue | { element?: Type; length?: unknown }) {
     const element =
       options !== null && typeof options === 'object' && 'element' in options ? options.element : undefined;
-    super({ element: element instanceof Type ? element : StringType.create() });
+    super({
+      element: element instanceof Type ? element : StringType.create(),
+      length: declaredLength(lengthOption(options))
+    });
   }
 
   /** The element type id, as registered. */
@@ -107,8 +148,16 @@ export class ArrayType extends Type<
     return this.options.element;
   }
 
+  /** Elements an array of this type holds, on the wire and in the generated C. */
+  public get length(): number {
+    return this.options.length;
+  }
+
   public async validateValue(data: JsonValue): Promise<true | Error> {
     if (!Array.isArray(data)) return new Error(`Expected an array of ${this.elementId()} values`);
+    if (data.length !== this.length) {
+      return new Error(`Expected ${this.length} elements, got ${data.length}`);
+    }
 
     // Every element is carried as text (the wire format is textual), so an
     // element that is not a string is never a valid element.
@@ -125,16 +174,22 @@ export class ArrayType extends Type<
   }
 
   public defaultValue(): TypeValue<this> {
-    return new TypeValue(this, []);
+    // Every slot starts at the element type's own default: the array is always
+    // full, so no slot is empty just because nothing has been typed into it.
+    const text = elementText(this.elementType.defaultValue().value);
+    return TypeValue.assumedValid(
+      this,
+      Array.from({ length: this.length }, () => text)
+    );
   }
 
   get staticName(): string {
     return 'array';
   }
 
-  /** The C spelling of an array of this element, e.g. `char*[]` or `int32[]`. */
+  /** The C spelling of an array of this element, e.g. `char*[3]` or `int32[3]`. */
   get detailedName(): string {
-    return `${this.options.element.detailedName}[]`;
+    return `${this.elementType.detailedName}[${this.length}]`;
   }
 
   static icon: ComponentType = ListIcon;
@@ -154,8 +209,11 @@ export class ArrayType extends Type<
     ArrayType.components = components;
   }
 
-  public static async from(options: IntoJsonValue | { element?: unknown }): Promise<ArrayType> {
-    return new ArrayType({ element: await resolveElementType(elementOption(options)) });
+  public static async from(options: IntoJsonValue | { element?: unknown; length?: unknown }): Promise<ArrayType> {
+    return new ArrayType({
+      element: await resolveElementType(elementOption(options)),
+      length: lengthOption(options)
+    });
   }
 
   public static create(): ArrayType {

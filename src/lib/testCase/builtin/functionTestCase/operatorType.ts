@@ -1,15 +1,21 @@
 import type { IntoJsonValue } from '$lib/types/utils';
+import type { Form } from '$lib/form';
 import type { Operator } from './operator.svelte';
 import type { Type } from './type.svelte';
 import type { TypeValue } from './typeValue.svelte';
 
 export abstract class OperatorType<O extends Operator = Operator, T extends Type = Type> {
   options: O extends Operator<infer Options> ? Options : IntoJsonValue;
-  typeOptions: T extends Type<infer Options> ? Options : IntoJsonValue;
+  /**
+   * The compared type's options — its own form's value, not the shape of the
+   * values it holds — so a binding can read the type it compares as the type
+   * itself sees it (an array's element and length, an int's size).
+   */
+  typeOptions: T extends Type<IntoJsonValue, Form, infer Options> ? Options : IntoJsonValue;
 
   constructor(
     options: O extends Operator<infer Options> ? Options : IntoJsonValue,
-    typeOptions: T extends Type<infer Options> ? Options : IntoJsonValue
+    typeOptions: T extends Type<IntoJsonValue, Form, infer Options> ? Options : IntoJsonValue
   ) {
     this.options = options;
     this.typeOptions = typeOptions;

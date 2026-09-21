@@ -23,23 +23,64 @@ const registrar = new RegistryProviderRegistrar(GlobalRegistryProvider.instance(
 registrar.registerRegistry(new ProbeRegistry());
 registrar.getRegistrar(ProbeRegistry, '').register('probe', ProbeService);
 
-function registryEvent(query: string) {
+/** A signed-in caller: the plugin API sits behind the session, like every other API route. */
+const session = { user: { id: 'probe-user' } };
+
+/** A request to one plugin API route, signed in unless a session is passed (or `null`). */
+function pluginApiEvent(path: string, query: string, auth: unknown = session) {
   return {
-    url: new URL(`http://localhost/api/plugin/registry?${query}`)
-  } as unknown as Parameters<typeof getRegistry>[0];
+    url: new URL(`http://localhost/api/plugin/${path}?${query}`),
+    locals: { auth: async () => auth }
+  };
 }
 
-function itemEvent(query: string) {
-  return {
-    url: new URL(`http://localhost/api/plugin/registryItem?${query}`)
-  } as unknown as Parameters<typeof getRegistryItem>[0];
+function registryEvent(query: string, auth?: unknown) {
+  return pluginApiEvent('registry', query, auth) as unknown as Parameters<typeof getRegistry>[0];
 }
 
-function writersEvent(query: string) {
-  return {
-    url: new URL(`http://localhost/api/plugin/registryWriters?${query}`)
-  } as unknown as Parameters<typeof getRegistryWriters>[0];
+function itemEvent(query: string, auth?: unknown) {
+  return pluginApiEvent('registryItem', query, auth) as unknown as Parameters<typeof getRegistryItem>[0];
 }
+
+function writersEvent(query: string, auth?: unknown) {
+  return pluginApiEvent('registryWriters', query, auth) as unknown as Parameters<typeof getRegistryWriters>[0];
+}
+
+describe('plugin API access', () => {
+  it('refuses a caller who is not signed in', async () => {
+    const calls = [
+      getRegistry(registryEvent('domain=global&id=probe.registry', null)),
+      getRegistryItem(itemEvent('domain=global&registry=probe.registry&id=probe', null)),
+      getRegistryWriters(writersEvent('domain=global&registry=probe.registry', null))
+    ];
+
+    for (const call of calls) {
+      await expect(call).rejects.toSatisfy((error: unknown) => isHttpError(error) && error.status === 403);
+    }
+  });
+
+  it('does not serve the server domain', async () => {
+    const calls = [
+      getRegistry(registryEvent('domain=server&id=test_case.server')),
+      getRegistryItem(itemEvent('domain=server&registry=test_case.server&id=function')),
+      getRegistryWriters(writersEvent('domain=server&registry=test_case.server'))
+    ];
+
+    for (const call of calls) {
+      await expect(call).rejects.toSatisfy((error: unknown) => isHttpError(error) && error.status === 400);
+    }
+  });
+
+  it('serves the client domain, which is what the browser asks about', async () => {
+    const response = await getRegistry(registryEvent('domain=client&id=window.problem_set_editor'));
+
+    await expect(response.json()).resolves.toEqual({
+      plugin: 'animorank',
+      domain: 'client',
+      id: 'window.problem_set_editor'
+    });
+  });
+});
 
 describe('GET /api/plugin/registry', () => {
   it('reports the plugin that registered a registry', async () => {

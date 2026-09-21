@@ -13,8 +13,8 @@ describe('ConfigSectionRegistry', () => {
     const registry = new ConfigSectionRegistry();
     const web = await registry.getInstance('web', { host: '0.0.0.0', port: 8080 });
     expect(web.data).toEqual({ host: '0.0.0.0', port: 8080 });
-    const plugins = await registry.getInstance('plugins', { enable: true, pluginDir: '/tmp/plugins' });
-    expect(plugins.data).toEqual({ enable: true, pluginDir: '/tmp/plugins' });
+    const plugins = await registry.getInstance('plugins', { pluginDir: '/tmp/plugins' });
+    expect(plugins.data).toEqual({ pluginDir: '/tmp/plugins' });
   });
 
   it('documents every config option with a description', async () => {

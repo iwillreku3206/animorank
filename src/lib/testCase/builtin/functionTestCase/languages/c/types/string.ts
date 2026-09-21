@@ -46,7 +46,8 @@ function escapeCLiteral(value: string): string {
 
 export class CStringType extends CType<StringType> {
   public async readFromPrint(printed: string): Promise<TypeValue<StringType>> {
-    return new TypeValue(this.type, { value: printed });
+    // The program printed this: it is data from outside, so it is checked.
+    return await TypeValue.create(this.type, { value: printed });
   }
   static type = StringType;
 

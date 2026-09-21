@@ -12,6 +12,9 @@ import {
 const PREBUILT_ENTRIES_ID = 'virtual:prebuilt-plugin-entries';
 const RESOLVED_ENTRIES_ID = '\0' + PREBUILT_ENTRIES_ID;
 
+/** The plugin's name, as Vite reports it and as its errors name it. */
+const PLUGIN_NAME = 'animorank:prebuilt-plugin-entries';
+
 /**
  * SvelteKit's default app directory. The compiled entries are emitted inside
  * it, under the same prefix the client build gives every other entry; the
@@ -132,21 +135,36 @@ export function prebuiltPluginEntries(): Plugin {
   }
 
   return {
-    name: 'animorank:prebuilt-plugin-entries',
+    name: PLUGIN_NAME,
 
     config(userConfig, env) {
       // Only the client build emits the entries: the server build reads their
       // URLs, and the dev server serves the packages' source modules.
       if (env.command !== 'build' || userConfig.build?.ssr) return;
 
-      const output = userConfig.build?.rollupOptions?.output;
-      if (!output || Array.isArray(output)) return;
       // The entries are emitted chunks, which the build names with its chunk
       // pattern rather than its entry pattern; the emitted names carry the
       // build's id instead of a content hash, so their URLs are known before
-      // the build that emits them runs.
+      // the build that emits them runs. When the build does not name chunks the
+      // way this plugin can follow, that is a build error: returning quietly
+      // would leave the descriptors pointing at URLs nothing ever emitted, and
+      // the browser would only find out with a 404.
+      const output = userConfig.build?.rollupOptions?.output;
+      if (!output || Array.isArray(output)) {
+        throw new Error(
+          `${PLUGIN_NAME}: expected the client build to configure one rollup output object, ` +
+            `so the prebuilt plugin chunks can be named; got ${output === undefined ? 'none' : 'an array'}. ` +
+            'Update this plugin alongside whatever changed the build output configuration.'
+        );
+      }
       const pattern = output.chunkFileNames;
-      if (typeof pattern !== 'string') return;
+      if (typeof pattern !== 'string') {
+        throw new Error(
+          `${PLUGIN_NAME}: expected the client build to name its chunks with a pattern, so the prebuilt plugin ` +
+            `chunks can be named; got ${pattern === undefined ? 'none' : typeof pattern}. ` +
+            'Update this plugin alongside whatever changed the build output configuration.'
+        );
+      }
 
       chunkPattern = pattern;
       const naming: NonNullable<Rollup.OutputOptions['chunkFileNames']> = (chunk) =>

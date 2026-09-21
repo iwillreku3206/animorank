@@ -66,9 +66,13 @@
     {
       function: 'fn1',
       parameters: [
-        { id: 'p', name: 'p', value: new TypeValue(new Pointer({ target: Integer.create() }), { value: '5' }) },
-        { id: 'f', name: 'f', value: new TypeValue(Float.create(), { value: '1.5' }) },
-        { id: 's', name: 's', value: new TypeValue(StringType.create(), { value: 'hi' }) }
+        {
+          id: 'p',
+          name: 'p',
+          value: TypeValue.assumedValid(new Pointer({ target: Integer.create() }), { value: '5' })
+        },
+        { id: 'f', name: 'f', value: TypeValue.assumedValid(Float.create(), { value: '1.5' }) },
+        { id: 's', name: 's', value: TypeValue.assumedValid(StringType.create(), { value: 'hi' }) }
       ],
       comparisons: []
     }

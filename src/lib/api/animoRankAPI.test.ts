@@ -59,6 +59,40 @@ describe('ServerAnimoRankAPI', () => {
     expect(api.serverRegistryProviderRegistrar.id).toBe('probe-plugin');
     expect(api.globalRegistryProviderRegistrar.id).toBe('probe-plugin');
   });
+
+  it('wires a registry by id, namespacing the keys to the plugin', async () => {
+    const api = new ServerAnimoRankAPI('by-id-plugin');
+
+    // The way in for a plugin that cannot name the registry's class.
+    const registrar = await api.globalRegistryProviderRegistrar.getRegistrarById<LanguageRegistry>('language');
+    expect(registrar.id).toBe('by-id-plugin');
+    expect(registrar.pluginId).toBe('by-id-plugin');
+    registrar.register('byidlang', MyLanguage);
+
+    const registry = GlobalRegistryProvider.instance().getRegistry(LanguageRegistry);
+    expect(registry.keys()).toContain('by-id-plugin:byidlang');
+    expect(registry.registeredBy('by-id-plugin:byidlang')).toBe('by-id-plugin');
+  });
+
+  it('wires a registry by id in the app’s own namespace when asked to', async () => {
+    const api = new ServerAnimoRankAPI('by-id-plugin');
+
+    // An empty namespace registers the key verbatim: definitions the app looks
+    // up by plain name (a data type) must not live in the plugin's namespace.
+    const registrar = await api.globalRegistryProviderRegistrar.getRegistrarById<LanguageRegistry>('language', '');
+    expect(registrar.id).toBe('');
+    registrar.register('byidplainlang', MyLanguage);
+
+    const registry = GlobalRegistryProvider.instance().getRegistry(LanguageRegistry);
+    expect(registry.keys()).toContain('byidplainlang');
+    expect(registry.registeredBy('byidplainlang')).toBe('by-id-plugin');
+  });
+
+  it('rejects an id no provider knows', async () => {
+    const api = new ServerAnimoRankAPI('probe-plugin');
+
+    await expect(api.globalRegistryProviderRegistrar.getRegistrarById('nowhere')).rejects.toThrow(/not found/);
+  });
 });
 
 describe('ClientAnimoRankAPI', () => {

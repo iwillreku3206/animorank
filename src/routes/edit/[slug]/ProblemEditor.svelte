@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import DockviewWindow from '$lib/window/DockviewWindow.svelte';
+  import type { DockviewWindowManager } from '$lib/window/dockviewWindowManager';
   import type { DefaultLayout } from '$lib/window/layout';
   import { ClientRegistryProvider } from '$lib/registry/client';
   import { ClientPluginLoader } from '$lib/plugin/clientLoader';
@@ -26,6 +27,7 @@
   };
 
   let context = $state<ProblemEditorWindowContext | null>(null);
+  let manager: DockviewWindowManager<unknown> | undefined = $state();
 
   // Initialisation must not be reactive. Reading `data.*` inside an effect makes
   // it a dependency, and because `context` is only assigned once the async
@@ -64,8 +66,22 @@
       }
       context = created;
       initializing = false;
-      void ClientPluginLoader.instance().notifyPageHook('onProblemEditorLoad', created);
     });
+  });
+
+  // The dock mounts only once the context exists, so the manager is built with
+  // the real context on its first mount; this effect then hands the context the
+  // manager's `openWindow`, which is what lets windows be opened imperatively.
+  // The plugins that answer this page's hook are told about it here — after
+  // their `openWindow` is usable, never before the dock exists — and only once.
+  let notified = false;
+  $effect(() => {
+    if (!manager || !context) return;
+    context.openWindow = manager.openWindow.bind(manager);
+
+    if (notified) return;
+    notified = true;
+    void ClientPluginLoader.instance().notifyPageHook('onProblemEditorLoad', context);
   });
 
   onDestroy(() => {
@@ -81,5 +97,6 @@
     {windowRegistry}
     {defaultLayout}
     storageKey={`problem-editor-${data.problem.id}`}
+    bind:manager
   />
 {/if}

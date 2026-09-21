@@ -51,6 +51,26 @@ export class RegistryProviderRegistrar {
     return new Registrar(this.provider.getRegistry(registry), namespace, this.id);
   }
 
+  /**
+   * Registrar for a registry named by id — its qualified id (`animorank:test_case`)
+   * or, when unambiguous, its own id (`test_case`).
+   *
+   * This is the way in for a plugin that cannot import the registry's class: a
+   * dynamically loaded plugin runs from a URL with no directory of its own to
+   * resolve against, so the app's classes are not names it can write down. The
+   * app can still name its registries for it, and an id is all it needs.
+   * Resolving a lazily registered registry loads it first.
+   *
+   * @param namespace overrides the plugin id a registrar stamps on every key;
+   *   see {@link getRegistrar}.
+   */
+  public async getRegistrarById<R extends ServiceRegistry<any, any[], any>>(
+    id: string,
+    namespace: string = this.id
+  ): Promise<Registrar<R>> {
+    return new Registrar<R>(await this.provider.getRegistryById<R>(id), namespace, this.id);
+  }
+
   /** Register a registry under `${id}:${registry.id}`; also keyed by its class. */
   public registerRegistry<R extends ServiceRegistry<any, any[], any>>(registry: R): R {
     return this.writer.registerRegistry(registry, this.id);

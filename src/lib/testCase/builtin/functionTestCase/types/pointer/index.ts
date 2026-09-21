@@ -99,7 +99,7 @@ export class Pointer extends Type<JsonValue, Form, { target: Type }> {
   }
 
   public defaultValue(): TypeValue<this> {
-    return new TypeValue(this, this.targetType.defaultValue().value);
+    return TypeValue.assumedValid(this, this.targetType.defaultValue().value);
   }
 
   get staticName(): string {

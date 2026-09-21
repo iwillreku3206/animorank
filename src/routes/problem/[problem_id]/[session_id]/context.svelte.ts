@@ -1,9 +1,9 @@
-import type { AddPanelPositionOptions } from 'dockview-core';
 import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
 import { ClientRegistryProvider } from '$lib/registry/client';
 import { TelemetryService } from '$lib/telemetry/telemetryService';
 import type { Problem, Slot } from '$lib/problem';
 import type { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
+import type { OpenWindow } from '$lib/window/dockviewWindowManager';
 import {
   runTestCases,
   submit,
@@ -11,12 +11,6 @@ import {
   type CustomRunResponse,
   type TestRunResponse
 } from '$lib/practiceSession/api';
-
-/** Opens (or focuses) a window in the dockview, optionally placing it. */
-export type OpenWindow = (
-  _key: string,
-  _positions?: AddPanelPositionOptions | AddPanelPositionOptions[]
-) => Promise<unknown>;
 
 export interface SolveWindowContextInitial {
   problem: Problem;

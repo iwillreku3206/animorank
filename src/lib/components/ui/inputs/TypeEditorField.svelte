@@ -16,10 +16,15 @@
 
   // The dropdown offers every registered type, so plugins that add types load
   // before it is built (`loadKeys` cannot be a `$derived`: a plugin is awaited).
-  let availableTypes = $state<string[]>([]);
+  // The keys are the state and the exclusions are derived from them, so a
+  // changed `excludeTypeIds` re-filters the list instead of being read once,
+  // inside the promise callback, and never noticed again.
+  let typeIds = $state<string[]>([]);
+  const availableTypes = $derived(typeIds.filter((id) => !excludeTypeIds.includes(id)));
+
   $effect(() => {
     void typeRegistry.loadKeys().then((keys) => {
-      availableTypes = keys.filter((id) => !excludeTypeIds.includes(id));
+      typeIds = keys;
     });
   });
 </script>

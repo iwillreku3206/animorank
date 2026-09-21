@@ -6,8 +6,8 @@ import type { Pointer } from '.';
 
 export class NotEqualPointer extends OperatorType<NotEqualOperator, Pointer> {
   public async compare(a: TypeValue<Pointer>, b: TypeValue<Pointer>): Promise<boolean> {
-    const innerA = new TypeValue(a.type.targetType, a.value as JsonValue);
-    const innerB = new TypeValue(b.type.targetType, b.value as JsonValue);
+    const innerA = TypeValue.assumedValid(a.type.targetType, a.value as JsonValue);
+    const innerB = TypeValue.assumedValid(b.type.targetType, b.value as JsonValue);
     return new NotEqualOperator(this.options).compare(innerA, innerB);
   }
 }

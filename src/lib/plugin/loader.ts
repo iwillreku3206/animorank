@@ -183,7 +183,10 @@ const prebuiltPluginDescriptors = collectPrebuiltPluginDescriptors();
  * The app's prebuilt plugins, initialized once per process: their descriptors
  * are fixed at compile time and their entries register into process-wide
  * registries, so a second initialization would collide with the first. Every
- * loader gets the plugins the first one initialized.
+ * loader gets the plugins the first one initialized — including its failure, if
+ * it failed: a plugin set that cannot be initialized is a broken deployment,
+ * and re-running the initialization would collide with whatever registered
+ * before the failure.
  */
 let appPrebuiltPlugins: Promise<LoadedPlugin[]> | null = null;
 
@@ -206,6 +209,13 @@ export class PluginLoader {
    * entries are logged and skipped so one bad third-party plugin cannot
    * prevent the rest from loading; a plugin whose `init` throws, however,
    * aborts the load.
+   *
+   * That abort is deliberate: a plugin is assumed to be as essential as the
+   * features it adds, so a plugin set that cannot be initialized is a broken
+   * deployment and is meant to fail loudly — a server missing half its plugins
+   * would look fine while behaving wrongly. Whoever catches the failure reports
+   * it (see `ServerPluginService.getLoader`, which caches it so the same reason
+   * reaches every caller).
    *
    * @returns the newly loaded plugins, in no particular order
    */
@@ -293,11 +303,7 @@ export class PluginLoader {
 
     const prebuilt =
       plugins === undefined
-        ? await (appPrebuiltPlugins ??= this.initializePrebuilt(prebuiltPluginDescriptors).catch((error: unknown) => {
-            // A failed load is not cached: the next loader retries it.
-            appPrebuiltPlugins = null;
-            throw error;
-          }))
+        ? await (appPrebuiltPlugins ??= this.initializePrebuilt(prebuiltPluginDescriptors))
         : await this.initializePrebuilt(plugins);
 
     for (const plugin of prebuilt) {

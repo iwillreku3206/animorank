@@ -167,14 +167,14 @@ describe('ServerPluginService', () => {
     expect(first.getPlugins().map((plugin) => plugin.manifest.id)).toContain('lazy-plugin');
   });
 
-  it('picks the folder up on a later call when it was missing before', async () => {
+  it('reports the same failure to every caller rather than retrying', async () => {
     configurePluginDir('plugins');
     const plugins = service();
     await expect(plugins.getLoader()).rejects.toThrow(/does not exist/);
 
-    // A folder created after the failed attempt is picked up: failures are not cached.
+    // A folder that is not there is a broken deployment, and plugins are
+    // essential: the failure stands, even once the folder appears.
     await writePlugin('late-plugin');
-    const loader = await plugins.getLoader();
-    expect(loader.getPlugins().map((plugin) => plugin.manifest.id)).toContain('late-plugin');
+    await expect(plugins.getLoader()).rejects.toThrow(/does not exist/);
   });
 });

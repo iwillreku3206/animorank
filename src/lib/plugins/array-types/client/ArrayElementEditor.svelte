@@ -16,7 +16,7 @@
    * steal focus.
    */
   let inner = $state(
-    new TypeValue(
+    TypeValue.assumedValid(
       untrack(() => elementType),
       elementValueOf(
         untrack(() => elementType),
@@ -36,7 +36,7 @@
    */
   $effect(() => {
     if (inner.type !== elementType || text !== synced) {
-      inner = new TypeValue(elementType, elementValueOf(elementType, text));
+      inner = TypeValue.assumedValid(elementType, elementValueOf(elementType, text));
       synced = text;
       return;
     }

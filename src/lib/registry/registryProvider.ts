@@ -48,25 +48,42 @@ export class RegistryProvider {
 
   /**
    * Look up a registry by its fully-qualified key of the form `namespace:id`
-   * (e.g. `animorank:test_case`). Resolves eagerly registered registries and
-   * lazily registered ones (loading at most once; concurrent lookups share a
-   * single load). When the id is registered nowhere, a browser loads the
-   * plugin that provides it (see {@link findRegistryPlugin}) before the lookup
-   * is retried once; on the server a miss is final. Throws when the key stays
-   * unknown.
+   * (e.g. `animorank:test_case`) or, when exactly one registration carries it,
+   * by the registry's own id (e.g. `test_case`). Resolves eagerly registered
+   * registries and lazily registered ones (loading at most once; concurrent
+   * lookups share a single load). When the id is registered nowhere, a browser
+   * loads the plugin that provides it (see {@link findRegistryPlugin}) before
+   * the lookup is retried once; on the server a miss is final. Throws when the
+   * id stays unknown.
    */
   public async getRegistryById<T extends ServiceRegistry<any, any[], any>>(qualifiedId: string): Promise<T> {
-    const registry = await this._lookupRegistry(qualifiedId);
+    const registry = await this._lookupById(qualifiedId);
     if (registry) {
       return registry as T;
     }
 
     await findRegistryPlugin(this.domain, qualifiedId);
-    const loaded = await this._lookupRegistry(qualifiedId);
+    const loaded = await this._lookupById(qualifiedId);
     if (loaded) {
       return loaded as T;
     }
     throw new Error(`Registry with id '${qualifiedId}' not found`);
+  }
+
+  /**
+   * The registry an id names: the key itself, or — when exactly one registered
+   * registry owns the id — that registry, reached through its key. A lazily
+   * registered registry is not known by its own id until it has loaded, so only
+   * its key finds it.
+   */
+  private async _lookupById(id: string): Promise<ServiceRegistry<any, any[], any> | undefined> {
+    const direct = await this._lookupRegistry(id);
+    if (direct) {
+      return direct;
+    }
+
+    const key = this._qualifiedIdOf(id);
+    return key === undefined || key === id ? undefined : this._lookupRegistry(key);
   }
 
   /** The registry registered under an id, waiting for a lazy registration to load. */

@@ -86,8 +86,8 @@ describe('Float', () => {
 
   it('compares with less_than through the operator registry', async () => {
     const op = LessThanOperator.create();
-    const expected = new TypeValue(Float.create(), { value: '2.5' });
-    const actual = new TypeValue(Float.create(), { value: '1.5' });
+    const expected = TypeValue.assumedValid(Float.create(), { value: '2.5' });
+    const actual = TypeValue.assumedValid(Float.create(), { value: '1.5' });
     expect(await op.compare(expected, actual)).toBe(true); // actual 1.5 < expected 2.5
     expect(await op.compare(actual, expected)).toBe(false); // actual 2.5 < expected 1.5
   });

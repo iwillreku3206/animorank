@@ -15,14 +15,14 @@
   // by Svelte after unrelated flushes, which would reassign `inner` (and
   // remount the nested editor, stealing focus) on every keystroke.
   let inner = $state<TypeValue<Type>>(
-    new TypeValue(
+    TypeValue.assumedValid(
       untrack(() => target),
       value.value
     )
   );
   $effect(() => {
     if (inner.type !== target) {
-      inner = new TypeValue(
+      inner = TypeValue.assumedValid(
         target,
         untrack(() => value.value)
       );

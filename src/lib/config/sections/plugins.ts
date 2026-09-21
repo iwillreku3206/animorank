@@ -3,11 +3,6 @@ import { ConfigSection } from '../section.svelte';
 
 const pluginsOptions = {
   fields: {
-    enable: {
-      label: 'Enable',
-      description: 'Whether plugins are loaded and executed.',
-      type: 'checkbox'
-    },
     pluginDir: {
       label: 'Plugin Directory',
       description: 'Directory that contains the plugin packages.',

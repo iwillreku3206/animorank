@@ -15,7 +15,8 @@ export class CPointer extends CType<Pointer> {
 
   public async readFromPrint(printed: string): Promise<TypeValue<Pointer>> {
     const inner = await (await this.innerCType()).readFromPrint(printed);
-    return new TypeValue(this.type, inner.value as JsonValue);
+    // The pointee came from the program through the target's own binding.
+    return await TypeValue.create(this.type, inner.value as JsonValue);
   }
 
   private async innerCType(): Promise<CType<Type>> {
@@ -27,7 +28,7 @@ export class CPointer extends CType<Pointer> {
   }
 
   private innerTypeValue(value: TypeValue<Pointer>): TypeValue<Type> {
-    return new TypeValue(this.type.targetType, value.value as JsonValue);
+    return TypeValue.assumedValid(this.type.targetType, value.value as JsonValue);
   }
 
   public async generateParameterDefinition(symbol: string): Promise<string> {

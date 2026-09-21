@@ -28,10 +28,10 @@ describe('OperatorRegistry', () => {
 });
 
 describe('operators', () => {
-  const int = (value: string) => new TypeValue(Integer.create(), { value });
-  const float = (value: string) => new TypeValue(Float.create(), { value });
-  const string = (value: string) => new TypeValue(StringType.create(), { value });
-  const pointer = async (value: string) => new TypeValue(await Pointer.from({ target: 'int' }), { value });
+  const int = (value: string) => TypeValue.assumedValid(Integer.create(), { value });
+  const float = (value: string) => TypeValue.assumedValid(Float.create(), { value });
+  const string = (value: string) => TypeValue.assumedValid(StringType.create(), { value });
+  const pointer = async (value: string) => TypeValue.assumedValid(await Pointer.from({ target: 'int' }), { value });
 
   it('less_than passes when the actual value is below the expected value', async () => {
     const op = LessThanOperator.create();
@@ -77,7 +77,7 @@ describe('operators', () => {
 
     // Legacy supported relational comparisons on pointers by dereferencing
     // the target type; the delegation lives in the pointer operator types.
-    const pointer = async (v: string) => new TypeValue(await Pointer.from({ target: 'int' }), { value: v });
+    const pointer = async (v: string) => TypeValue.assumedValid(await Pointer.from({ target: 'int' }), { value: v });
     expect(await LessThanOperator.create().compare(await pointer('5'), await pointer('3'))).toBe(true); // actual 3 < expected 5
     expect(await LessThanOperator.create().compare(await pointer('3'), await pointer('5'))).toBe(false);
     expect(await LessThanEqualOperator.create().compare(await pointer('4'), await pointer('4'))).toBe(true);

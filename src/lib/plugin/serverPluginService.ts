@@ -55,8 +55,8 @@ export function pluginFileOf(plugins: LoadedPlugin[], id: string, file: string):
  * and its files) and any code that gates on a plugin being present.
  *
  * Loading is lazy: nothing is read from disk until the first call. A failed
- * load is not cached, so a plugin directory that is created or repaired later
- * is picked up on the next call.
+ * load is final — the failure is cached so every caller reports the same reason
+ * (see {@link getLoader}).
  */
 export class ServerPluginService {
   private static _instance: ServerPluginService | null;
@@ -70,12 +70,20 @@ export class ServerPluginService {
     return ServerPluginService._instance;
   }
 
-  /** The loaded plugin registry; plugins are read from disk and the prebuilt globs on first call. */
+  /**
+   * The loaded plugin registry; plugins are read from disk and the prebuilt
+   * globs on first call.
+   *
+   * A failed load is cached and rethrown unchanged: plugins are essential — the
+   * app's features are incomplete without the ones this server ships — so a
+   * plugin set that cannot load must fail every caller with the reason it
+   * failed, never be retried behind their back. A retry could not succeed
+   * anyway: the plugins that loaded before the failure registered into
+   * process-wide registries, so a second attempt collides with those
+   * registrations instead of reporting the plugin that actually broke.
+   */
   public async getLoader(): Promise<PluginLoader> {
-    this.loaderPromise ??= this.load().catch((error: unknown) => {
-      this.loaderPromise = null;
-      throw error;
-    });
+    this.loaderPromise ??= this.load();
     return this.loaderPromise;
   }
 

@@ -2,6 +2,7 @@ import { TelemetryRegistry, TelemetryService } from '$lib/telemetry';
 import { RegistryProvider } from './registryProvider';
 import { SolveWindowRegistry } from '../../routes/problem/[problem_id]/[session_id]/windowRegistry';
 import { ProblemEditorWindowRegistry } from '../../routes/edit/[slug]/windowRegistry';
+import { ProblemSetEditorWindowRegistry } from '../../routes/instructor/problemSets/[id]/windowRegistry';
 
 export class ClientRegistryProvider extends RegistryProvider {
   private static _instance: ClientRegistryProvider | null;
@@ -12,6 +13,7 @@ export class ClientRegistryProvider extends RegistryProvider {
     this.registerServiceRegistry(TelemetryService, new TelemetryRegistry());
     this.registerRegistry(new SolveWindowRegistry());
     this.registerRegistry(new ProblemEditorWindowRegistry());
+    this.registerRegistry(new ProblemSetEditorWindowRegistry());
   }
 
   public static instance(): ClientRegistryProvider {

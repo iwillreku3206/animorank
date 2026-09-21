@@ -391,12 +391,12 @@ describe('CFunctionTestCase execute', () => {
       public: true,
       data: {
         function: 'fn1',
-        parameters: [{ name: 'x', value: { type: 'int', options: { size: 32, signed: null }, data: { value: 3 } } }],
+        parameters: [{ name: 'x', value: { type: 'int', options: { size: 32, signed: null }, data: { value: '3' } } }],
         comparisons: [
           {
             symbol: 'return',
             operator: { type: 'equal', options: {} },
-            value: { type: 'int', options: { size: 32, signed: null }, data: { value: 5 } }
+            value: { type: 'int', options: { size: 32, signed: null }, data: { value: '5' } }
           }
         ]
       },
@@ -432,7 +432,7 @@ describe('CFunctionTestCase execute', () => {
       expect(result.runInfo.comparisons[0]).toMatchObject({
         symbol: 'return',
         result: true,
-        expected: { value: { value: 5 } },
+        expected: { value: { value: '5' } },
         actual: { value: { value: '5' } }
       });
     }
@@ -892,7 +892,7 @@ describe('FunctionTestCase comparison symbol type sync', () => {
     const intType = (await new TypeRegistry().getStatic('int')).create();
 
     await testCase.setComparisonSymbol(0, 'param0');
-    testCase.setComparisonValue(0, new TypeValue(intType, { value: '7' }));
+    testCase.setComparisonValue(0, TypeValue.assumedValid(intType, { value: '7' }));
     await testCase.setComparisonSymbol(0, 'param1');
 
     expect(testCase.data.comparisons[0].symbol).toBe('param1');

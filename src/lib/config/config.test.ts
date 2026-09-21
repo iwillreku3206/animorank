@@ -40,3 +40,52 @@ describe('AppConfig.loadConfig', () => {
     );
   });
 });
+
+describe('AppConfig.save', () => {
+  const configPath = () => path.join(root, 'config.json');
+
+  it('writes the sections and leaves no temporary file behind', async () => {
+    const config = await AppConfig.loadConfig(new ConfigSectionRegistry(), configPath());
+    config.getSection(PluginsConfigSection)!.data = { pluginDir: 'plugins' };
+
+    await config.save();
+
+    // The web section was never configured, so it is not in the file — and its
+    // absence is not an error, which is what a load-and-save has to mean.
+    expect(JSON.parse(await fs.readFile(configPath(), 'utf8'))).toEqual({ plugins: { pluginDir: 'plugins' } });
+    // The write went through a temporary sibling; it must not survive the save.
+    await expect(fs.stat(`${configPath()}.tmp`)).rejects.toThrow('ENOENT');
+  });
+
+  it('keeps a section that was configured and drops one that was not', async () => {
+    await fs.writeFile(
+      path.join(root, 'config.json'),
+      JSON.stringify({ web: { host: '0.0.0.0', port: 8080 }, plugins: { pluginDir: 'plugins' } })
+    );
+    const config = await AppConfig.loadConfig(new ConfigSectionRegistry(), configPath());
+
+    await config.save();
+
+    expect(JSON.parse(await fs.readFile(configPath(), 'utf8'))).toEqual({
+      web: { host: '0.0.0.0', port: 8080 },
+      plugins: { pluginDir: 'plugins' }
+    });
+  });
+
+  it('publishes the whole file even when saves overlap', async () => {
+    const config = await AppConfig.loadConfig(new ConfigSectionRegistry(), configPath());
+    const section = config.getSection(PluginsConfigSection)!;
+
+    const saves: Promise<void>[] = [];
+    for (let index = 0; index < 20; index += 1) {
+      section.data = { pluginDir: `plugins-${index}` };
+      saves.push(config.save());
+    }
+    await Promise.all(saves);
+
+    // Every save wrote a state that was whole, so the file parses and holds the
+    // last one asked for.
+    expect(JSON.parse(await fs.readFile(configPath(), 'utf8'))).toEqual({ plugins: { pluginDir: 'plugins-19' } });
+    await expect(fs.stat(`${configPath()}.tmp`)).rejects.toThrow('ENOENT');
+  });
+});

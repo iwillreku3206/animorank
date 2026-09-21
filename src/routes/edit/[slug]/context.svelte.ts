@@ -2,6 +2,7 @@ import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
 import type { Problem as ProblemModel, ProblemTestCase, Tag } from '$lib/zenstack/models';
 import { Problem } from '$lib/problem';
 import { GlobalRegistryProvider } from '$lib/registry/global';
+import type { OpenWindow } from '$lib/window/dockviewWindowManager';
 import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
 import type { TestCase } from '$lib/testCase/testCase.svelte';
 import { FunctionTestCase } from '$lib/testCase/builtin/functionTestCase/functionTestCase.svelte';
@@ -25,6 +26,14 @@ export class ProblemEditorWindowContext {
   public functionData: FunctionTestCaseProblemData = $state() as unknown as FunctionTestCaseProblemData;
   public testCases: TestCase[] = $state([]);
   public topics: string[] = $state([]);
+
+  /**
+   * Opens (or focuses) a window in the dockview. The editor page assigns the
+   * dockview manager's own `openWindow` once the dock has attached (see
+   * `ProblemEditor.svelte`), so a plugin answering `onProblemEditorLoad` can
+   * open — or bring forward — a window it contributes.
+   */
+  public openWindow: OpenWindow = async () => {};
 
   // Plain fields, deliberately not `$state`: `AutoSave.state` is itself
   // reactive for the UI, and making the holder reactive would put the

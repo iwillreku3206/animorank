@@ -80,33 +80,6 @@ export const C_ELEMENT_SEPARATOR = '\\037';
 export const C_LIST_TERMINATOR = '\\036';
 
 /**
- * Escape an element for a C string literal.
- *
- * The wire format escapes what it must before this runs, so the job here is
- * only to keep C from reading anything differently: the backslash that starts a
- * wire escape becomes a literal backslash (so C leaves the escape text intact
- * for the decoder), the double quote becomes a literal quote, and a character
- * still in its raw control form is written as an octal escape — fixed width,
- * because a `\xNN` escape would absorb a following hex digit.
- */
-export function escapeCString(element: string): string {
-  let out = '';
-  for (const character of element) {
-    if (character === '\\') {
-      out += '\\\\';
-      continue;
-    }
-    if (character === '"') {
-      out += '\\"';
-      continue;
-    }
-    const code = character.codePointAt(0) ?? 0;
-    out += code < 0x20 || code === 0x7f ? `\\${code.toString(8).padStart(3, '0')}` : character;
-  }
-  return out;
-}
-
-/**
  * The whole encoded list for the given elements. Every element is terminated,
  * so an empty list (`RS`) and a list holding one empty element (`US RS`) stay
  * distinguishable.

@@ -39,7 +39,7 @@ export class VoidType extends Type<Record<string, never>, typeof voidOptions> {
   }
 
   public defaultValue(): TypeValue<this> {
-    return new TypeValue(this, {});
+    return TypeValue.assumedValid(this, {});
   }
 
   get staticName(): string {

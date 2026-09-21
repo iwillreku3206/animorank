@@ -9,6 +9,7 @@
   import YfmStaticView from '$lib/components/content/YfmStaticView.svelte';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
+  import { ClientRegistryProvider } from '$lib/registry/client';
   import { ClientPluginLoader } from '$lib/plugin/clientLoader';
   import type { Window } from '$lib/window';
   import ProblemListItem from './ProblemListItem.svelte';
@@ -22,14 +23,17 @@
     import('@diplodoc/latex-extension/runtime');
   }
 
-  const windowRegistry = new ProblemSetEditorWindowRegistry();
+  const windowRegistry = ClientRegistryProvider.instance().getRegistry(ProblemSetEditorWindowRegistry);
 
-  // Declared, not derived from the window map's insertion order — the tab strip
+  // The windows this page serves are the registry's keys, in registration
+  // order: the four built-ins, then whatever a plugin adds. Declared rather
+  // than derived from the window map's insertion order — the tab strip
   // reordered itself whenever the open calls were reordered. Titles come from
   // the window statics, which are safe to read before the windows are built.
-  const TAB_IDS = ['general', 'collaborators', 'student_access', 'analytics'];
-  const tabs = await Promise.all(
-    TAB_IDS.map(async (id) => ({ id, title: (await windowRegistry.getStatic(id)).title }))
+  let tabs = $state(
+    await Promise.all(
+      windowRegistry.keys().map(async (id) => ({ id, title: (await windowRegistry.getStatic(id)).title }))
+    )
   );
 
   // svelte-ignore state_referenced_locally
@@ -92,12 +96,29 @@
   };
 
   onMount(async () => {
-    for (const { id } of tabs) {
-      windowMap[id] = await windowRegistry.getInstance(id, context);
-    }
-    // The page is built: tell the plugins that answer this page's hook about it.
+    await syncTabs();
+    context.openWindow = openWindow;
+
+    // The page is built: tell the plugins that answer this page's hook about it,
+    // then pick up the windows they registered while answering it.
     await ClientPluginLoader.instance().notifyPageHook('onProblemSetEditorLoad', context);
+    await syncTabs();
   });
+
+  /** Build the window for every key the registry holds that the page does not show yet. */
+  async function syncTabs(): Promise<void> {
+    for (const id of await windowRegistry.loadKeys()) {
+      if (windowMap[id]) continue;
+      windowMap[id] = await windowRegistry.getInstance(id, context);
+      tabs.push({ id, title: (await windowRegistry.getStatic(id)).title });
+    }
+  }
+
+  /** Bring a window forward, building it first when it is new: what plugins receive as `openWindow`. */
+  async function openWindow(key: string): Promise<void> {
+    await syncTabs();
+    if (windowMap[key]) activeTab = key;
+  }
 
   onDestroy(() => {
     // The first draft never tore these down, leaking a mounted component tree

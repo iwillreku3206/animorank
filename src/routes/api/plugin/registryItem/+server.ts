@@ -12,10 +12,9 @@ export const prerender = false;
  * unambiguous, the registry's own id. The key is the one the registry was
  * written with, e.g. `array` for a data type.
  */
-export const GET: RequestHandler = async ({ url }) => {
-  const domain = url.searchParams.get('domain');
-  const registryId = url.searchParams.get('registry');
-  const id = url.searchParams.get('id');
+export const GET: RequestHandler = async (event) => {
+  const registryId = event.url.searchParams.get('registry');
+  const id = event.url.searchParams.get('id');
   if (!registryId) {
     error(400, 'Missing required query parameter "registry"');
   }
@@ -23,7 +22,8 @@ export const GET: RequestHandler = async ({ url }) => {
     error(400, 'Missing required query parameter "id"');
   }
 
-  const registry = providerForDomain(domain).findRegistry(registryId);
+  const { domain, provider } = await providerForDomain(event);
+  const registry = provider.findRegistry(registryId);
   if (!registry) {
     error(404, `No registry "${registryId}" is registered in the ${domain} domain`);
   }

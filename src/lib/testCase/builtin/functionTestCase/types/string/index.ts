@@ -39,7 +39,7 @@ export class StringType extends Type<Value, typeof stringOptions> {
   }
 
   public defaultValue(): TypeValue<this> {
-    return new TypeValue(this, { value: '' });
+    return TypeValue.assumedValid(this, { value: '' });
   }
 
   get staticName(): string {
