@@ -55,14 +55,19 @@ export const { handle } = SvelteKitAuth({
 
       if (!teacher && !user.email.endsWith('@dlsu.edu.ph')) return false;
 
+      return true;
+    }
+  },
+  events: {
+    async signIn({ user }) {
+      if (!user.email || !user.id) return;
+      const teacher = await db.teacherList.findUnique({ where: { email: user.email } });
       const obj = { id: user.id };
       if (teacher) {
         await db.teacher.upsert({ create: obj, update: {}, where: obj });
       } else {
         await db.student.upsert({ create: obj, update: {}, where: obj });
       }
-
-      return true;
     }
   },
   trustHost: true
