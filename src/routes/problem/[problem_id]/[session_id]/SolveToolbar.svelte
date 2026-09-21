@@ -6,7 +6,6 @@
   import PlayIcon from '@iconify-svelte/fa6-solid/play';
   import PaperPlaneIcon from '@iconify-svelte/fa6-solid/paper-plane';
   import GearIcon from '@iconify-svelte/fa6-solid/gear';
-  import ClockRotateLeftIcon from '@iconify-svelte/fa6-solid/clock-rotate-left';
   import ListIcon from '@iconify-svelte/fa6-solid/list';
   import ChevronLeftIcon from '@iconify-svelte/fa6-solid/chevron-left';
   import ChevronRightIcon from '@iconify-svelte/fa6-solid/chevron-right';
@@ -122,15 +121,6 @@
   </div>
 
   <div class="flex flex-row items-center gap-1 justify-self-end">
-    <Button
-      type="button"
-      class="btn-ghost btn-sm btn-square"
-      onclick={() => context.openWindow('submissions')}
-      title="Submission history"
-      aria-label="Submission history"
-    >
-      <ClockRotateLeftIcon class="h-4 w-4" />
-    </Button>
     <Button
       type="button"
       class="btn-ghost btn-sm btn-square"
