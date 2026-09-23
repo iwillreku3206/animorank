@@ -2,6 +2,7 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/zenstack';
 import { groupBy } from '$lib/utils/groupBy';
+import { problemOrderInSet } from '$lib/problem/problemService';
 import { readUuidParam } from '$lib/utils/params';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
@@ -28,7 +29,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
           subject: true,
           practice_sessions: { where: { student_id: session.user.id } }
         },
-        orderBy: { name: 'asc' }
+        orderBy: problemOrderInSet()
       },
       collaborators: { include: { collaborator: { include: { user: true } } } },
       difficulty: true,

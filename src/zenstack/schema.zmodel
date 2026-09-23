@@ -1,6 +1,7 @@
 import "practiceSession.zmodel"
 import "problem.zmodel"
 import "problemSet.zmodel"
+import "submission.zmodel"
 import "tag.zmodel"
 import "testCase.zmodel"
 import "user.zmodel"

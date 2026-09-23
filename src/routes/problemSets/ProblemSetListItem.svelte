@@ -1,38 +1,21 @@
 <script lang="ts">
   import TagChip from '$lib/components/ui/TagChip.svelte';
-  import BookmarkIcon from '@iconify-svelte/fa6-regular/bookmark';
-  import BookmarkIconSolid from '@iconify-svelte/fa6-solid/bookmark';
-  import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
-  import { removeBookmark, toggleBookmark } from './bookmark';
-  import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
-  import Button from '$lib/components/ui/buttons/Button.svelte';
+  import ClickableBadge from '$lib/components/ui/badges/ClickableBadge.svelte';
+  import StarIcon from '@iconify-svelte/fa6-solid/star';
   import type { PageProps } from './$types';
 
   type ProblemSet = PageProps['data']['problemSets'][number];
 
   /** The problem set data displayed in this list item. */
-  let { problemSet = $bindable() }: { problemSet: ProblemSet } = $props();
+  let { problemSet }: { problemSet: ProblemSet } = $props();
 
   /** Display name of the problem set's author(s). */
   const ownerName = $derived(problemSet.owners.map((o) => o.name).join(', '));
-
-  /**
-   * Toggle the bookmarked state for this problem set.
-   */
-  async function handleBookmarkClick() {
-    if (problemSet.bookmarked) {
-      await removeBookmark(problemSet.id);
-      problemSet.bookmarked = false;
-    } else {
-      await toggleBookmark(problemSet.id);
-      problemSet.bookmarked = true;
-    }
-  }
 </script>
 
-<!-- List container -->
+<!-- List container. Tapping anywhere that is not a nested link opens the problem set. -->
 <div
-  class="relative w-full flex flex-col gap-4 bg-base-200 hover:bg-base-100/70 rounded-lg px-4 py-4 sm:px-6 md:flex-row md:gap-8 md:items-center"
+  class="relative w-full flex flex-col gap-4 bg-base-200 hover:bg-base-100/70 active:bg-base-100 transition-colors duration-250 touch-manipulation rounded-lg px-4 py-4 sm:px-6 md:flex-row md:gap-8 md:items-center"
 >
   <!-- Main content: subject, tags, title, author -->
   <div class="flex-1 flex flex-col gap-2">
@@ -43,7 +26,7 @@
     >
       Courses / {#if problemSet.subject}
         <a
-          class="z-20 transition-colors duration-250 hover:text-primary"
+          class="relative z-10 transition-colors duration-250 hover:text-primary"
           href="/problemSets?tag={problemSet.subject.id}"
         >
           {problemSet.subject.label}
@@ -55,14 +38,19 @@
 
     <!-- Title + author -->
     <div class="flex flex-col gap-1">
-      <!-- Title -->
-      <h2 class="font-display text-xl font-semibold line-clamp-2 overflow-hidden">
+      <!-- Title. Its stretched ::after is what makes the row itself clickable. -->
+      <h2 class="font-display text-xl font-semibold">
         <a
-          class="hover:text-primary transition-colors duration-250"
+          class="block after:absolute after:inset-0 after:rounded-lg after:content-['']"
           href="/problemSets/{problemSet.id}"
           aria-label={`${problemSet.title}`}
         >
-          {problemSet.title}
+          <!-- Tint is on the span: the link's ::after spans the whole row, so a hover on
+               the link (or the h2) would follow it and fire from anywhere on the row. -->
+          <span
+            class="relative z-10 block line-clamp-2 overflow-hidden transition-colors duration-250 hover:text-primary"
+            >{problemSet.title}</span
+          >
         </a>
       </h2>
 
@@ -74,7 +62,7 @@
         {#each problemSet.owners as owner, i (owner.id)}
           <a
             href="/problemSets?creator={owner.id}"
-            class="z-20 transition-colors duration-250 hover:text-primary"
+            class="relative z-10 transition-colors duration-250 hover:text-primary"
           >
             {owner.name}
           </a>{i === problemSet.owners.length - 1 ? '' : ', '}
@@ -84,17 +72,33 @@
 
     <!-- Tags -->
     <div class="flex flex-row flex-wrap gap-2 max-h-7 overflow-hidden">
+      <!-- Featured sets lead the *default* listing only, so this badge doubles as the
+           explanation for why this one sits above its neighbours before any sort is
+           picked. Clicking it filters the catalogue down to featured sets. -->
+      {#if problemSet.featured}
+        <ClickableBadge
+          href="/problemSets?featured=true"
+          class="badge-sm badge-primary gap-1 relative z-10"
+          aria-label="Show only featured problem sets"
+        >
+          <StarIcon
+            class="h-3 w-3"
+            aria-hidden="true"
+          />
+          Featured
+        </ClickableBadge>
+      {/if}
       {#each problemSet.tags as tag (tag.id)}
         <TagChip
           {tag}
           href="/problemSets?tag={tag.id}"
-          class="z-20"
+          class="badge-sm badge-soft relative z-10"
         />
       {/each}
     </div>
   </div>
 
-  <!-- Right panel: progress, bookmark, details button -->
+  <!-- Right panel: progress -->
   <div class="flex flex-row items-center gap-6 w-full md:w-80 md:gap-8">
     <!-- Progress section -->
     <div class="flex-1 flex flex-col gap-2">
@@ -111,40 +115,5 @@
         aria-label={`${Math.round((problemSet.progress.finished / problemSet.progress.total) * 100)}% progress`}
       ></progress>
     </div>
-
-    <!-- Bookmark button -->
-    <Button
-      type="button"
-      class="btn-ghost btn-square p-0 w-6 h-6 z-20"
-      onclick={handleBookmarkClick}
-      aria-label={problemSet.bookmarked
-        ? `Remove ${problemSet.title} from bookmarks`
-        : `Add ${problemSet.title} to bookmarks`}
-      aria-pressed={problemSet.bookmarked}
-    >
-      {#if problemSet.bookmarked}
-        <BookmarkIconSolid
-          class="w-6 h-6"
-          aria-hidden="true"
-        />
-      {:else}
-        <BookmarkIcon
-          class="w-6 h-6"
-          aria-hidden="true"
-        />
-      {/if}
-    </Button>
-
-    <!-- Details button -->
-    <ButtonLink
-      href="/problemSets/{problemSet.id}"
-      class="btn-square btn-primary btn-outline z-20 inline-flex items-center"
-      aria-label={`Open ${problemSet.title} problem set details`}
-    >
-      <ArrowRightIcon
-        class="w-4 h-4"
-        aria-hidden="true"
-      />
-    </ButtonLink>
   </div>
 </div>

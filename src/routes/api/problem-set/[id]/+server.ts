@@ -117,16 +117,20 @@ export const PUT: RequestHandler = async ({ locals, request, params }) => {
 
   if (!updated) return error(403, 'Not authorized or not found');
 
-  // Handle topic updates separately (service doesn't support nested writes)
-  if (data.topic_ids !== undefined) {
-    await db.problemSet.update({
-      where: { id: params.id },
-      data: {
-        topics: {
-          set: data.topic_ids.map((topicId) => ({
-            problem_set_id_topic_tag_id: { problem_set_id: params.id, topic_tag_id: topicId }
-          }))
-        }
+  // Handle topic updates separately (service doesn't support nested writes).
+  // Rewritten rather than `set`-ing the relation: `set` only connects join rows
+  // that already exist, so selecting a topic the set had never carried failed
+  // with a missing-record error and the editor's autosave showed 'Failed to
+  // save'. Deselecting worked, which is why the bug read as add-only. Same
+  // delete-then-recreate shape the problem endpoint uses for its own topics.
+  const topicIds = data.topic_ids;
+  if (topicIds !== undefined) {
+    await db.$transaction(async (tx) => {
+      await tx.problemSetTopic.deleteMany({ where: { problem_set_id: params.id } });
+      if (topicIds.length > 0) {
+        await tx.problemSetTopic.createMany({
+          data: topicIds.map((topicId) => ({ problem_set_id: params.id, topic_tag_id: topicId }))
+        });
       }
     });
   }

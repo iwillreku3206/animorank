@@ -48,15 +48,22 @@ export const { handle } = SvelteKitAuth({
       session.user.hasAcceptedTOS = dbUser.hasAcceptedTOS;
 
       return session;
+    },
+    async signIn({ user }) {
+      if (!user.email || !user.id) return false;
+      const teacher = await db.teacherList.findUnique({ where: { email: user.email } });
+
+      if (!teacher && !user.email.endsWith('@dlsu.edu.ph')) return false;
+
+      return true;
     }
   },
   events: {
     async signIn({ user }) {
       if (!user.email || !user.id) return;
-      const dbUser = await db.teacherList.findUnique({ where: { email: user.email } });
-
+      const teacher = await db.teacherList.findUnique({ where: { email: user.email } });
       const obj = { id: user.id };
-      if (dbUser) {
+      if (teacher) {
         await db.teacher.upsert({ create: obj, update: {}, where: obj });
       } else {
         await db.student.upsert({ create: obj, update: {}, where: obj });

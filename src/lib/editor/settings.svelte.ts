@@ -33,7 +33,7 @@ export const DEFAULT_EDITOR_SETTINGS: EditorSettings = {
 
 /** Bounds for the font size slider, and the clamp applied to stored values. */
 export const FONT_SIZE_MIN = 10;
-export const FONT_SIZE_MAX = 24;
+export const FONT_SIZE_MAX = 72;
 
 /** The tab widths offered in the UI; any other stored value is rejected. */
 export const TAB_SIZES = [2, 4, 8] as const;
@@ -83,14 +83,12 @@ export function parseSettings(raw: unknown): EditorSettings {
 }
 
 /**
- * Options every editor in the app shares regardless of user settings. Kept here
- * so the two `monaco.editor.create` call sites cannot drift apart.
- *
- * `detectIndentation` is off deliberately: left on, Monaco infers indentation
- * from the starter code and silently overrides the user's chosen tab size.
+ * Options every editor in the app shares regardless of user settings.
  */
 export const BASE_MONACO_OPTIONS = {
   automaticLayout: true,
+  scrollBeyondLastLine: false,
+  padding: { bottom: 16 },
   fontFamily: 'DM Mono',
   theme: DEFAULT_MONACO_THEME,
   wordBasedSuggestions: 'currentDocument',

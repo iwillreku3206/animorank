@@ -46,12 +46,12 @@
       class="label"
       for="window__general__title"
     >
-      <span class="label-text font-bold">Problem Set Title</span>
+      <span class="font-bold">Problem Set Title</span>
     </label>
     <TextInput
       id="window__general__title"
       type="text"
-      class="input-bordered w-full"
+      class="w-full"
       bind:value={context.problemSet.title}
     />
   </div>
@@ -63,7 +63,7 @@
       class="label"
       id="window__general__subject_label"
     >
-      <span class="label-text font-bold">Course Assignment</span>
+      <span class="font-bold">Course Assignment</span>
     </div>
     <div class="dropdown block">
       <div
@@ -78,13 +78,14 @@
         tabindex="-1"
         class="dropdown-content menu bg-base-100 rounded-box z-1 w-64 p-2 shadow-sm"
       >
-        <label class="input">
-          <SearchIcon class="w-4 h-4" />
-          <input
-            bind:value={subjectSearch}
-            aria-label="Search subjects"
-          />
-        </label>
+        <TextInput
+          bind:value={subjectSearch}
+          aria-label="Search subjects"
+        >
+          {#snippet leading()}
+            <SearchIcon />
+          {/snippet}
+        </TextInput>
         {#if subjectsSearched.length > 0}
           {#each subjectsSearched as tag (tag.id)}
             <li>
@@ -105,7 +106,7 @@
       class="label"
       for="window__general__difficulty"
     >
-      <span class="label-text font-bold">Difficulty</span>
+      <span class="font-bold">Difficulty</span>
     </label>
     <Select
       id="window__general__difficulty"
@@ -120,7 +121,7 @@
   </div>
 
   <div class="form-control w-full">
-    <div class="label"><span class="label-text font-bold">Topics</span></div>
+    <div class="label"><span class="font-bold">Topics</span></div>
     <div class="flex flex-wrap gap-2">
       {#each topicTags as tag (tag.id)}
         <ClickableBadge
@@ -143,7 +144,7 @@
   </div>
 
   <div class="form-control w-full">
-    <div class="label"><span class="label-text font-bold">Description</span></div>
+    <div class="label"><span class="font-bold">Description</span></div>
     <Editor bind:text={context.problemSet.description} />
   </div>
 </section>

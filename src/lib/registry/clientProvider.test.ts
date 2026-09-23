@@ -8,10 +8,19 @@ it('client provider constructs all registries without module-cycle breakage', as
   const provider = ClientRegistryProvider.instance();
   expect(provider).toBeInstanceOf(ClientRegistryProvider);
   const solve = provider.getRegistry(SolveWindowRegistry);
-  expect(solve.keys().sort()).toEqual(['code_editor', 'custom_code', 'problem_info', 'test_cases']);
+  expect(solve.keys().sort()).toEqual(['code_editor', 'custom_code', 'problem_info', 'submissions', 'test_cases']);
   expect(await provider.getRegistryById('animorank:window.solve')).toBe(solve);
   const edit = provider.getRegistry(ProblemEditorWindowRegistry);
-  expect(edit.keys().sort()).toEqual(['functions', 'metadata', 'properties', 'starter_code', 'test_cases']);
+  // One window per registered test case type, id-derived (see `testCaseWindowId`).
+  expect(edit.keys().sort()).toEqual([
+    'functions',
+    'metadata',
+    'properties',
+    'starter_code',
+    'test_cases_custom',
+    'test_cases_function',
+    'test_cases_stdio'
+  ]);
   expect(await provider.getRegistryById('animorank:window.problem_editor')).toBe(edit);
   const telemetry = provider.getRegistry(TelemetryRegistry);
   expect(telemetry.keys()).toContain('console');

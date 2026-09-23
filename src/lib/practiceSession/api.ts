@@ -5,10 +5,12 @@ import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
 import type { TestCase } from '$lib/testCase/testCase.svelte';
 import type { Problem } from '$lib/problem';
 import type { ProblemTestCase } from '$lib/zenstack/models';
+import { errorFrom } from '$lib/response';
 
 export type TestRunResponse = {
   results: (TestCaseResult<FunctionTestCaseRunInfo> & { testCase?: TestCase })[];
   success: boolean;
+  recorded?: boolean;
 };
 
 async function hydrateResults(
@@ -47,6 +49,8 @@ export async function runTestCases(session_id: string, problem: Problem): Promis
     }
   });
 
+  if (!req.ok) throw await errorFrom(req, 'Could not run your code');
+
   const res = await req.json();
 
   return {
@@ -66,11 +70,14 @@ export async function submit(session_id: string, problem: Problem): Promise<Test
     }
   });
 
+  if (!req.ok) throw await errorFrom(req, 'Could not submit your code');
+
   const res = (await req.json()) as TestRunResponse;
 
   return {
     success: res.success,
-    results: await hydrateResults(res.results, problem)
+    results: await hydrateResults(res.results, problem),
+    recorded: res.recorded
   };
 }
 
@@ -89,6 +96,8 @@ export async function runCustomInput(session_id: string, stdin: string): Promise
       'content-type': 'application/json'
     }
   });
+
+  if (!req.ok) throw await errorFrom(req, 'Could not run your code');
 
   const res = await req.json();
   return res as CustomRunResponse;

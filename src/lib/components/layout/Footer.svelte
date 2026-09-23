@@ -1,5 +1,6 @@
 <script lang="ts">
   import GithubIcon from '@iconify-svelte/fa6-brands/github';
+  import DiscordIcon from '@iconify-svelte/fa6-brands/discord';
   import Link from '$lib/components/ui/Link.svelte';
 </script>
 
@@ -105,24 +106,39 @@
     <!-- Divider -->
     <div class="border-t border-base-content/10"></div>
 
-    <!-- Bottom bar: copyright + GitHub -->
+    <!-- Bottom bar: copyright + social links -->
     <div
       class="flex flex-col gap-3 pt-6 pb-2 text-sm text-base-content/70 sm:flex-row sm:items-center sm:justify-between"
     >
       <span>© AnimoRank 2026. All rights reserved.</span>
-      <Link
-        href="https://github.com/iwillreku3206/animorank"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="flex items-center gap-2 link-neutral text-sm w-fit"
-        aria-label="AnimoRank on GitHub"
-      >
-        <GithubIcon
-          class="w-5 h-5"
-          aria-hidden="true"
-        />
-        Github
-      </Link>
+      <div class="flex items-center gap-5">
+        <Link
+          href="https://discord.gg/aTefjQq9HX"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center gap-2 link-neutral text-sm w-fit"
+          aria-label="AnimoRank on Discord"
+        >
+          <DiscordIcon
+            class="w-5 h-5"
+            aria-hidden="true"
+          />
+          Discord
+        </Link>
+        <Link
+          href="https://github.com/iwillreku3206/animorank"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center gap-2 link-neutral text-sm w-fit"
+          aria-label="AnimoRank on GitHub"
+        >
+          <GithubIcon
+            class="w-5 h-5"
+            aria-hidden="true"
+          />
+          Github
+        </Link>
+      </div>
     </div>
   </div>
 </footer>

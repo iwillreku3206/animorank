@@ -9,6 +9,16 @@ export interface DockviewWindowManagerOptions {
   /**
    * localStorage key scoping the persisted layout to this editor. Omit to
    * disable persistence.
+   *
+   * A saved layout wins over `defaultLayout`, so changing the default only
+   * reaches people whose saved layout is gone: every change to `defaultLayout`
+   * needs a new key. Date the key `YYYY-MM-DD` with the day the change landed
+   * (`solve-layout-2026-09-18`) rather than numbering it `v3`. ISO dates still
+   * sort into order, and they answer the question a retired key actually
+   * raises — how long ago was this, and has every browser holding it had a
+   * chance to be swept? — which a version number cannot. Retire the old key
+   * by passing it to `discardSavedLayouts` on mount. If two changes land on
+   * one day, suffix the second `-2`.
    */
   storageKey?: string;
   /**
@@ -26,6 +36,30 @@ export type OpenWindow = (
   _key: string,
   _positions?: AddPanelPositionOptions | AddPanelPositionOptions[]
 ) => Promise<unknown>;
+
+/**
+ * Delete every persisted layout whose key starts with `keyPrefix`.
+ *
+ * Renaming a `storageKey` orphans whatever was saved under the old name: no
+ * code reads it again, but it sits in the visitor's browser indefinitely. Call
+ * this once on mount with the retired prefix and the entries are swept the
+ * first time the page loads. Safe to call repeatedly — after the first sweep
+ * there is nothing left to match — and safe to delete once the retired keys
+ * have had time to disappear from the browsers that hold them.
+ *
+ * `keyPrefix` is matched with `startsWith`, so it must not be a prefix of the
+ * live key — that would delete the layout it is meant to preserve on every
+ * mount.
+ */
+export function discardSavedLayouts(keyPrefix: string): void {
+  try {
+    for (const key of Object.keys(localStorage).filter((candidate) => candidate.startsWith(keyPrefix))) {
+      localStorage.removeItem(key);
+    }
+  } catch {
+    // localStorage unavailable (private mode, quota) — nothing to clean up.
+  }
+}
 
 /**
  * Owns the dockview instance and the windows opened in it. Attach a root

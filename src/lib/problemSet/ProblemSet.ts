@@ -18,6 +18,8 @@ export interface ProblemSetSummary {
   authors: { id: string; name: string }[];
   problemCount: number;
   bookmarked?: boolean;
+  /** Whether the set is curated onto the front of the catalogue's default listing. */
+  featured: boolean;
 }
 
 export class ProblemSet {

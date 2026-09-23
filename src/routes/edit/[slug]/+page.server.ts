@@ -4,6 +4,8 @@ import { db } from '$lib/zenstack';
 import { TestCaseService } from '$lib/testCase/testCaseService';
 import { ServerRegistryProvider } from '$lib/registry/server';
 import { TagService } from '$lib/tag';
+import { ProblemService } from '$lib/problem/problemService';
+import { Problem, toProblemLink } from '$lib/problem';
 import { toJsonValue } from '$lib/types/utils';
 import { readUuidParam } from '$lib/utils/params';
 
@@ -43,11 +45,22 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   const tags = await (await registryProvider.getService(TagService)).findAll();
 
+  const neighbors = await (
+    await registryProvider.getService(ProblemService)
+  ).findNeighbors({
+    problem: new Problem(problem),
+    user: session.user
+  });
+
   return {
     problem,
     topics: topics.map((t) => t.tag_id),
     testCases: testCases.map((tc) => ({ ...tc.testCase.model, data: toJsonValue(tc.testCase.data) })),
     tags: tags.map((tag) => tag.model),
-    user: session.user
+    user: session.user,
+    neighbors: {
+      previous: toProblemLink(neighbors.previous),
+      next: toProblemLink(neighbors.next)
+    }
   };
 };

@@ -1,36 +1,42 @@
 <script lang="ts">
   import type { User } from '@auth/sveltekit';
   import Button from '$lib/components/ui/buttons/Button.svelte';
-  import AccountMenu from '$lib/components/settings/AccountMenu.svelte';
-  import EditorSettingsModal from '$lib/components/settings/EditorSettingsModal.svelte';
+  import WorkspaceToolbar, { type ToolbarLink } from '$lib/components/layout/WorkspaceToolbar.svelte';
   import PlayIcon from '@iconify-svelte/fa6-solid/play';
   import PaperPlaneIcon from '@iconify-svelte/fa6-solid/paper-plane';
-  import GearIcon from '@iconify-svelte/fa6-solid/gear';
+  import { problemHref, problemSetHref } from '$lib/navigation';
+  import type { ProblemLink } from '$lib/problem';
   import type { SolveWindowContext } from './context.svelte';
 
-  let { context, user }: { context: SolveWindowContext; user: User } = $props();
+  let {
+    context,
+    user,
+    neighbors
+  }: {
+    context: SolveWindowContext;
+    user: User;
+    /** The problems either side of this one in its set; `null` at either end. */
+    neighbors: { previous: ProblemLink | null; next: ProblemLink | null };
+  } = $props();
 
-  let settingsOpen = $state(false);
+  /** Stepping lands the student in the sibling problem's own solve view. */
+  const toStep = (problem: ProblemLink | null): ToolbarLink | null =>
+    problem && { href: problemHref(problem.id), name: problem.name };
+
+  const steps = $derived({
+    previous: toStep(neighbors.previous),
+    next: toStep(neighbors.next)
+  });
 </script>
 
-<header class="grid h-12 shrink-0 grid-cols-[1fr_auto_1fr] items-center bg-base-300 px-2">
-  <div class="justify-self-start">
-    <a
-      href="/"
-      class="flex items-center"
-      aria-label="AnimoRank home"
-    >
-      <img
-        src="/brand/icon/animorank_icon_primary_dark.svg"
-        alt=""
-        class="h-7 w-auto transition-opacity hover:opacity-80"
-      />
-    </a>
-  </div>
-
+<WorkspaceToolbar
+  {user}
+  backHref={problemSetHref(context.problem.problem_set_id)}
+  neighbors={steps}
+>
   <!-- Primary actions. Both lock while a run is in flight; the editor panel
        shows the accompanying spinner overlay. -->
-  <div class="flex flex-row items-center gap-2 justify-self-center">
+  {#snippet actions()}
     <Button
       class="btn-sm gap-2"
       onclick={() => context.run()}
@@ -53,24 +59,5 @@
       />
       Submit
     </Button>
-  </div>
-
-  <div class="flex flex-row items-center gap-1 justify-self-end">
-    <Button
-      type="button"
-      class="btn-ghost btn-sm btn-square"
-      onclick={() => (settingsOpen = true)}
-      title="Editor settings"
-      aria-label="Editor settings"
-      aria-haspopup="dialog"
-    >
-      <GearIcon class="h-4 w-4" />
-    </Button>
-    <AccountMenu
-      {user}
-      compact
-    />
-  </div>
-</header>
-
-<EditorSettingsModal bind:open={settingsOpen} />
+  {/snippet}
+</WorkspaceToolbar>

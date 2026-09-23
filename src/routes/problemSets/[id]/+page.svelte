@@ -73,8 +73,7 @@
               class="transition-colors duration-250 hover:text-primary"
             >
               {collaborator.name}
-            </a>
-            {i === problemSet.collaborators.length - 1 ? '' : ','}
+            </a>{i === problemSet.collaborators.length - 1 ? '' : ', '}
           {/each}
         </p>
       </div>

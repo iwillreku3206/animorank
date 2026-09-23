@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   const problem = await problemService.findById({ id: problemId, user: session.user });
   if (!problem) throw error(404, { message: 'Not Found' });
 
-  const practiceSession = await practiceSessionService.findLatestNonDoneOrCreate({
+  const practiceSession = await practiceSessionService.findLatestOrCreate({
     problemId,
     user: session.user
   });

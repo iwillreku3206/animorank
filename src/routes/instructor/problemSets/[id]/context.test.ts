@@ -56,6 +56,40 @@ describe('ProblemSetEditorWindowContext autosave', () => {
     context.cleanup();
   });
 
+  it('sends the queued snapshot rather than whatever is current when the write runs', async () => {
+    const context = new ProblemSetEditorWindowContext(initialValues());
+
+    // Hold the first write open so the second has to queue behind it. The
+    // instructor keeps typing while it waits its turn, and re-reading the draft
+    // at execution time would send that later text under the queued write's
+    // baseline -- leaving the autosave recording a revision the server never
+    // received, which is what lets a revert to it dedup away and never land.
+    let releaseFirst!: () => void;
+    const firstInFlight = new Promise<void>((resolve) => (releaseFirst = resolve));
+    vi.mocked(saveProblemSet)
+      .mockImplementationOnce(() => firstInFlight)
+      .mockImplementation(() => Promise.resolve(undefined));
+
+    context.problemSet.title = 'First';
+    const first = context.forceSave();
+
+    context.problemSet.title = 'Queued for the write';
+    const second = context.forceSave();
+
+    context.problemSet.title = 'Typed while the queue drained';
+
+    releaseFirst();
+    await Promise.all([first, second]);
+
+    expect(saveProblemSet).toHaveBeenNthCalledWith(
+      2,
+      'ps-1',
+      expect.objectContaining({ title: 'Queued for the write' })
+    );
+
+    context.cleanup();
+  });
+
   it('reports a rejected save as an error rather than as saved', async () => {
     const context = new ProblemSetEditorWindowContext(initialValues());
     vi.mocked(saveProblemSet).mockRejectedValue(new Error('403'));

@@ -1,5 +1,6 @@
 <script lang="ts">
   import Button from '$lib/components/ui/buttons/Button.svelte';
+  import Textarea from '$lib/components/ui/textareas/Textarea.svelte';
   import type { CustomRunResponse } from '$lib/practiceSession/api';
 
   interface Props {
@@ -21,13 +22,12 @@
     >
       Standard Input (stdin)
     </label>
-    <textarea
+    <Textarea
       id="custom-stdin"
       bind:value={stdin}
-      class="textarea textarea-bordered w-full flex-1 font-mono text-sm resize-none"
+      class="w-full flex-1 font-mono text-sm resize-none"
       placeholder="Enter input to pass to your program..."
-      rows="6"
-    ></textarea>
+    />
   </div>
 
   <Button

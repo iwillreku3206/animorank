@@ -1,9 +1,12 @@
 <script lang="ts">
   import { onDestroy, onMount, untrack } from 'svelte';
   import { createHotkey } from '@tanstack/svelte-hotkeys';
+  import { beforeNavigate, goto } from '$app/navigation';
   import DockviewWindow from '$lib/window/DockviewWindow.svelte';
+  import Alert from '$lib/components/ui/alerts/Alert.svelte';
+  import Button from '$lib/components/ui/buttons/Button.svelte';
   import SolveToolbar from './SolveToolbar.svelte';
-  import type { DockviewWindowManager } from '$lib/window/dockviewWindowManager';
+  import { discardSavedLayouts, type DockviewWindowManager } from '$lib/window/dockviewWindowManager';
   import type { DefaultLayout } from '$lib/window/layout';
   import { Problem } from '$lib/problem';
   import { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
@@ -53,7 +56,10 @@
 
   const defaultLayout: DefaultLayout = {
     panes: [
-      { orientation: 'vertical', children: ['problem_info'] },
+      {
+        orientation: 'vertical',
+        children: [{ tabs: ['problem_info', 'submissions'], active: 'problem_info' }]
+      },
       {
         orientation: 'vertical',
         children: ['code_editor', { tabs: ['test_cases', 'custom_code'], active: 'test_cases' }],
@@ -89,6 +95,38 @@
 
   createHotkey('Control+S', () => void context?.forceSave());
 
+  let resuming = false;
+  beforeNavigate((navigation) => {
+    // No context yet means nothing has been edited: nothing to flush, and the
+    // navigation is safe to let through.
+    if (!context || resuming || navigation.type === 'leave' || !navigation.to) return;
+    if (context.saveState === 'saved') return;
+
+    navigation.cancel();
+    const { href } = navigation.to.url;
+
+    void context!.forceSave().then(() => {
+      if (context!.saveState === 'error' && !window.confirm('Your latest changes could not be saved. Leave anyway?')) {
+        return;
+      }
+      resuming = true;
+      void goto(href).finally(() => (resuming = false));
+    });
+  });
+
+  // Every superseded layout key, cleared on the way past. A saved layout wins
+  // over the default one, so a browser still holding an old key would keep its
+  // stale arrangement and never see panels that later defaults introduce --
+  // which is why each change to `defaultLayout` comes with a new key, dated the
+  // day it landed. Drop each entry once its date is far enough back that every
+  // browser holding the key has since loaded the page and had it swept.
+  //
+  // `solve-layout-v` covers the whole retired `v<number>` convention in one
+  // prefix -- `solve-layout-v2-<id>` (the only one saved per problem) through
+  // `solve-layout-v5` -- because a dated key never starts with it.
+  const SUPERSEDED_LAYOUT_KEYS = ['solve-layout-v'];
+  onMount(() => SUPERSEDED_LAYOUT_KEYS.forEach((key) => discardSavedLayouts(key)));
+
   onMount(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (!context || untrack(() => context!.saveState) !== 'saved') {
@@ -110,13 +148,28 @@
     <SolveToolbar
       {context}
       user={data.user}
+      neighbors={data.neighbors}
     />
+
+    <!-- An attempt that never ran. A failing test reports itself in the results
+         panel; this is the case where there is no result to show. -->
+    {#if context.runError}
+      <Alert class="alert-error mx-2 mt-2 shrink-0 py-2">
+        <span class="text-sm">{context.runError}</span>
+        <Button
+          class="btn-ghost btn-xs"
+          onclick={() => (context!.runError = null)}
+        >
+          Dismiss
+        </Button>
+      </Alert>
+    {/if}
 
     <DockviewWindow
       bind:context
       {windowRegistry}
       {defaultLayout}
-      storageKey={`solve-layout-v2-${data.problem.id}`}
+      storageKey="solve-layout-2026-09-18"
       bind:manager
     />
   {/if}

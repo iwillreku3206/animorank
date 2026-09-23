@@ -4,7 +4,6 @@
   import ArrowRightIcon from '@iconify-svelte/fa6-solid/arrow-right';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import ButtonLink from '$lib/components/ui/buttons/ButtonLink.svelte';
-  // import Badge from '$lib/components/ui/badges/Badge.svelte';
   import HeroGraph from './HeroGraph.svelte';
   import AutograderDemo from './AutograderDemo.svelte';
   import { signIn } from '@auth/sveltekit/client';
@@ -16,25 +15,6 @@
 
   // Selected course drives the live autograder demo below (tabs = picker).
   let selectedCourse = $state('Variables');
-
-  // Real topic tags from the platform (scripts/addDefaultTags.ts), grouped to
-  // mirror the course arc — fundamentals → data → structures → algorithms — so
-  // the section reads as a syllabus map instead of a wall of jargon.
-  // const topicGroups = [
-  //   { label: 'Fundamentals', topics: ['I/O', 'Conditions', 'Loops', 'Functions'] },
-  //   { label: 'Working with data', topics: ['Arrays', 'Strings', 'Structs', 'Files'] },
-  //   { label: 'Data structures', topics: ['Stacks', 'Queues', 'Trees', 'Graphs'] },
-  //   {
-  //     label: 'Algorithms',
-  //     topics: [
-  //       'Sorting',
-  //       'Search',
-  //       'Divide and Conquer',
-  //       'Dynamic Programming',
-  //       'Greedy Algorithms'
-  //     ]
-  //   }
-  // ];
 
   let root: HTMLElement;
 
@@ -61,7 +41,7 @@
 
 <Seo />
 
-{#snippet primaryCta(label: string, onGreen?: boolean)}
+{#snippet primaryCta(onGreen?: boolean)}
   {#if data.user}
     <ButtonLink
       class="btn-lg group font-semibold {onGreen ? 'btn-neutral' : 'btn-primary'}"
@@ -82,7 +62,7 @@
         class="h-5 w-5"
         aria-hidden="true"
       />
-      {label}
+      Start practicing
     </Button>
   {/if}
 {/snippet}
@@ -119,7 +99,7 @@
           style="--d:230ms"
           class="mt-9 flex flex-col items-start gap-3"
         >
-          {@render primaryCta('Start practicing')}
+          {@render primaryCta()}
           {#if !data.user}
             <span class="text-sm text-base-content/50"> Sign in with your DLSU Google account. </span>
           {/if}
@@ -161,59 +141,6 @@
     </div>
   </section>
 
-  <!-- TOPICS + DIFFICULTY: mirrors the courses section — big visual on the left
-       (2/3), copy on the right (1/3) — so the two sections alternate. -->
-  <!-- <section class="px-4 py-20 lg:py-24 xl:px-32">
-    <div class="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:items-center lg:gap-16">
-      <div
-        data-reveal="up"
-        style="--d:120ms"
-        class="flex flex-col gap-6 rounded-2xl border border-white/10 bg-base-200/60 p-6 lg:col-span-8 lg:p-8"
-      >
-        {#each topicGroups as group (group.label)}
-          <div class="flex flex-col gap-2.5 sm:flex-row sm:items-baseline sm:gap-6">
-            <span class="shrink-0 text-sm font-medium text-base-content/50 sm:w-32">
-              {group.label}
-            </span>
-            <div class="flex flex-wrap gap-2">
-              {#each group.topics as topic (topic)}
-                <Badge class="badge-lg border-white/10 bg-base-100/60 text-base-content">
-                  {topic}
-                </Badge>
-              {/each}
-            </div>
-          </div>
-        {/each}
-      </div>
-
-      <div class="lg:col-span-4">
-        <h2
-          data-reveal="up"
-          class="font-display text-3xl font-bold tracking-tight lg:text-5xl"
-        >
-          Find exactly what you need to drill.
-        </h2>
-        <p
-          data-reveal="up"
-          style="--d:80ms"
-          class="mt-5 max-w-[46ch] text-lg leading-relaxed text-base-content/70"
-        >
-          Filter by topic and difficulty, then work a focused set. Studying for a long exam on
-          pointers? Pull up every pointer problem and go.
-        </p>
-        <div
-          data-reveal="up"
-          style="--d:150ms"
-          class="mt-8 flex flex-wrap gap-2.5"
-        >
-          <Badge class="badge-lg border-transparent bg-primary/15 text-primary">Basic</Badge>
-          <Badge class="badge-lg border-transparent bg-accent/15 text-accent">Intermediate</Badge>
-          <Badge class="badge-lg border-transparent bg-error/15 text-error">Advanced</Badge>
-        </div>
-      </div>
-    </div>
-  </section> -->
-
   <!-- CLOSING: the page's one committed brand moment — drenched green -->
   <section class="app-gutter pb-28 lg:pb-36">
     <div
@@ -230,7 +157,7 @@
           Log in with your DLSU account to access your problem sets and start practicing.
         </p>
         <div class="mt-10">
-          {@render primaryCta('Start practicing', true)}
+          {@render primaryCta(true)}
         </div>
       </div>
     </div>

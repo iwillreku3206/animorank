@@ -4,6 +4,7 @@ import { ProblemInfoWindow } from './windows/ProblemInfo.window';
 import { CodeEditorWindow } from './windows/CodeEditor.window';
 import { TestCasesWindow } from './windows/TestCases.window';
 import { CustomCodeWindow } from './windows/CustomCode.window';
+import { SubmissionsWindow } from './windows/Submissions.window';
 
 export class SolveWindowRegistry extends WindowRegistry<SolveWindowContext> {
   public id = 'window.solve';
@@ -15,5 +16,6 @@ export class SolveWindowRegistry extends WindowRegistry<SolveWindowContext> {
     this.register('code_editor', CodeEditorWindow);
     this.register('test_cases', TestCasesWindow);
     this.register('custom_code', CustomCodeWindow);
+    this.register('submissions', SubmissionsWindow);
   }
 }
