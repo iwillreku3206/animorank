@@ -1,5 +1,5 @@
 import type { Problem } from '$lib/problem';
-import { ServiceRegistry, type ClassServiceOf } from '$lib/services/registry';
+import { ServiceRegistry, type ClassServiceOf } from '$lib/registry';
 import { ServerFunctionTestCase } from './builtin/functionTestCase/functionTestCase.server';
 import { ServerStdioTestCase } from './builtin/stdioTestCase/stdioTestCase.server';
 import { ServerCustomTestCase } from './builtin/customTestCase/customTestCase.server';
@@ -14,18 +14,13 @@ export class ServerTestCaseRegistry extends ServiceRegistry<
     id(): string;
     // eslint-disable-next-line no-unused-vars
     create(problem: Problem): Promise<ServerTestCase>;
-    languageRegistry: TestCaseLanguageRegistry;
+    languageRegistryClass: new () => TestCaseLanguageRegistry;
     validateUpdate(options: TestCaseUpdateOptions, existingType: string): void;
+    // eslint-disable-next-line no-unused-vars
+    from?(model: TestCaseModel, problem: Problem): Promise<ServerTestCase>;
   }
 > {
-  private static _instance: ServerTestCaseRegistry | null;
-
-  public static instance(): ServerTestCaseRegistry {
-    if (!ServerTestCaseRegistry._instance) {
-      ServerTestCaseRegistry._instance = new ServerTestCaseRegistry();
-    }
-    return ServerTestCaseRegistry._instance;
-  }
+  public id = 'test_case.server';
 
   constructor() {
     super();
@@ -38,8 +33,9 @@ export class ServerTestCaseRegistry extends ServiceRegistry<
     super.register(value.id(), value);
   }
 
-  public from(model: TestCaseModel, problem: Problem) {
-    return this.getInstance(model.type, model, problem);
+  public async from(model: TestCaseModel, problem: Problem): Promise<ServerTestCase> {
+    const cls = await this.getStatic(model.type);
+    return cls.from ? cls.from(model, problem) : this.getInstance(model.type, model, problem);
   }
 
   /**
@@ -51,10 +47,10 @@ export class ServerTestCaseRegistry extends ServiceRegistry<
    * first violation so an unparseable row is never written (it would become
    * invisible in the editor and permanently fail runs).
    */
-  public validateUpdate(options: TestCaseUpdateOptions, existingType: string): void {
+  public async validateUpdate(options: TestCaseUpdateOptions, existingType: string): Promise<void> {
     if (options.type !== undefined && !this.keys().includes(options.type)) {
       throw new Error(`Unknown test case type "${options.type}"`);
     }
-    this.getStatic(options.type ?? existingType).validateUpdate(options, existingType);
+    (await this.getStatic(options.type ?? existingType)).validateUpdate(options, existingType);
   }
 }

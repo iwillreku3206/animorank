@@ -1,4 +1,4 @@
-import type { ClassServiceOf } from '$lib/services/registry';
+import type { ClassServiceOf } from '$lib/registry';
 import type { CodeExecutorRegistry } from './codeExecutorRegistry';
 import type { ExecutionRequest, ExecutionResult } from './types';
 

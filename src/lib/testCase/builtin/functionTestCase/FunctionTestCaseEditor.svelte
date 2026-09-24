@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { FunctionTestCase } from './functionTestCase.svelte';
-  import type { Symbol } from './types';
+  import { canCompareReturn, type FunctionTestCaseProblemData, type Symbol } from './types';
+  import { GlobalRegistryProvider } from '$lib/registry/global';
   import { OperatorRegistry } from './operatorRegistry';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import DynamicForm from '$lib/components/ui/inputs/DynamicForm.svelte';
@@ -10,20 +11,40 @@
 
   let { testCase }: { testCase: FunctionTestCase } = $props();
 
-  const opRegistry = OperatorRegistry.instance();
+  const opRegistry = GlobalRegistryProvider.instance().getRegistry(OperatorRegistry);
 
-  let problemData = $derived(testCase.problem.functionData);
+  let problemData = $state<FunctionTestCaseProblemData>({ functions: {} });
+  $effect(() => {
+    void testCase.problem.functionData().then((d) => {
+      problemData = d;
+    });
+  });
   let availableFunctions = $derived(Object.entries(problemData.functions).map(([id, fn]) => ({ id, name: fn.name })));
-  let availableOperators = $derived([...opRegistry.keys()]);
-  let operatorNames = $derived(
-    Object.fromEntries(availableOperators.map((key) => [key, opRegistry.getStatic(key).create().displayName]))
-  );
+  /** The selected function's definition, as the Functions window last saved it. */
+  const selectedFunction = $derived(problemData.functions[testCase.data.function]);
+  let availableOperators = $state<string[]>([]);
+  let operatorNames = $state<Record<string, string>>({});
+  $effect(() => {
+    void (async () => {
+      // The operator select offers every registered operator, so plugins that
+      // add operators load before it is built, along with their display names.
+      const keys = await opRegistry.loadKeys();
+      const entries = await Promise.all(
+        keys.map(async (key) => [key, (await opRegistry.getStatic(key)).create().displayName] as const)
+      );
+      availableOperators = keys;
+      operatorNames = Object.fromEntries(entries);
+    })();
+  });
 
   let availableSymbols = $derived([
-    { value: 'return' as Symbol, label: 'return' },
+    // A void (or untyped) return has no value to compare, so `return` is shown
+    // disabled rather than dropped: the author can still compare a parameter.
+    { value: 'return' as Symbol, label: 'return', disabled: !canCompareReturn(selectedFunction) },
     ...testCase.data.parameters.map((p, i) => ({
       value: `param${i}` as Symbol,
-      label: p.name || `param${i}`
+      label: p.name || `param${i}`,
+      disabled: false
     }))
   ]);
 </script>
@@ -39,7 +60,9 @@
       id="fn-select"
       class="select-xs select-bordered flex-1"
       value={testCase.data.function}
-      onchange={(e) => testCase.selectFunction((e.target as HTMLSelectElement).value)}
+      onchange={(e) => {
+        void testCase.selectFunction((e.target as HTMLSelectElement).value);
+      }}
     >
       <option value="">Select a function</option>
       {#each availableFunctions as fn (fn.id)}
@@ -81,17 +104,24 @@
             <Select
               class="select-xs select-bordered"
               value={comp.symbol as string}
-              onchange={(e) => testCase.setComparisonSymbol(i, (e.target as HTMLSelectElement).value as Symbol)}
+              onchange={(e) => {
+                void testCase.setComparisonSymbol(i, (e.target as HTMLSelectElement).value as Symbol);
+              }}
             >
-              {#each availableSymbols as sym (sym)}
-                <option value={sym.value}>{sym.label}</option>
+              {#each availableSymbols as sym (sym.value)}
+                <option
+                  value={sym.value}
+                  disabled={sym.disabled}>{sym.label}</option
+                >
               {/each}
             </Select>
             {#if availableOperators.length > 0}
               <Select
                 class="select-xs select-bordered"
                 value={comp.operator.id}
-                onchange={(e) => testCase.setComparisonOperator(i, (e.target as HTMLSelectElement).value)}
+                onchange={(e) => {
+                  void testCase.setComparisonOperator(i, (e.target as HTMLSelectElement).value);
+                }}
               >
                 {#each availableOperators as opKey (opKey)}
                   <option value={opKey}>{operatorNames[opKey]}</option>
@@ -148,7 +178,9 @@
       {/each}
       <Button
         class="btn-xs btn-success self-start"
-        onclick={() => testCase.addComparison()}
+        onclick={() => {
+          void testCase.addComparison();
+        }}
         disabled={availableOperators.length === 0}
       >
         + Add Comparison

@@ -28,6 +28,16 @@ export interface DockviewWindowManagerOptions {
 }
 
 /**
+ * Opens (or focuses) a window in the dockview, optionally placing it. The
+ * window type is erased on purpose: a page context hands this to plugins, which
+ * have no business knowing the windows of the page they run on.
+ */
+export type OpenWindow = (
+  _key: string,
+  _positions?: AddPanelPositionOptions | AddPanelPositionOptions[]
+) => Promise<unknown>;
+
+/**
  * Delete every persisted layout whose key starts with `keyPrefix`.
  *
  * Renaming a `storageKey` orphans whatever was saved under the old name: no
@@ -67,6 +77,14 @@ export class DockviewWindowManager<T> {
   private readonly defaultLayout: DefaultLayout | undefined;
   private layoutChangeSubscription: { dispose(): void } | undefined;
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
+  /**
+   * Whether {@link destroy} has run. `attach` and `openWindow` await while they
+   * build windows, so a component that unmounts mid-attach (a panel the user
+   * closed while the dock was still coming up) would otherwise keep creating
+   * panels on a disposed dockview — or a dockview that was never disposed,
+   * because it was created after the teardown.
+   */
+  private destroyed = false;
 
   constructor(context: T, windowRegistry: WindowRegistry<T>, options: DockviewWindowManagerOptions = {}) {
     this.context = context;
@@ -75,17 +93,28 @@ export class DockviewWindowManager<T> {
     this.defaultLayout = options.defaultLayout;
   }
 
-  public attach(root: HTMLDivElement): void {
+  public async attach(root: HTMLDivElement): Promise<void> {
+    if (this.destroyed) return;
+
+    // Pre-ensure every registered window so dockview's synchronous callbacks
+    // below can read the populated map (they must not await).
+    await Promise.all(this.windowRegistry.keys().map((key) => this.ensureWindow(key)));
+    // The awaits above are the gaps a teardown can land in; every one of them
+    // is followed by this check, so nothing below runs for a destroyed manager.
+    if (this.destroyed) return;
+
     this.dockview = createDockview(root, {
       theme: themeAnimoRank,
       // A default tab component name routes every tab through
       // createTabComponent, which supplies the closable-tab renderer.
       defaultTabComponent: 'window-tab',
-      createComponent: (options) => this.ensureWindow(options.id).getRenderer(),
-      createTabComponent: (options) => (this.ensureWindow(options.id).closable ? new WindowTab(true) : undefined)
+      createComponent: (options) => this.windows.get(options.id)!.getRenderer(),
+      createTabComponent: (options) => (this.windows.get(options.id)!.closable ? new WindowTab(true) : undefined)
     });
 
-    const serialized = this.loadSavedLayout() ?? this.buildDefaultLayout(root);
+    const serialized = this.loadSavedLayout() ?? (await this.buildDefaultLayout(root));
+    if (this.destroyed) return;
+
     if (serialized) {
       try {
         this.dockview.fromJSON(serialized);
@@ -93,12 +122,14 @@ export class DockviewWindowManager<T> {
         // dockview logs and reverts on deserialization failure; fall back to
         // opening every registered window.
         for (const key of this.windowRegistry.keys()) {
-          this.openWindow(key);
+          if (this.destroyed) return;
+          await this.openWindow(key);
         }
       }
     } else {
       for (const key of this.windowRegistry.keys()) {
-        this.openWindow(key);
+        if (this.destroyed) return;
+        await this.openWindow(key);
       }
     }
 
@@ -113,8 +144,11 @@ export class DockviewWindowManager<T> {
    * the panel relative to an existing panel or group; the first candidate
    * whose reference is open is used.
    */
-  public openWindow(key: string, positions?: AddPanelPositionOptions | AddPanelPositionOptions[]): Window<T> {
-    const window = this.ensureWindow(key);
+  public async openWindow(
+    key: string,
+    positions?: AddPanelPositionOptions | AddPanelPositionOptions[]
+  ): Promise<Window<T>> {
+    const window = await this.ensureWindow(key);
     const panel = this.dockview?.getPanel(key);
     if (panel) {
       panel.api.setActive();
@@ -159,6 +193,7 @@ export class DockviewWindowManager<T> {
   }
 
   public destroy(): void {
+    this.destroyed = true;
     this.layoutChangeSubscription?.dispose();
     this.layoutChangeSubscription = undefined;
     if (this.saveTimer !== undefined) {
@@ -175,13 +210,19 @@ export class DockviewWindowManager<T> {
     this.dockview = undefined;
   }
 
-  private ensureWindow(key: string): Window<T> {
+  private async ensureWindow(key: string): Promise<Window<T>> {
     const existing = this.windows.get(key);
     if (existing) {
       return existing;
     }
-    const window = this.windowRegistry.getInstance(key, this.context);
-    this.windows.set(key, window);
+    const window = await this.windowRegistry.getInstance(key, this.context);
+    if (this.destroyed) {
+      // The manager was torn down while this window was being built. `destroy()`
+      // has already cleared the map, so nothing else will ever release it.
+      window.destroy();
+    } else {
+      this.windows.set(key, window);
+    }
     return window;
   }
 
@@ -205,7 +246,7 @@ export class DockviewWindowManager<T> {
     }
   }
 
-  private buildDefaultLayout(root: HTMLDivElement): SerializedDockview | undefined {
+  private async buildDefaultLayout(root: HTMLDivElement): Promise<SerializedDockview | undefined> {
     if (!this.defaultLayout) {
       return undefined;
     }
@@ -215,7 +256,7 @@ export class DockviewWindowManager<T> {
     };
     const titles = new Map<string, string>();
     for (const key of this.windowRegistry.keys()) {
-      titles.set(key, this.windowRegistry.getStatic(key).title);
+      titles.set(key, (await this.windowRegistry.getStatic(key)).title);
     }
     return defaultLayoutToDockview(this.defaultLayout, size, titles);
   }

@@ -49,6 +49,18 @@ export const { handle } = SvelteKitAuth({
 
       return session;
     },
+    /**
+     * Sign-in is restricted on purpose: only an address on the course's own
+     * domain (`@dlsu.edu.ph`), or one an operator has allow-listed in
+     * `TeacherList`, is admitted. An address outside those is refused rather
+     * than created as an account.
+     *
+     * Matching is exact — the suffix is compared as the provider reports it,
+     * and `TeacherList` is keyed on the address as stored — so an address
+     * differing only in case does not match. That is intended, not an
+     * oversight: do not add case folding here without deciding the policy
+     * again.
+     */
     async signIn({ user }) {
       if (!user.email || !user.id) return false;
       const teacher = await db.teacherList.findUnique({ where: { email: user.email } });

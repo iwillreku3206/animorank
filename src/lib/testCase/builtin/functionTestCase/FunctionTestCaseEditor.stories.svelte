@@ -7,6 +7,11 @@
   import { Problem } from '$lib/problem';
   import { FunctionTestCase } from './functionTestCase.svelte';
   import type { Problem as ProblemModel, ProblemTestCase } from '$lib/zenstack/models';
+  import { Integer } from './types/int';
+  import { Float } from './types/float';
+  import { StringType } from './types/string';
+  import { Pointer } from './types/pointer';
+  import { TypeValue } from './typeValue.svelte';
 
   const { Story } = defineMeta({
     title: 'Test Case/Function Test Case Editor',
@@ -57,7 +62,20 @@
         comparisons: []
       }
     } as unknown as ProblemTestCase,
-    problem
+    problem,
+    {
+      function: 'fn1',
+      parameters: [
+        {
+          id: 'p',
+          name: 'p',
+          value: TypeValue.assumedValid(new Pointer({ target: Integer.create() }), { value: '5' })
+        },
+        { id: 'f', name: 'f', value: TypeValue.assumedValid(Float.create(), { value: '1.5' }) },
+        { id: 's', name: 's', value: TypeValue.assumedValid(StringType.create(), { value: 'hi' }) }
+      ],
+      comparisons: []
+    }
   );
 </script>
 

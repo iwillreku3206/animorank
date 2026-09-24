@@ -1,7 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { Problem } from '$lib/problem';
 import type { Problem as ProblemModel } from '$lib/zenstack/models';
-import { parseExtensionData, parseSymbol, serializeExtensionData } from './types';
+import { canCompareReturn, parseExtensionData, parseSymbol, serializeExtensionData, type Function } from './types';
+import { VoidType } from './types/void';
+import { Integer } from './types/int';
+
+describe('canCompareReturn', () => {
+  const fn = (returnType: Function['returnType']) =>
+    ({ name: 'f', symbol: '', parameters: [], returnType }) as Function;
+
+  it('is false when there is no value to compare', () => {
+    expect(canCompareReturn(fn([VoidType.create()]))).toBe(false);
+    expect(canCompareReturn(fn([null]))).toBe(false);
+    expect(canCompareReturn(fn([]))).toBe(false);
+    expect(canCompareReturn(undefined)).toBe(false);
+  });
+
+  it('is true for a value-returning function', () => {
+    expect(canCompareReturn(fn([Integer.create()]))).toBe(true);
+  });
+});
 
 describe('parseSymbol', () => {
   it('accepts valid symbols', () => {
@@ -43,15 +61,15 @@ describe('extension data', () => {
       }
     } as unknown as ProblemModel);
 
-  it('preserves stored keys when parsing', () => {
-    const data = parseExtensionData(makeProblem('legacy-id'));
+  it('preserves stored keys when parsing', async () => {
+    const data = await parseExtensionData(makeProblem('legacy-id'));
     expect(Object.keys(data.functions)).toEqual(['legacy-id']);
     expect(data.functions['legacy-id'].name).toBe('add');
     expect(data.functions['legacy-id'].parameters[0].type!.id).toBe('int');
   });
 
-  it('preserves keys when serializing', () => {
-    const serialized = serializeExtensionData(parseExtensionData(makeProblem('legacy-id')));
+  it('preserves keys when serializing', async () => {
+    const serialized = serializeExtensionData(await parseExtensionData(makeProblem('legacy-id')));
     expect(Object.keys(serialized.functions as Record<string, unknown>)).toEqual(['legacy-id']);
     expect((serialized.functions as Record<string, { name: string }>)['legacy-id'].name).toBe('add');
   });

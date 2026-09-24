@@ -10,7 +10,9 @@ export class LessThanOperator extends Operator<null> {
     return new LessThanOperator(null);
   }
 
-  static typeRegistry = new LessThanOperatorTypeRegistry();
+  static get typeRegistryClass(): typeof LessThanOperatorTypeRegistry {
+    return LessThanOperatorTypeRegistry;
+  }
 
   get displayName(): string {
     return '<';

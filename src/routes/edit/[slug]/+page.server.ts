@@ -2,22 +2,23 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/zenstack';
 import { TestCaseService } from '$lib/testCase/testCaseService';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { TagService } from '$lib/tag';
 import { ProblemService } from '$lib/problem/problemService';
 import { Problem, toProblemLink } from '$lib/problem';
 import { toJsonValue } from '$lib/types/utils';
+import { readUuidParam } from '$lib/utils/params';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
   const session = await locals.auth();
 
   if (!session || !session.user.id) return redirect(302, '/');
 
-  const serviceProvider = ServerServiceProvider.instance();
+  const registryProvider = ServerRegistryProvider.instance();
 
   const problemResult = await db.problem.findUnique({
     where: {
-      id: params.slug,
+      id: readUuidParam(params.slug),
       problem_set: {
         OR: [
           { collaborators: { some: { collaborator_id: session.user.id } } },
@@ -35,14 +36,18 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   const { topics, ...problem } = problemResult;
 
-  const testCases = await serviceProvider.getService(TestCaseService).findByProblemForEdit({
+  const testCases = await (
+    await registryProvider.getService(TestCaseService)
+  ).findByProblemForEdit({
     problemId: problem.id,
     user: session.user
   });
 
-  const tags = await serviceProvider.getService(TagService).findAll();
+  const tags = await (await registryProvider.getService(TagService)).findAll();
 
-  const neighbors = await serviceProvider.getService(ProblemService).findNeighbors({
+  const neighbors = await (
+    await registryProvider.getService(ProblemService)
+  ).findNeighbors({
     problem: new Problem(problem),
     user: session.user
   });

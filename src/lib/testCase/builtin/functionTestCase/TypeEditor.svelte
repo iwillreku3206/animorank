@@ -1,8 +1,9 @@
 <script lang="ts">
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import DynamicForm from '$lib/components/ui/inputs/DynamicForm.svelte';
-  import Select from '$lib/components/ui/selects/Select.svelte';
+  import type { Component, ComponentType } from 'svelte';
   import type { Type } from './type.svelte';
+  import { GlobalRegistryProvider } from '$lib/registry/global';
   import { TypeRegistry } from './typeRegistry';
   import GearIcon from '@iconify-svelte/fa6-solid/gear';
 
@@ -15,29 +16,71 @@
     availableTypes: string[];
     dropdownAlign?: 'start' | 'end';
   } = $props();
-  const typeRegistry = TypeRegistry.instance();
+  const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
 
-  function selectType(typeId: string) {
-    type = typeId ? typeRegistry.getStatic(typeId).create() : null;
+  let typeNames = $state<Record<string, string>>({});
+  let typeIcons = $state<Record<string, Component | ComponentType | undefined>>({});
+  $effect(() => {
+    const types = availableTypes;
+    void Promise.all(
+      types.map(async (t) => {
+        const typeClass = await typeRegistry.getStatic(t);
+        return [t, typeClass.create().displayName, typeClass.icon] as const;
+      })
+    ).then((entries) => {
+      typeNames = Object.fromEntries(entries.map(([t, name]) => [t, name]));
+      typeIcons = Object.fromEntries(entries.map(([t, , icon]) => [t, icon]));
+    });
+  });
+
+  async function selectType(typeId: string) {
+    type = typeId ? (await typeRegistry.getStatic(typeId)).create() : null;
   }
 </script>
 
 <span class="inline-flex items-center gap-1">
-  <Select
-    class="select-xs select-primary min-w-24"
-    value={type?.id ?? ''}
-    onchange={(e) => selectType((e.target as HTMLSelectElement).value)}
-  >
-    <option
-      value=""
-      disabled>type</option
+  <!-- Type icons cannot go inside a native `<option>`, so the list is a
+       dropdown of buttons, rendered the way DynamicForm renders a select whose
+       options carry icons. -->
+  <div class="dropdown">
+    <div
+      tabindex="0"
+      role="button"
+      class="select select-xs select-primary min-w-24 justify-between"
     >
-    {#each availableTypes as t (t)}
-      <option value={t}>
-        {type?.id === t ? type.displayName : typeRegistry.getStatic(t).create().displayName}
-      </option>
-    {/each}
-  </Select>
+      <span class="flex items-center gap-2">
+        {#if type && typeIcons[type.id]}
+          {@const SelectedIcon = typeIcons[type.id]}
+          <SelectedIcon class="w-4 h-4 shrink-0" />
+        {/if}
+        <span>{type?.displayName ?? 'type'}</span>
+      </span>
+    </div>
+    <div
+      tabindex="0"
+      role="menu"
+      class="dropdown-content menu p-2 shadow bg-base-100 rounded-box min-w-full z-10"
+    >
+      {#each availableTypes as t (t)}
+        <li>
+          <button
+            role="menuitem"
+            class:active={type?.id === t}
+            onclick={() => {
+              void selectType(t);
+              (document.activeElement as HTMLElement)?.blur();
+            }}
+          >
+            {#if typeIcons[t]}
+              {@const TypeIcon = typeIcons[t]}
+              <TypeIcon class="w-4 h-4 shrink-0" />
+            {/if}
+            {type?.id === t ? type.displayName : (typeNames[t] ?? t)}
+          </button>
+        </li>
+      {/each}
+    </div>
+  </div>
   {#if type}
     <div class="dropdown dropdown-{dropdownAlign}">
       <div

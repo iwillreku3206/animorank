@@ -7,6 +7,8 @@ import { CustomCodeWindow } from './windows/CustomCode.window';
 import { SubmissionsWindow } from './windows/Submissions.window';
 
 export class SolveWindowRegistry extends WindowRegistry<SolveWindowContext> {
+  public id = 'window.solve';
+
   constructor() {
     super();
 

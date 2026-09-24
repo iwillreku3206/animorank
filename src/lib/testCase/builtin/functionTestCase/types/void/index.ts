@@ -1,4 +1,5 @@
 import { extractZodSchema, type Form } from '$lib/form';
+import type { ComponentType } from 'svelte';
 import type { JsonValue } from '@zenstackhq/orm';
 import { z } from 'zod';
 import { Type } from '../../type.svelte';
@@ -7,6 +8,7 @@ import { TypeValue } from '../../typeValue.svelte';
 import type { IntoJsonValue } from '$lib/types/utils';
 import VoidDisplay from './VoidDisplay.svelte';
 import VoidEditor from './VoidEditor.svelte';
+import BanIcon from '@iconify-svelte/fa6-solid/ban';
 
 const voidOptions = {
   fields: {}
@@ -37,22 +39,29 @@ export class VoidType extends Type<Record<string, never>, typeof voidOptions> {
   }
 
   public defaultValue(): TypeValue<this> {
-    return new TypeValue(this, {});
+    return TypeValue.assumedValid(this, {});
   }
 
-  get displayName(): string {
-    return 'Void';
+  get staticName(): string {
+    return 'void';
   }
+
+  /** The C spelling of the type, as for every other type's detail. */
+  get detailedName(): string {
+    return 'void';
+  }
+
+  static icon: ComponentType = BanIcon;
 
   get optionsForm() {
     return voidOptions;
   }
 
-  get valueDisplay(): ValueDisplay<this> {
-    return VoidDisplay as unknown as ValueDisplay<this>;
+  get valueDisplay(): ValueDisplay {
+    return VoidDisplay as unknown as ValueDisplay;
   }
 
-  get valueForm(): ValueEditor<this> {
-    return VoidEditor as unknown as ValueEditor<this>;
+  get valueForm(): ValueEditor {
+    return VoidEditor as unknown as ValueEditor;
   }
 }

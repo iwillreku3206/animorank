@@ -23,10 +23,10 @@
 
   let root: HTMLDivElement | undefined = $state();
 
-  onMount(() => {
+  onMount(async () => {
     const options: DockviewWindowManagerOptions = { storageKey, defaultLayout };
     manager = new DockviewWindowManager(context, windowRegistry, options);
-    manager.attach(root!);
+    await manager.attach(root!);
   });
 
   onDestroy(() => {

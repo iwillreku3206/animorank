@@ -7,6 +7,7 @@
   import TrashIcon from '@iconify-svelte/fa6-solid/trash';
   import type { TestCase } from '$lib/testCase/testCase.svelte';
   import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
+  import { GlobalRegistryProvider } from '$lib/registry/global';
   import TestCaseEditorMount from './TestCaseEditorMount.svelte';
 
   // `type` is the test case type this panel owns. Each type gets its own
@@ -16,7 +17,10 @@
   let deletesDisabled: Record<string, boolean> = $state({});
   let disableAddTestCase: boolean = $state(false);
 
-  const displayName = $derived(TestCaseRegistry.instance().getStatic(type).displayName);
+  const grp = GlobalRegistryProvider.instance();
+  const testCaseRegistry = grp.getRegistry(TestCaseRegistry);
+
+  const displayName = $derived((await testCaseRegistry.getStatic(type)).displayName);
   const testCases = $derived(context.testCases.filter((testCase) => testCase.model.type === type));
 
   function onDelete(id: string) {
@@ -43,7 +47,9 @@
     try {
       const model = await createTestCase(context.problem.model.id, type);
       if (model) {
-        const instance = TestCaseRegistry.instance().getInstance(model.type, model, context.problem);
+        const instance = await GlobalRegistryProvider.instance()
+          .getRegistry(TestCaseRegistry)
+          .from(model, context.problem);
         context.testCases = [...context.testCases, instance];
       }
     } catch (error) {

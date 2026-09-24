@@ -4,8 +4,10 @@ import type { ServerFunctionTestCase } from './functionTestCase.server';
 import { CFunctionTestCase } from './languages/c/c';
 
 export class FunctionTestCaseLanguageRegistry extends TestCaseLanguageRegistry<ServerFunctionTestCase> {
+  public id = 'test_case.function.language';
+
   constructor() {
     super();
-    this.registerLanguage(new CLanguage(), CFunctionTestCase);
+    super.register(CLanguage.id, CFunctionTestCase);
   }
 }

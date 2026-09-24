@@ -8,10 +8,12 @@ import { GreaterThanEqualFloat } from '../../types/float/greater_than_equal';
 import { GreaterThanEqualPointer } from '../../types/pointer/greater_than_equal';
 
 export class GreaterThanEqualOperatorTypeRegistry extends OperatorTypeRegistry<GreaterThanEqualOperator> {
+  public id = 'test_case.function.operator.greater_than_equal.type';
+
   constructor() {
     super();
-    this.registerType(Integer.create(), GreaterThanEqualInteger);
-    this.registerType(Float.create(), GreaterThanEqualFloat);
-    this.registerType(Pointer.create(), GreaterThanEqualPointer);
+    super.register(Integer.id(), GreaterThanEqualInteger);
+    super.register(Float.id(), GreaterThanEqualFloat);
+    super.register(Pointer.id(), GreaterThanEqualPointer);
   }
 }

@@ -4,7 +4,8 @@ import { db } from '$lib/zenstack';
 import { error, successObject } from '$lib/response';
 import type { ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 import type { TestCaseResult } from '$lib/testCase/types';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
+import { GlobalRegistryProvider } from '$lib/registry/global';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
 import { ProblemService } from '$lib/problem/problemService';
 import { TestCaseService } from '$lib/testCase/testCaseService';
@@ -20,9 +21,10 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   const session = await locals.auth();
   if (!session) return error(403, 'Unauthorized');
 
-  const serviceProvider = ServerServiceProvider.instance();
-  const practiceSessionService = serviceProvider.getService(PracticeSessionService);
-  const problemService = serviceProvider.getService(ProblemService);
+  const srp = ServerRegistryProvider.instance();
+  const grp = GlobalRegistryProvider.instance();
+  const practiceSessionService = await srp.getService(PracticeSessionService);
+  const problemService = await srp.getService(ProblemService);
 
   const {
     success: parseSuccess,
@@ -49,14 +51,16 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
   // this should never happen, this is just a TypeScript assertion
   if (!problem) return error(404, 'Problem not found');
 
-  const testCases = await serviceProvider.getService(TestCaseService).findByProblem({
+  const testCases = await (
+    await srp.getService(TestCaseService)
+  ).findByProblem({
     problemId: problem.id,
     user: session.user
   });
 
   const { test_type } = parsedData;
-  const language = new LanguageRegistry().getInstance(problem.model.language.toLowerCase());
-  const executor = serviceProvider.getService(CodeExecutor);
+  const language = await grp.getRegistry(LanguageRegistry).getInstance(problem.model.language.toLowerCase());
+  const executor = await srp.getService(CodeExecutor);
   // Hoisted: the getter re-runs slot parsing on every access, and the recorded
   // submission needs the assembled form from the same read.
   const previousCode = practiceSession.previousCode;
@@ -141,7 +145,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
       // `handleError` never sees a caught throw.
       const detail =
         submissionError instanceof Error ? (submissionError.stack ?? submissionError.message) : String(submissionError);
-      serviceProvider.getService(Logger, 'api/practice-session/run').error(`Failed to record submission: ${detail}`);
+      (await srp.getService(Logger, 'api/practice-session/run')).error(`Failed to record submission: ${detail}`);
     }
   }
 

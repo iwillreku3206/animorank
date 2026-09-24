@@ -2,7 +2,7 @@ import { toJsonValue, type IntoJsonValue } from '$lib/types/utils';
 import type { Form } from '$lib/form';
 import type { Type } from './type.svelte';
 import type { TypeValue } from './typeValue.svelte';
-import type { ClassServiceOf } from '$lib/services/registry';
+import type { ClassServiceOf } from '$lib/registry';
 import type { OperatorTypeRegistry } from './operatorTypeRegistry';
 import deepEqual from 'deep-equal';
 import type { TypeRegistry } from './typeRegistry';
@@ -16,7 +16,7 @@ export const OperatorSchema = z.object({
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export abstract class Operator<Options extends IntoJsonValue = any> {
-  declare static typeRegistry: OperatorTypeRegistry<Operator>;
+  declare static typeRegistryClass: new () => OperatorTypeRegistry<Operator>;
 
   public options: Options = $state() as Options;
 
@@ -55,12 +55,15 @@ export abstract class Operator<Options extends IntoJsonValue = any> {
    * @param {TypeValue} b The right-value (usually the actual value)
    */
 
-  public compare<T extends Type>(a: TypeValue<T>, b: TypeValue<T>): boolean {
+  public async compare<T extends Type>(a: TypeValue<T>, b: TypeValue<T>): Promise<boolean> {
     if (!deepEqual(a.type.options, b.type.options, { strict: true })) {
       throw new Error('Type options must match');
     }
 
-    const operatorType = (this.constructor as ClassServiceOf<OperatorRegistry>).typeRegistry.getInstance(
+    const { GlobalRegistryProvider } = await import('$lib/registry/global');
+    const registryClass = (this.constructor as ClassServiceOf<OperatorRegistry>).typeRegistryClass;
+    const operatorTypeRegistry = GlobalRegistryProvider.instance().getRegistry(registryClass);
+    const operatorType = await operatorTypeRegistry.getInstance(
       (a.type.constructor as ClassServiceOf<TypeRegistry>).id(),
       this.options,
       a.type.options

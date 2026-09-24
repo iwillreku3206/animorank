@@ -1,0 +1,225 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { ServiceRegistry } from '.';
+import { findRegistryPlugin } from './clientPlugins';
+
+export type AbstractConstructor<T = any> = abstract new (..._args: any[]) => T;
+
+/** The registry providers a plugin can register into, as the plugin API names them. */
+export type RegistryDomain = 'client' | 'global' | 'server';
+
+/** The domains a browser loads plugins for: the client and global providers live there. */
+export type ClientRegistryDomain = Exclude<RegistryDomain, 'server'>;
+
+export class RegistryProvider {
+  /** Which provider family this is, as the plugin API names it; see {@link RegistryDomain}. */
+  public readonly domain: RegistryDomain;
+
+  protected _registries = new Map<AbstractConstructor<any>, ServiceRegistry<any, any[], any>>();
+  private _registryIds = new Map<string, ServiceRegistry<any, any[], any>>();
+  private _lazyRegistries = new Map<string, () => Promise<ServiceRegistry<any, any[], any>>>();
+  private _inflightRegistries = new Map<string, Promise<ServiceRegistry<any, any[], any>>>();
+  /** The namespace (plugin id) each registry was registered under; see {@link registeredBy}. */
+  private _registryOrigins = new Map<string, string>();
+
+  /** @param domain the domain this provider's registries are named by, as a plugin registers into it. */
+  protected constructor(domain: RegistryDomain) {
+    this.domain = domain;
+  }
+
+  public async getService<T, C extends any[]>(service: AbstractConstructor<T>, ...args: C): Promise<T> {
+    const serviceRegistry = this._registries.get(service);
+    if (!serviceRegistry) throw new Error(`ServiceRegistry not found for ${service.name}`);
+
+    const serviceInstance = await serviceRegistry.getDefault(...args);
+
+    return serviceInstance;
+  }
+
+  /**
+   * Look up a registry by its class. Retains its original semantics: synchronous,
+   * and throws when the registry was not registered under that class.
+   */
+  public getRegistry<T extends ServiceRegistry<any, any[], any>>(registry: new () => T): T {
+    const serviceRegistry = this._registries.get(registry);
+    if (!serviceRegistry) throw new Error(`ServiceRegistry not found for ${registry.name}`);
+
+    return serviceRegistry as T;
+  }
+
+  /**
+   * Look up a registry by its fully-qualified key of the form `namespace:id`
+   * (e.g. `animorank:test_case`) or, when exactly one registration carries it,
+   * by the registry's own id (e.g. `test_case`). Resolves eagerly registered
+   * registries and lazily registered ones (loading at most once; concurrent
+   * lookups share a single load). When the id is registered nowhere, a browser
+   * loads the plugin that provides it (see {@link findRegistryPlugin}) before
+   * the lookup is retried once; on the server a miss is final. Throws when the
+   * id stays unknown.
+   */
+  public async getRegistryById<T extends ServiceRegistry<any, any[], any>>(qualifiedId: string): Promise<T> {
+    const registry = await this._lookupById(qualifiedId);
+    if (registry) {
+      return registry as T;
+    }
+
+    await findRegistryPlugin(this.domain, qualifiedId);
+    const loaded = await this._lookupById(qualifiedId);
+    if (loaded) {
+      return loaded as T;
+    }
+    throw new Error(`Registry with id '${qualifiedId}' not found`);
+  }
+
+  /**
+   * The registry an id names: the key itself, or — when exactly one registered
+   * registry owns the id — that registry, reached through its key. A lazily
+   * registered registry is not known by its own id until it has loaded, so only
+   * its key finds it.
+   */
+  private async _lookupById(id: string): Promise<ServiceRegistry<any, any[], any> | undefined> {
+    const direct = await this._lookupRegistry(id);
+    if (direct) {
+      return direct;
+    }
+
+    const key = this._qualifiedIdOf(id);
+    return key === undefined || key === id ? undefined : this._lookupRegistry(key);
+  }
+
+  /** The registry registered under an id, waiting for a lazy registration to load. */
+  private async _lookupRegistry(qualifiedId: string): Promise<ServiceRegistry<any, any[], any> | undefined> {
+    const eager = this._registryIds.get(qualifiedId);
+    if (eager) {
+      return eager;
+    }
+
+    const lazy = this._lazyRegistries.get(qualifiedId);
+    if (!lazy) {
+      return undefined;
+    }
+
+    const inflight = this._inflightRegistries.get(qualifiedId);
+    if (inflight) {
+      return inflight;
+    }
+
+    const loading = lazy()
+      .then((registry) => {
+        this._registryIds.set(qualifiedId, registry);
+        this._lazyRegistries.delete(qualifiedId);
+        this._inflightRegistries.delete(qualifiedId);
+        const origin = this._registryOrigins.get(qualifiedId);
+        if (origin) {
+          this._prepareRegistry(registry, origin);
+        }
+        return registry;
+      })
+      .catch((error) => {
+        this._inflightRegistries.delete(qualifiedId);
+        throw error;
+      });
+    this._inflightRegistries.set(qualifiedId, loading);
+    return loading;
+  }
+
+  /**
+   * The namespace (plugin id) a registry was registered under, looked up by
+   * its qualified id or, when unambiguous, by the registry's own id.
+   */
+  public registeredBy(id: string): string | undefined {
+    const qualifiedId = this._qualifiedIdOf(id);
+    return qualifiedId ? this._registryOrigins.get(qualifiedId) : undefined;
+  }
+
+  /**
+   * The registry registered under an id — the qualified id or, when
+   * unambiguous, the registry's own id. A registration that is lazily loaded
+   * and not resolved yet is not returned.
+   */
+  public findRegistry(id: string): ServiceRegistry<any, any[], any> | undefined {
+    const qualifiedId = this._qualifiedIdOf(id);
+    return qualifiedId ? this._registryIds.get(qualifiedId) : undefined;
+  }
+
+  /** The provider key an id names: the qualified id itself, or a unique registry's own id. */
+  private _qualifiedIdOf(id: string): string | undefined {
+    if (this._registryIds.has(id) || this._lazyRegistries.has(id)) {
+      return id;
+    }
+    const matches = [...this._registryIds].filter(([, registry]) => registry.id === id);
+    return matches.length === 1 ? matches[0][0] : undefined;
+  }
+
+  /**
+   * The context every registry of this provider carries: the domain it is
+   * served in — what a browser attributes a miss to, see
+   * {@link ServiceRegistry.setProviderContext} — and the namespace its own keys
+   * are attributed to. Registries registered later get it here too.
+   */
+  private _prepareRegistry(registry: ServiceRegistry<any, any[], any>, origin: string): void {
+    registry.setProviderContext(this.domain, origin);
+  }
+
+  /** Register a service instance; `getService` resolves it forever after. */
+  public registerSingleton<T>(service: AbstractConstructor<T>, instance: T) {
+    this._registries.set(service, ServiceRegistry.createSingleSingletonServiceRegistry(instance));
+  }
+
+  /**
+   * Register a registry instance under `namespace:${registry.id}` (via
+   * `getRegistryById`) and its class (via `getRegistry`). Registries
+   * self-register their built-in entries in their constructors; they never
+   * choose their own namespace — the registering provider supplies it.
+   */
+  protected registerRegistry<T extends ServiceRegistry<any, any[], any>>(
+    registry: T,
+    namespace: string = 'animorank'
+  ): T {
+    if (!registry.id) {
+      throw new Error(`Registry instance of ${registry.constructor.name} must declare an id`);
+    }
+    const qualifiedId = `${namespace}:${registry.id}`;
+    if (this._registryIds.has(qualifiedId)) {
+      throw new Error(`Registry with id '${qualifiedId}' already exists`);
+    }
+    this._registryIds.set(qualifiedId, registry);
+    this._registryOrigins.set(qualifiedId, namespace);
+    // Keys registered without a namespace of their own belong to the registry's:
+    // the app registers its own registries under 'animorank', plugins under theirs.
+    this._prepareRegistry(registry, namespace);
+    this._registries.set(registry.constructor as new () => ServiceRegistry<any, any[], any>, registry);
+    return registry;
+  }
+
+  /**
+   * Register a registry instance that serves a service: keyed by the service
+   * class (so `getService` resolves it) and by `namespace:${registry.id}`.
+   */
+  protected registerServiceRegistry<T, R extends ServiceRegistry<T, any[], any>>(
+    service: AbstractConstructor<T>,
+    registry: R,
+    namespace: string = 'animorank'
+  ): R {
+    const instance = this.registerRegistry(registry, namespace);
+    this._registries.set(service, instance);
+    return instance;
+  }
+
+  /**
+   * Lazily register a registry under `namespace:id`: the loader runs on first
+   * `getRegistryById` and the result is memoized. A failed load can be
+   * retried by a later call.
+   */
+  protected registerRegistryLazy<T extends ServiceRegistry<any, any[], any>>(
+    namespace: string,
+    id: string,
+    loader: () => Promise<T>
+  ): void {
+    const qualifiedId = `${namespace}:${id}`;
+    if (this._registryIds.has(qualifiedId) || this._lazyRegistries.has(qualifiedId)) {
+      throw new Error(`Registry with id '${qualifiedId}' already exists`);
+    }
+    this._lazyRegistries.set(qualifiedId, loader);
+    this._registryOrigins.set(qualifiedId, namespace);
+  }
+}

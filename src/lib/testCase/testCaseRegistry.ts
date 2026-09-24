@@ -1,4 +1,4 @@
-import { ServiceRegistry } from '$lib/services/registry';
+import { ServiceRegistry } from '$lib/registry';
 import { type ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 import type { TestCase } from './testCase.svelte';
 import type { Problem } from '$lib/problem';
@@ -14,16 +14,11 @@ export class TestCaseRegistry extends ServiceRegistry<
     displayName: string;
     // eslint-disable-next-line no-unused-vars
     create(problem: Problem): Promise<TestCase>;
+    // eslint-disable-next-line no-unused-vars
+    from?(model: TestCaseModel, problem: Problem): Promise<TestCase>;
   }
 > {
-  private static _instance: TestCaseRegistry | null;
-
-  public static instance(): TestCaseRegistry {
-    if (!TestCaseRegistry._instance) {
-      TestCaseRegistry._instance = new TestCaseRegistry();
-    }
-    return TestCaseRegistry._instance;
-  }
+  public id = 'test_case';
 
   constructor() {
     super();
@@ -32,7 +27,8 @@ export class TestCaseRegistry extends ServiceRegistry<
     this.register(CustomTestCase.id(), CustomTestCase);
   }
 
-  public from(model: TestCaseModel, problem: Problem) {
-    return this.getInstance(model.type, model, problem);
+  public async from(model: TestCaseModel, problem: Problem): Promise<TestCase> {
+    const cls = await this.getStatic(model.type);
+    return cls.from ? cls.from(model, problem) : this.getInstance(model.type, model, problem);
   }
 }

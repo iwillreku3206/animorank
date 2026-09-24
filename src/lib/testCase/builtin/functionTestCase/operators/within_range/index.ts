@@ -36,7 +36,9 @@ export class WithinRangeOperator extends Operator<{ range: string }> {
     super(withinRangeOptionsSchema.parse(options ?? {}));
   }
 
-  static typeRegistry = new WithinRangeOperatorTypeRegistry();
+  static get typeRegistryClass(): typeof WithinRangeOperatorTypeRegistry {
+    return WithinRangeOperatorTypeRegistry;
+  }
 
   get optionsForm(): Form | null {
     return withinRangeOptions;

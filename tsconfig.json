@@ -13,7 +13,26 @@
     "moduleResolution": "bundler",
     "jsx": "react",
     "allowImportingTsExtensions": true
-  }
+  },
+  // Plugin packages ship with the app and are compiled by the same build, so
+  // they are type-checked like app code. The inherited include list cannot be
+  // extended without repeating it (TypeScript does not merge `include`).
+  "include": [
+    ".svelte-kit/ambient.d.ts",
+    ".svelte-kit/non-ambient.d.ts",
+    ".svelte-kit/types/**/$types.d.ts",
+    "vite.config.js",
+    "vite.config.ts",
+    "src/**/*.js",
+    "src/**/*.ts",
+    "src/**/*.svelte",
+    "plugins/**/*.js",
+    "plugins/**/*.ts",
+    "plugins/**/*.svelte",
+    "tests/**/*.js",
+    "tests/**/*.ts",
+    "tests/**/*.svelte"
+  ]
   // Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
   // except $lib which is handled by https://kit.svelte.dev/docs/configuration#files
   //

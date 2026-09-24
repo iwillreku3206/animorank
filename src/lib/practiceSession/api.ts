@@ -1,5 +1,6 @@
 import type { TestCaseResult } from '$lib/testCase/types';
 import type { FunctionTestCaseRunInfo } from '$lib/testCase/builtin/functionTestCase/functionTestCase.svelte';
+import { GlobalRegistryProvider } from '$lib/registry/global';
 import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
 import type { TestCase } from '$lib/testCase/testCase.svelte';
 import type { Problem } from '$lib/problem';
@@ -12,25 +13,29 @@ export type TestRunResponse = {
   recorded?: boolean;
 };
 
-function hydrateResults(
+async function hydrateResults(
   raw: TestCaseResult<FunctionTestCaseRunInfo>[],
   problem: Problem
-): (TestCaseResult<FunctionTestCaseRunInfo> & { testCase?: TestCase })[] {
-  const registry = TestCaseRegistry.instance();
-  return raw.map((r) => {
-    // Hidden results arrive as bare { success, testCaseInfo: { public: false } }
-    // entries by design — they carry no model to hydrate and no details to
-    // display, so pass them through untouched.
-    if (!r.testCaseInfo.public) return r;
-    try {
-      // public results carry the full model as testCaseInfo
-      const testCase = registry.from(r.testCaseInfo as ProblemTestCase, problem);
-      return 'runInfo' in r ? { ...r, testCase, runInfo: testCase.hydrateRunInfo(r.runInfo) } : { ...r, testCase };
-    } catch (error) {
-      console.error(error);
-      return r;
-    }
-  });
+): Promise<(TestCaseResult<FunctionTestCaseRunInfo> & { testCase?: TestCase })[]> {
+  const registry = GlobalRegistryProvider.instance().getRegistry(TestCaseRegistry);
+  return Promise.all(
+    raw.map(async (r) => {
+      // Hidden results arrive as bare { success, testCaseInfo: { public: false } }
+      // entries by design — they carry no model to hydrate and no details to
+      // display, so pass them through untouched.
+      if (!r.testCaseInfo.public) return r;
+      try {
+        // public results carry the full model as testCaseInfo
+        const testCase = await registry.from(r.testCaseInfo as ProblemTestCase, problem);
+        return 'runInfo' in r
+          ? { ...r, testCase, runInfo: await testCase.hydrateRunInfo(r.runInfo) }
+          : { ...r, testCase };
+      } catch (error) {
+        console.error(error);
+        return r;
+      }
+    })
+  );
 }
 
 export async function runTestCases(session_id: string, problem: Problem): Promise<TestRunResponse> {
@@ -50,7 +55,7 @@ export async function runTestCases(session_id: string, problem: Problem): Promis
 
   return {
     success: res.success,
-    results: hydrateResults(res.results, problem)
+    results: await hydrateResults(res.results, problem)
   };
 }
 
@@ -71,7 +76,7 @@ export async function submit(session_id: string, problem: Problem): Promise<Test
 
   return {
     success: res.success,
-    results: hydrateResults(res.results, problem),
+    results: await hydrateResults(res.results, problem),
     recorded: res.recorded
   };
 }

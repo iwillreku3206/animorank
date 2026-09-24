@@ -5,6 +5,8 @@ import { Problem } from '$lib/problem';
 import { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
 import type { Problem as ProblemModel, PracticeSession as PracticeSessionModel } from '$lib/zenstack/models';
 import type { User } from '@auth/sveltekit';
+import { ClientRegistryProvider } from '$lib/registry/client';
+import { TelemetryRegistry, TelemetryService } from '$lib/telemetry';
 
 vi.mock('$lib/practiceSession/api', () => ({
   runTestCases: vi.fn(),
@@ -54,9 +56,9 @@ const makeSession = (savedCode: Record<string, string>) => {
   return { problem, practiceSession };
 };
 
-const makeContext = (savedCode: Record<string, string>) => {
+const makeContext = async (savedCode: Record<string, string>) => {
   const { problem, practiceSession } = makeSession(savedCode);
-  return new SolveWindowContext({ problem, practiceSession, language: 'c' });
+  return SolveWindowContext.create({ problem, practiceSession, language: 'c' });
 };
 
 /**
@@ -93,8 +95,8 @@ describe('SolveWindowContext slot ranges', () => {
     ['an emptied slot', { code: '' }],
     ['a longer line than the default', { code: '  printf("a rather long line indeed %d\\n", 1);' }]
   ])('with %s', (_label, savedCode) => {
-    it('stay addressable in the code the editor opens with', () => {
-      const context = makeContext(savedCode);
+    it('stay addressable in the code the editor opens with', async () => {
+      const context = await makeContext(savedCode);
 
       expect(context.slots).toHaveLength(1);
       for (const slot of context.slots) {
@@ -105,8 +107,8 @@ describe('SolveWindowContext slot ranges', () => {
     });
   });
 
-  it('seeds the code sections from the saved state', () => {
-    const context = makeContext({ code: '  puts("hi");' });
+  it('seeds the code sections from the saved state', async () => {
+    const context = await makeContext({ code: '  puts("hi");' });
     expect(context.editorState.codeSections).toEqual({ code: '  puts("hi");' });
     expect(context.editorState.code).toContain('  puts("hi");');
   });
@@ -141,7 +143,7 @@ describe('SolveWindowContext submissions', () => {
     ['failing', false]
   ])('leaves the editor editable after a %s submit', async (_label, success) => {
     vi.mocked(submit).mockResolvedValue(result(success));
-    const context = makeContext({ code: '  puts("hi");' });
+    const context = await makeContext({ code: '  puts("hi");' });
 
     await context.submit();
 
@@ -152,7 +154,7 @@ describe('SolveWindowContext submissions', () => {
   it('drops the solved panel when the student runs again', async () => {
     vi.mocked(submit).mockResolvedValue(result(true));
     vi.mocked(runTestCases).mockResolvedValue(result(false));
-    const context = makeContext({ code: '  puts("hi");' });
+    const context = await makeContext({ code: '  puts("hi");' });
 
     await context.submit();
     expect(context.testSubmitted).toBe(true);
@@ -184,20 +186,20 @@ describe('SolveWindowContext saved state', () => {
 
   it('advances the session so a context rebuilt from it starts from the saved code', async () => {
     const { problem, practiceSession } = makeSession({ code: '  puts("first");' });
-    const context = new SolveWindowContext({ problem, practiceSession, language: 'c' });
+    const context = await SolveWindowContext.create({ problem, practiceSession, language: 'c' });
 
     context.editorState.codeSections = { code: '  puts("second");' };
     await context.forceSave();
     expect(context.saveState).toBe('saved');
 
-    const rebuilt = new SolveWindowContext({ problem, practiceSession, language: 'c' });
+    const rebuilt = await SolveWindowContext.create({ problem, practiceSession, language: 'c' });
     expect(rebuilt.editorState.codeSections).toEqual({ code: '  puts("second");' });
     expect(rebuilt.editorState.code).toContain('  puts("second");');
   });
 
   it('records what was sent, not what was typed while the request was in flight', async () => {
     const { problem, practiceSession } = makeSession({ code: '  puts("first");' });
-    const context = new SolveWindowContext({ problem, practiceSession, language: 'c' });
+    const context = await SolveWindowContext.create({ problem, practiceSession, language: 'c' });
 
     // Resolve the save only once a later keystroke has landed, so re-reading
     // the editor after the await would pick up code the server never saw.
@@ -220,7 +222,7 @@ describe('SolveWindowContext saved state', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const { problem, practiceSession } = makeSession({ code: '  puts("first");' });
-    const context = new SolveWindowContext({ problem, practiceSession, language: 'c' });
+    const context = await SolveWindowContext.create({ problem, practiceSession, language: 'c' });
 
     context.editorState.codeSections = { code: '  puts("second");' };
     await context.forceSave();
@@ -260,7 +262,7 @@ describe('SolveWindowContext failed attempts', () => {
 
   it('does not grade a submit whose save failed', async () => {
     respondWith(500);
-    const context = makeContext({ code: '  puts("first");' });
+    const context = await makeContext({ code: '  puts("first");' });
 
     context.editorState.codeSections = { code: '  puts("second");' };
     await context.submit();
@@ -272,7 +274,7 @@ describe('SolveWindowContext failed attempts', () => {
 
   it('does not run code whose save failed', async () => {
     respondWith(500);
-    const context = makeContext({ code: '  puts("first");' });
+    const context = await makeContext({ code: '  puts("first");' });
 
     context.editorState.codeSections = { code: '  puts("second");' };
     await context.run();
@@ -287,7 +289,7 @@ describe('SolveWindowContext failed attempts', () => {
   it('submits once a retry of the failed save lands', async () => {
     respondWith(500, 200);
     vi.mocked(submit).mockResolvedValue(result(true));
-    const context = makeContext({ code: '  puts("first");' });
+    const context = await makeContext({ code: '  puts("first");' });
 
     context.editorState.codeSections = { code: '  puts("second");' };
     await context.submit();
@@ -308,7 +310,7 @@ describe('SolveWindowContext failed attempts', () => {
     // second write was needed rather than that a retry happened to succeed.
     respondWith(500);
     vi.mocked(runTestCases).mockResolvedValue(result(true));
-    const context = makeContext({ code: '  puts("first");' });
+    const context = await makeContext({ code: '  puts("first");' });
 
     context.editorState.codeSections = { code: '  puts("second");' };
     await context.run();
@@ -326,12 +328,12 @@ describe('SolveWindowContext failed attempts', () => {
   });
 
   it.each([
-    ['run', (context: ReturnType<typeof makeContext>) => context.run(), runTestCases],
-    ['submit', (context: ReturnType<typeof makeContext>) => context.submit(), submit]
+    ['run', (context: Awaited<ReturnType<typeof makeContext>>) => context.run(), runTestCases],
+    ['submit', (context: Awaited<ReturnType<typeof makeContext>>) => context.submit(), submit]
   ])('unlocks the editor when the %s request fails', async (_label, attempt, api) => {
     respondWith(200);
     vi.mocked(api).mockRejectedValue(new Error('Could not reach the grader'));
-    const context = makeContext({ code: '  puts("hi");' });
+    const context = await makeContext({ code: '  puts("hi");' });
 
     await attempt(context);
 
@@ -356,13 +358,13 @@ describe('SolveWindowContext submission recording', () => {
     vi.resetAllMocks();
   });
 
-  it('starts out assuming the history is complete', () => {
-    expect(makeContext({ code: '  puts("hi");' }).lastSubmissionRecorded).toBe(true);
+  it('starts out assuming the history is complete', async () => {
+    expect((await makeContext({ code: '  puts("hi");' })).lastSubmissionRecorded).toBe(true);
   });
 
   it('flags a submit the server could not record', async () => {
     vi.mocked(submit).mockResolvedValue(graded(false));
-    const context = makeContext({ code: '  puts("hi");' });
+    const context = await makeContext({ code: '  puts("hi");' });
 
     await context.submit();
 
@@ -378,7 +380,7 @@ describe('SolveWindowContext submission recording', () => {
 
   it('leaves the flag alone for a submit that was recorded', async () => {
     vi.mocked(submit).mockResolvedValue(graded(true));
-    const context = makeContext({ code: '  puts("hi");' });
+    const context = await makeContext({ code: '  puts("hi");' });
 
     await context.submit();
 
@@ -389,7 +391,7 @@ describe('SolveWindowContext submission recording', () => {
     // An older server build never says. Only an explicit `false` is a report
     // that a row was lost, so silence must not raise the warning.
     vi.mocked(submit).mockResolvedValue(graded());
-    const context = makeContext({ code: '  puts("hi");' });
+    const context = await makeContext({ code: '  puts("hi");' });
 
     await context.submit();
 
@@ -397,7 +399,7 @@ describe('SolveWindowContext submission recording', () => {
   });
 
   it('clears the flag when a later submit records cleanly', async () => {
-    const context = makeContext({ code: '  puts("hi");' });
+    const context = await makeContext({ code: '  puts("hi");' });
 
     vi.mocked(submit).mockResolvedValue(graded(false));
     await context.submit();
@@ -412,8 +414,8 @@ describe('SolveWindowContext submission recording', () => {
 });
 
 describe('SolveWindowContext run error lifetime', () => {
-  it('drops a standing error once the code changes', () => {
-    const context = makeContext({ code: '  puts("hi");' });
+  it('drops a standing error once the code changes', async () => {
+    const context = await makeContext({ code: '  puts("hi");' });
     context.runError = 'Your latest changes could not be saved.';
 
     context.scheduleSave();

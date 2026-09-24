@@ -3,6 +3,7 @@ import { TypeSchema, type Type } from './type.svelte';
 import { TypeValueSchema, type TypeValue } from './typeValue.svelte';
 import z from 'zod';
 import type { Problem } from '$lib/problem';
+import { GlobalRegistryProvider } from '$lib/registry/global';
 import { TypeRegistry } from './typeRegistry';
 import type { JsonObject } from '@zenstackhq/orm';
 
@@ -74,6 +75,16 @@ export const FunctionSchema = z.object({
 });
 
 /**
+ * Whether a function's return value can be compared. The harness never emits a
+ * return export file for `void` (nor for an untyped return slot), so a `return`
+ * comparison on such a function could never run.
+ */
+export function canCompareReturn(fn: Function | undefined): boolean {
+  const returnType = fn?.returnType[0];
+  return Boolean(returnType && !returnType.isVoid);
+}
+
+/**
  * @description Defines a function input parameter
  */
 export type ParameterValue<T extends Type = Type> = {
@@ -106,12 +117,12 @@ export const ParameterValueSchema = z.object({
   value: TypeValueSchema
 });
 
-export type ValueEditor<T extends Type> = Component<{
-  value: TypeValue<T>;
+export type ValueEditor = Component<{
+  value: TypeValue;
 }>;
 
-export type ValueDisplay<T extends Type> = Component<{
-  value: TypeValue<T>;
+export type ValueDisplay = Component<{
+  value: TypeValue;
 }>;
 /**
  * @description Defines symbols for functions
@@ -148,7 +159,7 @@ export const FunctionTestCaseProblemDataSchema = z.object({
   functions: z.record(z.string(), FunctionSchema)
 });
 
-export function parseExtensionData(problem: Problem): FunctionTestCaseProblemData {
+export async function parseExtensionData(problem: Problem): Promise<FunctionTestCaseProblemData> {
   const {
     data: parsedData,
     error,
@@ -162,16 +173,19 @@ export function parseExtensionData(problem: Problem): FunctionTestCaseProblemDat
 
   const data: FunctionTestCaseProblemData = { functions: {} };
 
+  const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
   for (const [key, fn] of Object.entries(parsedData.functions)) {
     data.functions[key] = {
       name: fn.name,
       symbol: fn.symbol ?? '',
-      parameters: fn.parameters.map((p) => ({
-        id: p.id,
-        name: p.name ?? '',
-        type: p.type ? TypeRegistry.instance().from(p.type) : null
-      })),
-      returnType: fn.returnType.map((t) => (t ? TypeRegistry.instance().from(t) : null))
+      parameters: await Promise.all(
+        fn.parameters.map(async (p) => ({
+          id: p.id,
+          name: p.name ?? '',
+          type: p.type ? await typeRegistry.from(p.type) : null
+        }))
+      ),
+      returnType: await Promise.all(fn.returnType.map(async (t) => (t ? await typeRegistry.from(t) : null)))
     };
   }
 

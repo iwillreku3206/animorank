@@ -6,6 +6,8 @@ import { StudentAccessWindow } from './windows/StudentAccess.window';
 import { AnalyticsWindow } from './windows/Analytics.window';
 
 export class ProblemSetEditorWindowRegistry extends WindowRegistry<ProblemSetEditorWindowContext> {
+  public id = 'window.problem_set_editor';
+
   constructor() {
     super();
 

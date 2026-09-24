@@ -1,9 +1,10 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { db } from '$lib/zenstack';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { TagService } from '$lib/tag';
 import { groupBy } from '$lib/utils/groupBy';
+import { readUuidParam } from '$lib/utils/params';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
   const session = await locals.auth();
@@ -11,7 +12,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   const problemSet = await db.problemSet.findUnique({
     where: {
-      id: params.id,
+      id: readUuidParam(params.id),
       collaborators: { some: { collaborator_id: session.user.id } }
     },
     include: {
@@ -36,7 +37,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   if (!problemSet) return redirect(302, '/instructor/problemSets');
 
-  const tagService = ServerServiceProvider.instance().getService(TagService);
+  const tagService = await ServerRegistryProvider.instance().getService(TagService);
   const tags = await tagService.findAll();
 
   const problemIds = problemSet.problems.map((p) => p.id);

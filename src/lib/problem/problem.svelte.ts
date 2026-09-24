@@ -86,7 +86,7 @@ export class Problem {
     this.model.extension_data = value;
   }
 
-  get functionData(): FunctionTestCaseProblemData {
+  public async functionData(): Promise<FunctionTestCaseProblemData> {
     return parseExtensionData(this);
   }
 }

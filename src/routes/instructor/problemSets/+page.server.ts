@@ -1,5 +1,5 @@
 import { ProblemSetService } from '$lib/problemSet';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { TagService } from '$lib/tag';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
@@ -14,8 +14,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   if (!session || !session.user.id) return redirect(302, '/');
   if (session.user?.type !== 'teacher') return redirect(302, '/');
 
-  const serviceProvider = ServerServiceProvider.instance();
-  const problemSetService = serviceProvider.getService(ProblemSetService);
+  const rp = ServerRegistryProvider.instance();
+  const problemSetService = await rp.getService(ProblemSetService);
 
   const params = url.searchParams;
   // Parsed by the same helpers the student page uses, so the wire format is
@@ -61,7 +61,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
   // The full tag universe, not just the tags present in the current page of
   // results, so the filter panels always list every option.
-  const tagService = serviceProvider.getService(TagService);
+  const tagService = await rp.getService(TagService);
   const allTags = await tagService.findAll();
   const tagGroups = groupBy(allTags, (t) => t.type);
 

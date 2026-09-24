@@ -1,20 +1,21 @@
 import type { JsonObject } from '@zenstackhq/orm';
 import { Logger } from '$lib/logging/logger';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
+import { GlobalRegistryProvider } from '$lib/registry/global';
 import type { Problem } from '$lib/problem';
 import type { ProblemTestCase } from '$lib/zenstack/models';
 import { TypeRegistry } from './typeRegistry';
 import { OperatorRegistry } from './operatorRegistry';
 import type { FunctionTestCaseProblemData } from './types';
 import { FunctionTestCaseProblemDataSchema } from './types';
-import { FunctionTestCaseDataSchema } from './functionTestCase.svelte';
+import { getFunctionTestCaseDataSchema } from './functionTestCase.svelte';
 
 /**
  * Server-side version of extension data loading with structured logging.
  */
-export function loadExtensionData(problem: Problem): FunctionTestCaseProblemData {
-  const serviceProvider = ServerServiceProvider.instance();
-  const logger = serviceProvider.getService(Logger, 'builtin/testCase/function');
+export async function loadExtensionData(problem: Problem): Promise<FunctionTestCaseProblemData> {
+  const registryProvider = ServerRegistryProvider.instance();
+  const logger = await registryProvider.getService(Logger, 'builtin/testCase/function');
 
   const {
     data: parsedData,
@@ -29,16 +30,19 @@ export function loadExtensionData(problem: Problem): FunctionTestCaseProblemData
 
   const data: FunctionTestCaseProblemData = { functions: {} };
 
+  const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
   for (const [key, fn] of Object.entries(parsedData.functions)) {
     data.functions[key] = {
       name: fn.name,
       symbol: fn.symbol ?? '',
-      parameters: fn.parameters.map((p) => ({
-        id: p.id,
-        name: p.name ?? '',
-        type: p.type ? TypeRegistry.instance().from(p.type) : null
-      })),
-      returnType: fn.returnType.map((t) => (t ? TypeRegistry.instance().from(t) : null))
+      parameters: await Promise.all(
+        fn.parameters.map(async (p) => ({
+          id: p.id,
+          name: p.name ?? '',
+          type: p.type ? await typeRegistry.from(p.type) : null
+        }))
+      ),
+      returnType: await Promise.all(fn.returnType.map(async (t) => (t ? await typeRegistry.from(t) : null)))
     };
   }
 
@@ -56,16 +60,16 @@ export function loadExtensionData(problem: Problem): FunctionTestCaseProblemData
  * test cases so an orphaned row fails loudly instead of crashing the
  * FunctionTestCase constructor and being silently dropped from the editor.
  */
-export function validateFunctionTestCaseKeys(model: ProblemTestCase, problem: Problem): string | null {
+export async function validateFunctionTestCaseKeys(model: ProblemTestCase, problem: Problem): Promise<string | null> {
   if (model.type !== 'function') return null;
 
-  const parsed = FunctionTestCaseDataSchema.safeParse(model.data);
+  const parsed = getFunctionTestCaseDataSchema().safeParse(model.data);
   if (!parsed.success) {
     return `Test case ${model.id} has data that does not match the function schema: ${parsed.error.message}`;
   }
 
   const { function: functionName, parameters } = parsed.data;
-  const fn = loadExtensionData(problem).functions[functionName];
+  const fn = (await loadExtensionData(problem)).functions[functionName];
   if (!fn) {
     return `Test case ${model.id} references function "${functionName}", which is not defined for this problem (delete the test case or restore the function in the Functions window)`;
   }
@@ -83,8 +87,8 @@ export function validateFunctionTestCaseKeys(model: ProblemTestCase, problem: Pr
   // Comparisons must resolve against the registries and the function's
   // signature — an unregistered type/operator id or a dangling symbol would
   // otherwise throw inside the client constructor and silently drop the row.
-  const typeRegistry = TypeRegistry.instance();
-  const operatorRegistry = OperatorRegistry.instance();
+  const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
+  const operatorRegistry = GlobalRegistryProvider.instance().getRegistry(OperatorRegistry);
   for (const comparison of parsed.data.comparisons) {
     if (!typeRegistry.keys().includes(comparison.value.type)) {
       return `Test case ${model.id} comparison uses unregistered value type "${comparison.value.type}"`;

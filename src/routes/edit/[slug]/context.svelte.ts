@@ -1,6 +1,8 @@
 import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
 import type { Problem as ProblemModel, ProblemTestCase, Tag } from '$lib/zenstack/models';
 import { Problem } from '$lib/problem';
+import { GlobalRegistryProvider } from '$lib/registry/global';
+import type { OpenWindow } from '$lib/window/dockviewWindowManager';
 import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
 import type { TestCase } from '$lib/testCase/testCase.svelte';
 import { FunctionTestCase } from '$lib/testCase/builtin/functionTestCase/functionTestCase.svelte';
@@ -8,6 +10,7 @@ import { serializeExtensionData, type FunctionTestCaseProblemData } from '$lib/t
 import { saveProblem, updateTestCase } from './api';
 import { getContext, setContext, untrack } from 'svelte';
 import { toJsonValue } from '$lib/types/utils';
+import deepEqual from 'deep-equal';
 
 export interface InitialValues {
   problem: ProblemModel;
@@ -24,15 +27,46 @@ export class ProblemEditorWindowContext {
   public testCases: TestCase[] = $state([]);
   public topics: string[] = $state([]);
 
-  private problemAutosave: AutoSave<ProblemModel> = $state() as unknown as AutoSave<ProblemModel>;
-  private testCaseAutosave: AutoSave<ProblemTestCase[]> = $state() as unknown as AutoSave<ProblemTestCase[]>;
-  private topicsAutosave: AutoSave<string[]> = $state() as unknown as AutoSave<string[]>;
+  /**
+   * Opens (or focuses) a window in the dockview. The editor page assigns the
+   * dockview manager's own `openWindow` once the dock has attached (see
+   * `ProblemEditor.svelte`), so a plugin answering `onProblemEditorLoad` can
+   * open — or bring forward — a window it contributes.
+   */
+  public openWindow: OpenWindow = async () => {};
+
+  // Plain fields, deliberately not `$state`: `AutoSave.state` is itself
+  // reactive for the UI, and making the holder reactive would put the
+  // autosave's own bookkeeping (state, timeoutId, lastSave) into the
+  // dependency set of the effect that calls `save()` — whose writes would
+  // then re-run that effect on every debounce, forever.
+  private problemAutosave: AutoSave<ProblemModel>;
+  private testCaseAutosave: AutoSave<ProblemTestCase[]>;
+  private topicsAutosave: AutoSave<string[]>;
 
   private _cleanup: () => void;
 
-  constructor(initialValues: InitialValues) {
+  public static async create(initialValues: InitialValues): Promise<ProblemEditorWindowContext> {
+    const problem = new Problem(initialValues.problem);
+    const functionData = await problem.functionData();
+    const testCases = (
+      await Promise.all(
+        initialValues.testCases.map(async (model) => {
+          try {
+            return await GlobalRegistryProvider.instance().getRegistry(TestCaseRegistry).from(model, problem);
+          } catch (error) {
+            console.error(`Dropping unhydratable test case ${model.id}:`, error);
+            return null;
+          }
+        })
+      )
+    ).filter((tc): tc is TestCase => tc !== null);
+    return new ProblemEditorWindowContext(initialValues, functionData, testCases);
+  }
+
+  private constructor(initialValues: InitialValues, functionData: FunctionTestCaseProblemData, testCases: TestCase[]) {
     this.problem = new Problem(initialValues.problem);
-    this.functionData = this.problem.functionData;
+    this.functionData = functionData;
     // Backfill stable ids for parameters created before the id scheme so
     // syncParameters can keep values attached across removals (M8). The
     // extension_data autosave persists them.
@@ -41,16 +75,7 @@ export class ProblemEditorWindowContext {
         parameter.id ??= crypto.randomUUID();
       }
     }
-    this.testCases = initialValues.testCases
-      .map((model) => {
-        try {
-          return TestCaseRegistry.instance().from(model, this.problem);
-        } catch (error) {
-          console.error(`Dropping unhydratable test case ${model.id}:`, error);
-          return null;
-        }
-      })
-      .filter((tc): tc is TestCase => tc !== null);
+    this.testCases = testCases;
     this.topics = initialValues.topics;
     this.tags = initialValues.tags;
 
@@ -60,7 +85,8 @@ export class ProblemEditorWindowContext {
 
     this._cleanup = $effect.root(() => {
       $effect(() => {
-        this.problemAutosave.save($state.snapshot(this.problem.model) as unknown as ProblemModel);
+        const snapshot = $state.snapshot(this.problem.model) as unknown as ProblemModel;
+        this.problemAutosave.save(snapshot);
       });
       $effect(() => {
         this.testCaseAutosave.save(this.testCases.map((tc) => this.serializeTestCase(tc)));
@@ -70,23 +96,30 @@ export class ProblemEditorWindowContext {
       });
       // Keep the serialized extension_data in sync with the function data state.
       $effect(() => {
+        const serialized = serializeExtensionData(this.functionData);
         const prev = untrack(() => this.problem.extension_data as Record<string, unknown>);
-        this.problem.extension_data = {
-          ...prev,
-          builtin_testCase_function: serializeExtensionData(this.functionData)
-        };
+        // Only write when the value actually changes. Writing an unchanged
+        // `extension_data` re-invalidates this effect (it reads the field), and
+        // because the sibling effects share this root, that re-runs all of them.
+        if (!deepEqual(prev['builtin_testCase_function'], serialized, { strict: true })) {
+          this.problem.extension_data = { ...prev, builtin_testCase_function: serialized };
+        }
       });
       // Fill in default values for parameters added to function definitions.
       $effect(() => {
         for (const testCase of this.testCases) {
           if (testCase instanceof FunctionTestCase) {
-            testCase.syncParameters(this.functionData);
+            void testCase.syncParameters(this.functionData);
           }
         }
       });
     });
   }
 
+  /**
+   * Dev-only: report what changed between successive problem snapshots, so the
+   * write that keeps re-running the autosave effect is named rather than guessed.
+   */
   /**
    * Add an empty function definition keyed by uuid. The details (name,
    * symbol, parameters, return types) are filled in through the editor binds.

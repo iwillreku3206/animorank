@@ -1,5 +1,5 @@
 import type { Editor } from '$lib/editor';
-import type { ClassServiceOf } from '$lib/services/registry';
+import type { ClassServiceOf } from '$lib/registry';
 import type { LanguageRegistry } from './languageRegistry';
 
 export abstract class Language<

@@ -13,45 +13,50 @@ export class CPointer extends CType<Pointer> {
     super(language, type as Pointer);
   }
 
-  public readFromPrint(printed: string): TypeValue<Pointer> {
-    const inner = this.innerCType().readFromPrint(printed);
-    return new TypeValue(this.type, inner.value as JsonValue);
+  public async readFromPrint(printed: string): Promise<TypeValue<Pointer>> {
+    const inner = await (await this.innerCType()).readFromPrint(printed);
+    // The pointee came from the program through the target's own binding.
+    return await TypeValue.create(this.type, inner.value as JsonValue);
   }
 
-  private innerCType(): CType<Type> {
-    return CFunctionTestCase.typeRegistry.getInstance(this.type.targetType.id, this.language, this.type.targetType);
+  private async innerCType(): Promise<CType<Type>> {
+    return CFunctionTestCase.getTypeRegistry().getInstance(
+      this.type.targetType.id,
+      this.language,
+      this.type.targetType
+    );
   }
 
   private innerTypeValue(value: TypeValue<Pointer>): TypeValue<Type> {
-    return new TypeValue(this.type.targetType, value.value as JsonValue);
+    return TypeValue.assumedValid(this.type.targetType, value.value as JsonValue);
   }
 
-  public generateParameterDefinition(symbol: string): string {
+  public async generateParameterDefinition(symbol: string): Promise<string> {
     // generateReturnType() already appends the trailing `*` (int*), so a
     // pointer-to-int yields `int* p` and a pointer-to-pointer `int** p`.
-    return `${this.generateReturnType()} ${symbol}`;
+    return `${await this.generateReturnType()} ${symbol}`;
   }
 
-  public generateReturnType(): string {
-    return `${this.innerCType().generateReturnType()}*`;
+  public async generateReturnType(): Promise<string> {
+    return `${await (await this.innerCType()).generateReturnType()}*`;
   }
 
-  public pushDeclaration(context: CExecutionContext, symbol: string, value?: TypeValue<Pointer>): void {
+  public async pushDeclaration(context: CExecutionContext, symbol: string, value?: TypeValue<Pointer>): Promise<void> {
     if (!value) {
-      context.pushCode(`${this.generateReturnType()} ${symbol};`);
+      context.pushCode(`${await this.generateReturnType()} ${symbol};`);
       return;
     }
 
     const innerSymbol = `${symbol}__target`;
-    this.innerCType().pushDeclaration(context, innerSymbol, this.innerTypeValue(value));
-    context.pushCode(`${this.generateReturnType()} ${symbol} = &${innerSymbol};`);
+    await (await this.innerCType()).pushDeclaration(context, innerSymbol, this.innerTypeValue(value));
+    context.pushCode(`${await this.generateReturnType()} ${symbol} = &${innerSymbol};`);
   }
 
-  public pushPreDefinitions(context: CExecutionContext): void {
-    this.innerCType().pushPreDefinitions(context);
+  public async pushPreDefinitions(context: CExecutionContext): Promise<void> {
+    await (await this.innerCType()).pushPreDefinitions(context);
   }
 
-  public pushPrint(context: CExecutionContext, symbol: string, fileSymbol: string): void {
-    this.innerCType().pushPrint(context, `*${symbol}`, fileSymbol);
+  public async pushPrint(context: CExecutionContext, symbol: string, fileSymbol: string): Promise<void> {
+    await (await this.innerCType()).pushPrint(context, `*${symbol}`, fileSymbol);
   }
 }
