@@ -59,7 +59,7 @@ class PrebuiltServerPlugin extends ServerPlugin {
 async function loadPrebuilt(id: string): Promise<PrebuiltServerPlugin> {
   const loader = new PluginLoader();
   const loaded = await loader.loadPrebuiltPlugins([
-    { manifest: JSON.parse(validManifest(id)), files: new Map(), server: { default: PrebuiltServerPlugin } }
+    { manifest: JSON.parse(validManifest(id)), server: { default: PrebuiltServerPlugin } }
   ]);
   expect(loaded).toHaveLength(1);
   expect(PrebuiltServerPlugin.lastInstance).toBeInstanceOf(PrebuiltServerPlugin);
@@ -315,28 +315,23 @@ describe('PluginLoader prebuilt plugins', () => {
     for (const plugin of loaded) {
       expect(plugin.type).toBe('prebuilt');
       expect(loader.getPlugin(plugin.manifest.id)).toBe(plugin);
-      // Its browser-facing files travel with it, so the route can serve them.
-      expect(plugin.files.has('client.ts')).toBe(true);
+      // Its sources stay with the app and are never handed to the plugin route.
+      expect(plugin.files.size).toBe(0);
     }
   });
 
   it('wraps compile-time descriptors into LoadedPlugins and registers them', async () => {
-    const files = new Map<string, Buffer>([
-      ['client.ts', Buffer.from("console.log('hi');\n")],
-      ['client/data.json', Buffer.from('{"a":1}\n')]
-    ]);
     const server = { default: PrebuiltServerPlugin } satisfies PluginServerModule;
 
     const loader = new PluginLoader();
     const loaded = await loader.loadPrebuiltPlugins([
-      { manifest: JSON.parse(validManifest('built-in-plugin')), files, server }
+      { manifest: JSON.parse(validManifest('built-in-plugin')), server }
     ]);
 
     expect(loaded).toHaveLength(1);
     const plugin = loaded[0];
     expect(plugin.type).toBe('prebuilt');
     expect(plugin.manifest.id).toBe('built-in-plugin');
-    expect(plugin.files).toBe(files);
     expect(plugin.server).toBe(server);
     expect(loader.getPlugin('built-in-plugin')).toBe(plugin);
   });
@@ -360,7 +355,6 @@ describe('PluginLoader prebuilt plugins', () => {
       new PluginLoader().loadPrebuiltPlugins([
         {
           manifest: JSON.parse(validManifest('failing-plugin')),
-          files: new Map(),
           server: { default: FailingPrebuiltPlugin }
         }
       ])
@@ -373,7 +367,6 @@ describe('PluginLoader prebuilt plugins', () => {
       loader.loadPrebuiltPlugins([
         {
           manifest: { id: '', manifestVersion: 'nope' },
-          files: new Map(),
           server: { default: PrebuiltServerPlugin }
         }
       ])
@@ -394,7 +387,6 @@ describe('PluginLoader prebuilt plugins', () => {
     const loaded = await loader.loadPrebuiltPlugins([
       {
         manifest: JSON.parse(validManifest('dup-plugin')),
-        files: new Map(),
         server: { default: PrebuiltServerPlugin }
       }
     ]);

@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { ServerPluginService } from '$lib/plugin/serverPluginService';
-import { pluginFileContentType } from '$lib/plugin/catalog';
+import { pluginFileContentType } from '$lib/plugin/catalog.server';
 
 // The public face of the plugin registry: files are read from loaded plugins,
 // never resolved from the URL, so a request cannot reach outside a plugin

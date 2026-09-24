@@ -37,6 +37,8 @@ export class CodeExecutorRegistry extends ServiceRegistry<
    * @param key - The registry key the executor is stored under.
    * @param value - The executor class; its static `languages()` determines
    *   which language ids resolve to it.
+   * @param origin - The namespace the key is attributed to; passed through to
+   *   the base registry, which is what `registeredBy`/`writers` report.
    * @description Kept in sync with `languageMap` for every registration, so
    *   `getDefaultForLanguage` resolves plugin-registered executors too.
    *
@@ -46,9 +48,10 @@ export class CodeExecutorRegistry extends ServiceRegistry<
    */
   protected override register(
     key: string,
-    value: (new (..._args: []) => CodeExecutor) & { id: string; languages(): Language[] }
+    value: (new (..._args: []) => CodeExecutor) & { id: string; languages(): Language[] },
+    origin?: string
   ): void {
-    super.register(key, value);
+    super.register(key, value, origin);
     for (const language of value.languages()) {
       if (!this.languageMap.has(language.id)) {
         this.languageMap.set(language.id, []);

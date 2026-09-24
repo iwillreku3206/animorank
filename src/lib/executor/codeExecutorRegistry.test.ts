@@ -57,5 +57,10 @@ describe('CodeExecutorRegistry', () => {
     expect(registry.keys()).toEqual(['default', 'plugin-a:custom']);
     await expect(registry.getDefaultForLanguage(new CustomLanguage())).resolves.toBeInstanceOf(CustomExecutor);
     await expect(registry.getDefaultForLanguage(new CLanguage())).resolves.toBeInstanceOf(Judge0Executor);
+
+    // Attribution survives the override: the plugin that registered the key is
+    // its writer, which is what `/api/plugin/registryWriters` reports.
+    expect(registry.registeredBy('plugin-a:custom')).toBe('plugin-a');
+    expect(registry.writers()).toContain('plugin-a');
   });
 });

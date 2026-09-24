@@ -1,4 +1,3 @@
-import path from 'path';
 import type * as FsPromises from 'fs/promises';
 import type { ConfigSection, ConfigSectionClass } from './section.svelte';
 import type { ConfigSectionRegistry } from './registry';
@@ -7,8 +6,22 @@ import type { JsonValue } from '@zenstackhq/orm';
 /** Name of the app's config file, relative to the process root. */
 export const CONFIG_FILE = 'config.json';
 
-/** The config file `loadConfig` reads when no path is given. */
-const DEFAULT_CONFIG_PATH = path.join(process.cwd(), CONFIG_FILE);
+/**
+ * The config file `loadConfig` reads when no path is given: `config.json` in the
+ * process root.
+ *
+ * Computed where it is used, and spelled without `path`, because this module is
+ * reachable from the browser — the shared registry provider registers
+ * `AppConfig` (see `$lib/registry/global`) — so a Node builtin import here would
+ * be bundled, and a module-scope `process.cwd()` would run on every page load
+ * for a path the browser can never use (`configFileSystem` refuses it).
+ */
+function defaultConfigPath(): string {
+  const cwd = process.cwd();
+  // The trailing separator appears only at the filesystem root, where
+  // `path.join` used to normalize it away.
+  return cwd.endsWith('/') ? `${cwd}${CONFIG_FILE}` : `${cwd}/${CONFIG_FILE}`;
+}
 
 type Sections = Record<string, ConfigSection>;
 
@@ -39,7 +52,7 @@ export class AppConfig {
    */
   public static async loadConfig(
     sections: ConfigSectionRegistry,
-    configPath: string = DEFAULT_CONFIG_PATH
+    configPath: string = defaultConfigPath()
   ): Promise<AppConfig> {
     const parsed = await readConfigFile(configPath);
     const hydrated: Sections = {};

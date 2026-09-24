@@ -139,6 +139,36 @@ describe('plugin file route', () => {
       );
     }
   });
+
+  it('serves nothing from a prebuilt plugin, even a file its package holds', async () => {
+    // A prebuilt plugin's code is a chunk of the app's build, so no path under
+    // this route belongs to it. Its file map is populated on purpose: the rule
+    // has to keep these files off the wire, not an empty map.
+    plugins.push(
+      new LoadedPlugin(
+        'prebuilt',
+        {
+          id: 'built-in',
+          manifestVersion: '0',
+          name: 'Built In',
+          author: 'tester',
+          version: '1.0.0',
+          category: ['test']
+        },
+        new Map([
+          ['client.ts', Buffer.from("console.log('hi');\n")],
+          ['client/helper.ts', Buffer.from('export const helper = 1;\n')]
+        ]),
+        {}
+      )
+    );
+
+    for (const file of ['client.ts', 'client/helper.ts', 'global.ts', 'manifest.json']) {
+      await expect(getFile(event('built-in', file))).rejects.toSatisfy(
+        (error: unknown) => isHttpError(error) && error.status === 404
+      );
+    }
+  });
 });
 
 describe('plugin descriptor route', () => {

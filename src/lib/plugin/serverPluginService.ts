@@ -5,13 +5,8 @@ import { AppConfig } from '$lib/config/config';
 import { PluginsConfigSection } from '$lib/config/sections/plugins';
 import { PluginLoader } from './loader';
 import type { LoadedPlugin } from './loadedPlugin';
-import {
-  PLUGIN_CLIENT_ENTRY,
-  PLUGIN_GLOBAL_ENTRY,
-  isServablePluginFile,
-  pluginFileUrl,
-  type PluginClientDescriptor
-} from './catalog';
+import { PLUGIN_CLIENT_ENTRY, PLUGIN_GLOBAL_ENTRY, isServablePluginFile, pluginFileUrl } from './catalog.server';
+import type { PluginClientDescriptor } from './catalog';
 import { prebuiltClientEntries } from './prebuiltClientEntries';
 
 /**

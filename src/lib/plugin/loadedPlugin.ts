@@ -23,11 +23,14 @@ export class LoadedPlugin {
   public readonly type: PluginType;
   public readonly manifest: PluginManifest;
   /**
-   * Contents of the plugin's browser-facing files — the client entry
-   * (`client.js` / `client.ts`) and everything under the plugin's `client/`
-   * folder — keyed by the path relative to the plugin root (e.g. `client.js`,
-   * `client/helper.js`). The directory structure is preserved so the entry can
-   * import its own files by relative path.
+   * Contents of a dynamically loaded plugin's browser-facing files — the
+   * `client.js` entry, the optional `global.js`, and everything under the
+   * plugin's `client/` folder — keyed by the path relative to the plugin root
+   * (e.g. `client.js`, `client/helper.js`). The directory structure is
+   * preserved so the entry can import its own files by relative path.
+   *
+   * Empty for a prebuilt plugin: its code is part of the app's own client
+   * build, so it ships no file for the plugin route to serve.
    */
   public readonly files: Map<string, Buffer>;
   /** Module namespace of the eagerly imported server entry. */

@@ -4,5 +4,6 @@ export { ServerPlugin } from './serverPlugin';
 export { ClientPlugin } from './clientPlugin';
 export { ClientPluginLoader } from './clientLoader';
 export { ServerPluginService } from './serverPluginService';
-export { PLUGIN_ROUTE_PREFIX, pluginFileUrl, type PluginClientDescriptor } from './catalog';
+export { PLUGIN_ROUTE_PREFIX, type PluginClientDescriptor } from './catalog';
+export { pluginFileUrl } from './catalog.server';
 export { PluginManifestSchema, type PluginManifest } from './manifest';

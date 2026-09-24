@@ -13,17 +13,17 @@ import { LoadedPlugin, type PluginServerModule } from './loadedPlugin';
  * One prebuilt plugin, resolved at compile time via Vite glob imports (so it
  * is HMR-capable in the dev server):
  * - `manifest`: the manifest.json contents (validated on load)
- * - `files`: web-facing file contents (client entry plus static assets), keyed
- *   by the path relative to the plugin root
  * - `server`: the eagerly imported module namespace of the server entry
  *
  * The loader assembles the default set itself from the prebuilt plugin
  * directories (see {@link PluginLoader.loadPrebuiltPlugins}); descriptors are
  * only injected directly for tests or bespoke wiring.
+ *
+ * A descriptor carries no browser-facing files: a prebuilt plugin's code is
+ * part of the app's own client build, so nothing of its package is served.
  */
 export interface PrebuiltPluginDescriptor {
   manifest: unknown;
-  files: Map<string, Buffer>;
   server: PluginServerModule;
 }
 
@@ -159,19 +159,7 @@ function collectPrebuiltPluginDescriptors(): PrebuiltPluginDescriptor[] {
       });
     }
 
-    const files = new Map<string, Buffer>([['client.ts', Buffer.from(client)]]);
-    const globalSource = prebuiltWebSources[at('global.ts')];
-    if (globalSource !== undefined) {
-      files.set('global.ts', Buffer.from(globalSource));
-    }
-    const clientPrefix = at('client/');
-    for (const key of Object.keys(prebuiltWebSources)
-      .filter((key) => key.startsWith(clientPrefix))
-      .sort()) {
-      files.set(key.slice(rootKey.length + 1), Buffer.from(prebuiltWebSources[key]));
-    }
-
-    descriptors.push({ manifest, files, server });
+    descriptors.push({ manifest, server });
   }
 
   return descriptors;
@@ -317,8 +305,8 @@ export class PluginLoader {
   private async initializePrebuilt(plugins: PrebuiltPluginDescriptor[]): Promise<LoadedPlugin[]> {
     const initialized: LoadedPlugin[] = [];
 
-    for (const { manifest, files, server } of plugins) {
-      const plugin = new LoadedPlugin('prebuilt', PluginManifestSchema.parse(manifest), files, server);
+    for (const { manifest, server } of plugins) {
+      const plugin = new LoadedPlugin('prebuilt', PluginManifestSchema.parse(manifest), new Map(), server);
       await this.initialize(plugin);
       initialized.push(plugin);
     }
