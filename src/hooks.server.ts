@@ -4,6 +4,8 @@ import { handle as authHandle } from '$lib/auth';
 import { Logger } from '$lib/logging/logger';
 import { ServerRegistryProvider } from '$lib/registry/server';
 import { ServerPluginService } from '$lib/plugin/serverPluginService';
+import { Server, type ServerApp } from '$lib/server';
+import { injectPluginApiRequest, isPluginApiPath } from '$lib/server/pluginApiRequest';
 
 /**
  * Load every plugin when the server starts, so no request waits on plugin
@@ -23,17 +25,33 @@ export const init: ServerInit = async () => {
     const logger = await ServerRegistryProvider.instance().getService(Logger, 'webserver');
     logger.error(`Failed to load plugins: ${error instanceof Error ? error.message : String(error)}`);
   }
+
+  // The app mounts the APIs a plugin registers while loading (see
+  // `Server.prepareApp`), so it is prepared only now, with every plugin already
+  // loaded, and each plugin's routes are part of it.
+  app = await new Server().prepareApp();
 };
+
+/**
+ * The Fastify app the plugin APIs are mounted on, prepared by `init` once the
+ * plugins have loaded. A build never prepares one: plugins are runtime state.
+ */
+let app: ServerApp | undefined;
 
 export const handle: Handle = async ({ event, resolve }) => {
   const registryProvider = ServerRegistryProvider.instance();
   const logger = await registryProvider.getService(Logger, 'webserver');
 
-  const response = await authHandle({ event, resolve });
-
   logger.debug(`${event.request.method} ${event.url.pathname}`);
 
-  return response;
+  // A plugin API request belongs to the Fastify app, never to a route of this
+  // app, so it is injected before anything resolves it here — resolving a path
+  // that is no route of the app throws rather than answering 404.
+  if (isPluginApiPath(event.url.pathname)) {
+    return app === undefined ? new Response('Not Found', { status: 404 }) : injectPluginApiRequest(app, event);
+  }
+
+  return authHandle({ event, resolve });
 };
 
 export const handleError: HandleServerError = async ({ error }) => {

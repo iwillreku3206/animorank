@@ -1,6 +1,7 @@
 import path from 'path';
 import { existsSync } from 'fs';
 import { GlobalRegistryProvider } from '$lib/registry/global';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { AppConfig } from '$lib/config/config';
 import { PluginsConfigSection } from '$lib/config/sections/plugins';
 import { PluginLoader } from './loader';
@@ -54,15 +55,21 @@ export function pluginFileOf(plugins: LoadedPlugin[], id: string, file: string):
  * (see {@link getLoader}).
  */
 export class ServerPluginService {
-  private static _instance: ServerPluginService | null;
-
   private loaderPromise: Promise<PluginLoader> | null = null;
 
   public constructor(private readonly _root: string) {}
 
+  /**
+   * The app's plugin service, kept on the registry provider whose registries
+   * its plugins write into: the two share one lifetime. A dev-server module
+   * reload re-creates this module, and a service of its own would load the
+   * plugins again — into registries that already hold their registrations,
+   * which is a collision, not a reload.
+   */
   public static instance(): ServerPluginService {
-    ServerPluginService._instance ??= new ServerPluginService(process.cwd());
-    return ServerPluginService._instance;
+    const provider = ServerRegistryProvider.instance();
+    provider.pluginService ??= new ServerPluginService(process.cwd());
+    return provider.pluginService;
   }
 
   /**

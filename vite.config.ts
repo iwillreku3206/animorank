@@ -57,7 +57,12 @@ export default defineConfig(({ mode }) => {
           path.resolve(process.cwd(), 'plugins/*/server.@(js|ts)'),
           path.resolve(process.cwd(), 'src/lib/plugins/*/server.@(js|ts)'),
           ...(pluginDir ? [`${pluginDir}/*/server.@(js|ts)`] : [])
-        ]
+        ],
+        // A prebuilt package under the repository-root plugins/ folder serves
+        // its client entry from there in dev; SvelteKit's allow list covers
+        // only src/, .svelte-kit/ and node_modules/, and Vite concatenates the
+        // two lists. The deny entries above keep server entries off the wire.
+        allow: [path.resolve(process.cwd(), 'plugins')]
       }
     },
     ssr: {

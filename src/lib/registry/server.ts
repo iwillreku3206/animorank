@@ -15,9 +15,19 @@ import { CustomTestCaseLanguageRegistry } from '$lib/testCase/builtin/customTest
 import { CTypeRegistry } from '$lib/testCase/builtin/functionTestCase/languages/c/typeRegistry';
 import { TagRegistry } from '$lib/tag/tagRegistry';
 import { RegistryProvider } from './registryProvider';
+import { ServerAPIRegistry } from '$lib/server/registry';
+import type { ServerPluginService } from '$lib/plugin/serverPluginService';
 
 export class ServerRegistryProvider extends RegistryProvider {
   private static _instance: ServerRegistryProvider | null;
+
+  /**
+   * The app's plugin service. It lives here, beside the registries its plugins
+   * write into, so the two share one lifetime: a dev-server module reload
+   * re-creates the plugin modules but not this provider, and a plugin that has
+   * already registered into these registries must not register again.
+   */
+  public pluginService: ServerPluginService | null = null;
 
   private constructor() {
     super('server');
@@ -30,6 +40,7 @@ export class ServerRegistryProvider extends RegistryProvider {
     this.registerRegistry(new CustomTestCaseLanguageRegistry());
     this.registerRegistry(new CTypeRegistry());
     this.registerRegistry(new TagRegistry());
+    this.registerRegistry(new ServerAPIRegistry());
     this._registries.set(ProblemService, ServiceRegistry.createSingleSingletonServiceRegistry(new ProblemService()));
     this._registries.set(
       ProblemSetService,
@@ -43,7 +54,7 @@ export class ServerRegistryProvider extends RegistryProvider {
     this._registries.set(TestCaseService, ServiceRegistry.createSingleServiceRegistry(TestCaseService));
   }
 
-  public static instance(): RegistryProvider {
+  public static instance(): ServerRegistryProvider {
     if (!ServerRegistryProvider._instance) {
       ServerRegistryProvider._instance = new ServerRegistryProvider();
     }
