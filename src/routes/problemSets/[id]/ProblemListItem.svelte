@@ -16,9 +16,9 @@
 
   let tags = $derived([problem.difficulty, ...problem.topics].filter((x) => !!x));
 
-  let totalAttempts = $derived(parseInt((problemAttempts || [])[0]?.attempts.toString() || '0') || 0);
+  let totalAttempts = $derived(Number.parseInt((problemAttempts || [])[0]?.attempts.toString() || '0') || 0);
 
-  let totalSolvers = $derived(parseInt((problemSolvers || [])[0]?.solvers.toString() || '0') || 0);
+  let totalSolvers = $derived(Number.parseInt((problemSolvers || [])[0]?.solvers.toString() || '0') || 0);
 
   let passRate = $derived(totalSolvers / (totalAttempts || 1));
 </script>

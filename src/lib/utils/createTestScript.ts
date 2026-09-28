@@ -97,9 +97,9 @@ export const generateStarterCode = (dtype, fName, inputTypes) => {
   const parameters = inputTypes
     .map((x, i) => {
       if (inputTypes[i].endsWith('[]')) {
-        return `${inputTypes[i].slice(0, -2)} ${String.fromCharCode(97 + i)}[]`;
+        return `${inputTypes[i].slice(0, -2)} ${String.fromCodePoint(97 + i)}[]`;
       } else {
-        return `${inputTypes[i]} ${String.fromCharCode(97 + i)}`;
+        return `${inputTypes[i]} ${String.fromCodePoint(97 + i)}`;
       }
     })
     .join(', ');

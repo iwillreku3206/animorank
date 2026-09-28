@@ -27,7 +27,7 @@ export abstract class Logger {
     this.module = module;
   }
 
-  protected abstract log(message: Loggable): void;
+  protected abstract log(message: Loggable): void | Promise<void>;
 
   public debug(message: string) {
     this.log({ level: LogLevel.DEBUG, message });

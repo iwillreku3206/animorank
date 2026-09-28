@@ -232,7 +232,7 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
     if (symbol === 'return') return fn.returnType[0] ?? null;
     const param = symbol.match(/^param(\d+)$/);
     if (!param) return null;
-    return fn.parameters[parseInt(param[1], 10)]?.type ?? null;
+    return fn.parameters[Number.parseInt(param[1], 10)]?.type ?? null;
   }
 
   /**

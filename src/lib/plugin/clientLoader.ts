@@ -79,7 +79,7 @@ export class ClientPluginLoader {
    */
   public async getPlugin(id: string): Promise<ClientPlugin | undefined> {
     const known = this.instances.get(id);
-    if (known) return known;
+    if (known !== undefined) return known;
 
     const descriptor = await this.servedDescriptor(id);
     if (!descriptor) return undefined;
@@ -87,7 +87,7 @@ export class ClientPluginLoader {
     // Re-check before starting: concurrent callers may have started the load
     // while this one awaited the descriptor, and they must share that instance.
     const started = this.instances.get(id);
-    if (started) return started;
+    if (started !== undefined) return started;
 
     const loading = this.load(descriptor);
     this.instances.set(id, loading);
@@ -153,7 +153,7 @@ export class ClientPluginLoader {
   /** The descriptor the plugin route serves for one plugin, asked for once per id. */
   private servedDescriptor(id: string): Promise<PluginClientDescriptor | undefined> {
     const known = this.descriptors.get(id);
-    if (known) return known;
+    if (known !== undefined) return known;
 
     const request = this.fetchDescriptor(id).catch((error: unknown) => {
       // A failed request must not poison the loader; the next call retries.

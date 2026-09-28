@@ -102,8 +102,8 @@ export async function validateFunctionTestCaseKeys(model: ProblemTestCase, probl
         return `Test case ${model.id} compares the return value of function "${functionName}", which has no return type`;
       }
     } else {
-      const match = symbol.match(/^param(\d+)$/);
-      if (!match || !fn.parameters[parseInt(match[1], 10)]) {
+      const match = /^param(\d+)$/.exec(symbol);
+      if (!match || !fn.parameters[Number.parseInt(match[1], 10)]) {
         return `Test case ${model.id} comparison references symbol "${symbol}", which function "${functionName}" does not define`;
       }
     }

@@ -12,7 +12,7 @@ const pageSize = 12;
 export const load: PageServerLoad = async ({ locals, url }) => {
   const session = await locals.auth();
 
-  if (!session || !session.user.id) {
+  if (!session?.user.id) {
     redirect(302, '/');
   }
 
@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const filters = parseFilters(params);
   const sort = parseSort(params);
   const search = params.get('search') || '';
-  const page = parseInt(params.get('page') || '1') || 1;
+  const page = Number.parseInt(params.get('page') || '1') || 1;
 
   const problemSetsQueryResult = await problemSetService.findByFilter({
     user: session.user,

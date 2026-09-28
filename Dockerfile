@@ -2,6 +2,9 @@
 
 # For caching the dependencies
 FROM node:24-trixie AS builder
+RUN addgroup -S nonroot \
+    && adduser -S nonroot -G nonroot
+USER nonroot
 WORKDIR /app
 COPY package*.json .
 RUN npm ci
@@ -13,6 +16,9 @@ RUN npm prune --production
 
 # For building the final image
 FROM node:24-trixie
+RUN addgroup -S nonroot \
+    && adduser -S nonroot -G nonroot
+USER nonroot
 WORKDIR /app
 COPY --from=builder /app/build build/
 COPY --from=builder /app/node_modules node_modules/

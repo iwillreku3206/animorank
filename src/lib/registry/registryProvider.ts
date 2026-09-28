@@ -15,11 +15,11 @@ export class RegistryProvider {
   public readonly domain: RegistryDomain;
 
   protected _registries = new Map<AbstractConstructor<any>, ServiceRegistry<any, any[], any>>();
-  private _registryIds = new Map<string, ServiceRegistry<any, any[], any>>();
-  private _lazyRegistries = new Map<string, () => Promise<ServiceRegistry<any, any[], any>>>();
-  private _inflightRegistries = new Map<string, Promise<ServiceRegistry<any, any[], any>>>();
+  private readonly _registryIds = new Map<string, ServiceRegistry<any, any[], any>>();
+  private readonly _lazyRegistries = new Map<string, () => Promise<ServiceRegistry<any, any[], any>>>();
+  private readonly _inflightRegistries = new Map<string, Promise<ServiceRegistry<any, any[], any>>>();
   /** The namespace (plugin id) each registry was registered under; see {@link registeredBy}. */
-  private _registryOrigins = new Map<string, string>();
+  private readonly _registryOrigins = new Map<string, string>();
 
   /** @param domain the domain this provider's registries are named by, as a plugin registers into it. */
   protected constructor(domain: RegistryDomain) {
@@ -99,7 +99,7 @@ export class RegistryProvider {
     }
 
     const inflight = this._inflightRegistries.get(qualifiedId);
-    if (inflight) {
+    if (inflight !== undefined) {
       return inflight;
     }
 

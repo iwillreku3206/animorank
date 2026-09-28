@@ -128,12 +128,12 @@ export abstract class ServiceRegistry<T, C extends unknown[], S = object> {
 
   private async _resolveLazy(key: string): Promise<Exclude<Service<T, C, S>, { singleton: 'lazy' }> | undefined> {
     const service = this._registry.get(key);
-    if (!service || service.singleton !== 'lazy') {
+    if (service?.singleton !== 'lazy') {
       return service as Exclude<Service<T, C, S>, { singleton: 'lazy' }> | undefined;
     }
 
     const inflight = this._inflight.get(key);
-    if (inflight) {
+    if (inflight !== undefined) {
       return inflight as Promise<Exclude<Service<T, C, S>, { singleton: 'lazy' }>>;
     }
 

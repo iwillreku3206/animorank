@@ -35,8 +35,8 @@
   );
 
   // The aggregates count DISTINCT student_id, so these are people, not runs.
-  const studentsAttempted = $derived(parseInt((problemAttempts || [])[0]?.attempts.toString() || '0') || 0);
-  const studentsSolved = $derived(parseInt((problemSolvers || [])[0]?.solvers.toString() || '0') || 0);
+  const studentsAttempted = $derived(Number.parseInt((problemAttempts || [])[0]?.attempts.toString() || '0') || 0);
+  const studentsSolved = $derived(Number.parseInt((problemSolvers || [])[0]?.solvers.toString() || '0') || 0);
   const passRate = $derived(studentsSolved / (studentsAttempted || 1));
 
   function confirmDelete() {

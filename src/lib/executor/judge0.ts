@@ -141,8 +141,8 @@ export class Judge0Executor extends CodeExecutor {
       exitCode: res.exit_code ?? (res.status.id === 3 ? 0 : 1),
       stdout,
       stderr,
-      cpuTime: Math.round(parseFloat(res.time ?? '0') * 1000),
-      wallTime: Math.round(parseFloat(res.time ?? '0') * 1000),
+      cpuTime: Math.round(Number.parseFloat(res.time ?? '0') * 1000),
+      wallTime: Math.round(Number.parseFloat(res.time ?? '0') * 1000),
       memoryUsage: res.memory ?? undefined
     };
     return {

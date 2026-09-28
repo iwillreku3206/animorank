@@ -24,7 +24,7 @@ export class ApiQueryHandler {
   public query(route: string, params: Record<string, string>): Promise<Record<string, unknown> | undefined> {
     const url = `${this.base}/${route}?${new URLSearchParams(params)}`;
     const known = this.pending.get(url);
-    if (known) return known;
+    if (known !== undefined) return known;
 
     const query = this.fetchBody(url).then((result) => {
       // A request that was not answered may be answerable later, so its entry

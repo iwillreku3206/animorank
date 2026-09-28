@@ -11,7 +11,7 @@ import type { FastifyPluginCallback } from 'fastify';
  */
 class HealthcheckAPI extends ServerAPI {
   public async fastifyPlugin(): Promise<FastifyPluginCallback> {
-    return async (app) => {
+    return (app) => {
       app.get('/healthcheck', async (_request, reply) => reply.type('text/plain').send('OK'));
     };
   }

@@ -212,22 +212,24 @@ export class PluginLoader {
     const loaded: LoadedPlugin[] = [];
 
     await Promise.all(
-      (await fs.readdir(pluginDir)).sort().map(async (dirname) => {
-        const dir = path.join(pluginDir, dirname);
-        let plugin: LoadedPlugin;
-        try {
-          if (!(await fs.stat(dir)).isDirectory()) {
-            logger.warning(`Non-directory detected in plugin directory: ${dirname}`);
+      (await fs.readdir(pluginDir))
+        .sort((a, b) => a.localeCompare(b))
+        .map(async (dirname) => {
+          const dir = path.join(pluginDir, dirname);
+          let plugin: LoadedPlugin;
+          try {
+            if (!(await fs.stat(dir)).isDirectory()) {
+              logger.warning(`Non-directory detected in plugin directory: ${dirname}`);
+              return;
+            }
+            plugin = await this.loadDynamicPlugin(dir);
+          } catch (error) {
+            logger.error(`Failed to load plugin "${dirname}": ${errorMessage(error)}`);
             return;
           }
-          plugin = await this.loadDynamicPlugin(dir);
-        } catch (error) {
-          logger.error(`Failed to load plugin "${dirname}": ${errorMessage(error)}`);
-          return;
-        }
-        await this.initialize(plugin);
-        if (this.register(plugin, logger)) loaded.push(plugin);
-      })
+          await this.initialize(plugin);
+          if (this.register(plugin, logger)) loaded.push(plugin);
+        })
     );
 
     return loaded;
