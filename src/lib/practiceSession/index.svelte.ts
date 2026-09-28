@@ -6,7 +6,6 @@ import type { JsonValue } from '@zenstackhq/orm';
 
 export type PracticeSessionData = {
   code: Record<string, string>;
-  extensionData: Record<string, JsonValue>;
 };
 
 export type PreviousCodeSection = {
@@ -59,7 +58,7 @@ export abstract class PracticeSession {
    * Get all previous code sections as a plain object.
    */
   public getPreviousState(): PracticeSessionData {
-    return (this.model.previous_state as PracticeSessionData) ?? { code: {}, extensionData: {} };
+    return (this.model.previous_state as PracticeSessionData) ?? { code: {} };
   }
 
   /**
@@ -111,5 +110,20 @@ export abstract class PracticeSession {
 
   get updatedAt(): Date {
     return this.model.updated_at;
+  }
+
+  /**
+   * The session's extension data: where a plugin keeps its own state for this
+   * attempt, keyed by its extension id. The counterpart of
+   * `Problem.extension_data`; persisted through the session API (see
+   * `savePracticeSession`), which merges a write into the stored object so a
+   * plugin can send just its own key.
+   */
+  get extension_data(): JsonValue {
+    return this.model.extension_data || {};
+  }
+
+  set extension_data(value: JsonValue) {
+    this.model.extension_data = value;
   }
 }

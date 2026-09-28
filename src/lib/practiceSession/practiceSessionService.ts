@@ -60,7 +60,7 @@ export class PracticeSessionService {
       data: {
         student_id: options.user.id!,
         problem_id: options.problemId,
-        previous_state: { extensionData: {}, code: state } as PracticeSessionData,
+        previous_state: { code: state } as PracticeSessionData,
         done: false
       }
     });
@@ -198,7 +198,13 @@ export class PracticeSessionService {
   }): Promise<ServerPracticeSession | null> {
     const updated = await db.practiceSession.update({
       where: { id: options.id, student_id: options.user.id || '' },
-      data: { ...options.newState, previous_state: options.newState.previous_state || undefined }
+      data: {
+        ...options.newState,
+        // Both are required JSON columns whose model types admit null: null
+        // means "no change", the same convention `ProblemService.update` uses.
+        previous_state: options.newState.previous_state || undefined,
+        extension_data: options.newState.extension_data ?? undefined
+      }
     });
 
     const problem = await (

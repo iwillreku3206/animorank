@@ -7,6 +7,7 @@ import {
   runTestCases,
   submit,
   runCustomInput,
+  savePracticeSession,
   type CustomRunResponse,
   type TestRunResponse
 } from '$lib/practiceSession/api';
@@ -244,16 +245,7 @@ export class SolveWindowContext {
    * accounted for.
    */
   private async saveCode(code: Record<string, string>): Promise<void> {
-    const response = await fetch(`/api/practice-session/${this.practiceSession.id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ code }),
-      headers: { 'content-type': 'application/json' }
-    });
-    // `fetch` only rejects on network failure, so a 4xx/5xx has to be raised by
-    // hand or the autosave would report a failed save as 'saved'.
-    if (!response.ok) {
-      throw new Error(`Failed to save code: ${response.status} ${response.statusText}`);
-    }
+    await savePracticeSession(this.practiceSession.id, { code });
     // The server holds this code now, so advance the client's copy of the
     // session to match. Without this the model keeps the page-load state
     // forever, and anything reseeding from it later reverts the student's work.

@@ -5,6 +5,7 @@ import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
 import type { TestCase } from '$lib/testCase/testCase.svelte';
 import type { Problem } from '$lib/problem';
 import type { ProblemTestCase } from '$lib/zenstack/models';
+import type { JsonValue } from '@zenstackhq/orm';
 import { errorFrom } from '$lib/response';
 
 export type TestRunResponse = {
@@ -12,6 +13,31 @@ export type TestRunResponse = {
   success: boolean;
   recorded?: boolean;
 };
+
+export interface PracticeSessionUpdate {
+  /** The session's code, keyed by slot label. */
+  code?: Record<string, string>;
+  /** Keys to write into the session's extension data; merged with what is stored. */
+  extension_data?: JsonValue;
+}
+
+/**
+ * Persist what the session should hold: the code the student has written, an
+ * extension's own data, or both. Only what is passed is touched.
+ *
+ * Rejects when the write does not land, so a caller that is about to act on the
+ * server's copy of the session -- run, submit -- never mistakes a failed save
+ * for a successful one. `fetch` only rejects on network failure, so a 4xx/5xx
+ * has to be raised by hand.
+ */
+export async function savePracticeSession(sessionId: string, updates: PracticeSessionUpdate): Promise<void> {
+  const response = await fetch(`/api/practice-session/${sessionId}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+    headers: { 'content-type': 'application/json' }
+  });
+  if (!response.ok) throw await errorFrom(response, 'Could not save your session');
+}
 
 async function hydrateResults(
   raw: TestCaseResult<FunctionTestCaseRunInfo>[],

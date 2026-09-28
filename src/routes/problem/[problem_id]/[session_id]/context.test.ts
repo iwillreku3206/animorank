@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SolveWindowContext } from './context.svelte';
 import { runTestCases, submit, type TestRunResponse } from '$lib/practiceSession/api';
+import type * as practiceSessionApi from '$lib/practiceSession/api';
 import { Problem } from '$lib/problem';
 import { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
 import type { Problem as ProblemModel, PracticeSession as PracticeSessionModel } from '$lib/zenstack/models';
@@ -8,7 +9,8 @@ import type { User } from '@auth/sveltekit';
 import { ClientRegistryProvider } from '$lib/registry/client';
 import { TelemetryRegistry, TelemetryService } from '$lib/telemetry';
 
-vi.mock('$lib/practiceSession/api', () => ({
+vi.mock('$lib/practiceSession/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof practiceSessionApi>()),
   runTestCases: vi.fn(),
   submit: vi.fn(),
   runCustomInput: vi.fn()
@@ -47,7 +49,7 @@ const makeSession = (savedCode: Record<string, string>) => {
       problem_id: 'problem-1',
       student_id: 'student-1',
       done: false,
-      previous_state: { code: savedCode, extensionData: {} }
+      previous_state: { code: savedCode }
     } as unknown as PracticeSessionModel,
     problem,
     user
