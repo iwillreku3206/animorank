@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { type monaco } from '$lib/monaco';
   import { browser } from '$app/environment';
   import constrainedEditor from 'constrained-editor-plugin';
@@ -125,32 +125,56 @@
     }
 
     monacoNamespace = import('$lib/monaco').then((module) => {
-      if (!editorContainer) return;
-      const { monaco } = module;
-      const constrained = constrainedEditor(monaco);
-      constrainedInstance = constrained;
-
-      monacoInstance = monaco.editor.create(editorContainer, {
-        ...BASE_MONACO_OPTIONS,
-        ...toMonacoEditorOptions(editorSettings.current),
-        value: code,
-        language
-      });
-
-      monacoModel = monacoInstance.getModel() || undefined;
-
-      monacoInstance.onDidChangeModelContent(() => {
-        code = monacoInstance?.getValue() || '';
-      });
-
-      registerConstrained(slots.map((slot) => ({ label: slot.label, range: slot.initialRange })));
-
-      return monaco;
+      monacoApi = module.monaco;
+      return module.monaco;
     });
-    return () => {
-      monacoInstance?.dispose();
-      monacoModel?.dispose();
-    };
+  });
+
+  /** The loaded Monaco namespace; the editor is created once it and the container exist. */
+  let monacoApi = $state<typeof monaco>();
+
+  /**
+   * Create the editor as soon as both the module and the container exist.
+   * Creating it inside the import callback instead meant a component whose
+   * container was not bound yet (mounting while detached, e.g. a window built
+   * before its panel is attached) bailed out and showed "Loading Editor..."
+   * forever. The `created` flag is deliberately not `$state`: this effect
+   * reads it, and a state write would re-run the effect and tear down the
+   * editor it just made.
+   */
+  let created = false;
+  $effect(() => {
+    const container = editorContainer;
+    const loaded = monacoApi;
+    if (created || !container || !loaded) return;
+    created = true;
+
+    const constrained = constrainedEditor(loaded);
+    constrainedInstance = constrained;
+
+    monacoInstance = loaded.editor.create(container, {
+      ...BASE_MONACO_OPTIONS,
+      ...toMonacoEditorOptions(editorSettings.current),
+      value: code,
+      language
+    });
+
+    if (!monacoInstance) {
+      console.warn('Monaco was not instantiated properly');
+    }
+
+    monacoModel = monacoInstance!.getModel() || undefined;
+
+    monacoInstance!.onDidChangeModelContent(() => {
+      code = monacoInstance?.getValue() || '';
+    });
+
+    registerConstrained(slots.map((slot) => ({ label: slot.label, range: slot.initialRange })));
+  });
+
+  onDestroy(() => {
+    monacoInstance?.dispose();
+    monacoModel?.dispose();
   });
 
   $effect(() => {
@@ -194,12 +218,17 @@
   });
 </script>
 
-<div
-  class="{rest.class} w-full h-full"
-  bind:this={editorContainer}
->
+<div class="{rest.class} relative w-full h-full overflow-hidden">
+  <!-- Monaco measures this layer, and `absolute inset-0` keeps it pinned to the
+       host's box: the editor's own DOM never contributes to the host's height,
+       so an `automaticLayout` pass can never feed back into the next one (the
+       editor resizing its container, which resizes the editor...). -->
+  <div
+    class="absolute inset-0"
+    bind:this={editorContainer}
+  ></div>
   {#if !monacoInstance}
-    <p class="content-center w-full h-full text-grey-400">Loading Editor...</p>
+    <p class="absolute inset-0 content-center text-grey-400">Loading Editor...</p>
   {/if}
 </div>
 

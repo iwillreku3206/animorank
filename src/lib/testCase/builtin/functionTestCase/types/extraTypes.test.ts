@@ -6,7 +6,34 @@ import { VoidType } from './void';
 import { Integer } from './int';
 import { LessThanOperator } from '../operators/less_than';
 import { TypeValue } from '../typeValue.svelte';
+import type { Type } from '../type.svelte';
 import type { JsonValue } from '@zenstackhq/orm';
+
+describe('type display names', () => {
+  it('labels every type as `static (detailed)`, lowercase, with an icon', () => {
+    const cases: Array<[Type, string]> = [
+      [Integer.create(), 'int (int32)'],
+      [new Integer({ size: 64, signed: false }), 'int (uint64)'],
+      [new Integer({ size: 8, signed: true }), 'int (signed int8)'],
+      [Float.create(), 'float (float32)'],
+      [new Float({ size: 64 }), 'float (float64)'],
+      [StringType.create(), 'string (char*)'],
+      [VoidType.create(), 'void (void)'],
+      [Pointer.create(), 'pointer (int32*)'],
+      [new Pointer({ target: Pointer.create() }), 'pointer (int32**)']
+    ];
+
+    for (const [type, name] of cases) {
+      expect(type.displayName).toBe(name);
+      expect(type.displayName).toBe(type.displayName.toLowerCase());
+    }
+
+    // Icons are declared by the type itself, not by an instance's options.
+    for (const typeClass of [Integer, Float, StringType, VoidType, Pointer]) {
+      expect(typeClass.icon).toBeDefined();
+    }
+  });
+});
 
 describe('Integer', () => {
   it('validates integer values against the int32 bounds by default', async () => {
@@ -57,12 +84,12 @@ describe('Float', () => {
     expect(await float.validateValue({ value: '1e999' } as JsonValue)).toBeInstanceOf(Error);
   });
 
-  it('compares with less_than through the operator registry', () => {
+  it('compares with less_than through the operator registry', async () => {
     const op = LessThanOperator.create();
-    const expected = new TypeValue(Float.create(), { value: '2.5' });
-    const actual = new TypeValue(Float.create(), { value: '1.5' });
-    expect(op.compare(expected, actual)).toBe(true); // actual 1.5 < expected 2.5
-    expect(op.compare(actual, expected)).toBe(false); // actual 2.5 < expected 1.5
+    const expected = TypeValue.assumedValid(Float.create(), { value: '2.5' });
+    const actual = TypeValue.assumedValid(Float.create(), { value: '1.5' });
+    expect(await op.compare(expected, actual)).toBe(true); // actual 1.5 < expected 2.5
+    expect(await op.compare(actual, expected)).toBe(false); // actual 2.5 < expected 1.5
   });
 });
 
@@ -76,7 +103,7 @@ describe('StringType', () => {
 
 describe('Pointer', () => {
   it('validates the inner value against the target type', async () => {
-    const pointer = new Pointer({ target: 'int' });
+    const pointer = await Pointer.from({ target: 'int' });
     expect(await pointer.validateValue({ value: '0' } as JsonValue)).toBe(true);
     expect(await pointer.validateValue({ nope: true } as JsonValue)).toBeInstanceOf(Error);
   });

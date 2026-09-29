@@ -1,7 +1,7 @@
 import z from 'zod';
 import type { RequestHandler } from './$types';
 import { error, successObject } from '$lib/response';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { ProblemSetService } from '$lib/problemSet/problemSetService';
 
 const postValidator = z.object({
@@ -18,7 +18,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
   if (!success) return error(400, zodError);
 
-  const problemSetService = ServerServiceProvider.instance().getService(ProblemSetService);
+  const problemSetService = await ServerRegistryProvider.instance().getService(ProblemSetService);
 
   const problemSet = await problemSetService.create({
     title: data.title,
@@ -39,7 +39,7 @@ const listValidator = z.object({
 export const GET: RequestHandler = async ({ locals, url }) => {
   const session = await locals.auth();
 
-  if (!session || !session.user.id) return error(403, 'Unauthorized');
+  if (!session?.user.id) return error(403, 'Unauthorized');
 
   const params = url.searchParams;
   const {
@@ -48,13 +48,13 @@ export const GET: RequestHandler = async ({ locals, url }) => {
     error: zodError
   } = await listValidator.safeParseAsync({
     search: params.get('search'),
-    page: params.get('page') ? parseInt(params.get('page')!, 10) : undefined,
-    pageSize: params.get('pageSize') ? parseInt(params.get('pageSize')!, 10) : undefined
+    page: params.get('page') ? Number.parseInt(params.get('page')!, 10) : undefined,
+    pageSize: params.get('pageSize') ? Number.parseInt(params.get('pageSize')!, 10) : undefined
   });
 
   if (!success) return error(400, zodError);
 
-  const problemSetService = ServerServiceProvider.instance().getService(ProblemSetService);
+  const problemSetService = await ServerRegistryProvider.instance().getService(ProblemSetService);
 
   const result = await problemSetService.findByFilter({
     user: session.user,

@@ -126,6 +126,26 @@ describe('AutoSave', () => {
     expect(autosave.state).toBe('saved');
   });
 
+  it('does not report saved while a newer edit is still debounced', async () => {
+    const server = makeServer();
+    const autosave = new AutoSave<Code>(server.callback, { body: 'start' });
+
+    autosave.save({ body: 'a' });
+    await vi.advanceTimersByTimeAsync(3000); // the write for 'a' is in flight
+    autosave.save({ body: 'b' }); // deferred: the timer is armed, nothing sent
+
+    server.land(0);
+    await flush();
+    // 'a' is on the server, but 'b' is only in the debounce window: calling this
+    // 'saved' is what lets a reload or a navigation drop the edit.
+    expect(autosave.state).toBe('hold');
+
+    await vi.advanceTimersByTimeAsync(3000);
+    server.land(1);
+    await flush();
+    expect(autosave.state).toBe('saved');
+  });
+
   it('awaits an in-flight write instead of sending a duplicate of it', async () => {
     const server = makeServer();
     const autosave = new AutoSave<Code>(server.callback, { body: 'start' });

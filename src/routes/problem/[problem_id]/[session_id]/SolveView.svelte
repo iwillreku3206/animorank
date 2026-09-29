@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, untrack } from 'svelte';
+  import { onDestroy, onMount, untrack } from 'svelte';
   import { createHotkey } from '@tanstack/svelte-hotkeys';
   import { beforeNavigate, goto } from '$app/navigation';
   import DockviewWindow from '$lib/window/DockviewWindow.svelte';
@@ -10,26 +10,49 @@
   import type { DefaultLayout } from '$lib/window/layout';
   import { Problem } from '$lib/problem';
   import { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
+  import { ClientRegistryProvider } from '$lib/registry/client';
+  import { ClientPluginLoader } from '$lib/plugin/clientLoader';
   import { SolveWindowRegistry } from './windowRegistry';
   import { SolveWindowContext } from './context.svelte';
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
 
-  const windowRegistry = new SolveWindowRegistry();
+  const windowRegistry = ClientRegistryProvider.instance().getRegistry(SolveWindowRegistry);
 
   // svelte-ignore state_referenced_locally
   const problem = new Problem(data.problem);
   // svelte-ignore state_referenced_locally
   const practiceSession = new ClientPracticeSession(data.practiceSession, problem, data.user);
 
-  let context = $state(
-    new SolveWindowContext({
-      problem,
-      practiceSession,
-      language: data.problem.language.toLowerCase()
-    })
-  );
+  let context = $state<SolveWindowContext | null>(null);
+
+  // Initialisation must not be reactive, for the same reason as the editor: the
+  // props would become a dependency of the effect, and `context` stays null
+  // while the creation is in flight, so the guard cannot stop a second run.
+  let initializing = false;
+  let destroyed = false;
+
+  // Read once, outside the effect, so the effect has no dependencies at all.
+  const initialValues = {
+    problem,
+    practiceSession,
+
+    // We intentionally capture the initial values here
+    // eslint-disable-next-line svelte/no-unused-svelte-ignore
+    // svelte-ignore state_referenced_locally
+    language: data.problem.language.toLowerCase()
+  };
+
+  $effect(() => {
+    if (initializing || context) return;
+    initializing = true;
+    void SolveWindowContext.create(initialValues).then((created) => {
+      if (destroyed) return;
+      context = created;
+      initializing = false;
+    });
+  });
 
   const defaultLayout: DefaultLayout = {
     panes: [
@@ -47,32 +70,43 @@
 
   let manager: DockviewWindowManager<unknown> | undefined = $state();
 
+  // The dock mounts only once the context exists, so the manager is built with
+  // the real context on its first mount; this effect then hands the context the
+  // manager's `openWindow`, which is what lets windows be opened imperatively.
+  // The plugins that answer this page's hook are told about it here, after
+  // their `openWindow` is usable, and only once.
+  let notified = false;
   $effect(() => {
-    if (manager) {
-      const openWindow = manager.openWindow.bind(manager);
-      context.openWindow = openWindow;
-    }
+    if (!manager || !context) return;
+    context.openWindow = manager.openWindow.bind(manager);
+
+    if (notified) return;
+    notified = true;
+    void ClientPluginLoader.instance().notifyPageHook('onSolvePageLoad', context);
   });
 
   // Debounced autosave: every edit to the code sections queues a save, which the
   // status bar in the editor window reports on.
   $effect(() => {
+    if (!context) return;
     $state.snapshot(context.editorState.codeSections);
-    untrack(() => context.scheduleSave());
+    untrack(() => context?.scheduleSave());
   });
 
-  createHotkey('Control+S', () => context.forceSave());
+  createHotkey('Control+S', () => void context?.forceSave());
 
   let resuming = false;
   beforeNavigate((navigation) => {
-    if (resuming || navigation.type === 'leave' || !navigation.to) return;
+    // No context yet means nothing has been edited: nothing to flush, and the
+    // navigation is safe to let through.
+    if (!context || resuming || navigation.type === 'leave' || !navigation.to) return;
     if (context.saveState === 'saved') return;
 
     navigation.cancel();
     const { href } = navigation.to.url;
 
-    void context.forceSave().then(() => {
-      if (context.saveState === 'error' && !window.confirm('Your latest changes could not be saved. Leave anyway?')) {
+    void context!.forceSave().then(() => {
+      if (context!.saveState === 'error' && !window.confirm('Your latest changes could not be saved. Leave anyway?')) {
         return;
       }
       resuming = true;
@@ -95,42 +129,48 @@
 
   onMount(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (untrack(() => context.saveState) !== 'saved') {
+      if (!context || untrack(() => context!.saveState) !== 'saved') {
         e.preventDefault();
-        e.returnValue = '';
+        return '';
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   });
+
+  onDestroy(() => {
+    destroyed = true;
+  });
 </script>
 
 <div class="flex flex-1 flex-col min-h-0">
-  <SolveToolbar
-    {context}
-    user={data.user}
-    neighbors={data.neighbors}
-  />
+  {#if context}
+    <SolveToolbar
+      {context}
+      user={data.user}
+      neighbors={data.neighbors}
+    />
 
-  <!-- An attempt that never ran. A failing test reports itself in the results
-       panel; this is the case where there is no result to show. -->
-  {#if context.runError}
-    <Alert class="alert-error mx-2 mt-2 shrink-0 py-2">
-      <span class="text-sm">{context.runError}</span>
-      <Button
-        class="btn-ghost btn-xs"
-        onclick={() => (context.runError = null)}
-      >
-        Dismiss
-      </Button>
-    </Alert>
+    <!-- An attempt that never ran. A failing test reports itself in the results
+         panel; this is the case where there is no result to show. -->
+    {#if context.runError}
+      <Alert class="alert-error mx-2 mt-2 shrink-0 py-2">
+        <span class="text-sm">{context.runError}</span>
+        <Button
+          class="btn-ghost btn-xs"
+          onclick={() => (context!.runError = null)}
+        >
+          Dismiss
+        </Button>
+      </Alert>
+    {/if}
+
+    <DockviewWindow
+      bind:context
+      {windowRegistry}
+      {defaultLayout}
+      storageKey="solve-layout-2026-09-18"
+      bind:manager
+    />
   {/if}
-
-  <DockviewWindow
-    bind:context
-    {windowRegistry}
-    {defaultLayout}
-    storageKey="solve-layout-2026-09-18"
-    bind:manager
-  />
 </div>

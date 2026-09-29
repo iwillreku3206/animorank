@@ -10,7 +10,9 @@ export class NotEqualOperator extends Operator<null> {
     return new NotEqualOperator(null);
   }
 
-  static typeRegistry = new NotEqualOperatorTypeRegistry();
+  static get typeRegistryClass(): typeof NotEqualOperatorTypeRegistry {
+    return NotEqualOperatorTypeRegistry;
+  }
 
   get displayName(): string {
     return '!=';

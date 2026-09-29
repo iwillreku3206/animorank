@@ -1,5 +1,4 @@
-import type { Language } from '$lib/language';
-import { ServiceRegistry, type ClassServiceOf } from '$lib/services/registry';
+import { ServiceRegistry } from '$lib/registry';
 import type { ServerTestCase } from './testCase.server';
 import type { TestCaseLanguage } from './testCaseLanguage.server';
 
@@ -11,9 +10,5 @@ export class TestCaseLanguageRegistry<TC extends ServerTestCase = any> extends S
 > {
   constructor() {
     super();
-  }
-
-  public registerLanguage(language: Language, testCaseLanguage: ClassServiceOf<this>) {
-    this.register(language.id, testCaseLanguage);
   }
 }

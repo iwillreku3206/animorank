@@ -4,7 +4,7 @@ import type { User } from '@auth/sveltekit';
 import { PracticeSession, type PracticeSessionData } from './index.svelte.ts';
 import { Problem } from '$lib/problem';
 import { ProblemService } from '$lib/problem/problemService';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import type { PracticeSession as PracticeSessionModel } from '$lib/zenstack/models';
 import { arrayToHashMap } from '$lib/utils/arrayToHashMap.ts';
 
@@ -29,22 +29,13 @@ export interface FindLatestOptions {
 }
 
 export class PracticeSessionService {
-  private static _instance: PracticeSessionService | null;
-
-  private constructor() {}
-
-  public static instance(): PracticeSessionService {
-    if (!PracticeSessionService._instance) {
-      PracticeSessionService._instance = new PracticeSessionService();
-    }
-    return PracticeSessionService._instance;
-  }
-
   /**
    * Create a new practice session.
    */
   public async create(options: CreateOptions): Promise<ServerPracticeSession | null> {
-    const problem = await ProblemService.instance().findById({
+    const problem = await (
+      await ServerRegistryProvider.instance().getService(ProblemService)
+    ).findById({
       id: options.problemId,
       user: options.user
     });
@@ -69,7 +60,7 @@ export class PracticeSessionService {
       data: {
         student_id: options.user.id!,
         problem_id: options.problemId,
-        previous_state: { extensionData: {}, code: state } as PracticeSessionData,
+        previous_state: { code: state } as PracticeSessionData,
         done: false
       }
     });
@@ -141,7 +132,9 @@ export class PracticeSessionService {
     });
 
     if (practiceSession) {
-      const problem = await ProblemService.instance().findById({
+      const problem = await (
+        await ServerRegistryProvider.instance().getService(ProblemService)
+      ).findById({
         id: practiceSession.problem_id,
         user: options.user
       });
@@ -153,7 +146,9 @@ export class PracticeSessionService {
       return new ServerPracticeSession(practiceSession, problem, options.user);
     }
 
-    const problem = await ProblemService.instance().findById({
+    const problem = await (
+      await ServerRegistryProvider.instance().getService(ProblemService)
+    ).findById({
       id: options.problemId,
       user: options.user
     });
@@ -203,10 +198,18 @@ export class PracticeSessionService {
   }): Promise<ServerPracticeSession | null> {
     const updated = await db.practiceSession.update({
       where: { id: options.id, student_id: options.user.id || '' },
-      data: { ...options.newState, previous_state: options.newState.previous_state || undefined }
+      data: {
+        ...options.newState,
+        // Both are required JSON columns whose model types admit null: null
+        // means "no change", the same convention `ProblemService.update` uses.
+        previous_state: options.newState.previous_state || undefined,
+        extension_data: options.newState.extension_data ?? undefined
+      }
     });
 
-    const problem = await ProblemService.instance().findById({
+    const problem = await (
+      await ServerRegistryProvider.instance().getService(ProblemService)
+    ).findById({
       id: updated.problem_id,
       user: options.user
     });
@@ -219,7 +222,7 @@ export class PracticeSessionService {
 
 export class ServerPracticeSession extends PracticeSession {
   public async persistPracticeSession(): Promise<void> {
-    const service = ServerServiceProvider.instance().getService(PracticeSessionService);
+    const service = await ServerRegistryProvider.instance().getService(PracticeSessionService);
 
     await service.update({
       id: this.id,

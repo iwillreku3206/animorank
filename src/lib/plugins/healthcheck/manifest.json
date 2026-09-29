@@ -1,0 +1,9 @@
+{
+  "id": "healthcheck",
+  "manifestVersion": "0",
+  "name": "Health Check",
+  "author": "AnimoRank",
+  "version": "1.0.0",
+  "description": "Serves GET /healthcheck, answering OK in plaintext.",
+  "category": ["api"]
+}

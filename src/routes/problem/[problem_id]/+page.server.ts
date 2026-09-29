@@ -1,27 +1,29 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
 import { ProblemService } from '$lib/problem/problemService';
+import { readUuidParam } from '$lib/utils/params';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
   const session = await locals.auth();
 
   if (!session || !session.user.id) redirect(302, '/');
 
-  const serviceProvider = ServerServiceProvider.instance();
-  const problemService = serviceProvider.getService(ProblemService);
-  const practiceSessionService = serviceProvider.getService(PracticeSessionService);
+  const rp = ServerRegistryProvider.instance();
+  const practiceSessionService = await rp.getService(PracticeSessionService);
+  const problemService = await rp.getService(ProblemService);
 
-  const problem = await problemService.findById({ id: params.problem_id, user: session.user });
+  const problemId = readUuidParam(params.problem_id);
+  const problem = await problemService.findById({ id: problemId, user: session.user });
   if (!problem) throw error(404, { message: 'Not Found' });
 
   const practiceSession = await practiceSessionService.findLatestOrCreate({
-    problemId: params.problem_id,
+    problemId,
     user: session.user
   });
 
   if (!practiceSession) throw error(404, { message: 'Not Found' });
 
-  throw redirect(302, `/problem/${params.problem_id}/${practiceSession.id}`);
+  throw redirect(302, `/problem/${problemId}/${practiceSession.id}`);
 };

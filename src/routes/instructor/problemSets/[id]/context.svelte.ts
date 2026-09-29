@@ -1,5 +1,6 @@
 import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
 import type { Tag } from '$lib/zenstack/models';
+import type { OpenWindow } from '$lib/window/dockviewWindowManager';
 import { addProblem, deleteProblem, saveProblem, saveProblemSet } from './api';
 
 /**
@@ -57,6 +58,14 @@ export class ProblemSetEditorWindowContext {
   public problems: EditorProblem[] = $state([]);
   public topics: string[] = $state([]);
   public collaborators: string[] = $state([]);
+
+  /**
+   * Opens (or focuses) one of the editor's windows. This page shows its windows
+   * as tabs rather than in a dockview, so the page assigns a function that
+   * selects the window's tab (see `+page.svelte`); a plugin answering
+   * `onProblemSetEditorLoad` uses it to bring forward the window it contributes.
+   */
+  public openWindow: OpenWindow = async () => {};
 
   private readonly autosave: AutoSave<ProblemSetDraft>;
   private readonly _cleanup: () => void;

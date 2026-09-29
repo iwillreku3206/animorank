@@ -6,13 +6,20 @@
   import TypeEditor from './TypeEditor.svelte';
   import TextInput from '$lib/components/ui/inputs/TextInput.svelte';
   import Button from '$lib/components/ui/buttons/Button.svelte';
+  import { GlobalRegistryProvider } from '$lib/registry/global';
   import { TypeRegistry } from './typeRegistry';
 
   const context = getProblemEditorContext();
   const data = $derived(context.functionData);
 
-  const typeRegistry = TypeRegistry.instance();
-  const availableTypes = $derived([...typeRegistry.keys()]);
+  const typeRegistry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
+
+  // Parameters and return types offer every registered type, so plugins that
+  // add types load before the list is built.
+  let availableTypes = $state<string[]>([]);
+  $effect(() => {
+    void typeRegistry.loadKeys().then((keys) => (availableTypes = keys));
+  });
 
   function addParameter(fn: FuncDef) {
     // Default the type immediately: an untyped parameter persisted to

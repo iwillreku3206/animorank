@@ -3,7 +3,7 @@
   import type { TypeValue } from '../../typeValue.svelte';
 
   let { value }: { value: TypeValue<Pointer> } = $props();
-  let targetName = $derived(value.type.targetType.displayName);
+  let targetName = $derived(value.type.targetType.detailedName);
   // The pointee data is the target's value shape (e.g. { value: '5' } for an
   // int target); show the scalar when present so results actually display the
   // compared value.

@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { ServerServiceProvider } from '$lib/services/serverServiceProvider';
+import { ServerRegistryProvider } from '$lib/registry/server';
 import { ProblemSetService } from '$lib/problemSet';
 import { TagService } from '$lib/tag';
 import type { SortOrder, SortType } from '$lib/problemSet/problemSetService';
@@ -12,17 +12,17 @@ const pageSize = 12;
 export const load: PageServerLoad = async ({ locals, url }) => {
   const session = await locals.auth();
 
-  if (!session || !session.user.id) {
+  if (!session?.user.id) {
     redirect(302, '/');
   }
 
-  const problemSetService = ServerServiceProvider.instance().getService(ProblemSetService);
+  const problemSetService = await ServerRegistryProvider.instance().getService(ProblemSetService);
 
   const params = url.searchParams;
   const filters = parseFilters(params);
   const sort = parseSort(params);
   const search = params.get('search') || '';
-  const page = parseInt(params.get('page') || '1') || 1;
+  const page = Number.parseInt(params.get('page') || '1') || 1;
 
   const problemSetsQueryResult = await problemSetService.findByFilter({
     user: session.user,
@@ -60,7 +60,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
   // Load the full tag universe (not just tags present in the current results) so
   // the filter browser always shows every available tag.
-  const tagService = ServerServiceProvider.instance().getService(TagService);
+  const tagService = await ServerRegistryProvider.instance().getService(TagService);
   const allTags = await tagService.findAll();
   const tagGroups = groupBy(allTags, (t) => t.type);
 

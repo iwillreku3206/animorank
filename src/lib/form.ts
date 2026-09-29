@@ -31,8 +31,6 @@ interface TemporalExtra {
 }
 
 interface SelectionExtra {
-  // Legacy class components (e.g. @iconify-svelte) and modern svelte 5
-  // function components are both renderable as dynamic components.
   options:
     | readonly string[]
     | readonly number[]
@@ -70,6 +68,8 @@ export type FormFieldDefinition = {
     label: string;
     type: K;
     default?: InferValueType<K>;
+    /** Optional helper text rendered under the label. */
+    description?: string;
   } & FieldConfigLookup[K];
 }[FormFieldType];
 

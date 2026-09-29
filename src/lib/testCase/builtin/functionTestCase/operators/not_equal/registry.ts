@@ -10,11 +10,13 @@ import { NotEqualString } from '../../types/string/not_equal';
 import { NotEqualPointer } from '../../types/pointer/not_equal';
 
 export class NotEqualOperatorTypeRegistry extends OperatorTypeRegistry<NotEqualOperator> {
+  public id = 'test_case.function.operator.not_equal.type';
+
   constructor() {
     super();
-    this.registerType(Integer.create(), NotEqualInteger);
-    this.registerType(Float.create(), NotEqualFloat);
-    this.registerType(StringType.create(), NotEqualString);
-    this.registerType(Pointer.create(), NotEqualPointer);
+    super.register(Integer.id(), NotEqualInteger);
+    super.register(Float.id(), NotEqualFloat);
+    super.register(StringType.id(), NotEqualString);
+    super.register(Pointer.id(), NotEqualPointer);
   }
 }

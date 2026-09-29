@@ -51,7 +51,7 @@
   const sortBy = $derived(sort.by);
   const sortDesc = $derived(sort.desc);
   const searchApplied = $derived(page.url.searchParams.get('search') || '');
-  const pageNumber = $derived(parseInt(page.url.searchParams.get('page') || '1') || 1);
+  const pageNumber = $derived(Number.parseInt(page.url.searchParams.get('page') || '1') || 1);
   const problemSets = $derived(data.problemSets);
 
   let searchInput = $state(page.url.searchParams.get('search') || '');

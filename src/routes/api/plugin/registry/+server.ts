@@ -1,0 +1,25 @@
+import { error, json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { providerForDomain } from '../domains';
+
+export const prerender = false;
+
+/**
+ * The plugin that registered a registry: `GET /api/plugin/registry?domain=global&id=<registry id>`.
+ * The id may be a registry's qualified id (`plugin:registry-id`) or, when
+ * unambiguous, the registry's own id (`test_case.function.type`).
+ */
+export const GET: RequestHandler = async (event) => {
+  const id = event.url.searchParams.get('id');
+  if (!id) {
+    error(400, 'Missing required query parameter "id"');
+  }
+
+  const { domain, provider } = await providerForDomain(event);
+  const plugin = provider.registeredBy(id);
+  if (!plugin) {
+    error(404, `No registry "${id}" is registered in the ${domain} domain`);
+  }
+
+  return json({ plugin, domain, id });
+};

@@ -12,6 +12,8 @@
 
 */
 -- DeleteData
+-- Intentional and irreversible: see the note above. This clears only rows
+-- recorded before `full_code` existed, which predate the feature's release.
 DELETE FROM "Submission";
 
 -- AlterTable

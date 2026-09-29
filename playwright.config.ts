@@ -10,7 +10,7 @@ const config: PlaywrightTestConfig = {
     env: { ...process.env, SSL_DEV_SERVER: 'false' }
   },
   testDir: 'tests',
-  testMatch: /(.+\.)?(test|spec)\.[jt]s/
+  testMatch: /(test|spec)\.[jt]s/
 };
 
 export default config;

@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 import { db } from '$lib/zenstack';
 import { groupBy } from '$lib/utils/groupBy';
 import { problemOrderInSet } from '$lib/problem/problemService';
+import { readUuidParam } from '$lib/utils/params';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
   const session = await locals.auth();
@@ -11,7 +12,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   const problemSet = await db.problemSet.findUnique({
     where: {
-      id: params.id,
+      id: readUuidParam(params.id),
       OR: [
         { is_global: true },
         { collaborators: { some: { collaborator_id: session.user.id } } },
@@ -76,7 +77,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
     : {};
 
   const bookmarked = !!(await db.problemSetBookmark.findUnique({
-    where: { problem_set_id_user_id: { problem_set_id: params.id, user_id: session.user.id } }
+    where: { problem_set_id_user_id: { problem_set_id: readUuidParam(params.id), user_id: session.user.id } }
   }));
 
   return {

@@ -1,4 +1,4 @@
-import { ServiceRegistry } from '$lib/services/registry';
+import { ServiceRegistry } from '$lib/registry';
 import type { Tag as TagModel } from '$lib/zenstack/models';
 import { Tag } from './Tag';
 import type { SubjectTagCreateOptions, SubjectTagUpdateOptions } from './SubjectTag';
@@ -22,6 +22,8 @@ export class TagRegistry extends ServiceRegistry<
     findAll(): Promise<TagModel[]>;
   }
 > {
+  public id = 'tag';
+
   public constructor() {
     super();
     this.register('SubjectTag', SubjectTag);

@@ -103,18 +103,18 @@
    * TypeValues out, TestCase attached — so the stories hand the display the
    * same objects it gets in production.
    */
-  function result(
+  async function result(
     testCaseModel: ProblemTestCase,
     runInfo: unknown,
     success: boolean,
     extra: { failureReason?: string; compilerOutput?: string } = {}
-  ): Result {
-    const testCase = new FunctionTestCase(testCaseModel, problem);
+  ): Promise<Result> {
+    const testCase = await FunctionTestCase.from(testCaseModel, problem);
     return {
       success,
       testCaseInfo: { ...testCaseModel, public: true },
       ...extra,
-      runInfo: testCase.hydrateRunInfo(runInfo as FunctionTestCaseRunInfo),
+      runInfo: await testCase.hydrateRunInfo(runInfo as FunctionTestCaseRunInfo),
       testCase
     } as unknown as Result;
   }
@@ -122,13 +122,13 @@
   const equal = op('equal');
   const square = (n: string) => [{ name: 'n', value: n }];
 
-  const passed = result(
+  const passed = await result(
     model('fn1', square('5'), [def('return', equal, '25')]),
     { comparisons: [cmp('return', '25', '25', true)] },
     true
   );
 
-  const wrongAnswer = result(
+  const wrongAnswer = await result(
     model('fn1', square('7'), [def('return', equal, '49')]),
     { comparisons: [cmp('return', '49', '14', false)] },
     false
@@ -136,13 +136,13 @@
 
   // The case the operator work exists for: "Expected 49" would read as a
   // broken equality test when the assertion is actually "> 49".
-  const greaterThan = result(
+  const greaterThan = await result(
     model('fn1', square('7'), [def('return', op('greater_than'), '49')]),
     { comparisons: [cmp('return', '49', '14', false)] },
     false
   );
 
-  const withinRange = result(
+  const withinRange = await result(
     model('fn1', square('5'), [def('return', op('within_range', { range: '2' }), '25')]),
     { comparisons: [cmp('return', '25', '26', true)] },
     true
@@ -150,7 +150,7 @@
 
   // Every branch of label(): a named parameter, a bare return, and a
   // numbered return — with passing and failing rows side by side.
-  const multipleComparisons = result(
+  const multipleComparisons = await result(
     model('fn1', square('3'), [
       def('param0', equal, '3'),
       def('return', equal, '9'),
@@ -162,7 +162,7 @@
     false
   );
 
-  const multiArgument = result(
+  const multiArgument = await result(
     model(
       'fn2',
       [
@@ -177,7 +177,7 @@
 
   // Both name sources blank — the case that produced an empty row label
   // before the positional fallback. param1 is the *second* parameter.
-  const unnamedParameters = result(
+  const unnamedParameters = await result(
     model(
       'fn2',
       [
@@ -190,22 +190,26 @@
     false
   );
 
-  const noComparisons = result(model('fn1', square('5'), []), { comparisons: [] }, true);
+  const noComparisons = await result(model('fn1', square('5'), []), { comparisons: [] }, true);
 
   const failing = (runInfo: unknown, extra = {}) =>
     result(model('fn1', square('5'), [def('return', equal, '25')]), runInfo, false, extra);
 
-  const compileError = failing(
+  const compileError = await failing(
     { failure: 'compile_error' },
     {
       compilerOutput:
         'main.c: In function "square":\nmain.c:3:5: error: expected ";" before "}" token\n    3 |     return n * n\n      |     ^'
     }
   );
-  const runtimeError = failing({ failure: 'run_error', exitCode: 139, stderr: 'Segmentation fault (core dumped)' });
-  const timedOut = failing({ failure: 'timeout' });
-  const outputNotGenerated = failing({ failure: 'output_not_generated' });
-  const withFailureReason = failing(
+  const runtimeError = await failing({
+    failure: 'run_error',
+    exitCode: 139,
+    stderr: 'Segmentation fault (core dumped)'
+  });
+  const timedOut = await failing({ failure: 'timeout' });
+  const outputNotGenerated = await failing({ failure: 'output_not_generated' });
+  const withFailureReason = await failing(
     { failure: 'run_error', exitCode: 1 },
     { failureReason: 'Execution was terminated by the grader.' }
   );

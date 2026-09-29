@@ -12,6 +12,8 @@ model PracticeSession {
   done                     Boolean               @default(false)
   previous_state           Json                  @default("{}")
 
+  extension_data           Json                  @default("{}")
+
   created_at               DateTime              @default(now()) @db.Timestamptz(6)
   updated_at               DateTime              @updatedAt @db.Timestamptz(6)
 

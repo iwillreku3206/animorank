@@ -65,7 +65,7 @@ export function parseFileOutputs(stdout: Buffer): File[] {
 }
 
 export class Judge0Executor extends CodeExecutor {
-  static id = 'default'; // CodeExecutorRegistry.registerCodeExecutor keys by this; ServiceProvider.getService(CodeExecutor) → getDefault() → 'default'
+  static id = 'default'; // CodeExecutorRegistry's constructor registers this class under its static `id`; RegistryProvider.getService(CodeExecutor) → getDefault() → 'default'
   static languages(): Language[] {
     return [new CLanguage()];
   }
@@ -141,8 +141,8 @@ export class Judge0Executor extends CodeExecutor {
       exitCode: res.exit_code ?? (res.status.id === 3 ? 0 : 1),
       stdout,
       stderr,
-      cpuTime: Math.round(parseFloat(res.time ?? '0') * 1000),
-      wallTime: Math.round(parseFloat(res.time ?? '0') * 1000),
+      cpuTime: Math.round(Number.parseFloat(res.time ?? '0') * 1000),
+      wallTime: Math.round(Number.parseFloat(res.time ?? '0') * 1000),
       memoryUsage: res.memory ?? undefined
     };
     return {

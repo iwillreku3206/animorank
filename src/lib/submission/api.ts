@@ -38,7 +38,7 @@ export async function fetchSubmissions(
   if (options.limit !== undefined) query.set('limit', String(options.limit));
   if (options.before !== undefined) query.set('before', options.before);
 
-  const suffix = query.size > 0 ? `?${query}` : '';
+  const suffix = query.toString() ? `?${query}` : '';
   const response = await fetch(`/api/problem/${problem_id}/submissions${suffix}`);
   if (!response.ok) throw await errorFrom(response, 'Failed to load submissions');
 

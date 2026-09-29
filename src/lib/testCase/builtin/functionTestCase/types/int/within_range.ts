@@ -4,7 +4,7 @@ import { OperatorType } from '../../operatorType';
 import type { TypeValue } from '../../typeValue.svelte';
 
 export class WithinRangeInteger extends OperatorType<WithinRangeOperator, Integer> {
-  public compare(expected: TypeValue<Integer>, actual: TypeValue<Integer>): boolean {
+  public async compare(expected: TypeValue<Integer>, actual: TypeValue<Integer>): Promise<boolean> {
     const range = Number(this.options.range);
     if (!Number.isInteger(range)) {
       // The schema guarantees a non-negative numeric string, but a

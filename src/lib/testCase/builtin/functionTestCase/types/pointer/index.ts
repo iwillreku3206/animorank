@@ -1,6 +1,8 @@
 import { type Form } from '$lib/form';
+import type { ComponentType } from 'svelte';
 import type { JsonValue } from '@zenstackhq/orm';
 import type { IntoJsonValue } from '$lib/types/utils';
+import { GlobalRegistryProvider } from '$lib/registry/global';
 import { Type, TypeSchema } from '../../type.svelte';
 import type { ValueDisplay, ValueEditor } from '../../types';
 import { TypeRegistry } from '../../typeRegistry';
@@ -8,6 +10,8 @@ import { TypeValue } from '../../typeValue.svelte';
 import type z from 'zod';
 import PointerDisplay from './PointerDisplay.svelte';
 import PointerEditor from './PointerEditor.svelte';
+import ArrowPointerIcon from '@iconify-svelte/fa6-solid/arrow-pointer';
+import { Integer } from '../int';
 import { VoidType } from '../void';
 
 /**
@@ -22,7 +26,7 @@ function buildPointerOptions(): Form {
         label: 'Pointed To Type',
         type: 'typeEditor',
         excludeTypeIds: [VoidType.id()],
-        default: TypeRegistry.instance().getStatic('int').create()
+        default: Integer.create()
       }
     }
   };
@@ -32,23 +36,25 @@ function buildPointerOptions(): Form {
  * Hydrate the target type from whatever the options carry: a Type instance
  * (in-memory), a type id (legacy wire), or a serialized type `{type, options}`.
  */
-function normalizeTarget(target: unknown): Type {
+async function resolveTarget(target: unknown): Promise<Type> {
   if (target instanceof Type) return target;
   if (typeof target === 'string') {
     try {
-      return TypeRegistry.instance().getStatic(target).create();
+      return (await GlobalRegistryProvider.instance().getRegistry(TypeRegistry).getStatic(target)).create();
     } catch {
       // fall through to the default
     }
   }
   if (target !== null && typeof target === 'object' && 'type' in target) {
     try {
-      return TypeRegistry.instance().from(target as z.infer<typeof TypeSchema>);
+      return await GlobalRegistryProvider.instance()
+        .getRegistry(TypeRegistry)
+        .from(target as z.infer<typeof TypeSchema>);
     } catch {
       // fall through to the default
     }
   }
-  return TypeRegistry.instance().getStatic('int').create();
+  return Integer.create();
 }
 
 export class Pointer extends Type<JsonValue, Form, { target: Type }> {
@@ -57,12 +63,24 @@ export class Pointer extends Type<JsonValue, Form, { target: Type }> {
   }
 
   static create() {
-    return new Pointer({ target: TypeRegistry.instance().getStatic('int').create() });
+    // Direct class reference (not the registry), so construction stays synchronous.
+    return new Pointer({ target: Integer.create() });
+  }
+
+  /**
+   * Canonical hydration from serialized (or in-memory) options: resolves a
+   * raw/legacy target through the registry. The sync constructor cannot
+   * resolve types, so it only accepts live Type instances.
+   */
+  public static async from(options: IntoJsonValue | { target?: Type | string | unknown }): Promise<Pointer> {
+    const raw = options !== null && typeof options === 'object' && 'target' in options ? options.target : undefined;
+    const target = await resolveTarget(raw);
+    return new Pointer({ target });
   }
 
   constructor(options: IntoJsonValue | { target?: Type }) {
     const target = options !== null && typeof options === 'object' && 'target' in options ? options.target : undefined;
-    super({ target: normalizeTarget(target) });
+    super({ target: target instanceof Type ? target : Integer.create() });
   }
 
   /**
@@ -81,27 +99,29 @@ export class Pointer extends Type<JsonValue, Form, { target: Type }> {
   }
 
   public defaultValue(): TypeValue<this> {
-    return new TypeValue(this, this.targetType.defaultValue().value);
+    return TypeValue.assumedValid(this, this.targetType.defaultValue().value);
   }
 
-  get displayName(): string {
-    return 'Pointer';
+  get staticName(): string {
+    return 'pointer';
   }
+
+  /** The C spelling: the target's detail followed by its pointer star. */
+  get detailedName(): string {
+    return `${this.targetType.detailedName}*`;
+  }
+
+  static icon: ComponentType = ArrowPointerIcon;
 
   get optionsForm() {
     return buildPointerOptions();
   }
 
-  // Unlike the leaf types, Pointer adds public members of its own (targetType),
-  // so `this`-typed getters could not satisfy the base's ValueEditor<this>
-  // slots under Svelte's contravariant Component props; type them against the
-  // base Type instead (the components still receive the concrete value at
-  // runtime).
-  get valueDisplay(): ValueDisplay<Type> {
-    return PointerDisplay as unknown as ValueDisplay<Type>;
+  get valueDisplay(): ValueDisplay {
+    return PointerDisplay as unknown as ValueDisplay;
   }
 
-  get valueForm(): ValueEditor<Type> {
-    return PointerEditor as unknown as ValueEditor<Type>;
+  get valueForm(): ValueEditor {
+    return PointerEditor as unknown as ValueEditor;
   }
 }

@@ -9,6 +9,7 @@
     windowRegistry,
     storageKey,
     defaultLayout,
+    // eslint-disable-next-line no-useless-assignment -- the parent's `bind:manager` reads it
     manager = $bindable()
   }: {
     context: unknown;
@@ -23,14 +24,21 @@
 
   let root: HTMLDivElement | undefined = $state();
 
-  onMount(() => {
+  // Tracked locally as well: the bindable is published only once the dock
+  // exists, so a parent effect cannot hand `openWindow` to a plugin while the
+  // manager has nothing to open into.
+  let created: DockviewWindowManager<unknown> | undefined;
+
+  onMount(async () => {
     const options: DockviewWindowManagerOptions = { storageKey, defaultLayout };
-    manager = new DockviewWindowManager(context, windowRegistry, options);
-    manager.attach(root!);
+    created = new DockviewWindowManager(context, windowRegistry, options);
+    await created.attach(root!);
+    // Published only once the dock exists: `openWindow` is a no-op until then.
+    manager = created;
   });
 
   onDestroy(() => {
-    manager?.destroy();
+    created?.destroy();
   });
 </script>
 

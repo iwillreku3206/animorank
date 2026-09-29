@@ -31,9 +31,10 @@
    * and routinely the empty string, so blanks are normalised away here rather
    * than being mistaken for names downstream.
    */
-  const parameterNames = $derived.by(() => {
+  const parameterNames = $derived.by(async () => {
     if (!testCase) return [];
-    const definition = testCase.problem.functionData.functions[testCase.data.function];
+    const functionData = await testCase.problem.functionData();
+    const definition = functionData.functions[testCase.data.function];
     return testCase.data.parameters.map(
       (parameter, i) => definition?.parameters[i]?.name?.trim() || parameter.name?.trim() || ''
     );
@@ -45,14 +46,14 @@
   // the same return value).
   const operators = $derived(testCase?.data.comparisons.map((c) => c.operator.describeExpectation) ?? []);
 
-  function label(symbol: string): string {
+  async function label(symbol: string): Promise<string> {
     if (symbol === 'return') return 'Return value';
     const param = symbol.match(/^param(\d+)$/);
     if (param) {
       const index = Number(param[1]);
       // Counted from 1, matching how the parameter reads in a signature —
       // `param1` is the second one.
-      return parameterNames[index] || `Parameter ${index + 1}`;
+      return (await parameterNames)[index] || `Parameter ${index + 1}`;
     }
     const ret = symbol.match(/^return(\d+)$/);
     if (ret) return `Return value ${ret[1]}`;
@@ -109,7 +110,7 @@
         {@const Actual = displayFor(comparison.actual)}
         <div class="flex flex-col gap-2">
           <div class="flex flex-row items-center gap-1.5">
-            <span class="text-xs font-medium tracking-wide text-base-content/50">{label(comparison.symbol)}</span>
+            <span class="text-xs font-medium tracking-wide text-base-content/50">{await label(comparison.symbol)}</span>
             {#if comparison.result}
               <CircleCheckIcon
                 class="h-3 w-3 text-success"

@@ -61,6 +61,12 @@ export class SchemaType implements SchemaDef {
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("{}") }] }] as readonly AttributeApplication[],
                     default: "{}" as FieldDefault
                 },
+                extension_data: {
+                    name: "extension_data",
+                    type: "Json",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("{}") }] }] as readonly AttributeApplication[],
+                    default: "{}" as FieldDefault
+                },
                 created_at: {
                     name: "created_at",
                     type: "DateTime",

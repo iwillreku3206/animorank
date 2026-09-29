@@ -29,3 +29,4 @@ skills-lock.json
 backups/
 *storybook.log
 storybook-static
+/.scannerwork

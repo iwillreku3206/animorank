@@ -4,17 +4,23 @@ import type { TestCaseResult } from '$lib/testCase/types';
 import type { ProblemTestCase as TestCaseModel } from '$lib/zenstack/models';
 import {
   FunctionTestCase,
-  FunctionTestCaseDataSchema,
+  getFunctionTestCaseDataSchema,
   type FunctionTestCaseData,
   type FunctionTestCaseRunInfo
 } from './functionTestCase.svelte';
 import { FunctionTestCaseLanguageRegistry } from './languageRegistry';
 
 export class ServerFunctionTestCase extends ServerTestCase<FunctionTestCaseData, FunctionTestCaseRunInfo> {
-  static languageRegistry = new FunctionTestCaseLanguageRegistry();
-  public static dataSchema = FunctionTestCaseDataSchema;
-  public constructor(model: TestCaseModel, problem: Problem) {
-    super(new FunctionTestCase(model, problem));
+  static languageRegistryClass = FunctionTestCaseLanguageRegistry;
+  public static get dataSchema() {
+    return getFunctionTestCaseDataSchema();
+  }
+  public static async from(model: TestCaseModel, problem: Problem): Promise<ServerFunctionTestCase> {
+    return new ServerFunctionTestCase(model, problem, await FunctionTestCase.from(model, problem));
+  }
+
+  public constructor(model: TestCaseModel, problem: Problem, testCase?: FunctionTestCase) {
+    super(testCase ?? new FunctionTestCase(model, problem));
   }
   public static id() {
     return 'function';

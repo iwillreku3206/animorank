@@ -10,11 +10,13 @@ import { EqualString } from '../../types/string/equal';
 import { EqualPointer } from '../../types/pointer/equal';
 
 export class EqualOperatorTypeRegistry extends OperatorTypeRegistry<EqualOperator> {
+  public id = 'test_case.function.operator.equal.type';
+
   constructor() {
     super();
-    this.registerType(Integer.create(), EqualInteger);
-    this.registerType(Float.create(), EqualFloat);
-    this.registerType(StringType.create(), EqualString);
-    this.registerType(Pointer.create(), EqualPointer);
+    super.register(Integer.id(), EqualInteger);
+    super.register(Float.id(), EqualFloat);
+    super.register(StringType.id(), EqualString);
+    super.register(Pointer.id(), EqualPointer);
   }
 }

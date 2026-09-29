@@ -1,9 +1,11 @@
 import { ConsoleLogger } from '$lib/logging/console';
 import { FileLogger } from '$lib/logging/file';
 import type { Logger } from '$lib/logging/logger';
-import { ServiceRegistry } from '$lib/services/registry';
+import { ServiceRegistry } from '$lib/registry';
 
 export class LoggerRegistry extends ServiceRegistry<Logger, [string]> {
+  public id = 'logging';
+
   public constructor() {
     super();
 
@@ -11,7 +13,7 @@ export class LoggerRegistry extends ServiceRegistry<Logger, [string]> {
     this.register('file', FileLogger);
   }
 
-  public getDefault(module: string): Logger {
+  public async getDefault(module: string): Promise<Logger> {
     let logger = process.env.LOGGER_TYPE || 'console';
     if (!this._registry.has(logger)) {
       logger = 'console';

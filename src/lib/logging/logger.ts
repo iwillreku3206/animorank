@@ -27,25 +27,41 @@ export abstract class Logger {
     this.module = module;
   }
 
-  protected abstract log(message: Loggable): void;
+  protected abstract log(message: Loggable): void | Promise<void>;
 
   public debug(message: string) {
-    this.log({ level: LogLevel.DEBUG, message });
+    this.emit({ level: LogLevel.DEBUG, message });
   }
 
   public info(message: string) {
-    this.log({ level: LogLevel.INFO, message });
+    this.emit({ level: LogLevel.INFO, message });
   }
 
   public warning(message: string) {
-    this.log({ level: LogLevel.WARNING, message });
+    this.emit({ level: LogLevel.WARNING, message });
   }
 
   public error(message: string) {
-    this.log({ level: LogLevel.ERROR, message });
+    this.emit({ level: LogLevel.ERROR, message });
   }
 
   public critical(message: string) {
-    this.log({ level: LogLevel.CRITICAL, message });
+    this.emit({ level: LogLevel.CRITICAL, message });
+  }
+
+  /**
+   * A logger must not be able to take the process down: a file logger's append
+   * can reject long after the call that asked for it returned, and an
+   * unhandled rejection exits the process under Node's default policy.
+   */
+  private emit(message: Loggable): void {
+    try {
+      const result = this.log(message);
+      if (result instanceof Promise) {
+        result.catch((error) => console.error(`Logger "${this.module}" failed`, error));
+      }
+    } catch (error) {
+      console.error(`Logger "${this.module}" failed`, error);
+    }
   }
 }

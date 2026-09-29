@@ -10,7 +10,9 @@ export class EqualOperator extends Operator<null> {
     return new EqualOperator(null);
   }
 
-  static typeRegistry = new EqualOperatorTypeRegistry();
+  static get typeRegistryClass(): typeof EqualOperatorTypeRegistry {
+    return EqualOperatorTypeRegistry;
+  }
 
   get displayName(): string {
     return '=';

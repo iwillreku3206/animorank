@@ -11,7 +11,7 @@ import {
 import { CustomTestCaseLanguageRegistry } from './languageRegistry';
 
 export class ServerCustomTestCase extends ServerTestCase<CustomTestCaseData, CustomTestCaseRunInfo> {
-  static languageRegistry = new CustomTestCaseLanguageRegistry();
+  static languageRegistryClass = CustomTestCaseLanguageRegistry;
   public static dataSchema = CustomTestCaseDataSchema;
   public constructor(model: TestCaseModel, problem: Problem) {
     super(new CustomTestCase(model, problem));

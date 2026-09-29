@@ -1,4 +1,4 @@
-import { ServiceRegistry } from '$lib/services/registry';
+import { ServiceRegistry } from '$lib/registry';
 import { OperatorSchema, type Operator } from './operator.svelte';
 import type { OperatorTypeRegistry } from './operatorTypeRegistry';
 import { LessThanOperator } from './operators/less_than';
@@ -9,26 +9,22 @@ import { EqualOperator } from './operators/equal';
 import { NotEqualOperator } from './operators/not_equal';
 import { WithinRangeOperator } from './operators/within_range';
 import type z from 'zod';
+import type { IntoJsonValue } from '$lib/types/utils';
 
 export class OperatorRegistry extends ServiceRegistry<
   Operator,
-  [any],
+  // This is handled at runtime, operators should check if the data is valid.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [IntoJsonValue | any],
   {
     id(): string;
     create(): Operator;
-    typeRegistry: OperatorTypeRegistry<Operator>;
+    typeRegistryClass: new () => OperatorTypeRegistry<Operator>;
   }
 > {
-  private static _instance: OperatorRegistry | null;
+  public id = 'test_case.function.operator';
 
-  public static instance(): OperatorRegistry {
-    if (!OperatorRegistry._instance) {
-      OperatorRegistry._instance = new OperatorRegistry();
-    }
-    return OperatorRegistry._instance;
-  }
-
-  private constructor() {
+  constructor() {
     super();
     this.register('less_than', LessThanOperator);
     this.register('less_than_equal', LessThanEqualOperator);
@@ -39,7 +35,7 @@ export class OperatorRegistry extends ServiceRegistry<
     this.register('within_range', WithinRangeOperator);
   }
 
-  public from(serialized: z.infer<typeof OperatorSchema>) {
+  public async from(serialized: z.infer<typeof OperatorSchema>): Promise<Operator> {
     return this.getInstance(serialized.type, serialized.options);
   }
 }

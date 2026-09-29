@@ -35,7 +35,7 @@
    */
   const WORKSPACE_ROUTES = new Set(['/problem/[problem_id]/[session_id]', '/edit/[slug]']);
 
-  const isWorkspace = $derived(WORKSPACE_ROUTES.has(page.route.id ?? ''));
+  const isWorkspace = $derived(!page.error && WORKSPACE_ROUTES.has(page.route.id ?? ''));
 </script>
 
 <div class="flex flex-col min-h-screen bg-base-300 text-base-content">
