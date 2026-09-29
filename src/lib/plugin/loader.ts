@@ -210,6 +210,11 @@ export class PluginLoader {
   public async loadDynamicPlugins(pluginDir: string): Promise<LoadedPlugin[]> {
     const logger = await this.getLogger();
     const loaded: LoadedPlugin[] = [];
+    // Ids already loaded, plus the ones this call has claimed. A duplicate is
+    // skipped before its `init` runs: registrations are namespaced by the
+    // plugin's own id, so a second `init` under the same id re-registers the
+    // same keys and the collision rejects the whole load.
+    const seen = new Set(this.plugins.keys());
 
     await Promise.all(
       (await fs.readdir(pluginDir))
@@ -227,6 +232,12 @@ export class PluginLoader {
             logger.error(`Failed to load plugin "${dirname}": ${errorMessage(error)}`);
             return;
           }
+          const { id } = plugin.manifest;
+          if (seen.has(id)) {
+            logger.warning(`Skipping plugin "${id}": a plugin with this id is already loaded`);
+            return;
+          }
+          seen.add(id);
           await this.initialize(plugin);
           if (this.register(plugin, logger)) loaded.push(plugin);
         })
@@ -305,10 +316,18 @@ export class PluginLoader {
 
   /** Initialize the given descriptors in order; a plugin that cannot initialize aborts the load. */
   private async initializePrebuilt(plugins: PrebuiltPluginDescriptor[]): Promise<LoadedPlugin[]> {
+    const logger = await this.getLogger();
     const initialized: LoadedPlugin[] = [];
+    const seen = new Set(this.plugins.keys());
 
     for (const { manifest, server } of plugins) {
-      const plugin = new LoadedPlugin('prebuilt', PluginManifestSchema.parse(manifest), new Map(), server);
+      const parsed = PluginManifestSchema.parse(manifest);
+      if (seen.has(parsed.id)) {
+        logger.warning(`Skipping plugin "${parsed.id}": a plugin with this id is already loaded`);
+        continue;
+      }
+      seen.add(parsed.id);
+      const plugin = new LoadedPlugin('prebuilt', parsed, new Map(), server);
       await this.initialize(plugin);
       initialized.push(plugin);
     }

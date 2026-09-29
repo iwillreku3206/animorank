@@ -110,6 +110,9 @@
     for (const id of await windowRegistry.loadKeys()) {
       if (windowMap[id]) continue;
       windowMap[id] = await windowRegistry.getInstance(id, context);
+      // A key seeded into `tabs` from `keys()` above is already in the strip;
+      // pushing it again duplicates the keyed each's key.
+      if (tabs.some((tab) => tab.id === id)) continue;
       tabs.push({ id, title: (await windowRegistry.getStatic(id)).title });
     }
   }

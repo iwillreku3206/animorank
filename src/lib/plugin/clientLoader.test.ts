@@ -389,4 +389,44 @@ describe('ClientPluginLoader page hooks', () => {
     expect(consoleError).not.toHaveBeenCalled();
     consoleError.mockRestore();
   });
+
+  it('still answers the page when a plugin mid-load fails', async () => {
+    serve('healthy-solver', hookingPlugin('healthy-solver', ['onSolvePageLoad']));
+    serve(
+      'broken-solver',
+      "export default class BrokenPlugin {\n  async init() { throw new Error('the plugin failed'); }\n}\n"
+    );
+
+    let importStarted!: () => void;
+    const started = new Promise<void>((resolve) => (importStarted = resolve));
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+
+    const plugins = new ClientPluginLoader({
+      routeBase: `${origin}/plugins`,
+      importModule: async (url) => {
+        if (url.includes('broken-solver')) {
+          // The loader registers the load before it reaches the importer, so a
+          // pending entry exists as soon as this runs.
+          importStarted();
+          await gate;
+        }
+        return browserImport(url);
+      }
+    });
+
+    await plugins.getPlugin('healthy-solver');
+    const failing = plugins.getPlugin('broken-solver').catch(() => undefined);
+    await started;
+
+    // The failing load is still pending when the page asks for its hook: the
+    // failure must neither reject this call nor keep the other plugins from
+    // answering it.
+    const notified = plugins.notifyPageHook('onSolvePageLoad', solvePage);
+    release();
+    await expect(notified).resolves.toBeUndefined();
+
+    expect(hookCalls()).toContain('healthy-solver:onSolvePageLoad:the solve page');
+    await failing;
+  });
 });

@@ -132,7 +132,11 @@ export class AutoSave<T> {
       // A newer write may still be queued behind this one, and calling that
       // 'saved' would tell the student their latest keystrokes are persisted
       // while they are still on the wire.
-      if (this.outstanding === 0) this.state = 'saved';
+      //
+      // A scheduled-but-unsent write is not on the server yet either, so a
+      // timer still armed means this is not 'saved' even though nothing is in
+      // flight.
+      if (this.outstanding === 0 && this.timeoutId === undefined) this.state = 'saved';
       return true;
     } catch (error) {
       this.outstanding -= 1;

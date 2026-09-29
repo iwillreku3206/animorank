@@ -15,8 +15,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
   const problemService = await registryProvider.getService(ProblemService);
   const practiceSessionService = await registryProvider.getService(PracticeSessionService);
 
-  // `problem_id` was validated by the parent loader that redirected here.
-  const problem = await problemService.findById({ id: params.problem_id, user: session.user });
+  // Both ids are checked here; no parent loader runs for this route.
+  const problem = await problemService.findById({ id: readUuidParam(params.problem_id), user: session.user });
   if (!problem) throw error(404, { message: 'Not Found' });
 
   const practiceSession = await practiceSessionService.findById({

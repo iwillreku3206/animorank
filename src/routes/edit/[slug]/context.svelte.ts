@@ -117,10 +117,6 @@ export class ProblemEditorWindowContext {
   }
 
   /**
-   * Dev-only: report what changed between successive problem snapshots, so the
-   * write that keeps re-running the autosave effect is named rather than guessed.
-   */
-  /**
    * Add an empty function definition keyed by uuid. The details (name,
    * symbol, parameters, return types) are filled in through the editor binds.
    */

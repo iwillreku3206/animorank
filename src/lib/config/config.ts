@@ -17,6 +17,9 @@ export const CONFIG_FILE = 'config.json';
  * for a path the browser can never use (`configFileSystem` refuses it).
  */
 function defaultConfigPath(): string {
+  if (!import.meta.env.SSR) {
+    throw new Error('The app config file is server-side; a browser cannot read or write it');
+  }
   const cwd = process.cwd();
   // The trailing separator appears only at the filesystem root, where
   // `path.join` used to normalize it away.
@@ -113,15 +116,21 @@ function configuredSections(sections: Sections): Sections {
   return Object.fromEntries(Object.entries(sections).filter(([, section]) => section.data !== undefined));
 }
 
+/** Counter making each temporary file name in the process unique; see {@link writeFileAtomically}. */
+let temporaryCounter = 0;
+
 /**
  * Write `contents` to `file` so the file is only ever seen whole: the bytes go
  * to a temporary sibling first, and the rename that publishes them is atomic
- * within a directory. The temporary name is fixed, which is safe because saves
- * are serialized (see {@link AppConfig.save}).
+ * within a directory.
  */
 async function writeFileAtomically(file: string, contents: string): Promise<void> {
   const { writeFile, rename } = await configFileSystem();
-  const temporary = `${file}.tmp`;
+  // Unique per write: the name only has to be free in this directory, and two
+  // `AppConfig` instances (or two processes) can be writing at once. The rename
+  // is still last-writer-wins.
+  temporaryCounter += 1;
+  const temporary = `${file}.${process.pid}.${temporaryCounter}.tmp`;
   await writeFile(temporary, contents);
   await rename(temporary, file);
 }

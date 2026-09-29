@@ -113,16 +113,19 @@
 </script>
 
 <div class="flex flex-1 flex-col min-h-0">
-  <EditorToolbar
-    {context}
-    user={data.user}
-    neighbors={data.neighbors}
-  />
+  {#if context}
+    <EditorToolbar
+      {context}
+      user={data.user}
+      neighbors={data.neighbors}
+    />
 
-  <DockviewWindow
-    bind:context
-    {windowRegistry}
-    {defaultLayout}
-    storageKey={`problem-editor:2026-09-18:${data.problem.id}`}
-  />
+    <DockviewWindow
+      bind:context
+      bind:manager
+      {windowRegistry}
+      {defaultLayout}
+      storageKey={`problem-editor:2026-09-18:${data.problem.id}`}
+    />
+  {/if}
 </div>

@@ -59,7 +59,7 @@ export class Float extends Type<Value, typeof floatOptions> {
     // size 32: the harness emits the literal as a C float, so anything
     // beyond FLT_MAX silently becomes inf and every comparison fails with a
     // cryptic "Actual: inf" (the exact double still passes validation).
-    if (this.options.size === 32 && Math.abs(value) > 3.4028234663852886e38) {
+    if (this.options.size === 32 && Math.abs(value) > 3.4028235e38) {
       return new Error('Value is out of range for 32-bit float (max magnitude 3.4028235e38)');
     }
 

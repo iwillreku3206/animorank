@@ -6,8 +6,6 @@ import { Problem } from '$lib/problem';
 import { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
 import type { Problem as ProblemModel, PracticeSession as PracticeSessionModel } from '$lib/zenstack/models';
 import type { User } from '@auth/sveltekit';
-import { ClientRegistryProvider } from '$lib/registry/client';
-import { TelemetryRegistry, TelemetryService } from '$lib/telemetry';
 
 vi.mock('$lib/practiceSession/api', async (importOriginal) => ({
   ...(await importOriginal<typeof practiceSessionApi>()),

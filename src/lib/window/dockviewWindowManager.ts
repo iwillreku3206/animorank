@@ -133,6 +133,8 @@ export class DockviewWindowManager<T> {
       }
     }
 
+    if (this.destroyed || !this.dockview) return;
+
     if (this.storageKey) {
       this.layoutChangeSubscription = this.dockview.onDidLayoutChange(() => this.scheduleSave());
     }

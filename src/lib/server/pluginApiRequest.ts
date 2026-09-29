@@ -68,12 +68,23 @@ export async function injectPluginApiRequest(app: ServerApp, event: RequestEvent
     if (!UNFORWARDED_REQUEST_HEADERS.includes(name)) headers[name] = value;
   });
 
+  // A deployment can be told to read the client address from a header
+  // (`ADDRESS_HEADER`), and `getClientAddress()` throws when that header is
+  // missing. The address only fills light-my-request's `remoteAddress`, so a
+  // request without one still goes through.
+  let remoteAddress: string | undefined;
+  try {
+    remoteAddress = event.getClientAddress();
+  } catch {
+    remoteAddress = undefined;
+  }
+
   const injected = await app.inject({
     method: method as HTTPMethods,
     url: event.url.pathname + event.url.search,
     headers,
     payload,
-    remoteAddress: event.getClientAddress()
+    remoteAddress
   });
 
   const headersInit = outgoingHeadersToHeadersInit(injected.headers);
@@ -81,6 +92,9 @@ export async function injectPluginApiRequest(app: ServerApp, event: RequestEvent
 
   // A null-body status takes no body at all; every other one takes the bytes
   // the plugin sent, which `content-length` (from Fastify's byte count) matches.
+  //
+  // The copy is what the body type accepts: a `Buffer`, or a view over its
+  // buffer, is typed `ArrayBufferLike`, which `BodyInit` rejects.
   const body = NULL_BODY_STATUSES.includes(injected.statusCode) ? null : new Uint8Array(injected.rawPayload);
 
   return new Response(body, { status: injected.statusCode, headers: headersInit });

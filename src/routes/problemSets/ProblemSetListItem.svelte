@@ -47,8 +47,7 @@
         >
           <!-- Tint is on the span: the link's ::after spans the whole row, so a hover on
                the link (or the h2) would follow it and fire from anywhere on the row. -->
-          <span
-            class="relative z-10 block line-clamp-2 overflow-hidden transition-colors duration-250 hover:text-primary"
+          <span class="relative z-10 line-clamp-2 overflow-hidden transition-colors duration-250 hover:text-primary"
             >{problemSet.title}</span
           >
         </a>

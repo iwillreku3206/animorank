@@ -1,7 +1,7 @@
 import z from 'zod';
 
 export const PluginManifestSchema = z.object({
-  id: z.string().nonempty(),
+  id: z.string().regex(/^[a-z0-9][a-z0-9._-]*$/),
   manifestVersion: z.enum(['0']),
   name: z.string().nonempty(),
   author: z.string().nonempty(),

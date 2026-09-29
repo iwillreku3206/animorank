@@ -121,11 +121,20 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
         const definitionType = problemData.functions[parsed.function]?.parameters[i]?.type;
         const type = definitionType ?? (await typeRegistry.from(parameter.value));
 
-        return {
-          id: parameter.id,
-          name: parameter.name,
-          value: await TypeValue.create(type, parameter.value.data)
-        };
+        let value: TypeValue;
+        try {
+          value = await TypeValue.create(type, parameter.value.data);
+        } catch {
+          // The definition's type no longer fits a value stored earlier — its
+          // size, signedness or length changed, or the parameters were
+          // reordered. The row must still load: the editor shows it, and
+          // `syncParameters` re-types it against the definition once the
+          // instructor edits. `assumedValid` is the same tolerance
+          // `syncParameters` already applies to these values.
+          value = TypeValue.assumedValid(await typeRegistry.from(parameter.value), parameter.value.data);
+        }
+
+        return { id: parameter.id, name: parameter.name, value };
       })
     );
 

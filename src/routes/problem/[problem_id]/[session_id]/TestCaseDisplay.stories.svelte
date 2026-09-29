@@ -16,7 +16,7 @@
   import { TestCaseRegistry } from '$lib/testCase/testCaseRegistry';
   import type { Problem as ProblemModel, ProblemTestCase } from '$lib/zenstack/models';
   import type { TestRunResponse } from '$lib/practiceSession/api';
-  import { ServerRegistryProvider } from '$lib/registry/server';
+  import { GlobalRegistryProvider } from '$lib/registry/global';
 
   type Result = TestRunResponse['results'][number];
 
@@ -47,7 +47,7 @@
     }
   } as unknown as ProblemModel);
 
-  const registry = ServerRegistryProvider.instance().getRegistry(TestCaseRegistry);
+  const registry = GlobalRegistryProvider.instance().getRegistry(TestCaseRegistry);
 
   function functionModel(id: string, arg: string): ProblemTestCase {
     return {
@@ -85,7 +85,7 @@
       success,
       testCaseInfo: { ...model, public: true },
       ...extra,
-      runInfo: testCase.hydrateRunInfo(runInfo as never),
+      runInfo: await testCase.hydrateRunInfo(runInfo as never),
       testCase
     } as unknown as Result;
   }

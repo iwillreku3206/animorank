@@ -64,6 +64,44 @@ describe('ServerFunctionTestCase', () => {
     expect(testCase.data.parameters[0].value.type.id).toBe('int');
   });
 
+  it('keeps a stored parameter value the definition no longer types', async () => {
+    // The definition narrowed `fn1`'s parameter to int8 after the value was
+    // stored: the row must still hydrate, or the editor and the run endpoint
+    // would 500 on it.
+    const narrowProblem = {
+      ...problemModel,
+      extension_data: {
+        builtin_testCase_function: {
+          functions: {
+            fn1: {
+              name: 'square',
+              parameters: [{ name: 'x', type: { type: 'int', options: { size: 8, signed: null } } }],
+              returnType: [{ type: 'int', options: { size: 8, signed: null } }]
+            }
+          }
+        }
+      }
+    } as unknown as ProblemModel;
+    const testCaseModel = {
+      ...makeTestCaseModel(),
+      data: {
+        function: 'fn1',
+        parameters: [
+          { name: 'x', value: { type: 'int', options: { size: 32, signed: null }, data: { value: '1000' } } }
+        ],
+        comparisons: []
+      }
+    } as unknown as ProblemTestCase;
+
+    const serverTestCase = await new ServerTestCaseRegistry().from(testCaseModel, new Problem(narrowProblem));
+
+    const testCase = serverTestCase.testCase as FunctionTestCase;
+    // The value keeps its own type until `syncParameters` re-types it against
+    // the definition.
+    expect(testCase.data.parameters[0].value.type.id).toBe('int');
+    expect(testCase.data.parameters[0].value.value).toEqual({ value: '1000' });
+  });
+
   it('converts to a plain JSON value at the serialization boundary', async () => {
     const testCaseModel = makeTestCaseModel();
     const serverTestCase = await new ServerTestCaseRegistry().from(testCaseModel, new Problem(problemModel));

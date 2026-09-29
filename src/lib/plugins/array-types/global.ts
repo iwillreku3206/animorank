@@ -50,8 +50,14 @@ export function escapeElement(element: string): string {
   return out;
 }
 
+const HEX_PAIR = /^[0-9a-fA-F]{2}$/;
+
 /**
  * Decode one element written by {@link escapeElement}.
+ *
+ * Total by construction: a program's printed text is not guaranteed to be a
+ * string this module produced, so an escape that cannot be decoded is kept as
+ * the characters it is, never dropped and never thrown on.
  */
 export function unescapeElement(element: string): string {
   let out = '';
@@ -62,14 +68,19 @@ export function unescapeElement(element: string): string {
       continue;
     }
     const next = element[index + 1];
+    if (next === undefined) {
+      // A lone trailing backslash is data, not an incomplete escape.
+      out += character;
+      continue;
+    }
     index += 1;
-    if (next === 'x') {
+    if (next === 'x' && HEX_PAIR.test(element.slice(index + 1, index + 3))) {
       out += String.fromCodePoint(Number.parseInt(element.slice(index + 1, index + 3), 16));
       index += 2;
       continue;
     }
     const escape = ESCAPES.find(([, escaped]) => escaped === `\\${next}`);
-    out += escape ? escape[0] : (next ?? '');
+    out += escape ? escape[0] : character + next;
   }
   return out;
 }

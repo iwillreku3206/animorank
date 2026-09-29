@@ -10,10 +10,8 @@ import ListIcon from '@iconify-svelte/fa6-solid/list';
 import { TypeRegistry } from '$lib/testCase/builtin/functionTestCase/typeRegistry';
 import { TypeValue } from '$lib/testCase/builtin/functionTestCase/typeValue.svelte';
 import { StringType } from '$lib/testCase/builtin/functionTestCase/types/string';
-import { Float } from '$lib/testCase/builtin/functionTestCase/types/float';
-import { Integer } from '$lib/testCase/builtin/functionTestCase/types/int';
 import { VoidType } from '$lib/testCase/builtin/functionTestCase/types/void';
-import { elementText } from './elementText';
+import { elementText, elementValueOf } from './elementText';
 
 /** Elements a freshly created array holds. */
 const DEFAULT_LENGTH = 3;
@@ -50,6 +48,20 @@ const arrayOptions = {
 } as const satisfies Form;
 
 /**
+ * The element type to hydrate with: `element` when the wire format and the C
+ * generator support it, a string element otherwise.
+ *
+ * The options form excludes these (`excludeTypeIds` above); a stored or
+ * hand-edited value carrying one is not usable — a void element has no value
+ * and no C type to declare, and a nested array's separators would sit inside
+ * the outer element stream — so it falls back to string the same way an
+ * unknown type does.
+ */
+function usableElementType(element: Type): Type {
+  return element.id === VoidType.id() || element.id === ArrayType.id() ? StringType.create() : element;
+}
+
+/**
  * The element type an array hydrates to, from whatever its options carry: a
  * live `Type` (constructed here or rebuilt by the type editor), a type id, or
  * the serialized `{ type, options }` the server receives. A serialized element
@@ -59,28 +71,25 @@ const arrayOptions = {
  * against a removed type still opens.
  */
 export async function resolveElementType(element: unknown): Promise<Type> {
-  if (element instanceof Type) return element;
+  if (element instanceof Type) return usableElementType(element);
 
   const registry = GlobalRegistryProvider.instance().getRegistry(TypeRegistry);
   if (typeof element === 'string') {
     try {
-      return (await registry.getStatic(element)).create();
+      return usableElementType((await registry.getStatic(element)).create());
     } catch {
       // fall through to the default
     }
   }
   if (element !== null && typeof element === 'object' && 'type' in element) {
     try {
-      return await registry.from(element as z.infer<typeof TypeSchema>);
+      return usableElementType(await registry.from(element as z.infer<typeof TypeSchema>));
     } catch {
       // fall through to the default
     }
   }
   return StringType.create();
 }
-
-const integerElement = /^-?\d+$/;
-const floatElement = /^-?(\d+(\.\d*)?|\.\d+)(e[+-]?\d+)?$/i;
 
 /** The element option a raw (serialized or in-memory) options value carries. */
 function elementOption(options: unknown): unknown {
@@ -150,7 +159,7 @@ export class ArrayType extends Type<
 
   /** Elements an array of this type holds, on the wire and in the generated C. */
   public get length(): number {
-    return this.options.length;
+    return declaredLength(this.options.length);
   }
 
   public async validateValue(data: JsonValue): Promise<true | Error> {
@@ -159,15 +168,18 @@ export class ArrayType extends Type<
       return new Error(`Expected ${this.length} elements, got ${data.length}`);
     }
 
-    // Every element is carried as text (the wire format is textual), so an
-    // element that is not a string is never a valid element.
-    const element = this.elementType;
-    const numeric = element.id === Float.id() || element.id === Integer.id();
-    const validator = element.id === Float.id() ? floatElement : integerElement;
-
     for (const [index, item] of data.entries()) {
-      if (typeof item !== 'string' || (numeric && !validator.test(item))) {
-        return new Error(`Element ${index} (${JSON.stringify(item)}) is not a valid ${element.detailedName}`);
+      if (typeof item !== 'string') {
+        return new Error(`Element ${index} (${JSON.stringify(item)}) is not a valid ${this.elementType.detailedName}`);
+      }
+      // The element type's own validator is authoritative: it knows the int
+      // size and signedness, the float precision, the pointer's target and the
+      // string's shape, none of which a local syntax check can see.
+      const valid = await this.elementType.validateValue(elementValueOf(this.elementType, item));
+      if (valid !== true) {
+        return new Error(
+          `Element ${index} (${JSON.stringify(item)}) is not a valid ${this.elementType.detailedName}: ${valid.message}`
+        );
       }
     }
     return true;

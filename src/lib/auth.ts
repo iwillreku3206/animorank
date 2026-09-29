@@ -55,11 +55,12 @@ export const { handle } = SvelteKitAuth({
      * `TeacherList`, is admitted. An address outside those is refused rather
      * than created as an account.
      *
-     * Matching is exact — the suffix is compared as the provider reports it,
-     * and `TeacherList` is keyed on the address as stored — so an address
-     * differing only in case does not match. That is intended, not an
-     * oversight: do not add case folding here without deciding the policy
-     * again.
+     * Addresses are compared lowercased: the provider lowercases the address
+     * before this callback, so the policy enforced here is "`TeacherList` rows
+     * must be stored lowercase". A row containing uppercase can never match —
+     * the teacher it names is silently demoted to `Student` by
+     * `events.signIn` — so store addresses lowercase. Do not add case folding
+     * here without deciding the policy again.
      */
     async signIn({ user }) {
       if (!user.email || !user.id) return false;

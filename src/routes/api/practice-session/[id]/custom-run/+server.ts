@@ -29,6 +29,7 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
     user: session.user
   });
   if (!practiceSession) return error(404, 'Practice session not found');
+  if (practiceSession.studentId !== session.user.id) return error(403, 'Unauthorized');
 
   const result = await codeExecutor.execute({
     files: [{ path: 'main.c', content: Buffer.from(practiceSession.previousCode.fullCode, 'utf8') }],

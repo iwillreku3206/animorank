@@ -6,6 +6,7 @@ import { ServerRegistryProvider } from '$lib/registry/server';
 import { ServerPluginService } from '$lib/plugin/serverPluginService';
 import { Server, type ServerApp } from '$lib/server';
 import { injectPluginApiRequest, isPluginApiPath } from '$lib/server/pluginApiRequest';
+import { errorMessage } from '$lib/utils/errorMessage';
 
 /**
  * Load every plugin when the server starts, so no request waits on plugin
@@ -23,7 +24,7 @@ export const init: ServerInit = async () => {
     // A broken plugin setup must not keep the server from starting: the service
     // reports the failure again to whoever needs plugins.
     const logger = await ServerRegistryProvider.instance().getService(Logger, 'webserver');
-    logger.error(`Failed to load plugins: ${error instanceof Error ? error.message : String(error)}`);
+    logger.error(`Failed to load plugins: ${errorMessage(error)}`);
   }
 
   // The app mounts the APIs a plugin registers while loading (see

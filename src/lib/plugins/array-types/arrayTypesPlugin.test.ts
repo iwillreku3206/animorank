@@ -18,7 +18,7 @@ import { ArrayType } from './arrayTypes';
 import { CArrayType } from './arrayCType';
 import { EqualOperator } from '$lib/testCase/builtin/functionTestCase/operators/equal';
 import { Pointer } from '$lib/testCase/builtin/functionTestCase/types/pointer';
-import { decodeList, encodeList } from './global';
+import { decodeList, encodeList, ELEMENT_SEPARATOR, LIST_TERMINATOR } from './global';
 import { CodeExecutor } from '$lib/executor';
 import type { ExecutionRequest, ExecutionResult } from '$lib/executor/types';
 
@@ -106,6 +106,13 @@ describe('array type', () => {
     expect(await integers.validateValue(['0', '-12', '2147483647'])).toBe(true);
     expect(await integers.validateValue(['1.5', '0', '0'])).toBeInstanceOf(Error);
     expect(await integers.validateValue(['abc', '0', '0'])).toBeInstanceOf(Error);
+  });
+
+  it('validates elements through the element type', async () => {
+    const unsigned = new ArrayType({ element: new Integer({ size: 32, signed: false }), length: 1 });
+
+    expect(await unsigned.validateValue(['-1'])).toBeInstanceOf(Error);
+    expect(await unsigned.validateValue(['1'])).toBe(true);
   });
 
   it('hydrates the element type and the length from their serialized form', async () => {
@@ -291,6 +298,11 @@ describe('array wire format', () => {
     for (const elements of cases) {
       expect(decodeList(encodeList(elements))).toEqual(elements);
     }
+  });
+
+  it('keeps a backslash the encoder never wrote, and never throws on a bad hex escape', () => {
+    expect(decodeList(`a\\${ELEMENT_SEPARATOR}${LIST_TERMINATOR}`)).toEqual(['a\\']);
+    expect(decodeList(`\\xzz${ELEMENT_SEPARATOR}${LIST_TERMINATOR}`)).toEqual(['\\xzz']);
   });
 });
 
@@ -508,7 +520,8 @@ describe('registration through the plugin entries', () => {
     const binding = await (languageTypes as AnyRegistry).getInstance('array', undefined, type);
     expect(await binding.generateParameterDefinition('p')).toBe('char** p');
     // The wire form of a one-element list: the element then its terminator.
-    expect(await binding.readFromPrint('a\\x1f\\x1e')).toBeInstanceOf(TypeValue);
+    const value = await binding.readFromPrint(`a${ELEMENT_SEPARATOR}${LIST_TERMINATOR}`);
+    expect(value.value).toEqual(['a']);
   });
 
   it('registers the same type the app-wide registries then hold', async () => {

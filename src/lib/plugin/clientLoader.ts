@@ -139,9 +139,19 @@ export class ClientPluginLoader {
     }
   }
 
-  /** Every plugin this loader has initialized, by id. */
+  /** Every plugin this loader has initialized, by id. A plugin that failed to
+   *  load is skipped: it was reported where its load was requested. */
   private async loadedPlugins(): Promise<[string, ClientPlugin][]> {
-    return Promise.all([...this.instances].map(async ([id, plugin]) => [id, await plugin] as [string, ClientPlugin]));
+    const loaded: [string, ClientPlugin][] = [];
+    for (const [id, plugin] of this.instances) {
+      try {
+        loaded.push([id, await plugin]);
+      } catch {
+        // Reported where the load was requested (`getPlugin`); one plugin that
+        // cannot load must not stop the others answering a page hook.
+      }
+    }
+    return loaded;
   }
 
   /** The class a plugin's client module default-exports, imported but neither instantiated nor initialized. */

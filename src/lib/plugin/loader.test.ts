@@ -203,6 +203,37 @@ describe('PluginLoader dynamic plugins', () => {
     expect(loader.getPlugin('not-a-plugin')).toBeUndefined();
   });
 
+  it('skips a plugin whose manifest id is already loaded, before its init runs', async () => {
+    const record = (name: string) =>
+      'export default class DuplicatePlugin {\n' +
+      `  async init() { globalThis.__duplicatePluginInits = (globalThis.__duplicatePluginInits ?? []).concat('${name}'); }\n` +
+      '}\n';
+    await writeFiles('dup-a', {
+      'manifest.json': validManifest('duplicate-plugin'),
+      'package.json': '{"type": "module"}\n',
+      'client.js': CLIENT_JS,
+      'server.js': record('dup-a')
+    });
+    await writeFiles('dup-b', {
+      'manifest.json': validManifest('duplicate-plugin'),
+      'package.json': '{"type": "module"}\n',
+      'client.js': CLIENT_JS,
+      'server.js': record('dup-b')
+    });
+
+    const loader = new PluginLoader();
+    const loaded = await loader.loadDynamicPlugins(root);
+
+    // Exactly one of the two directories may initialize: a second `init` under
+    // the same id re-registers the keys the first claimed and the collision
+    // would reject the whole load.
+    expect(loader.getPlugins()).toHaveLength(1);
+    expect(loaded).toHaveLength(1);
+    expect(loader.getPlugin('duplicate-plugin')).toBe(loaded[0]);
+    expect(Reflect.get(globalThis, '__duplicatePluginInits')).toHaveLength(1);
+    Reflect.deleteProperty(globalThis, '__duplicatePluginInits');
+  });
+
   it('skips broken plugin directories and keeps loading the rest', async () => {
     await writeFiles('good', {
       'manifest.json': validManifest('good-plugin'),
