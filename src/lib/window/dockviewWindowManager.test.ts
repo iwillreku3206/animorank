@@ -89,3 +89,27 @@ describe('DockviewWindowManager teardown during attach', () => {
     expect(dockview.addPanel).not.toHaveBeenCalled();
   });
 });
+
+describe('DockviewWindowManager closeWindow', () => {
+  it('closes the open window by key and ignores a key that is not open', async () => {
+    mocks.createDockview.mockReset();
+    mocks.createDockview.mockReturnValue(dockview);
+    const close = vi.fn();
+    const manager = new DockviewWindowManager(
+      {},
+      registryOf(['panel'], async () => fakeWindow(vi.fn()))
+    );
+    await manager.attach({} as HTMLDivElement);
+    dockview.getPanel.mockClear();
+
+    // The window docked during attach is open now, and the manager reads
+    // panels back through `getPanel` to close them.
+    dockview.getPanel.mockReturnValueOnce({ api: { close, setActive: vi.fn() } } as never);
+    manager.closeWindow('panel');
+    manager.closeWindow('never_opened');
+
+    expect(dockview.getPanel).toHaveBeenNthCalledWith(1, 'panel');
+    expect(dockview.getPanel).toHaveBeenNthCalledWith(2, 'never_opened');
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+});

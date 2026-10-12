@@ -38,6 +38,14 @@ export type OpenWindow = (
 ) => Promise<unknown>;
 
 /**
+ * Closes the window with this key, taking its panel (and tab) out of the
+ * dockview. The window itself stays built, so a later open restores the state
+ * it had — the same contract as a panel the user closed through its tab — and
+ * a key that is not open is a no-op.
+ */
+export type CloseWindow = (_key: string) => void;
+
+/**
  * Delete every persisted layout whose key starts with `keyPrefix`.
  *
  * Renaming a `storageKey` orphans whatever was saved under the old name: no
@@ -166,6 +174,16 @@ export class DockviewWindowManager<T> {
       this.dockview?.getPanel(key)?.api.setActive();
     }
     return window;
+  }
+
+  /**
+   * Close the window with this key, releasing its panel and tab. A key that is
+   * not open is a no-op; the window stays built, so a later {@link openWindow}
+   * restores the state it had — matching a panel the user closed through its
+   * tab.
+   */
+  public closeWindow(key: string): void {
+    this.dockview?.getPanel(key)?.api.close();
   }
 
   private resolvePosition(

@@ -122,13 +122,16 @@
   const equal = op('equal');
   const square = (n: string) => [{ name: 'n', value: n }];
 
-  const passed = await result(
+  // Fixtures are promises, awaited inside `pane` below: the app compiles with
+  // `experimental.async`, but Storybook's svelte-csf indexer compiles story
+  // files with default compiler options, where a top-level `await` fails.
+  const passed = result(
     model('fn1', square('5'), [def('return', equal, '25')]),
     { comparisons: [cmp('return', '25', '25', true)] },
     true
   );
 
-  const wrongAnswer = await result(
+  const wrongAnswer = result(
     model('fn1', square('7'), [def('return', equal, '49')]),
     { comparisons: [cmp('return', '49', '14', false)] },
     false
@@ -136,13 +139,13 @@
 
   // The case the operator work exists for: "Expected 49" would read as a
   // broken equality test when the assertion is actually "> 49".
-  const greaterThan = await result(
+  const greaterThan = result(
     model('fn1', square('7'), [def('return', op('greater_than'), '49')]),
     { comparisons: [cmp('return', '49', '14', false)] },
     false
   );
 
-  const withinRange = await result(
+  const withinRange = result(
     model('fn1', square('5'), [def('return', op('within_range', { range: '2' }), '25')]),
     { comparisons: [cmp('return', '25', '26', true)] },
     true
@@ -150,7 +153,7 @@
 
   // Every branch of label(): a named parameter, a bare return, and a
   // numbered return — with passing and failing rows side by side.
-  const multipleComparisons = await result(
+  const multipleComparisons = result(
     model('fn1', square('3'), [
       def('param0', equal, '3'),
       def('return', equal, '9'),
@@ -162,7 +165,7 @@
     false
   );
 
-  const multiArgument = await result(
+  const multiArgument = result(
     model(
       'fn2',
       [
@@ -177,7 +180,7 @@
 
   // Both name sources blank — the case that produced an empty row label
   // before the positional fallback. param1 is the *second* parameter.
-  const unnamedParameters = await result(
+  const unnamedParameters = result(
     model(
       'fn2',
       [
@@ -190,38 +193,40 @@
     false
   );
 
-  const noComparisons = await result(model('fn1', square('5'), []), { comparisons: [] }, true);
+  const noComparisons = result(model('fn1', square('5'), []), { comparisons: [] }, true);
 
   const failing = (runInfo: unknown, extra = {}) =>
     result(model('fn1', square('5'), [def('return', equal, '25')]), runInfo, false, extra);
 
-  const compileError = await failing(
+  const compileError = failing(
     { failure: 'compile_error' },
     {
       compilerOutput:
         'main.c: In function "square":\nmain.c:3:5: error: expected ";" before "}" token\n    3 |     return n * n\n      |     ^'
     }
   );
-  const runtimeError = await failing({
+  const runtimeError = failing({
     failure: 'run_error',
     exitCode: 139,
     stderr: 'Segmentation fault (core dumped)'
   });
-  const timedOut = await failing({ failure: 'timeout' });
-  const outputNotGenerated = await failing({ failure: 'output_not_generated' });
-  const withFailureReason = await failing(
+  const timedOut = failing({ failure: 'timeout' });
+  const outputNotGenerated = failing({ failure: 'output_not_generated' });
+  const withFailureReason = failing(
     { failure: 'run_error', exitCode: 1 },
     { failureReason: 'Execution was terminated by the grader.' }
   );
 
-  const hidden = { success: false, testCaseInfo: { public: false } } as Result;
+  const hidden = Promise.resolve({ success: false, testCaseInfo: { public: false } } as Result);
 </script>
 
 <!-- Mirrors the panel the display renders in: base-300 behind its base-100 boxes. -->
-{#snippet pane(testCaseResult: Result)}
-  <div class="w-full rounded-lg bg-base-300 p-4 text-base-content">
-    <FunctionTestCaseDisplay {testCaseResult} />
-  </div>
+{#snippet pane(testCaseResult: Promise<Result>)}
+  {#await testCaseResult then resolved}
+    <div class="w-full rounded-lg bg-base-300 p-4 text-base-content">
+      <FunctionTestCaseDisplay testCaseResult={resolved} />
+    </div>
+  {/await}
 {/snippet}
 
 <Story name="Passed">

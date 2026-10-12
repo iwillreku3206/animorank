@@ -65,6 +65,12 @@
 
   let activeTab = $state('general');
 
+  // Keys whose window was closed: the next `syncTabs` — which otherwise builds
+  // every registry key — must not rebuild them, or a closed window would come
+  // straight back the moment any window is opened. An `openWindow` for the key
+  // clears the entry and builds it again.
+  const closedKeys = new Set<string>();
+
   // Windows mount into detached elements, so they can only be built in the
   // browser. The tab strip renders from `tabs` regardless, so the content area
   // is briefly empty rather than the whole panel showing a loading string.
@@ -98,6 +104,7 @@
   onMount(async () => {
     await syncTabs();
     context.openWindow = openWindow;
+    context.closeWindow = closeWindow;
 
     // The page is built: tell the plugins that answer this page's hook about it,
     // then pick up the windows they registered while answering it.
@@ -108,7 +115,7 @@
   /** Build the window for every key the registry holds that the page does not show yet. */
   async function syncTabs(): Promise<void> {
     for (const id of await windowRegistry.loadKeys()) {
-      if (windowMap[id]) continue;
+      if (windowMap[id] || closedKeys.has(id)) continue;
       windowMap[id] = await windowRegistry.getInstance(id, context);
       // A key seeded into `tabs` from `keys()` above is already in the strip;
       // pushing it again duplicates the keyed each's key.
@@ -117,10 +124,29 @@
     }
   }
 
-  /** Bring a window forward, building it first when it is new: what plugins receive as `openWindow`. */
+  /**
+   * Bring a window forward, building it first when it is new or was closed:
+   * what plugins receive as `openWindow`.
+   */
   async function openWindow(key: string): Promise<void> {
+    closedKeys.delete(key);
     await syncTabs();
     if (windowMap[key]) activeTab = key;
+  }
+
+  /**
+   * Release a window and hide its tab: what plugins receive as `closeWindow`.
+   * A later `openWindow` rebuilds it from the registry. A key that was never
+   * built (or was already closed) is a no-op.
+   */
+  function closeWindow(key: string): void {
+    const window = windowMap[key];
+    if (!window) return;
+    closedKeys.add(key);
+    window.destroy();
+    delete windowMap[key];
+    tabs = tabs.filter((tab) => tab.id !== key);
+    if (activeTab === key) activeTab = tabs[0]?.id ?? '';
   }
 
   onDestroy(() => {

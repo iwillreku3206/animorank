@@ -79,13 +79,15 @@
 
   // The dock mounts only once the context exists, so the manager is built with
   // the real context on its first mount; this effect then hands the context the
-  // manager's `openWindow`, which is what lets windows be opened imperatively.
-  // The plugins that answer this page's hook are told about it here — after
-  // their `openWindow` is usable, never before the dock exists — and only once.
+  // manager's `openWindow`/`closeWindow`, which is what lets windows be opened
+  // and closed imperatively. The plugins that answer this page's hook are told
+  // about it here — after those are usable, never before the dock exists — and
+  // only once.
   let notified = false;
   $effect(() => {
     if (!manager || !context) return;
     context.openWindow = manager.openWindow.bind(manager);
+    context.closeWindow = manager.closeWindow.bind(manager);
 
     if (notified) return;
     notified = true;

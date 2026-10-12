@@ -10,7 +10,7 @@ WORKDIR /app
 RUN chown nonroot:nonroot /app
 USER nonroot
 COPY --chown=nonroot:nonroot package*.json .
-RUN npm ci
+RUN npm ci --ignore-scripts
 COPY --chown=nonroot:nonroot . .
 ENV NODE_OPTIONS=--max_old_space_size=4096
 RUN npx svelte-kit sync
@@ -19,9 +19,9 @@ RUN npm prune --production
 
 # For building the final image
 FROM node:24-trixie
-RUN npm install -g @zenstackhq/cli
 RUN addgroup --system nonroot \
-    && adduser --system --ingroup nonroot --home /home/nonroot nonroot
+    && adduser --system --ingroup nonroot --home /home/nonroot nonroot \
+    npm install -g @zenstackhq/cli
 WORKDIR /app
 RUN chown nonroot:nonroot /app
 USER nonroot
@@ -31,7 +31,7 @@ COPY --from=builder --chown=nonroot:nonroot /app/src/zenstack src/zenstack
 COPY --from=builder --chown=nonroot:nonroot /app/prisma/migrations prisma/migrations
 COPY --chown=nonroot:nonroot package.json .
 COPY --chown=nonroot:nonroot prisma.config.ts .
-COPY --chown=nonroot:nonroot docker-entrypoint.sh .
+COPY --chmod=755 docker-entrypoint.sh .
 # RUN npx zenstack generate
 EXPOSE 3000
 ENV NODE_ENV=production

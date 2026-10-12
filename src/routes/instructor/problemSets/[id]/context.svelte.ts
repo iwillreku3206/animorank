@@ -1,6 +1,6 @@
 import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
 import type { Tag } from '$lib/zenstack/models';
-import type { OpenWindow } from '$lib/window/dockviewWindowManager';
+import type { CloseWindow, OpenWindow } from '$lib/window/dockviewWindowManager';
 import { addProblem, deleteProblem, saveProblem, saveProblemSet } from './api';
 
 /**
@@ -66,6 +66,14 @@ export class ProblemSetEditorWindowContext {
    * `onProblemSetEditorLoad` uses it to bring forward the window it contributes.
    */
   public openWindow: OpenWindow = async () => {};
+
+  /**
+   * Closes one of the editor's windows. This page shows its windows as tabs,
+   * so the page assigns a function that releases the window and hides its tab
+   * (see `+page.svelte`); a plugin answering `onProblemSetEditorLoad` uses it
+   * to close a window it contributes, and opening it again rebuilds it.
+   */
+  public closeWindow: CloseWindow = () => {};
 
   private readonly autosave: AutoSave<ProblemSetDraft>;
   private readonly _cleanup: () => void;

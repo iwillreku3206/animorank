@@ -106,57 +106,50 @@
     comparisons: [{ symbol: 'return', expected: intValue(expected), actual: intValue(actual), result: ok }]
   });
 
+  /**
+   * Fixtures resolve as promises and are awaited in the story templates: the
+   * app compiles with `experimental.async`, but Storybook's svelte-csf indexer
+   * compiles story files with default compiler options, where a top-level
+   * `await` fails indexing.
+   */
+  const fixture = (results: (Result | Promise<Result>)[], success = false): Promise<TestRunResponse> =>
+    Promise.all(results).then((hydrated) => ({ success, results: hydrated }));
+
   // --- fixtures per story ---
-  const mixed: TestRunResponse = {
-    success: false,
-    results: [
-      await result(functionModel('tc-1', '5'), comparison('25', '25', true), true),
-      await result(functionModel('tc-2', '7'), comparison('49', '14', false), false),
-      await result(functionModel('tc-3', '9'), { failure: 'timeout' }, false)
-    ]
-  };
+  const mixed = fixture([
+    result(functionModel('tc-1', '5'), comparison('25', '25', true), true),
+    result(functionModel('tc-2', '7'), comparison('49', '14', false), false),
+    result(functionModel('tc-3', '9'), { failure: 'timeout' }, false)
+  ]);
 
-  const stdio: TestRunResponse = {
-    success: false,
-    results: [
-      await result(stdioModel('tc-1', '3 4\n', '7\n'), { expected: '7\n', actual: '7\n' }, true),
-      await result(stdioModel('tc-2', '10 20\n', '30\n'), { expected: '30\n', actual: '1030\n' }, false)
-    ]
-  };
+  const stdio = fixture([
+    result(stdioModel('tc-1', '3 4\n', '7\n'), { expected: '7\n', actual: '7\n' }, true),
+    result(stdioModel('tc-2', '10 20\n', '30\n'), { expected: '30\n', actual: '1030\n' }, false)
+  ]);
 
-  const failures: TestRunResponse = {
-    success: false,
-    results: [
-      await result(functionModel('tc-1', '1'), { failure: 'compile_error' }, false, {
-        compilerOutput: 'main.c:3:5: error: expected ";" before "}" token'
-      }),
-      await result(
-        functionModel('tc-2', '2'),
-        { failure: 'run_error', exitCode: 139, stderr: 'Segmentation fault' },
-        false
-      ),
-      await result(functionModel('tc-3', '3'), { failure: 'output_not_generated' }, false),
-      await result(functionModel('tc-4', '4'), { failure: 'timeout' }, false)
-    ]
-  };
+  const failures = fixture([
+    result(functionModel('tc-1', '1'), { failure: 'compile_error' }, false, {
+      compilerOutput: 'main.c:3:5: error: expected ";" before "}" token'
+    }),
+    result(functionModel('tc-2', '2'), { failure: 'run_error', exitCode: 139, stderr: 'Segmentation fault' }, false),
+    result(functionModel('tc-3', '3'), { failure: 'output_not_generated' }, false),
+    result(functionModel('tc-4', '4'), { failure: 'timeout' }, false)
+  ]);
 
-  const empty: TestRunResponse = { success: true, results: [] };
+  const empty = fixture([], true);
 
-  const broken: TestRunResponse = { success: false, results: [unhydrated(functionModel('tc-1', '5'))] };
+  const broken = fixture([unhydrated(functionModel('tc-1', '5'))]);
 
-  const submitMixed: TestRunResponse = {
-    success: false,
-    results: [
-      await result(functionModel('tc-1', '5'), comparison('25', '25', true), true),
-      await result(functionModel('tc-2', '7'), comparison('49', '14', false), false),
-      await result(functionModel('tc-3', '8'), { failure: 'compile_error' }, false),
-      await result(functionModel('tc-4', '9'), { failure: 'timeout' }, false),
-      await result(functionModel('tc-5', '10'), { failure: 'run_error', exitCode: 139 }, false),
-      await result(functionModel('tc-6', '11'), { failure: 'output_not_generated' }, false),
-      hidden(true),
-      hidden(false)
-    ]
-  };
+  const submitMixed = fixture([
+    result(functionModel('tc-1', '5'), comparison('25', '25', true), true),
+    result(functionModel('tc-2', '7'), comparison('49', '14', false), false),
+    result(functionModel('tc-3', '8'), { failure: 'compile_error' }, false),
+    result(functionModel('tc-4', '9'), { failure: 'timeout' }, false),
+    result(functionModel('tc-5', '10'), { failure: 'run_error', exitCode: 139 }, false),
+    result(functionModel('tc-6', '11'), { failure: 'output_not_generated' }, false),
+    hidden(true),
+    hidden(false)
+  ]);
 
   let selMixed = $state(0);
   let selStdio = $state(0);
@@ -168,86 +161,100 @@
 
 <Story name="Run - Mixed Results">
   {#snippet template()}
-    <div class="bg-base-300 text-base-content h-96 w-full rounded-lg">
-      <TestCaseDisplay
-        tests={mixed}
-        lastTestType="run"
-        bind:selectedTest={selMixed}
-      />
-    </div>
+    {#await mixed then tests}
+      <div class="bg-base-300 text-base-content h-96 w-full rounded-lg">
+        <TestCaseDisplay
+          {tests}
+          lastTestType="run"
+          bind:selectedTest={selMixed}
+        />
+      </div>
+    {/await}
   {/snippet}
 </Story>
 
 <Story name="Run - Stdio Test Case">
   {#snippet template()}
-    <div class="bg-base-300 text-base-content h-96 w-full rounded-lg">
-      <TestCaseDisplay
-        tests={stdio}
-        lastTestType="run"
-        bind:selectedTest={selStdio}
-      />
-    </div>
+    {#await stdio then tests}
+      <div class="bg-base-300 text-base-content h-96 w-full rounded-lg">
+        <TestCaseDisplay
+          {tests}
+          lastTestType="run"
+          bind:selectedTest={selStdio}
+        />
+      </div>
+    {/await}
   {/snippet}
 </Story>
 
 <Story name="Run - Failure Modes">
   {#snippet template()}
-    <div class="bg-base-300 text-base-content h-96 w-full rounded-lg">
-      <TestCaseDisplay
-        tests={failures}
-        lastTestType="run"
-        bind:selectedTest={selFailures}
-      />
-    </div>
+    {#await failures then tests}
+      <div class="bg-base-300 text-base-content h-96 w-full rounded-lg">
+        <TestCaseDisplay
+          {tests}
+          lastTestType="run"
+          bind:selectedTest={selFailures}
+        />
+      </div>
+    {/await}
   {/snippet}
 </Story>
 
 <Story name="Run - No Results">
   {#snippet template()}
-    <div class="bg-base-300 text-base-content h-96 w-full rounded-lg">
-      <TestCaseDisplay
-        tests={empty}
-        lastTestType="run"
-        bind:selectedTest={selEmpty}
-      />
-    </div>
+    {#await empty then tests}
+      <div class="bg-base-300 text-base-content h-96 w-full rounded-lg">
+        <TestCaseDisplay
+          {tests}
+          lastTestType="run"
+          bind:selectedTest={selEmpty}
+        />
+      </div>
+    {/await}
   {/snippet}
 </Story>
 
 <Story name="Run - Unhydratable Result">
   {#snippet template()}
-    <div class="bg-base-300 text-base-content h-96 w-full rounded-lg">
-      <TestCaseDisplay
-        tests={broken}
-        lastTestType="run"
-        bind:selectedTest={selBroken}
-      />
-    </div>
+    {#await broken then tests}
+      <div class="bg-base-300 text-base-content h-96 w-full rounded-lg">
+        <TestCaseDisplay
+          {tests}
+          lastTestType="run"
+          bind:selectedTest={selBroken}
+        />
+      </div>
+    {/await}
   {/snippet}
 </Story>
 
 <Story name="Submit - Result Chips">
   {#snippet template()}
-    <div class="bg-base-300 text-base-content h-96 w-full rounded-lg">
-      <TestCaseDisplay
-        tests={submitMixed}
-        lastTestType="submit"
-        bind:selectedTest={selSubmit}
-      />
-    </div>
+    {#await submitMixed then tests}
+      <div class="bg-base-300 text-base-content h-96 w-full rounded-lg">
+        <TestCaseDisplay
+          {tests}
+          lastTestType="submit"
+          bind:selectedTest={selSubmit}
+        />
+      </div>
+    {/await}
   {/snippet}
 </Story>
 
 <Story name="Submit - All Passed">
   {#snippet template()}
-    <div class="bg-base-300 text-base-content h-96 w-full rounded-lg">
-      <TestCaseDisplay
-        tests={empty}
-        lastTestType="submit"
-        testSubmitted
-        handleReturn={() => alert('Return to problem set')}
-        bind:selectedTest={selEmpty}
-      />
-    </div>
+    {#await empty then tests}
+      <div class="bg-base-300 text-base-content h-96 w-full rounded-lg">
+        <TestCaseDisplay
+          {tests}
+          lastTestType="submit"
+          testSubmitted
+          handleReturn={() => alert('Return to problem set')}
+          bind:selectedTest={selEmpty}
+        />
+      </div>
+    {/await}
   {/snippet}
 </Story>
