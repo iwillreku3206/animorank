@@ -21,7 +21,7 @@ RUN npm prune --production
 FROM node:24-trixie
 RUN addgroup --system nonroot \
     && adduser --system --ingroup nonroot --home /home/nonroot nonroot \
-    npm install -g @zenstackhq/cli
+    && npm install -g @zenstackhq/cli
 WORKDIR /app
 RUN chown nonroot:nonroot /app
 USER nonroot

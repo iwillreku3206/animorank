@@ -102,6 +102,32 @@ describe('ServerFunctionTestCase', () => {
     expect(testCase.data.parameters[0].value.value).toEqual({ value: '1000' });
   });
 
+  it('keeps a stored comparison value its own type no longer validates', async () => {
+    // `fn1` returns int32, but this comparison's value was stored for an int8
+    // and holds a value out of its range — the row must still hydrate, or the
+    // editor and the run endpoint would 500 on it.
+    const testCaseModel = {
+      ...makeTestCaseModel(),
+      data: {
+        function: 'fn1',
+        parameters: [],
+        comparisons: [
+          {
+            symbol: 'return',
+            operator: { type: 'equal', options: null },
+            value: { type: 'int', options: { size: 8, signed: true }, data: { value: '1000' } }
+          }
+        ]
+      }
+    } as unknown as ProblemTestCase;
+
+    const serverTestCase = await new ServerTestCaseRegistry().from(testCaseModel, new Problem(problemModel));
+
+    const testCase = serverTestCase.testCase as FunctionTestCase;
+    expect(testCase.data.comparisons[0].value.type.id).toBe('int');
+    expect(testCase.data.comparisons[0].value.value).toEqual({ value: '1000' });
+  });
+
   it('converts to a plain JSON value at the serialization boundary', async () => {
     const testCaseModel = makeTestCaseModel();
     const serverTestCase = await new ServerTestCaseRegistry().from(testCaseModel, new Problem(problemModel));

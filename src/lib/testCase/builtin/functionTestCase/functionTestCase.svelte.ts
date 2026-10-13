@@ -106,7 +106,11 @@ export class FunctionTestCase extends TestCase<FunctionTestCaseData, FunctionTes
         Comparison.from({
           symbol: parseSymbol(comparison.symbol),
           operator: await opRegistry.from(comparison.operator),
-          value: await TypeValue.create(await typeRegistry.from(comparison.value), comparison.value.data)
+          // A comparison's value carries its own type, so there is nothing to
+          // check it against: validating here can only reject a stored row. The
+          // row must still load - the editor shows it - which is the rule the
+          // parameter loop below already applies to the values it hydrates.
+          value: TypeValue.assumedValid(await typeRegistry.from(comparison.value), comparison.value.data)
         })
       )
     );
