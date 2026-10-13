@@ -21,8 +21,9 @@ export const init: ServerInit = async () => {
   try {
     await ServerPluginService.instance().getLoader();
   } catch (error) {
-    // A broken plugin setup must not keep the server from starting: the service
-    // reports the failure again to whoever needs plugins.
+    // A plugin that cannot be *loaded* must not keep the server from starting:
+    // the service reports the failure again to whoever needs plugins. This
+    // covers loading only -- see the note on `prepareApp` below.
     const logger = await ServerRegistryProvider.instance().getService(Logger, 'webserver');
     logger.error(`Failed to load plugins: ${errorMessage(error)}`);
   }
@@ -30,6 +31,14 @@ export const init: ServerInit = async () => {
   // The app mounts the APIs a plugin registers while loading (see
   // `Server.prepareApp`), so it is prepared only now, with every plugin already
   // loaded, and each plugin's routes are part of it.
+  //
+  // Deliberately outside the try above, and deliberately uncaught: preparing the
+  // app is part of starting up, and a process that cannot finish it must not
+  // serve requests on a half-mounted plugin API surface -- one that answered
+  // with some plugins missing would look healthy while behaving wrongly. The
+  // rejection is meant to reach the platform and stop the app from loading. The
+  // 404 `handle` answers for a plugin path covers requests that arrive before
+  // `init` has prepared the app, not a failed `init`.
   app = await new Server().prepareApp();
 };
 

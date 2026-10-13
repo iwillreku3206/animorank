@@ -96,6 +96,38 @@ describe('PluginLoader dynamic plugins', () => {
     expect(loader.getPlugin('unknown')).toBeUndefined();
   });
 
+  it('keeps two plugins whose entry files are byte-identical from sharing one module', async () => {
+    const shared = 'export const state = { count: 0 };\nexport default class SharedPlugin {\n  async init() {}\n}\n';
+    await writeFiles('plugin-a', {
+      'manifest.json': validManifest('plugin-a'),
+      'client.js': CLIENT_JS,
+      'server.js': shared,
+      'package.json': '{"type": "module"}\n'
+    });
+    await writeFiles('plugin-b', {
+      'manifest.json': validManifest('plugin-b'),
+      'client.js': CLIENT_JS,
+      'server.js': shared,
+      'package.json': '{"type": "module"}\n'
+    });
+
+    const loader = new PluginLoader();
+    const loaded = await loader.loadDynamicPlugins(root);
+
+    expect(loaded).toHaveLength(2);
+    const stateOf = (id: string): unknown => {
+      const plugin = loader.getPlugin(id);
+      if (!plugin) throw new Error(`plugin ${id} was not loaded`);
+      const server: unknown = plugin.server;
+      if (typeof server !== 'object' || server === null || !('state' in server)) {
+        throw new Error(`plugin ${id} exposes no state export`);
+      }
+      return server.state;
+    };
+    // The same bytes must still be two modules: a data: URL is cached by URL.
+    expect(stateOf('plugin-a')).not.toBe(stateOf('plugin-b'));
+  });
+
   it('keeps files keyed by plugin-root-relative paths with directory structure intact', async () => {
     await writeFiles('sample', {
       'manifest.json': validManifest('sample-plugin'),

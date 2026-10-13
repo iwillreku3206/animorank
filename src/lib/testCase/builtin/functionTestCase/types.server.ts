@@ -7,7 +7,7 @@ import type { ProblemTestCase } from '$lib/zenstack/models';
 import { TypeRegistry } from './typeRegistry';
 import { OperatorRegistry } from './operatorRegistry';
 import type { FunctionTestCaseProblemData } from './types';
-import { FunctionTestCaseProblemDataSchema } from './types';
+import { FunctionTestCaseProblemDataSchema, canCompareReturn } from './types';
 import { getFunctionTestCaseDataSchema } from './functionTestCase.svelte';
 
 /**
@@ -98,8 +98,12 @@ export async function validateFunctionTestCaseKeys(model: ProblemTestCase, probl
     }
     const symbol = comparison.symbol;
     if (symbol === 'return') {
-      if (!fn.returnType[0]) {
-        return `Test case ${model.id} compares the return value of function "${functionName}", which has no return type`;
+      // `canCompareReturn`, not the presence of a return type: a `void` return
+      // type is a type, so a truthiness check passes it, and the harness emits
+      // no return export for it -- the comparison could never run. The same
+      // predicate decides this in the editor (`FunctionTestCaseEditor.svelte`).
+      if (!canCompareReturn(fn)) {
+        return `Test case ${model.id} compares the return value of function "${functionName}", which has no comparable return type`;
       }
     } else {
       const match = /^param(\d+)$/.exec(symbol);

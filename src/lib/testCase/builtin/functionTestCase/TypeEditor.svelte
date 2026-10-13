@@ -34,6 +34,10 @@
   });
 
   async function selectType(typeId: string) {
+    // Re-picking the type already bound is a no-op: `create()` builds a fresh
+    // instance with default options, so acting on it would silently reset the
+    // author's options (int64 back to int32, a pointer's target back to int).
+    if (type?.id === typeId) return;
     type = typeId ? (await typeRegistry.getStatic(typeId)).create() : null;
   }
 </script>

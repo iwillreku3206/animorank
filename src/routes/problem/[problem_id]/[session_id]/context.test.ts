@@ -4,6 +4,8 @@ import { runTestCases, submit, type TestRunResponse } from '$lib/practiceSession
 import type * as practiceSessionApi from '$lib/practiceSession/api';
 import { Problem } from '$lib/problem';
 import { ClientPracticeSession } from '$lib/practiceSession/clientPracticeSession';
+import { TelemetryService } from '$lib/telemetry/telemetryService';
+import type { Entry } from '$lib/telemetry/telemetryHook';
 import type { Problem as ProblemModel, PracticeSession as PracticeSessionModel } from '$lib/zenstack/models';
 import type { User } from '@auth/sveltekit';
 
@@ -424,5 +426,84 @@ describe('SolveWindowContext run error lifetime', () => {
     // it outlasts the problem it reported -- a student who reconnects and keeps
     // typing would go on reading that their work could not be saved.
     expect(context.runError).toBeNull();
+  });
+});
+
+describe('SolveWindowContext telemetry', () => {
+  class RecordingTelemetryService extends TelemetryService {
+    public readonly entries: Entry[] = [];
+    protected telemetryCallback(entry: Entry): void {
+      this.entries.push(entry);
+    }
+  }
+
+  const result = (success: boolean) =>
+    ({
+      success,
+      results: [{ success, testCaseInfo: { public: true } }]
+    }) as unknown as TestRunResponse;
+
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('{}', { status: 200 }))
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetAllMocks();
+  });
+
+  const makeRecordingContext = async () => {
+    const telemetry = new RecordingTelemetryService('session-1');
+    const { problem, practiceSession } = makeSession({ code: '  puts("hi");' });
+    const context = await SolveWindowContext.create({ problem, practiceSession, language: 'c', telemetry });
+    telemetry.attachExecution(context.executionObservable);
+    return { context, telemetry };
+  };
+
+  it('records a run attempt', async () => {
+    vi.mocked(runTestCases).mockResolvedValue(result(true));
+    const { context, telemetry } = await makeRecordingContext();
+
+    await context.run();
+
+    expect(telemetry.entries).toEqual([
+      {
+        type: 'RUN_ATTEMPT',
+        data: {
+          runType: 'run',
+          publicTestResults: [{ success: true, testCaseInfo: { public: true } }],
+          generalTestResults: [true],
+          submittedCode: context.editorState.code
+        }
+      }
+    ]);
+
+    // The payload carries the code the student was working on, not an empty or
+    // stale copy of it.
+    const recorded = telemetry.entries[0].data;
+    if (!('submittedCode' in recorded)) throw new Error('the recorded attempt carries no submittedCode');
+    expect(recorded.submittedCode).toContain('puts("hi")');
+  });
+
+  it('records a submit as a submit attempt', async () => {
+    vi.mocked(submit).mockResolvedValue(result(false));
+    const { context, telemetry } = await makeRecordingContext();
+
+    await context.submit();
+
+    expect(telemetry.entries).toEqual([
+      {
+        type: 'RUN_ATTEMPT',
+        data: {
+          runType: 'submit',
+          publicTestResults: [{ success: false, testCaseInfo: { public: true } }],
+          generalTestResults: [false],
+          submittedCode: context.editorState.code
+        }
+      }
+    ]);
   });
 });

@@ -841,6 +841,41 @@ describe('validateFunctionTestCaseKeys', () => {
     await expect(validateFunctionTestCaseKeys(makeModel(), untypedProblem)).resolves.toContain('has no type');
   });
 
+  it('rejects a return comparison on a function that returns nothing comparable', async () => {
+    // The function was switched to `void` after the comparison was stored: a
+    // truthiness check on the return type lets this row through, and the run
+    // then fails on a return export the harness never emits.
+    const voidProblem = new Problem({
+      ...problemModel,
+      extension_data: {
+        builtin_testCase_function: {
+          functions: {
+            fn1: { name: 'square', parameters: [], returnType: [{ type: 'void', options: {} }] }
+          }
+        }
+      }
+    } as unknown as ProblemModel);
+
+    const result = await validateFunctionTestCaseKeys(
+      makeModel({
+        data: {
+          function: 'fn1',
+          parameters: [],
+          comparisons: [
+            {
+              symbol: 'return',
+              operator: { type: 'equal', options: null },
+              value: { type: 'int', options: { size: 32, signed: null }, data: { value: '0' } }
+            }
+          ]
+        }
+      }),
+      voidProblem
+    );
+
+    expect(result).toContain('has no comparable return type');
+  });
+
   it('ignores non-function test cases', async () => {
     await expect(validateFunctionTestCaseKeys(makeModel({ type: 'stdio' }), problem)).resolves.toBeNull();
   });

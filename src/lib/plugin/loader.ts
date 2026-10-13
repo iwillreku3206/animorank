@@ -45,9 +45,20 @@ async function readServerScripts(dir: string): Promise<{ global?: string; server
  * resolving a plugin path through it would tie a runtime plugin to the build
  * tool. A data URL is resolved by the runtime itself, so a plugin directory
  * stays an ordinary part of the filesystem.
+ *
+ * `scriptPath` (the script's path within its plugin package) is the URL's
+ * fragment, not part of the payload: the ESM registry keys modules by URL, so
+ * without it two plugins whose entry files are byte-identical would collapse
+ * into one module -- the second entry would never be evaluated, and both would
+ * share its state.
+ *
+ * The specifier is built from the script's bytes at runtime, so no static
+ * import can name it; `@vite-ignore` keeps the bundler from trying to resolve
+ * it at build time.
  */
-async function importSource(source: string): Promise<UnknownModule> {
-  const url = `data:text/javascript;base64,${Buffer.from(source, 'utf8').toString('base64')}`;
+async function importSource(source: string, scriptPath: string): Promise<UnknownModule> {
+  const payload = Buffer.from(source, 'utf8').toString('base64');
+  const url = `data:text/javascript;base64,${payload}#${encodeURIComponent(scriptPath)}`;
   return (await import(/* @vite-ignore */ url)) as UnknownModule;
 }
 
@@ -261,8 +272,8 @@ export class PluginLoader {
     ]);
 
     // The shared entry runs before the per-side one, exactly as on the client.
-    if (scripts.global !== undefined) await importSource(scripts.global);
-    const server = await importSource(scripts.server);
+    if (scripts.global !== undefined) await importSource(scripts.global, path.join(dir, 'global.js'));
+    const server = await importSource(scripts.server, path.join(dir, 'server.js'));
 
     const files = new Map<string, Buffer>([['client.js', client]]);
     if (scripts.global !== undefined) {

@@ -1,3 +1,4 @@
+import type { CustomRunResponse } from '$lib/practiceSession/api';
 import type { TestCaseResult } from './types';
 
 type Execution = {
@@ -7,6 +8,12 @@ type Execution = {
   submittedCode: string;
 };
 
+type CustomExecution = {
+  submittedCode: string;
+  result: CustomRunResponse;
+};
+
 export type ExecutionEvent = {
-  run: Execution;
+  tests: Execution;
+  custom: CustomExecution;
 };

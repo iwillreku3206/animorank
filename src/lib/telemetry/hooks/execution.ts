@@ -10,11 +10,23 @@ export class ExecutionHook extends TelemetryHook {
     return () => {};
   }
   public executionHook(executionObservable: Subscribable<ExecutionEvent>): () => void {
-    return executionObservable.subscribe('run', (execution) => {
+    const testsUnmount = executionObservable.subscribe('tests', (execution) => {
       this.addEntry({
         type: 'RUN_ATTEMPT',
         data: execution
       });
     });
+
+    const customUnmount = executionObservable.subscribe('custom', (execution) => {
+      this.addEntry({
+        type: 'CUSTOM_RUN',
+        data: { execution: execution }
+      });
+    });
+
+    return () => {
+      testsUnmount();
+      customUnmount();
+    };
   }
 }
