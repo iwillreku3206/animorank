@@ -459,7 +459,6 @@ describe('SolveWindowContext telemetry', () => {
     const telemetry = new RecordingTelemetryService('session-1');
     const { problem, practiceSession } = makeSession({ code: '  puts("hi");' });
     const context = await SolveWindowContext.create({ problem, practiceSession, language: 'c', telemetry });
-    telemetry.attachExecution(context.executionObservable);
     return { context, telemetry };
   };
 
