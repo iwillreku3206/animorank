@@ -50,7 +50,11 @@ export interface CreateOptions {
  */
 const readableByUser = (userId: string) => ({
   problem_set: {
-    OR: [{ is_global: true }, { collaborators: { some: { collaborator_id: userId } } }]
+    OR: [
+      { is_global: true },
+      { collaborators: { some: { collaborator_id: userId } } },
+      { subscriptions: { some: { student_id: userId } } }
+    ]
   },
   OR: [{ visible: true }, { problem_set: { collaborators: { some: { collaborator_id: userId } } } }]
 });
