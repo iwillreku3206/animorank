@@ -1,9 +1,14 @@
 <script lang="ts">
   import Badge from '$lib/components/ui/badges/Badge.svelte';
+  import { colorOf, typeColors } from '$lib/analytics/sessionLogColors';
   import { formatLogTimestamp } from '$lib/analytics/sessionLogTime';
   import type { SessionLogsViewContext } from '../context.svelte';
 
   let { context }: { context: SessionLogsViewContext } = $props();
+
+  // The same colours the replay uses: assigned in the order the session recorded
+  // the types, though this view lists the entries newest first.
+  const colors = $derived(typeColors([...context.logs].reverse()));
 </script>
 
 {#if context.logs.length === 0}
@@ -17,7 +22,13 @@
             class="text-sm text-base-content/60"
             datetime={log.timestamp}>{formatLogTimestamp(log.timestamp)}</time
           >
-          <Badge class="badge-neutral">{log.type}</Badge>
+          <Badge class="badge-neutral gap-1">
+            <span
+              class="inline-block size-2 rounded-full"
+              style="background-color: {colorOf(colors, log.type)}"
+            ></span>
+            {log.type}
+          </Badge>
         </div>
         <pre class="mt-3 max-h-60 overflow-auto rounded-box bg-base-300 p-3 text-xs">{JSON.stringify(
             log.data,

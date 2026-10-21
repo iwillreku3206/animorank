@@ -2,6 +2,7 @@
   import Badge from '$lib/components/ui/badges/Badge.svelte';
   import Button from '$lib/components/ui/buttons/Button.svelte';
   import Select from '$lib/components/ui/selects/Select.svelte';
+  import { colorOf, typeColors } from '$lib/analytics/sessionLogColors';
   import { formatLogTimestamp } from '$lib/analytics/sessionLogTime';
   import type { SessionLogsViewContext } from '../../../routes/instructor/analytics/session-logs/context.svelte';
   import { replayTexts, slotAt, textDeltas } from './replay';
@@ -15,7 +16,8 @@
     frameDuration,
     parseSpeed,
     previewOf,
-    textEditCounts
+    textEditCounts,
+    timelineSlices
   } from './tape';
 
   let { context }: { context: SessionLogsViewContext } = $props();
@@ -31,6 +33,9 @@
   const deltas = $derived(textDeltas(entries));
   const texts = $derived(replayTexts(document?.baseCode ?? '', deltas));
   const editsAt = $derived(textEditCounts(frames));
+  // One colour per type of entry this session recorded, in first-appearance
+  // order; the legend under the timeline is what names them.
+  const colors = $derived(typeColors(entries));
 
   let rawPosition = $state(0);
   const position = $derived(Math.min(rawPosition, lastPosition));
@@ -38,7 +43,10 @@
   const editStep = $derived(editsAt[position] ?? 0);
   const code = $derived(texts[editStep] ?? '');
   const totalMs = $derived(frames.at(-1)?.elapsedMs ?? 0);
-  const progress = $derived(totalMs === 0 || !frame ? 0 : (frame.elapsedMs / totalMs) * 100);
+  const slices = $derived(timelineSlices(frames));
+  const playheadPercent = $derived(
+    slices[position] ? slices[position].startPercent + slices[position].widthPercent / 2 : 0
+  );
 
   // The edit the code pane is showing, for the slot badge beside it.
   const slotLabel = $derived(
@@ -206,22 +214,38 @@
       >
     </div>
 
-    <!-- The timeline: one tick per entry — text edits lit, since they are the
-         ones that change the code beside it. -->
     <div class="flex flex-col gap-1">
-      <div class="relative h-4">
-        {#each frames as tapeFrame (tapeFrame.entry.id)}
-          <span
-            class="absolute top-0 h-full w-px {tapeFrame.entry.type === TEXT_EDIT
-              ? 'bg-primary'
-              : 'bg-base-content/25'}"
-            style="left: {totalMs === 0 ? 0 : (tapeFrame.elapsedMs / totalMs) * 100}%"
-            title="{formatElapsed(tapeFrame.elapsedMs)} · {tapeFrame.entry.type}"
-          ></span>
-        {/each}
+      <!-- The timeline: one slice per entry, as wide as the time it covers and
+         coloured by the kind of entry it is. Width carries time, so the events
+         stand taller while text edits sit in a thin lane along the bottom —
+         height is the one dimension that can mark them without lying about
+         when they happened. -->
+      <div
+        class="relative h-7 w-full overflow-hidden rounded-sm"
+        data-testid="replay-timeline"
+      >
+        <div class="flex h-full w-full items-end">
+          {#each frames as tapeFrame, index (tapeFrame.entry.id)}
+            {@const isEdit = tapeFrame.entry.type === TEXT_EDIT}
+            <button
+              class="shrink-0 cursor-pointer border-0 p-0 {isEdit ? 'h-2' : 'h-full'}"
+              class:opacity-30={index > position}
+              style="width: {slices[index]?.widthPercent ?? 0}%; background-color: {colorOf(
+                colors,
+                tapeFrame.entry.type
+              )}"
+              title="{formatElapsed(tapeFrame.elapsedMs)} · {tapeFrame.entry.type}"
+              aria-label="Seek to {formatElapsed(tapeFrame.elapsedMs)}: {tapeFrame.entry.type}"
+              data-testid="replay-slice"
+              data-entry-type={tapeFrame.entry.type}
+              onclick={() => seek(index)}
+            ></button>
+          {/each}
+        </div>
         <div
-          class="absolute top-1/2 left-0 h-0.5 -translate-y-1/2 bg-primary"
-          style="width: {progress}%"
+          class="pointer-events-none absolute inset-y-0 w-0.5 -translate-x-1/2 bg-base-content"
+          style="left: {playheadPercent}%"
+          data-testid="replay-playhead"
         ></div>
       </div>
       <input
@@ -233,6 +257,20 @@
         oninput={() => (playing = false)}
         aria-label="Replay position"
       />
+      <ul
+        class="flex flex-wrap items-center gap-x-3 gap-y-1"
+        data-testid="replay-legend"
+      >
+        {#each [...colors] as [type, color] (type)}
+          <li class="flex items-center gap-1 text-xs text-base-content/60">
+            <span
+              class="inline-block size-2 rounded-full"
+              style="background-color: {color}"
+            ></span>
+            {type}
+          </li>
+        {/each}
+      </ul>
     </div>
 
     <div class="grid gap-3 lg:grid-cols-2">
@@ -266,7 +304,13 @@
               class="text-sm text-base-content/60"
               datetime={frame.entry.timestamp}>{formatLogTimestamp(frame.entry.timestamp)}</time
             >
-            <Badge class="badge-neutral">{frame.entry.type}</Badge>
+            <Badge class="badge-neutral gap-1">
+              <span
+                class="inline-block size-2 rounded-full"
+                style="background-color: {colorOf(colors, frame.entry.type)}"
+              ></span>
+              {frame.entry.type}
+            </Badge>
           </div>
           <pre
             data-testid="replay-frame"
@@ -293,8 +337,9 @@
                   <span class="w-16 shrink-0 font-mono tabular-nums text-base-content/60"
                     >{formatElapsed(tapeFrame.elapsedMs)}</span
                   >
-                  <span class="shrink-0 {tapeFrame.entry.type === TEXT_EDIT ? 'text-primary' : 'text-base-content/80'}"
-                    >{tapeFrame.entry.type}</span
+                  <span
+                    class="shrink-0"
+                    style="color: {colorOf(colors, tapeFrame.entry.type)}">{tapeFrame.entry.type}</span
                   >
                   <span class="truncate pl-2 text-base-content/40">{previewOf(tapeFrame.entry.data)}</span>
                 </button>

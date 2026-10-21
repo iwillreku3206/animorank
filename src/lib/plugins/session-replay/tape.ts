@@ -68,6 +68,45 @@ export function formatElapsed(ms: number): string {
 /** The entry type whose payload is a text edit; see `replay.ts`. */
 export const TEXT_EDIT = 'TEXT_MODIFIED';
 
+/** One slice of the replay's timeline, in percentages of its width. */
+export interface TimelineSlice {
+  startPercent: number;
+  widthPercent: number;
+}
+
+/**
+ * The timeline's slices: one per frame, as wide as the time it covers — the wait
+ * until the next entry — but never thinner than `minPercent`, because a session
+ * is bursty by nature: a dozen entries in the same second would otherwise be a
+ * single pixel of colour, and the tape would read as one long empty wait.
+ *
+ * Exactly `minPercent` of the width is reserved for every frame up front and the
+ * rest is shared out by elapsed time, so the widths always add up to 100 and no
+ * slice is thinner than the floor. A timeline too short for the floor at all
+ * falls back to equal slices.
+ */
+export function timelineSlices(frames: TapeFrame[], minPercent = 1.2): TimelineSlice[] {
+  if (frames.length === 0) return [];
+
+  const total = frames.at(-1)?.elapsedMs ?? 0;
+  // A frame covers the time until the next one; the last one covers none of its own.
+  const spans = frames.map((frame, index) => {
+    const next = frames[index + 1];
+    return next ? Math.max(0, next.elapsedMs - frame.elapsedMs) : 0;
+  });
+
+  const floor = Math.min(minPercent, 100 / frames.length);
+  const free = 100 - floor * frames.length;
+  const widths = spans.map((span) => floor + (total > 0 ? (span / total) * free : free / frames.length));
+
+  let start = 0;
+  return widths.map((widthPercent) => {
+    const slice = { startPercent: start, widthPercent };
+    start += widthPercent;
+    return slice;
+  });
+}
+
 /**
  * For each frame, how many text edits the session has made by then, counted
  * inclusively — the index into `replayTexts`' steps that a playhead at this
