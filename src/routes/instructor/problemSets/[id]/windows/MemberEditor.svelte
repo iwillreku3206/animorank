@@ -84,24 +84,26 @@
       >
         <span class="font-bold">{label}</span>
       </label>
-      <TextInput
-        id="{id}__email"
-        type="email"
-        class="w-full"
-        {placeholder}
-        autocomplete="off"
-        bind:value={email}
-        aria-invalid={error !== null}
-        aria-describedby={error === null ? undefined : `${id}__error`}
-      />
+      <div class="flex flex-row gap-2">
+        <TextInput
+          id="{id}__email"
+          type="email"
+          class="w-full"
+          {placeholder}
+          autocomplete="off"
+          bind:value={email}
+          aria-invalid={error !== null}
+          aria-describedby={error === null ? undefined : `${id}__error`}
+        />
+        <Button
+          class="btn-primary"
+          type="submit"
+          disabled={!canSubmit}
+        >
+          {addLabel}
+        </Button>
+      </div>
     </div>
-    <Button
-      class="btn-primary mt-9"
-      type="submit"
-      disabled={!canSubmit}
-    >
-      {addLabel}
-    </Button>
   </form>
 
   {#if error}
