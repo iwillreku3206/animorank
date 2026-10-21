@@ -1,10 +1,21 @@
 <script lang="ts">
+  import MemberEditor from './MemberEditor.svelte';
   import type { ProblemSetEditorWindowContext } from '../context.svelte';
 
-  // The prop is declared so the component satisfies `Component<{ context }>`,
-  // which the window registry requires; the stub has nothing to read from it yet.
-  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
   let { context }: { context: ProblemSetEditorWindowContext } = $props();
 </script>
 
-<section class="flex flex-col gap-4 p-4">TODO: Implement</section>
+<section class="flex flex-col gap-4 p-4">
+  <MemberEditor
+    id="window__student_access"
+    label="Student email"
+    description="Students on this list can practise the set's problems, subscribed one account at a time by email. Only registered student accounts can be added."
+    placeholder="student@example.com"
+    addLabel="Add student"
+    emptyLabel="No students have access yet."
+    countNoun="student"
+    members={context.subscribers}
+    onAdd={(email) => context.addSubscriber(email)}
+    onRemove={(id) => context.removeSubscriber(id)}
+  />
+</section>

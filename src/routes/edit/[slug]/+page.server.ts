@@ -14,17 +14,19 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
   if (!session || !session.user.id) return redirect(302, '/');
 
+  // Authoring is a collaborator's page: being subscribed to the set, or the set
+  // being global, makes a problem *solvable*, not editable — and this load hands
+  // out the test cases, expected values included. A student who reached it could
+  // read every answer while the write endpoints refused them.
+  if (session.user.type !== 'teacher') return redirect(302, '/');
+
   const registryProvider = ServerRegistryProvider.instance();
 
   const problemResult = await db.problem.findUnique({
     where: {
       id: readUuidParam(params.slug),
       problem_set: {
-        OR: [
-          { collaborators: { some: { collaborator_id: session.user.id } } },
-          { subscriptions: { some: { student_id: session.user.id } } },
-          { is_global: true }
-        ]
+        collaborators: { some: { collaborator_id: session.user.id } }
       }
     },
     include: {

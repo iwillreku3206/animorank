@@ -58,7 +58,8 @@
         topics: problem.topics
       })),
       topics: data.problemSet.topic_ids,
-      collaborators: data.problemSet.collaboratorIds,
+      collaborators: data.problemSet.collaborators,
+      subscribers: data.problemSet.subscribers,
       tags: data.tags
     })
   );

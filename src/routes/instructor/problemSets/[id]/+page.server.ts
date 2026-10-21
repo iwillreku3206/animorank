@@ -27,6 +27,9 @@ export const load: PageServerLoad = async ({ locals, params }) => {
           }
         }
       },
+      subscriptions: {
+        include: { student: { include: { user: true } } }
+      },
       difficulty: true,
       subject: true,
       topics: {
@@ -86,7 +89,20 @@ export const load: PageServerLoad = async ({ locals, params }) => {
         ...p,
         topics: p.topics.map((topic) => topic.tag_id)
       })),
-      collaboratorIds: problemSet.collaborators.map((c) => c.collaborator.user.id)
+      collaborators: problemSet.collaborators
+        .map((c) => ({
+          id: c.collaborator.user.id,
+          name: c.collaborator.user.name,
+          email: c.collaborator.user.email
+        }))
+        .sort((a, b) => a.email.localeCompare(b.email)),
+      subscribers: problemSet.subscriptions
+        .map((subscription) => ({
+          id: subscription.student.user.id,
+          name: subscription.student.user.name,
+          email: subscription.student.user.email
+        }))
+        .sort((a, b) => a.email.localeCompare(b.email))
     },
     tags: tags.map((tag) => tag.model),
     globalProblemSolvers,

@@ -8,7 +8,8 @@ import type {
 } from '$lib/zenstack/models';
 import { TagType } from '$lib/zenstack/models';
 import type { User } from '@auth/sveltekit';
-import { ProblemSet, type CollaboratorInfo, type ProblemSetSummary } from '.';
+import { ProblemSet, type ProblemSetSummary } from '.';
+import { normalizeEmail, resolveMember, type MemberInfo, type MemberRejection, type MemberRole } from './members';
 import { ServerRegistryProvider } from '$lib/registry/server';
 import { Tag, TagService } from '$lib/tag';
 import { arrayToHashMap } from '$lib/utils/arrayToHashMap';
@@ -42,7 +43,8 @@ export interface DeleteOptions {
 
 export interface AddCollaboratorOptions {
   problemSetId: string;
-  collaboratorId: string;
+  /** The address the instructor typed; resolved to a registered teacher. */
+  email: string;
   user: User;
 }
 
@@ -56,6 +58,34 @@ export interface ListCollaboratorsOptions {
   problemSetId: string;
   user: User;
 }
+
+export interface ListSubscribersOptions {
+  problemSetId: string;
+  user: User;
+}
+
+export interface AddSubscriberOptions {
+  problemSetId: string;
+  /** The address the instructor typed; resolved to a registered student. */
+  email: string;
+  user: User;
+}
+
+export interface RemoveSubscriberOptions {
+  problemSetId: string;
+  studentId: string;
+  user: User;
+}
+
+/**
+ * What adding an address did, for either kind of member. `rejected` carries why
+ * the address cannot join in that role, so the route can say it in the
+ * instructor's words.
+ */
+export type AddMemberResult =
+  | { status: 'added' | 'already-added'; member: MemberInfo }
+  | { status: 'forbidden' }
+  | { status: 'rejected'; reason: MemberRejection };
 
 export type FilterStatus = 'not_started' | 'in_progress' | 'complete';
 
@@ -225,65 +255,207 @@ export class ProblemSetService {
   /**
    * Add a teacher as a collaborator on a problem set.
    */
-  public async addCollaborator(options: AddCollaboratorOptions): Promise<boolean> {
-    const problemSet = await db.problemSet.findUnique({
-      where: {
-        id: options.problemSetId,
-        ...editableBy(options.user.id || '')
-      }
-    });
-
-    if (!problemSet) return false;
-
-    await db.problemSetCollaborator.create({
-      data: {
-        collaborator: { connect: { id: options.collaboratorId } },
-        problem_set: { connect: { id: options.problemSetId } }
-      }
-    });
-
-    return true;
+  /**
+   * Add the teacher behind `email` as a collaborator. Same rules as
+   * {@link addSubscriber}, with the role swapped: the account has to exist and
+   * has to be a *teacher*, because a collaboration is a row joining `Teacher`.
+   * Adding someone who already collaborates changes nothing and says so.
+   */
+  public async addCollaborator(options: AddCollaboratorOptions): Promise<AddMemberResult> {
+    return this.addMember(options.problemSetId, options.email, 'teacher', options.user);
   }
 
   /**
    * Remove a teacher from the collaborators of a problem set.
    */
-  public async removeCollaborator(options: RemoveCollaboratorOptions): Promise<boolean> {
-    try {
-      await db.problemSetCollaborator.delete({
-        where: {
-          collaborator_id_problem_set_id: {
-            collaborator_id: options.collaboratorId,
-            problem_set_id: options.problemSetId
-          }
-        }
-      });
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
   /**
-   * List all collaborators of a problem set.
+   * Remove a collaborator. `false` when the caller does not collaborate on the
+   * set — without that guard any teacher could drop any other from any set — or
+   * when the row is not there to remove.
    */
-  public async listCollaborators(options: ListCollaboratorsOptions): Promise<CollaboratorInfo[]> {
+  public async removeCollaborator(options: RemoveCollaboratorOptions): Promise<boolean> {
     const problemSet = await db.problemSet.findUnique({
       where: {
         id: options.problemSetId,
-        ...readableBy(options.user.id || '')
+        ...editableBy(options.user.id || '')
+      },
+      select: { id: true }
+    });
+
+    if (!problemSet) return false;
+
+    const removed = await db.problemSetCollaborator.deleteMany({
+      where: { problem_set_id: options.problemSetId, collaborator_id: options.collaboratorId }
+    });
+
+    return removed.count > 0;
+  }
+
+  /**
+   * List the collaborators of a problem set. `null` when the caller does not
+   * collaborate on it — an empty list is a set with one collaborator, which is
+   * not the same answer — and emails are personal data, so the guard is the
+   * editing one rather than the reading one a student's catalogue uses.
+   */
+  public async listCollaborators(options: ListCollaboratorsOptions): Promise<MemberInfo[] | null> {
+    const problemSet = await db.problemSet.findUnique({
+      where: {
+        id: options.problemSetId,
+        ...editableBy(options.user.id || '')
       },
       include: {
         collaborators: { include: { collaborator: { include: { user: true } } } }
       }
     });
 
-    if (!problemSet) return [];
+    if (!problemSet) return null;
 
-    return problemSet.collaborators.map((c) => ({
-      id: c.collaborator.user.id,
-      name: c.collaborator.user.name
-    }));
+    return problemSet.collaborators
+      .map((c) => ({
+        id: c.collaborator.user.id,
+        name: c.collaborator.user.name,
+        email: c.collaborator.user.email
+      }))
+      .sort((a, b) => a.email.localeCompare(b.email));
+  }
+
+  /**
+   * List the students subscribed to a problem set, by email. `null` when the
+   * caller does not collaborate on the set — an empty list is a set nobody
+   * subscribed to, which is a different answer.
+   *
+   * Emails are personal data, so the guard is the editing one, not the reading
+   * one a student's own catalogue uses.
+   */
+  public async listSubscribers(options: ListSubscribersOptions): Promise<MemberInfo[] | null> {
+    const problemSet = await db.problemSet.findUnique({
+      where: {
+        id: options.problemSetId,
+        ...editableBy(options.user.id || '')
+      },
+      include: {
+        subscriptions: { include: { student: { include: { user: true } } } }
+      }
+    });
+
+    if (!problemSet) return null;
+
+    return problemSet.subscriptions
+      .map((subscription) => ({
+        id: subscription.student.user.id,
+        name: subscription.student.user.name,
+        email: subscription.student.user.email
+      }))
+      .sort((a, b) => a.email.localeCompare(b.email));
+  }
+
+  /**
+   * Subscribe the student behind `email` to a problem set: the same rules as
+   * {@link addCollaborator}, with the role swapped.
+   */
+  public async addSubscriber(options: AddSubscriberOptions): Promise<AddMemberResult> {
+    return this.addMember(options.problemSetId, options.email, 'student', options.user);
+  }
+
+  /**
+   * Add the account behind `email` to a problem set in `role`.
+   *
+   * The address has to name a registered account (`unknown-email` otherwise),
+   * and that account has to be of the right kind (`not-a-student` /
+   * `not-a-teacher` otherwise): a subscription is a row joining `Student` and a
+   * collaboration one joining `Teacher`. The two are not interchangeable, so a
+   * teacher cannot be given a student's seat and a student cannot be handed an
+   * editing one by typing into the wrong tab.
+   *
+   * Adding somebody who is already there is a success that changes nothing,
+   * which is what a form resubmitted or filled twice should do.
+   */
+  private async addMember(problemSetId: string, email: string, role: MemberRole, user: User): Promise<AddMemberResult> {
+    const problemSet = await db.problemSet.findUnique({
+      where: {
+        id: problemSetId,
+        ...editableBy(user.id || '')
+      },
+      select: { id: true }
+    });
+
+    if (!problemSet) return { status: 'forbidden' };
+
+    const requested = normalizeEmail(email);
+    const account = requested
+      ? await db.user.findFirst({
+          where: { email: { equals: requested, mode: 'insensitive' } },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            student: { select: { id: true } },
+            teacher: { select: { id: true } }
+          }
+        })
+      : null;
+
+    const resolved = resolveMember(
+      account
+        ? {
+            id: account.id,
+            email: account.email,
+            name: account.name,
+            isStudent: account.student !== null,
+            isTeacher: account.teacher !== null
+          }
+        : null,
+      role
+    );
+
+    if (!resolved.ok) return { status: 'rejected', reason: resolved.reason };
+
+    const member = resolved.member;
+    const alreadyThere =
+      role === 'student'
+        ? (await db.subscription.findUnique({
+            where: { problem_set_id_student_id: { problem_set_id: problemSetId, student_id: member.id } }
+          })) !== null
+        : (await db.problemSetCollaborator.findUnique({
+            where: {
+              collaborator_id_problem_set_id: { collaborator_id: member.id, problem_set_id: problemSetId }
+            }
+          })) !== null;
+
+    if (!alreadyThere) {
+      if (role === 'student') {
+        await db.subscription.create({ data: { problem_set_id: problemSetId, student_id: member.id } });
+      } else {
+        await db.problemSetCollaborator.create({
+          data: { problem_set_id: problemSetId, collaborator_id: member.id }
+        });
+      }
+    }
+
+    return { status: alreadyThere ? 'already-added' : 'added', member };
+  }
+
+  /**
+   * Unsubscribe a student from a problem set. `false` when the caller does not
+   * collaborate on the set, or when that student was not subscribed — the editor
+   * treats both as "it is gone", which is what it asked for.
+   */
+  public async removeSubscriber(options: RemoveSubscriberOptions): Promise<boolean> {
+    const problemSet = await db.problemSet.findUnique({
+      where: {
+        id: options.problemSetId,
+        ...editableBy(options.user.id || '')
+      },
+      select: { id: true }
+    });
+
+    if (!problemSet) return false;
+
+    const removed = await db.subscription.deleteMany({
+      where: { problem_set_id: options.problemSetId, student_id: options.studentId }
+    });
+
+    return removed.count > 0;
   }
 
   /**

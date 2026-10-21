@@ -21,15 +21,13 @@ export const GET: RequestHandler = async ({ locals, params }) => {
 
   if (!problemSet) return error(404, 'Not found');
 
-  // Query with the specific includes needed for this endpoint
+  // The payload below is the authoring one — test cases with their expected
+  // values, collaborators, teachers — so it is served to a collaborator only.
+  // Reading the set as a student is a different question with a different answer.
   const fullProblemSet = await db.problemSet.findUnique({
     where: {
       id: params.id,
-      OR: [
-        { is_global: true },
-        { subscriptions: { some: { student_id: session.user.id } } },
-        { collaborators: { some: { collaborator_id: session.user.id } } }
-      ]
+      collaborators: { some: { collaborator_id: session.user.id } }
     },
     include: {
       problems: true,

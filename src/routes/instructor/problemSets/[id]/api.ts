@@ -1,4 +1,5 @@
 import type { Problem, ProblemSet } from '$lib/zenstack/models';
+import type { MemberInfo } from '$lib/problemSet';
 import { errorFrom } from '$lib/response';
 
 export type SaveProblemSetPayload = Partial<Omit<ProblemSet, 'id'>> & {
@@ -54,4 +55,44 @@ export async function saveProblem(problemId: string, updates: UpdateProblemPaylo
 export async function deleteProblem(problemId: string): Promise<void> {
   const response = await fetch(`/api/problem/${problemId}`, { method: 'DELETE' });
   if (!response.ok) throw await errorFrom(response, 'Deleting problem failed');
+}
+
+export async function addSubscriber(problemSetId: string, email: string): Promise<MemberInfo> {
+  const response = await fetch(`/api/problem-set/${problemSetId}/subscribers`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+  if (!response.ok) throw await errorFrom(response, 'Adding the subscriber failed');
+  const body = (await response.json()) as { member: MemberInfo };
+  return body.member;
+}
+
+export async function removeSubscriber(problemSetId: string, studentId: string): Promise<void> {
+  const response = await fetch(`/api/problem-set/${problemSetId}/subscribers`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ studentId })
+  });
+  if (!response.ok) throw await errorFrom(response, 'Removing the subscriber failed');
+}
+
+export async function addCollaborator(problemSetId: string, email: string): Promise<MemberInfo> {
+  const response = await fetch(`/api/problem-set/${problemSetId}/collaborators`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  });
+  if (!response.ok) throw await errorFrom(response, 'Adding the collaborator failed');
+  const body = (await response.json()) as { member: MemberInfo };
+  return body.member;
+}
+
+export async function removeCollaborator(problemSetId: string, collaboratorId: string): Promise<void> {
+  const response = await fetch(`/api/problem-set/${problemSetId}/collaborators`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ collaboratorId })
+  });
+  if (!response.ok) throw await errorFrom(response, 'Removing the collaborator failed');
 }

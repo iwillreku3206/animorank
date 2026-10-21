@@ -99,6 +99,34 @@ export class TestCaseService {
     return { problem: new Problem(problemModel), models };
   }
 
+  /**
+   * The editor's fetch: the problem and its test case models, for a collaborator
+   * of the problem's set only.
+   *
+   * `fetchByProblem` filters by who may *read* the set, which includes the
+   * students subscribed to it — and a hydrated test case carries its expected
+   * values. The edit page hands those to the browser, so it cannot share that
+   * rule: what a student may run is not what they may see.
+   */
+  private async fetchByProblemForEdit(
+    options: FindByProblemOptions
+  ): Promise<{ problem: Problem; models: ProblemTestCase[] } | null> {
+    const problemModel = await db.problem.findUnique({ where: { id: options.problemId } });
+    if (!problemModel) return null;
+
+    const models = await db.problemTestCase.findMany({
+      where: {
+        problem_id: options.problemId,
+        problem: {
+          problem_set: { collaborators: { some: { collaborator_id: options.user.id || '' } } }
+        }
+      },
+      orderBy: { created_at: 'asc' }
+    });
+
+    return { problem: new Problem(problemModel), models };
+  }
+
   public async findByProblem(options: FindByProblemOptions): Promise<ServerTestCase[]> {
     const fetched = await this.fetchByProblem(options);
     if (!fetched) return [];
@@ -120,7 +148,7 @@ export class TestCaseService {
    * creating such rows in the first place.
    */
   public async findByProblemForEdit(options: FindByProblemOptions): Promise<ServerTestCase[]> {
-    const fetched = await this.fetchByProblem(options);
+    const fetched = await this.fetchByProblemForEdit(options);
     if (!fetched) return [];
 
     const result: ServerTestCase[] = [];

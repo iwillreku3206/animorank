@@ -1,11 +1,6 @@
 import type { ProblemSet as ProblemSetModel } from '$lib/zenstack/models';
 import type { Tag } from '$lib/zenstack/models';
 
-export interface CollaboratorInfo {
-  id: string;
-  name: string | null;
-}
-
 export interface ProblemSetSummary {
   id: string;
   title: string;

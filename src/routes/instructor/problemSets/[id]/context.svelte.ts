@@ -1,7 +1,17 @@
 import { AutoSave, type AutoSaveState } from '$lib/utils/autosave.svelte';
 import type { Tag } from '$lib/zenstack/models';
 import type { CloseWindow, OpenWindow } from '$lib/window/dockviewWindowManager';
-import { addProblem, deleteProblem, saveProblem, saveProblemSet } from './api';
+import {
+  addCollaborator,
+  addProblem,
+  addSubscriber,
+  deleteProblem,
+  removeCollaborator,
+  removeSubscriber,
+  saveProblem,
+  saveProblemSet
+} from './api';
+import type { MemberInfo } from '$lib/problemSet';
 
 /**
  * A problem as the editor needs it. Deliberately its own shape rather than the
@@ -32,7 +42,8 @@ export interface InitialValues {
   problemSet: EditorProblemSet;
   problems: EditorProblem[];
   topics: string[];
-  collaborators: string[];
+  collaborators: MemberInfo[];
+  subscribers: MemberInfo[];
   tags: Tag[];
 }
 
@@ -57,7 +68,10 @@ export class ProblemSetEditorWindowContext {
   public problemSet: EditorProblemSet = $state() as unknown as EditorProblemSet;
   public problems: EditorProblem[] = $state([]);
   public topics: string[] = $state([]);
-  public collaborators: string[] = $state([]);
+  /** The teachers who can edit this set; the Collaborators tab owns them. */
+  public collaborators: MemberInfo[] = $state([]);
+  /** The students who can practise this set; the Student Access tab owns them. */
+  public subscribers: MemberInfo[] = $state([]);
 
   /**
    * Opens (or focuses) one of the editor's windows. This page shows its windows
@@ -83,6 +97,7 @@ export class ProblemSetEditorWindowContext {
     this.problems = initialValues.problems;
     this.topics = initialValues.topics;
     this.collaborators = initialValues.collaborators;
+    this.subscribers = initialValues.subscribers;
     this.tags = initialValues.tags;
 
     this.autosave = new AutoSave((draft) => this.persist(draft), this.draft());
@@ -166,6 +181,40 @@ export class ProblemSetEditorWindowContext {
       problem.visible = previous;
       throw error;
     }
+  }
+
+  /**
+   * Add the teacher behind an address as a collaborator. An address that is not
+   * a registered teacher account rejects with the server's sentence, which the
+   * tab shows beside the field.
+   */
+  public async addCollaborator(email: string): Promise<void> {
+    const collaborator = await addCollaborator(this.problemSet.id, email);
+    const others = this.collaborators.filter((existing) => existing.id !== collaborator.id);
+    this.collaborators = [...others, collaborator].sort((a, b) => a.email.localeCompare(b.email));
+  }
+
+  /** Drop a collaborator; the row leaves the list only once the server agrees. */
+  public async removeCollaborator(collaboratorId: string): Promise<void> {
+    await removeCollaborator(this.problemSet.id, collaboratorId);
+    this.collaborators = this.collaborators.filter((collaborator) => collaborator.id !== collaboratorId);
+  }
+
+  /**
+   * Subscribe the student behind an address, keeping the list in order. An
+   * address that is not a registered student account rejects with the server's
+   * sentence, which the tab shows beside the field.
+   */
+  public async addSubscriber(email: string): Promise<void> {
+    const subscriber = await addSubscriber(this.problemSet.id, email);
+    const others = this.subscribers.filter((existing) => existing.id !== subscriber.id);
+    this.subscribers = [...others, subscriber].sort((a, b) => a.email.localeCompare(b.email));
+  }
+
+  /** Unsubscribe a student; the row leaves the list only once the server agrees. */
+  public async removeSubscriber(studentId: string): Promise<void> {
+    await removeSubscriber(this.problemSet.id, studentId);
+    this.subscribers = this.subscribers.filter((subscriber) => subscriber.id !== studentId);
   }
 
   public cleanup(): void {
