@@ -101,6 +101,29 @@ export class ClientPluginLoader {
   }
 
   /**
+   * Loads every plugin the client knows about — the app's prebuilt set —
+   * whether or not it answers a page hook.
+   *
+   * A page that renders whatever a plugin contributes, rather than answering a
+   * hook of its own, cannot name the plugins that contribute to it: a prebuilt
+   * plugin's registrations happen in the browser, so nothing the server knows
+   * lists them. It loads them all instead, and picks the contributions out of
+   * the registry afterwards. A plugin that cannot be loaded is reported and
+   * skipped; it costs the page its views, never the page.
+   */
+  public async loadPrebuiltPlugins(): Promise<void> {
+    await Promise.all(
+      this.prebuiltPlugins().map(async (id) => {
+        try {
+          await this.getPlugin(id);
+        } catch (error) {
+          console.error(`Could not load plugin "${id}"`, error);
+        }
+      })
+    );
+  }
+
+  /**
    * Tells the plugins that answer `hook` that the page has loaded, with the
    * page's context, loading them first if they are not loaded already.
    *

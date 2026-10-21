@@ -1,0 +1,9 @@
+{
+  "id": "session-replay",
+  "manifestVersion": "0",
+  "name": "Session Replay",
+  "author": "AnimoRank",
+  "version": "1.0.0",
+  "description": "Replays a session like a recording: every entry on a scrubbable timeline, with the code document following its text edits.",
+  "category": ["analytics"]
+}

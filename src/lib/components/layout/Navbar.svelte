@@ -119,6 +119,12 @@
           class="px-4 text-base"
           href={problemSetsUrl}>Problem Sets</Link
         >
+        {#if user?.type === 'teacher'}
+          <Link
+            class="px-4 text-base"
+            href="/instructor/analytics">Analytics</Link
+          >
+        {/if}
       {/if}
     </div>
   </div>
@@ -190,6 +196,13 @@
         href={problemSetsUrl}
         onclick={closeDrawer}>Problem Sets</Link
       >
+      {#if user?.type === 'teacher'}
+        <Link
+          class="py-2 text-base"
+          href="/instructor/analytics"
+          onclick={closeDrawer}>Analytics</Link
+        >
+      {/if}
     {/if}
   </nav>
 

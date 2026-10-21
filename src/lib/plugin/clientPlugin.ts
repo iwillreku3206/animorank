@@ -3,12 +3,14 @@ import type { ClientAnimoRankAPI } from '$lib/api/client';
 import type { ProblemEditorWindowContext } from '../../routes/edit/[slug]/context.svelte';
 import type { ProblemSetEditorWindowContext } from '../../routes/instructor/problemSets/[id]/context.svelte';
 import type { SolveWindowContext } from '../../routes/problem/[problem_id]/[session_id]/context.svelte';
+import type { SessionLogsViewContext } from '../../routes/instructor/analytics/session-logs/context.svelte';
 
 /** The context each page-load hook receives, keyed by hook name. */
 export interface PluginPageHookContexts {
   onProblemEditorLoad: ProblemEditorWindowContext;
   onProblemSetEditorLoad: ProblemSetEditorWindowContext;
   onSolvePageLoad: SolveWindowContext;
+  onSessionLogsLoad: SessionLogsViewContext;
 }
 
 /** A page a plugin can be told about, named after the hook that answers it. */
@@ -36,4 +38,7 @@ export abstract class ClientPlugin {
 
   /** The solve page has loaded, with the session's context. */
   public onSolvePageLoad(_context: SolveWindowContext): void | Promise<void> {}
+
+  /** The session logs page has loaded, with the selected session's logs, problem and document. */
+  public onSessionLogsLoad(_context: SessionLogsViewContext): void | Promise<void> {}
 }

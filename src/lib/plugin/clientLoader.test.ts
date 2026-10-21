@@ -430,3 +430,48 @@ describe('ClientPluginLoader page hooks', () => {
     await failing;
   });
 });
+
+/**
+ * Loading a page's whole plugin set: a page that renders whatever plugins
+ * contribute cannot name the plugins that contribute to it — their
+ * registrations happen in the browser — so it loads all of them and picks the
+ * contributions out of its registry afterwards.
+ */
+describe('ClientPluginLoader.loadPrebuiltPlugins', () => {
+  it('loads every known plugin, whether or not it answers a hook', async () => {
+    serve('quiet-plugin', recordingPlugin('quiet-plugin'));
+    serve('hooked-plugin', hookingPlugin('hooked-plugin', ['onSolvePageLoad']));
+    const plugins = loader({ prebuiltPlugins: () => ['quiet-plugin', 'hooked-plugin'] });
+
+    await plugins.loadPrebuiltPlugins();
+
+    expect(inits()).toContain('quiet-plugin');
+    expect(inits()).toContain('hooked-plugin');
+  });
+
+  it('keeps one plugin failing from costing the others their load', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    serve(
+      'broken-loader',
+      "export default class BrokenPlugin {\n  async init() { throw new Error('the plugin failed'); }\n}\n"
+    );
+    serve('healthy-plugin', recordingPlugin('healthy-plugin'));
+    const plugins = loader({ prebuiltPlugins: () => ['broken-loader', 'healthy-plugin'] });
+
+    await expect(plugins.loadPrebuiltPlugins()).resolves.toBeUndefined();
+
+    expect(inits()).toContain('healthy-plugin');
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it('passes over a plugin the route does not serve without reporting it', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const plugins = loader({ prebuiltPlugins: () => ['never-served'] });
+
+    await expect(plugins.loadPrebuiltPlugins()).resolves.toBeUndefined();
+
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+});

@@ -5,6 +5,7 @@ import { ProblemService } from '$lib/problem/problemService';
 import { ProblemSetService } from '$lib/problemSet/problemSetService';
 import { PracticeSessionService } from '$lib/practiceSession/practiceSessionService';
 import { TagService } from '$lib/tag/tagService';
+import { AnalyticsService, SessionLogService } from '$lib/analytics';
 import { TestCaseService } from '$lib/testCase/testCaseService';
 import { CodeExecutor } from '$lib/executor';
 import { CodeExecutorRegistry } from '$lib/executor/codeExecutorRegistry';
@@ -51,6 +52,14 @@ export class ServerRegistryProvider extends RegistryProvider {
       ServiceRegistry.createSingleSingletonServiceRegistry(new PracticeSessionService())
     );
     this._registries.set(TagService, ServiceRegistry.createSingleSingletonServiceRegistry(new TagService()));
+    this._registries.set(
+      AnalyticsService,
+      ServiceRegistry.createSingleSingletonServiceRegistry(new AnalyticsService())
+    );
+    this._registries.set(
+      SessionLogService,
+      ServiceRegistry.createSingleSingletonServiceRegistry(new SessionLogService())
+    );
     this._registries.set(TestCaseService, ServiceRegistry.createSingleServiceRegistry(TestCaseService));
   }
 

@@ -3,6 +3,7 @@ import { RegistryProvider } from './registryProvider';
 import { SolveWindowRegistry } from '../../routes/problem/[problem_id]/[session_id]/windowRegistry';
 import { ProblemEditorWindowRegistry } from '../../routes/edit/[slug]/windowRegistry';
 import { ProblemSetEditorWindowRegistry } from '../../routes/instructor/problemSets/[id]/windowRegistry';
+import { SessionLogsWindowRegistry } from '../../routes/instructor/analytics/session-logs/windowRegistry';
 
 export class ClientRegistryProvider extends RegistryProvider {
   private static _instance: ClientRegistryProvider | null;
@@ -14,6 +15,7 @@ export class ClientRegistryProvider extends RegistryProvider {
     this.registerRegistry(new SolveWindowRegistry());
     this.registerRegistry(new ProblemEditorWindowRegistry());
     this.registerRegistry(new ProblemSetEditorWindowRegistry());
+    this.registerRegistry(new SessionLogsWindowRegistry());
   }
 
   public static instance(): ClientRegistryProvider {
