@@ -9,6 +9,7 @@
   import { transform as mermaid } from '@diplodoc/mermaid-extension/plugin';
   import { transform as transformHTML } from '@diplodoc/html-extension';
   import defaultPlugins from '@diplodoc/transform/lib/plugins';
+  import { percentSolved } from '$lib/utils/percentSolved';
 
   type ProblemSet = PageProps['data']['problemSets'][number];
 
@@ -136,7 +137,7 @@
       class="progress h-2 w-full bg-neutral problemSetProgress"
       value={problemSet.progress.finished}
       max={problemSet.progress.total}
-      aria-label={`${Math.round((problemSet.progress.finished / problemSet.progress.total) * 100)}% progress`}
+      aria-label={`${percentSolved(problemSet.progress.finished, problemSet.progress.total)}% progress`}
     ></progress>
   </div>
 </div>

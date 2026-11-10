@@ -340,19 +340,21 @@
   </div>
 
   <!-- Pagination -->
-  <div class="flex w-full flex-row items-center justify-center">
-    <div class="join">
-      <Button
-        class="join-item"
-        onclick={() => goToPage(pageNumber - 1)}
-        disabled={pageNumber <= 1}>«</Button
-      >
-      <Button class="join-item">Page {pageNumber}/{data.pagination.pageCount}</Button>
-      <Button
-        class="join-item"
-        onclick={() => goToPage(pageNumber + 1)}
-        disabled={pageNumber >= data.pagination.pageCount}>»</Button
-      >
+  {#if data.pagination.pageCount > 1}
+    <div class="flex w-full flex-row items-center justify-center">
+      <div class="join">
+        <Button
+          class="join-item"
+          onclick={() => goToPage(pageNumber - 1)}
+          disabled={pageNumber <= 1}>«</Button
+        >
+        <Button class="join-item">Page {pageNumber}/{data.pagination.pageCount}</Button>
+        <Button
+          class="join-item"
+          onclick={() => goToPage(pageNumber + 1)}
+          disabled={pageNumber >= data.pagination.pageCount}>»</Button
+        >
+      </div>
     </div>
-  </div>
+  {/if}
 </main>

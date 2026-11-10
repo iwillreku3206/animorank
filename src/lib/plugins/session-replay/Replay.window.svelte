@@ -5,7 +5,7 @@
   import { colorOf, typeColors } from '$lib/analytics/sessionLogColors';
   import { formatLogTimestamp } from '$lib/analytics/sessionLogTime';
   import type { SessionLogsViewContext } from '../../../routes/instructor/analytics/session-logs/context.svelte';
-  import { replayTexts, slotAt, textDeltas } from './replay';
+  import { replayBase, replayTexts, slotAt, textDeltas } from './replay';
   import {
     MAX_SPEED,
     MIN_SPEED,
@@ -31,7 +31,7 @@
   // edits, and how many of them each frame has behind it.
   const document = $derived(context.document);
   const deltas = $derived(textDeltas(entries));
-  const texts = $derived(replayTexts(document?.baseCode ?? '', deltas));
+  const texts = $derived(replayTexts(replayBase(document), deltas));
   const editsAt = $derived(textEditCounts(frames));
   // One colour per type of entry this session recorded, in first-appearance
   // order; the legend under the timeline is what names them.

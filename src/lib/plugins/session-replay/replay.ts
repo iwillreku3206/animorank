@@ -1,4 +1,4 @@
-import type { SessionLogEntry, SessionLogSlot } from '$lib/analytics/sessionLogView';
+import type { SessionLogDocument, SessionLogEntry, SessionLogSlot } from '$lib/analytics/sessionLogView';
 import { TEXT_EDIT } from './tape';
 
 /** One `TEXT_MODIFIED` entry: `new` replaces `old` at `offset`. */
@@ -41,6 +41,17 @@ export function replayTexts(base: string, deltas: TextDelta[]): string[] {
     texts.push(text);
   }
   return texts;
+}
+
+/**
+ * The code a replay starts from: the assembled template for a slot problem,
+ * or the problem's starter code for a non-slot one. A non-slot editor opens
+ * on `starter_code`, which `buildSessionLogDocument` carries as `template`
+ * while its `baseCode` is `''` for such problems.
+ */
+export function replayBase(document: SessionLogDocument | null): string {
+  if (!document) return '';
+  return document.usesSlots ? document.baseCode : document.template;
 }
 
 /** The label of the slot whose range contains `offset` in `text`, or `null` when it is outside every slot. */

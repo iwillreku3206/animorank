@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { canViewAnalytics } from '$lib/analytics/access';
   import { tick } from 'svelte';
   import { signIn } from '@auth/sveltekit/client';
   import type { Session } from '@auth/sveltekit';
@@ -119,7 +120,7 @@
           class="px-4 text-base"
           href={problemSetsUrl}>Problem Sets</Link
         >
-        {#if user?.type === 'teacher'}
+        {#if canViewAnalytics(user)}
           <Link
             class="px-4 text-base"
             href="/instructor/analytics">Analytics</Link
@@ -196,7 +197,7 @@
         href={problemSetsUrl}
         onclick={closeDrawer}>Problem Sets</Link
       >
-      {#if user?.type === 'teacher'}
+      {#if canViewAnalytics(user)}
         <Link
           class="py-2 text-base"
           href="/instructor/analytics"

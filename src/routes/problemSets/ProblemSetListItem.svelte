@@ -2,6 +2,7 @@
   import TagChip from '$lib/components/ui/TagChip.svelte';
   import ClickableBadge from '$lib/components/ui/badges/ClickableBadge.svelte';
   import StarIcon from '@iconify-svelte/fa6-solid/star';
+  import { percentSolved } from '$lib/utils/percentSolved';
   import type { PageProps } from './$types';
 
   type ProblemSet = PageProps['data']['problemSets'][number];
@@ -111,7 +112,7 @@
         class="progress h-2 w-full bg-neutral problemSetProgress"
         value={problemSet.progress.finished}
         max={problemSet.progress.total}
-        aria-label={`${Math.round((problemSet.progress.finished / problemSet.progress.total) * 100)}% progress`}
+        aria-label={`${percentSolved(problemSet.progress.finished, problemSet.progress.total)}% progress`}
       ></progress>
     </div>
   </div>

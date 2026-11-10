@@ -121,6 +121,12 @@ export interface FindByFilterOptions {
     order: SortOrder;
   };
   studentProgress?: boolean;
+  /**
+   * Restrict the listing to problem sets the user collaborates on — the ones
+   * the instructor editor opens and may change. Without it every readable set
+   * is listed: global sets and subscriptions included.
+   */
+  editableOnly?: boolean;
 }
 
 export type StudentProgress = { finished: number; total: number };
@@ -463,11 +469,19 @@ export class ProblemSetService {
    * read, for the creator filter. Loaded in full and searched client-side; if the
    * teacher catalog grows large, switch to a server-side search endpoint.
    */
-  public async findCreators(user: User): Promise<{ id: string; name: string }[]> {
+  public async findCreators(
+    user: User,
+    options: { editableOnly?: boolean } = {}
+  ): Promise<{ id: string; name: string }[]> {
     const teachers = await db.teacher.findMany({
-      where: {
-        problem_set_collaborations: { some: { problem_set: readableBy(user.id || '') } }
-      },
+      where: options.editableOnly
+        ? {
+            // Co-collaborators: teachers sharing at least one set with `user`.
+            problem_set_collaborations: { some: { problem_set: editableBy(user.id || '') } }
+          }
+        : {
+            problem_set_collaborations: { some: { problem_set: readableBy(user.id || '') } }
+          },
       include: { user: { select: { id: true, name: true } } },
       orderBy: { user: { name: 'asc' } }
     });
@@ -476,7 +490,8 @@ export class ProblemSetService {
   }
 
   /**
-   * Find problem sets accessible to the user with optional filtering.
+   * Find problem sets the user may read with optional filtering; `editableOnly`
+   * narrows that to the sets they collaborate on.
    */
   public async findByFilter<O extends FindByFilterOptions>(
     options: O
@@ -556,9 +571,12 @@ export class ProblemSetService {
       )
       .with('solved_amounts', (db) =>
         db
+          // LEFT so a set with no problems still yields one row of zero counts.
+          // With inner joins such a set had no row here at all, and the main
+          // query's inner join to this CTE then dropped it from every listing.
           .selectFrom('ProblemSet')
-          .innerJoin('Problem', 'Problem.problem_set_id', 'ProblemSet.id')
-          .innerJoin('problem_progress', 'problem_progress.id', 'Problem.id')
+          .leftJoin('Problem', 'Problem.problem_set_id', 'ProblemSet.id')
+          .leftJoin('problem_progress', 'problem_progress.id', 'Problem.id')
           .groupBy('ProblemSet.id')
           .select('ProblemSet.id')
           .select((eb) =>
@@ -582,7 +600,17 @@ export class ProblemSetService {
         db
           .selectFrom('solved_amounts')
           .select('id')
-          .select((eb) => eb(eb.cast(eb.ref('count_finished'), 'real'), '/', eb.ref('count_total')).as('progress_pct'))
+          // A set with no problems has count_total = 0; dividing would raise
+          // "division by zero" in Postgres, so it reports 0% instead.
+          .select((eb) =>
+            eb
+              .case()
+              .when(eb.ref('count_total'), '=', eb.lit(0))
+              .then(eb.lit(0))
+              .else(eb(eb.cast(eb.ref('count_finished'), 'real'), '/', eb.ref('count_total')))
+              .end()
+              .as('progress_pct')
+          )
       )
       .with('problem_count', (db) =>
         db
@@ -689,25 +717,34 @@ export class ProblemSetService {
       .select('bookmarked.bookmarked');
 
     // Restrict to problem sets the user may read: global, subscribed to, or
-    // collaborating on.
+    // collaborating on. `editableOnly` narrows that to the sets they collaborate
+    // on, which is what the instructor listing passes.
     query = query.where((eb) =>
-      eb.or([
-        eb('ProblemSet.is_global', '=', eb.lit(true)),
-        eb.exists(
-          eb
-            .selectFrom('Subscription')
-            .whereRef('Subscription.problem_set_id', '=', 'ProblemSet.id')
-            .where('Subscription.student_id', '=', options.user.id || '')
-            .select('Subscription.problem_set_id')
-        ),
-        eb.exists(
-          eb
-            .selectFrom('ProblemSetCollaborator')
-            .whereRef('ProblemSetCollaborator.problem_set_id', '=', 'ProblemSet.id')
-            .where('ProblemSetCollaborator.collaborator_id', '=', options.user.id || '')
-            .select('ProblemSetCollaborator.problem_set_id')
-        )
-      ])
+      options.editableOnly
+        ? eb.exists(
+            eb
+              .selectFrom('ProblemSetCollaborator')
+              .whereRef('ProblemSetCollaborator.problem_set_id', '=', 'ProblemSet.id')
+              .where('ProblemSetCollaborator.collaborator_id', '=', options.user.id || '')
+              .select('ProblemSetCollaborator.problem_set_id')
+          )
+        : eb.or([
+            eb('ProblemSet.is_global', '=', eb.lit(true)),
+            eb.exists(
+              eb
+                .selectFrom('Subscription')
+                .whereRef('Subscription.problem_set_id', '=', 'ProblemSet.id')
+                .where('Subscription.student_id', '=', options.user.id || '')
+                .select('Subscription.problem_set_id')
+            ),
+            eb.exists(
+              eb
+                .selectFrom('ProblemSetCollaborator')
+                .whereRef('ProblemSetCollaborator.problem_set_id', '=', 'ProblemSet.id')
+                .where('ProblemSetCollaborator.collaborator_id', '=', options.user.id || '')
+                .select('ProblemSetCollaborator.problem_set_id')
+            )
+          ])
     );
 
     if (options.filters?.bookmarked) {
@@ -787,7 +824,13 @@ export class ProblemSetService {
                   eb('count_finished', '<>', eb.ref('solved_amounts.count_total'))
                 ]);
               case 'complete':
-                return eb('count_finished', '=', eb.ref('solved_amounts.count_total'));
+                // A set with no problems is 0 of 0 solved: requiring a non-zero
+                // total keeps it out of "complete", which would contradict the
+                // 0% the card shows for it.
+                return eb.and([
+                  eb('solved_amounts.count_total', '>', eb.lit(0)),
+                  eb('count_finished', '=', eb.ref('solved_amounts.count_total'))
+                ]);
             }
           })
         )

@@ -1057,6 +1057,12 @@ export class SchemaType implements SchemaDef {
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
                     default: false as FieldDefault
                 },
+                admin: {
+                    name: "admin",
+                    type: "Boolean",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal(false) }] }] as readonly AttributeApplication[],
+                    default: false as FieldDefault
+                },
                 student: {
                     name: "student",
                     type: "Student",

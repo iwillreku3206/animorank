@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { JsonValue } from '@zenstackhq/orm';
-import type { SessionLogEntry, SessionLogSlot } from '$lib/analytics/sessionLogView';
-import { replayTexts, slotAt, textDeltas } from './replay';
+import type { SessionLogDocument, SessionLogEntry, SessionLogSlot } from '$lib/analytics/sessionLogView';
+import { replayBase, replayTexts, slotAt, textDeltas } from './replay';
 
 const entry = (type: string, data: JsonValue | null, timestamp = '2026-10-15T04:20:22.302Z'): SessionLogEntry => ({
   id: `id-${type}-${timestamp}`,
@@ -106,6 +106,50 @@ describe('replayTexts', () => {
     expect(texts).toHaveLength(deltas.length + 1);
     expect(texts.map((text) => text.length)).toEqual([247, 246, 251, 256, 252, 253, 254, 253]);
     expect(texts[1]).toBe(BASE_CODE.slice(0, 77) + BASE_CODE.slice(78));
+  });
+});
+
+describe('replayBase', () => {
+  it('is the empty string without a document', () => {
+    expect(replayBase(null)).toBe('');
+  });
+
+  it('is the assembled template for a slot problem', () => {
+    const document: SessionLogDocument = {
+      template: '%slot s1%\n%endslot s1%\n',
+      usesSlots: true,
+      baseCode: 'assembled',
+      savedCode: 'assembled',
+      slots: SLOTS
+    };
+
+    expect(replayBase(document)).toBe('assembled');
+  });
+
+  it('is the starter code for a non-slot problem, whose base code is empty', () => {
+    const document: SessionLogDocument = {
+      template: 'int main() {}\n',
+      usesSlots: false,
+      baseCode: '',
+      savedCode: 'int main() {}\n',
+      slots: []
+    };
+
+    expect(replayBase(document)).toBe('int main() {}\n');
+  });
+
+  it('starts a non-slot replay from the starter code and lands on the saved body', () => {
+    const document: SessionLogDocument = {
+      template: 'int main() {}\n',
+      usesSlots: false,
+      baseCode: '',
+      savedCode: 'int main() { return 0; }\n',
+      slots: []
+    };
+
+    const texts = replayTexts(replayBase(document), [{ timestamp: 't1', offset: 12, old: '', new: ' return 0; ' }]);
+
+    expect(texts).toEqual(['int main() {}\n', 'int main() { return 0; }\n']);
   });
 });
 

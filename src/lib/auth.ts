@@ -9,6 +9,8 @@ declare module '@auth/sveltekit' {
       userId: string;
       type?: 'student' | 'teacher';
       hasAcceptedTOS: boolean;
+      /** Operator flag: teachers only, and only the analytics pages read it. */
+      admin: boolean;
       /**
        * By default, TypeScript merges new interface properties and overwrites existing ones.
        * In this case, the default session user properties will be overwritten,
@@ -46,6 +48,7 @@ export const { handle } = SvelteKitAuth({
       }
 
       session.user.hasAcceptedTOS = dbUser.hasAcceptedTOS;
+      session.user.admin = dbUser.admin;
 
       return session;
     },

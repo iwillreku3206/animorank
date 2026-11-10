@@ -43,7 +43,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
     page,
     pageSize,
     sort: { by: sort.by as SortType, order: (sort.desc ? 'desc' : 'asc') as SortOrder },
-    studentProgress: false
+    studentProgress: false,
+    editableOnly: true
   });
 
   const problemSets = problemSetsQueryResult.problemSets.map((ps) => ({
@@ -65,7 +66,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
   const allTags = await tagService.findAll();
   const tagGroups = groupBy(allTags, (t) => t.type);
 
-  const creators = await problemSetService.findCreators(session.user);
+  const creators = await problemSetService.findCreators(session.user, { editableOnly: true });
 
   return {
     user: session.user,
