@@ -53,11 +53,16 @@
       const index = Number(param[1]);
       // Counted from 1, matching how the parameter reads in a signature —
       // `param1` is the second one.
-      return (await parameterNames)[index] || `Parameter ${index + 1}`;
+      return parameterLabel(index);
     }
     const ret = symbol.match(/^return(\d+)$/);
     if (ret) return `Return value ${ret[1]}`;
     return symbol;
+  }
+
+  /** Name of the parameter at `index`, falling back to its position. */
+  async function parameterLabel(index: number): Promise<string> {
+    return (await parameterNames)[index] || `Parameter ${index + 1}`;
   }
 
   const failureLabels: Record<string, string> = {
@@ -83,6 +88,23 @@
         value={testCaseResult.failureReason}
         tone="error"
       />
+    {/if}
+
+    {#if testCase && testCase.data.parameters.length > 0}
+      <div class="flex flex-col gap-2">
+        <span class="text-xs font-medium tracking-wide text-base-content/50">Input parameters</span>
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {#each testCase.data.parameters as parameter, i (i)}
+            {@const ParameterValue = displayFor(parameter.value)}
+            <div class="flex flex-col gap-1 overflow-x-auto rounded-lg bg-base-100 px-3 py-2">
+              <span class="text-xs font-medium tracking-wide text-base-content/50">{await parameterLabel(i)}</span>
+              <div class="flex flex-row items-center gap-1 font-mono text-xs leading-relaxed text-base-content">
+                <ParameterValue value={parameter.value} />
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
     {/if}
 
     {#if 'failure' in testCaseResult.runInfo}
