@@ -29,7 +29,7 @@
     "@eslint/js": "^10.0.1",
     "@iconify/svelte": "^5.2.1",
     "@monaco-editor/loader": "^1.4.0",
-    "@playwright/test": "^1.60.0",
+    "@playwright/test": "^1.65.0",
     "@storybook/addon-a11y": "^10.5.0",
     "@storybook/addon-docs": "^10.5.0",
     "@storybook/addon-svelte-csf": "^5.1.5",
