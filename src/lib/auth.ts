@@ -79,10 +79,9 @@ export const { handle } = SvelteKitAuth({
       if (!user.email || !user.id) return;
       const teacher = await db.teacherList.findUnique({ where: { email: user.email } });
       const obj = { id: user.id };
+      await db.student.upsert({ create: obj, update: {}, where: obj });
       if (teacher) {
         await db.teacher.upsert({ create: obj, update: {}, where: obj });
-      } else {
-        await db.student.upsert({ create: obj, update: {}, where: obj });
       }
     }
   },

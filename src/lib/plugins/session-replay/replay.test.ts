@@ -107,6 +107,20 @@ describe('replayTexts', () => {
     expect(texts.map((text) => text.length)).toEqual([247, 246, 251, 256, 252, 253, 254, 253]);
     expect(texts[1]).toBe(BASE_CODE.slice(0, 77) + BASE_CODE.slice(78));
   });
+
+  it('reads a CRLF base as LF while applying edits in their logged coordinates', () => {
+    const texts = replayTexts('int main() {\r\n    return 0;\r\n}\r\n', [
+      { timestamp: 't1', offset: 25, old: '0', new: '1' }
+    ]);
+
+    expect(texts).toEqual(['int main() {\n    return 0;\n}\n', 'int main() {\n    return 1;\n}\n']);
+  });
+
+  it('reads a CRLF insertion as LF', () => {
+    const texts = replayTexts('ab', [{ timestamp: 't1', offset: 1, old: 'b', new: 'b\r\nc' }]);
+
+    expect(texts).toEqual(['ab', 'ab\nc']);
+  });
 });
 
 describe('replayBase', () => {

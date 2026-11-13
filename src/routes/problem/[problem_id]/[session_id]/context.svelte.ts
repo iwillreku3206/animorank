@@ -287,7 +287,8 @@ export class SolveWindowContext {
     // forever, and anything reseeding from it later reverts the student's work.
     this.practiceSession.recordSavedCode(code);
     // The session state is persisted: flush collated telemetry into the
-    // session history alongside it, instead of on its own timer.
+    // session history now, so the save and the edits leading to it are recorded
+    // together rather than waiting out the queue's poll.
     void this.telemetry.flush();
   }
 }

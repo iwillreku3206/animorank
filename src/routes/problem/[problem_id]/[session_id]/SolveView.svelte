@@ -141,6 +141,9 @@
 
   onDestroy(() => {
     destroyed = true;
+    // The session's telemetry poll outlives the component otherwise, ticking
+    // against a queue nothing on this page will read again.
+    context?.telemetry.dispose();
   });
 </script>
 

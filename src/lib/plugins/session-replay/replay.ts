@@ -31,14 +31,19 @@ export function textDeltas(entries: SessionLogEntry[]): TextDelta[] {
 /**
  * The document after each step: index 0 is `base`, index `i` the text after
  * delta `i - 1`. An offset past the end of the buffer is clamped to it.
+ *
+ * A replay reads `\r\n` as `\n`, so every returned text has its line endings
+ * normalized. Edits are still applied in the coordinates the log recorded —
+ * the editor's buffer may itself use `\r\n`, and its offsets count that second
+ * character — so the deltas must be applied before the normalization.
  */
 export function replayTexts(base: string, deltas: TextDelta[]): string[] {
-  const texts = [base];
+  const texts = [base.replaceAll('\r\n', '\n')];
   let text = base;
   for (const delta of deltas) {
     const offset = Math.min(Math.max(0, delta.offset), text.length);
     text = text.slice(0, offset) + delta.new + text.slice(offset + delta.old.length);
-    texts.push(text);
+    texts.push(text.replaceAll('\r\n', '\n'));
   }
   return texts;
 }

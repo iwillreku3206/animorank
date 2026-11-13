@@ -71,5 +71,12 @@ export abstract class TelemetryService {
    */
   public async flush(): Promise<void> {}
 
+  /**
+   * Release anything the service holds past the page's lifetime — a poll, a
+   * connection. Called as the solve page unmounts; a no-op for strategies that
+   * hold nothing, like {@link flush}.
+   */
+  public dispose(): void {}
+
   protected abstract telemetryCallback(_entry: Entry): void | Promise<void>;
 }

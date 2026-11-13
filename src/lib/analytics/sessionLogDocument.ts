@@ -13,8 +13,9 @@ export function buildSessionLogDocument(problem: {
 }): SessionLogDocument {
   if (!problem.usesSlots) {
     // A non-slot problem's editor holds the `body` section alone; `starter_code`
-    // is not read for it (see `PracticeSession.previousCode`).
-    const saved = problem.sections['body'] ?? '';
+    // is not read for it (see `PracticeSession.previousCode`). The saved body is
+    // read with `\r\n` as `\n`, like the assembled documents below.
+    const saved = (problem.sections['body'] ?? '').replaceAll('\r\n', '\n');
     return {
       template: problem.starterCode,
       usesSlots: false,

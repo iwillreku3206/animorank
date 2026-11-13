@@ -102,4 +102,15 @@ describe('buildSessionLogDocument', () => {
     expect(document.savedCode).toBe('');
     expect(document.slots).toEqual([]);
   });
+
+  it('normalizes CRLF line endings in a non-slot saved body', () => {
+    const document = buildSessionLogDocument({
+      starterCode: 'int main() {}\r\n',
+      usesSlots: false,
+      sections: { body: 'int main() {\r\n    return 0;\r\n}\r\n' }
+    });
+
+    expect(document.savedCode).toBe('int main() {\n    return 0;\n}\n');
+    expect(document.savedCode).not.toContain('\r');
+  });
 });
