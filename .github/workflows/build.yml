@@ -88,5 +88,5 @@ jobs:
         if: github.ref == 'refs/heads/main'
         with:
           url: ${{ secrets.COOLIFY_URL }}/api/v1/deploy?uuid=${{ secrets.COOLIFY_RESOURCE_ID }}&force=false
-          method: GET
+          method: POST
           bearerToken: ${{ secrets.COOLIFY_API_TOKEN }}
