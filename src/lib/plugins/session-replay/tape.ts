@@ -109,7 +109,7 @@ export function timelineSlices(frames: TapeFrame[], minPercent = 1.2): TimelineS
 
 /**
  * For each frame, how many text edits the session has made by then, counted
- * inclusively — the index into `replayTexts`' steps that a playhead at this
+ * inclusively — the index into `replaySteps`' steps that a playhead at this
  * frame shows. It is what ties the entry tape to the code pane: frame `i` of a
  * session with `n` edits before it shows step `i`'s count of `0…n`.
  */

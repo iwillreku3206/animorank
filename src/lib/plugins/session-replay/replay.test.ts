@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { JsonValue } from '@zenstackhq/orm';
 import type { SessionLogDocument, SessionLogEntry, SessionLogSlot } from '$lib/analytics/sessionLogView';
-import { replayBase, replayTexts, slotAt, textDeltas } from './replay';
+import { codeSnapshots, recordedLineEndings, replayBase, replaySteps, slotAt, textDeltas } from './replay';
 
 const entry = (type: string, data: JsonValue | null, timestamp = '2026-10-15T04:20:22.302Z'): SessionLogEntry => ({
   id: `id-${type}-${timestamp}`,
@@ -65,59 +65,67 @@ describe('textDeltas', () => {
   });
 });
 
-describe('replayTexts', () => {
+/**
+ * The documents a replay produces, one per step: what the assertions below read
+ * as `texts`. The step's own offset is checked separately.
+ */
+const textsOf = (
+  base: string,
+  deltas: Parameters<typeof replaySteps>[1],
+  lineEndings?: Parameters<typeof replaySteps>[2]
+) => replaySteps(base, deltas, lineEndings).map((step) => step.text);
+
+describe('replaySteps', () => {
   it('returns the base plus one text per step', () => {
-    const texts = replayTexts('', [
-      { timestamp: 't1', offset: 0, old: '', new: 'a' },
-      { timestamp: 't2', offset: 1, old: '', new: 'b' }
+    const texts = textsOf('', [
+      { offset: 0, old: '', new: 'a' },
+      { offset: 1, old: '', new: 'b' }
     ]);
 
     expect(texts).toEqual(['', 'a', 'ab']);
   });
 
   it('replaces and deletes per the reported span', () => {
-    const texts = replayTexts('abcdef', [
-      { timestamp: 't1', offset: 2, old: 'cd', new: 'XY' },
-      { timestamp: 't2', offset: 0, old: 'a', new: '' }
+    const texts = textsOf('abcdef', [
+      { offset: 2, old: 'cd', new: 'XY' },
+      { offset: 0, old: 'a', new: '' }
     ]);
 
     expect(texts).toEqual(['abcdef', 'abXYef', 'bXYef']);
   });
 
   it('clamps an offset past the end of the buffer to it', () => {
-    const texts = replayTexts('abc', [{ timestamp: 't1', offset: 99, old: '', new: '!' }]);
+    const texts = textsOf('abc', [{ offset: 99, old: '', new: '!' }]);
 
     expect(texts[1]).toBe('abc!');
   });
 
   it('applies the seeded session edits to its slot document', () => {
     const deltas = [
-      { timestamp: 't1', offset: 77, old: ';', new: '' },
-      { timestamp: 't2', offset: 158, old: '', new: '\n    ' },
-      { timestamp: 't3', offset: 163, old: '', new: '\n    ' },
-      { timestamp: 't4', offset: 159, old: '\n   ', new: '' },
-      { timestamp: 't5', offset: 164, old: '', new: 'p' },
-      { timestamp: 't6', offset: 165, old: '', new: 'r' },
-      { timestamp: 't7', offset: 165, old: 'r', new: '' }
+      { offset: 77, old: ';', new: '' },
+      { offset: 158, old: '', new: '\n    ' },
+      { offset: 163, old: '', new: '\n    ' },
+      { offset: 159, old: '\n   ', new: '' },
+      { offset: 164, old: '', new: 'p' },
+      { offset: 165, old: '', new: 'r' },
+      { offset: 165, old: 'r', new: '' }
     ];
 
-    const texts = replayTexts(BASE_CODE, deltas);
+    const texts = textsOf(BASE_CODE, deltas);
 
     expect(texts).toHaveLength(deltas.length + 1);
     expect(texts.map((text) => text.length)).toEqual([247, 246, 251, 256, 252, 253, 254, 253]);
     expect(texts[1]).toBe(BASE_CODE.slice(0, 77) + BASE_CODE.slice(78));
   });
 
-  it('reads a CRLF base as LF while applying edits in their logged coordinates', () => {
-    const texts = replayTexts('int main() {\r\n    return 0;\r\n}\r\n', [
-      { timestamp: 't1', offset: 25, old: '0', new: '1' }
-    ]);
+  it('reads a CRLF base as LF and applies edits in that same LF frame', () => {
+    const texts = textsOf('int main() {\r\n    return 0;\r\n}\r\n', [{ offset: 24, old: '0', new: '1' }]);
 
     expect(texts).toEqual(['int main() {\n    return 0;\n}\n', 'int main() {\n    return 1;\n}\n']);
   });
 
   it('reads a CRLF insertion as LF', () => {
-    const texts = replayTexts('ab', [{ timestamp: 't1', offset: 1, old: 'b', new: 'b\r\nc' }]);
+    const texts = textsOf('ab', [{ offset: 1, old: 'b', new: 'b\r\nc' }]);
 
     expect(texts).toEqual(['ab', 'ab\nc']);
   });
@@ -161,7 +169,7 @@ describe('replayBase', () => {
       slots: []
     };
 
-    const texts = replayTexts(replayBase(document), [{ timestamp: 't1', offset: 12, old: '', new: ' return 0; ' }]);
+    const texts = textsOf(replayBase(document), [{ offset: 12, old: '', new: ' return 0; ' }]);
 
     expect(texts).toEqual(['int main() {}\n', 'int main() { return 0; }\n']);
   });
@@ -178,5 +186,100 @@ describe('slotAt', () => {
     expect(slotAt(SLOTS, BASE_CODE, BASE_CODE.length)).toBeNull();
     expect(slotAt(SLOTS, BASE_CODE, BASE_CODE.length + 1)).toBeNull();
     expect(slotAt(SLOTS, BASE_CODE, -1)).toBeNull();
+  });
+});
+
+describe('recordedLineEndings', () => {
+  it('is crlf for a recording whose inserted text carries \r\n', () => {
+    expect(recordedLineEndings([{ offset: 0, old: '', new: 'a\r\nb' }])).toBe('crlf');
+  });
+
+  it('is lf for a recording that never inserted a line break', () => {
+    expect(recordedLineEndings([{ offset: 0, old: '', new: 'ab' }])).toBe('lf');
+    expect(recordedLineEndings([])).toBe('lf');
+  });
+});
+
+describe('replaySteps under the crlf assumption', () => {
+  it('applies a raw offset to the buffer those offsets were counted over', () => {
+    // The buffer is CRLF, so the edit at raw 25 replaces the `0` there; read in
+    // LF coordinates that character sits at 24 instead.
+    const steps = replaySteps('int main() {\r\n    return 0;\r\n}\r\n', [{ offset: 25, old: '0', new: '1' }], 'crlf');
+
+    expect(steps.map((step) => step.text)).toEqual([
+      'int main() {\n    return 0;\n}\n',
+      'int main() {\n    return 1;\n}\n'
+    ]);
+    // The recorded offset is raw; the step reports it in the text it returned.
+    expect(steps[1].offset).toBe(24);
+  });
+
+  it('keeps a recorded old length as the deleted span instead of rewriting it as CRLF', () => {
+    // `old` was sliced from the LF view, so its length is what the write
+    // counted; inflating it to `\r\n` would delete one character too many.
+    const steps = replaySteps('a\r\nb\r\nc', [{ offset: 1, old: '\nb', new: '' }], 'crlf');
+
+    expect(steps.at(-1)?.text).toBe('ab\nc');
+  });
+
+  it('leaves an edit with no recorded span unapplied, which is all the log can say', () => {
+    const steps = replaySteps('ab', [{ offset: 1, old: '', new: '' }], 'crlf');
+
+    expect(steps.at(-1)?.text).toBe('ab');
+  });
+});
+
+describe('codeSnapshots', () => {
+  it('takes the code a run logged, counted to the edits before it', () => {
+    const snapshots = codeSnapshots([
+      entry('TEXT_MODIFIED', { offset: 0, old: '', new: 'a' }),
+      entry('RUN_ATTEMPT', { runType: 'run', submittedCode: 'abc' }),
+      entry('TEXT_MODIFIED', { offset: 3, old: '', new: 'd' }),
+      entry('CUSTOM_RUN', { execution: { submittedCode: 'abcd' } })
+    ]);
+
+    expect(snapshots).toEqual([
+      { beforeEdit: 1, code: 'abc' },
+      { beforeEdit: 2, code: 'abcd' }
+    ]);
+  });
+
+  it('skips entries whose payload carries no code', () => {
+    expect(codeSnapshots([entry('RUN_ATTEMPT', { runType: 'run' }), entry('RUN_ATTEMPT', null)])).toEqual([]);
+  });
+});
+
+describe('replaySteps with snapshots', () => {
+  it('restarts the document from a snapshot, dropping an earlier drift', () => {
+    // The second delta is a deletion whose span the log lost (`old` empty), which
+    // leaves a character behind — the drift a snapshot cures.
+    const deltas = [
+      { offset: 0, old: '', new: 'ab' },
+      { offset: 1, old: '', new: '' },
+      { offset: 2, old: '', new: '!' }
+    ];
+    const steps = replaySteps('', deltas, 'lf', [{ beforeEdit: 2, code: 'ab' }]);
+
+    expect(steps.map((step) => step.text)).toEqual(['', 'ab', 'ab', 'ab!']);
+    expect(steps[2].approximate).toBe(false);
+  });
+
+  it('flags a lost span as approximate until a snapshot proves the document', () => {
+    const deltas = [
+      { offset: 0, old: '', new: 'ab' },
+      { offset: 1, old: '', new: '' },
+      { offset: 2, old: '', new: 'c' }
+    ];
+    const steps = replaySteps('', deltas, 'lf', [{ beforeEdit: 3, code: 'ac' }]);
+
+    expect(steps.map((step) => step.approximate)).toEqual([false, false, true, false]);
+  });
+
+  it('flags an old that does not match the text it claims to replace', () => {
+    // A recording whose `old` came from somewhere else: nothing verifies, so the
+    // document cannot be trusted from that step on.
+    const steps = replaySteps('abc', [{ offset: 0, old: 'zz', new: 'a' }], 'lf');
+
+    expect(steps[1].approximate).toBe(true);
   });
 });
