@@ -10,6 +10,13 @@ interface TapeFrame {
 /** How long one frame stays on screen at 1×; the transport's speeds divide it. */
 export const FRAME_MS = 800;
 
+/**
+ * The elapsed time that counts as one additive unit of timeline width. A frame
+ * always gets its base tick, so a second of waiting doubles a frame's weight and
+ * an hour of it adds eight — enough to stand out without erasing the rest.
+ */
+const TICK_MS = 1000;
+
 /** The playback speeds the transport offers as presets, slowest first. */
 export const SPEEDS = [0.5, 1, 2, 4] as const;
 
@@ -75,32 +82,29 @@ export interface TimelineSlice {
 }
 
 /**
- * The timeline's slices: one per frame, as wide as the time it covers — the wait
- * until the next entry — but never thinner than `minPercent`, because a session
- * is bursty by nature: a dozen entries in the same second would otherwise be a
- * single pixel of colour, and the tape would read as one long empty wait.
+ * The timeline's slices: one per frame, widths adding up to 100%.
  *
- * Exactly `minPercent` of the width is reserved for every frame up front and the
- * rest is shared out by elapsed time, so the widths always add up to 100 and no
- * slice is thinner than the floor. A timeline too short for the floor at all
- * falls back to equal slices.
+ * Every frame gets one base tick of width and the elapsed time it covers adds
+ * logarithmically on top, so a long idle gap stays visible without erasing the
+ * entries around it: a burst of same-second edits keeps a readable slice each,
+ * and a minute of waiting is several times a tick rather than the whole tape.
+ * Widths are therefore a compressed reading of time, not a proportional one —
+ * the clock, the tooltips and the feed labels carry the exact elapsed time.
  */
-export function timelineSlices(frames: TapeFrame[], minPercent = 1.2): TimelineSlice[] {
+export function timelineSlices(frames: TapeFrame[]): TimelineSlice[] {
   if (frames.length === 0) return [];
 
-  const total = frames.at(-1)?.elapsedMs ?? 0;
   // A frame covers the time until the next one; the last one covers none of its own.
-  const spans = frames.map((frame, index) => {
+  const weights = frames.map((frame, index) => {
     const next = frames[index + 1];
-    return next ? Math.max(0, next.elapsedMs - frame.elapsedMs) : 0;
+    const span = next ? Math.max(0, next.elapsedMs - frame.elapsedMs) : 0;
+    return 1 + Math.log1p(span / TICK_MS);
   });
-
-  const floor = Math.min(minPercent, 100 / frames.length);
-  const free = 100 - floor * frames.length;
-  const widths = spans.map((span) => floor + (total > 0 ? (span / total) * free : free / frames.length));
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
 
   let start = 0;
-  return widths.map((widthPercent) => {
+  return weights.map((weight) => {
+    const widthPercent = (weight / totalWeight) * 100;
     const slice = { startPercent: start, widthPercent };
     start += widthPercent;
     return slice;

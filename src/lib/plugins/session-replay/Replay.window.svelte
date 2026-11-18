@@ -7,7 +7,7 @@
   import type { SessionLogsViewContext } from '../../../routes/instructor/analytics/session-logs/context.svelte';
   import {
     codeSnapshots,
-    recordedLineEndings,
+    legacyLineEndings,
     replayBase,
     replaySteps,
     slotAt,
@@ -40,11 +40,14 @@
   const document = $derived(context.document);
   const deltas = $derived(textDeltas(entries));
   /**
-   * What the recorded offsets count. One machine typed the whole session, so it
-   * is one answer for the replay; the recording's own inserted text is what
-   * says which, and the toggle overrides it.
+   * The frame to assume for entries recorded before the recorder tagged one.
+   * Every new delta carries its own, so this is only the fallback; it is
+   * re-derived per recording and the toggle overrides it.
    */
   let lineEndings = $state<LineEndings>('lf');
+  // A recording whose deltas all name their frame is not affected by the
+  // fallback, so the override is only offered where it could change something.
+  const hasLegacyDeltas = $derived(deltas.some((delta) => delta.lineEndings === undefined));
   // A run or submit logs the whole document it graded, which is the one state a
   // recording proves exactly; the replay restarts from each so a reconstruction
   // that drifted cannot carry its error past a known-good point.
@@ -68,8 +71,9 @@
    */
   const approximate = $derived(steps[editStep]?.approximate ?? false);
   /**
-   * How many times the log proves the whole document — one per run or submit,
-   * the points the replay restarts from. Between them a lost span is unrecoverable.
+   * How many times the log proves the whole document — one per run, submit, or
+   * periodic checkpoint, the points the replay restarts from. Between them a
+   * lost span is unrecoverable.
    */
   const provedSteps = $derived(snapshots.length);
   const totalMs = $derived(frames.at(-1)?.elapsedMs ?? 0);
@@ -113,9 +117,9 @@
     shownTape = identity;
     rawPosition = 0;
     playing = false;
-    // Another recording can come from another machine, so the assumption is
-    // re-derived rather than carried over.
-    lineEndings = recordedLineEndings(deltas);
+    // Another recording can come from another machine or another recorder
+    // build, so the fallback is re-derived rather than carried over.
+    lineEndings = legacyLineEndings(deltas);
   });
 
   $effect(() => {
@@ -250,11 +254,12 @@
     </div>
 
     <div class="flex flex-col gap-1">
-      <!-- The timeline: one slice per entry, as wide as the time it covers and
-         coloured by the kind of entry it is. Width carries time, so the events
-         stand taller while text edits sit in a thin lane along the bottom —
+      <!-- The timeline: one slice per entry, coloured by the kind of entry it
+         is. Width carries time on a log-compressed scale — every entry keeps a
+         readable slice and a long idle gap just widens its own — so the events
+         stand taller while text edits sit in a thin lane along the bottom:
          height is the one dimension that can mark them without lying about
-         when they happened. -->
+         when they happened. Exact times are in the clock and the labels. -->
       <div
         class="relative h-7 w-full overflow-hidden rounded-sm"
         data-testid="replay-timeline"
@@ -318,29 +323,32 @@
           {#if slotLabel}
             <Badge class="badge-neutral">{slotLabel}</Badge>
           {/if}
-          <!-- Which characters the recorded offsets were counted over. One
-               machine typed the session, so one answer covers all of it, and
-               the recording says which; this is the override for a recording
-               that reads wrong. -->
-          <div
-            class="ml-auto flex items-center gap-1"
-            role="group"
-            aria-label="Assume line endings"
-          >
-            <span class="text-xs text-base-content/60">Line endings</span>
-            <Button
-              class="btn-xs {lineEndings === 'lf' ? 'btn-primary' : ''}"
-              aria-pressed={lineEndings === 'lf'}
-              title="Count a newline as one character"
-              onclick={() => (lineEndings = 'lf')}>LF</Button
+          {#if hasLegacyDeltas}
+            <!-- The frame legacy entries' offsets were counted in: the toggle
+                 only affects the entries that recorded none. A recording that
+                 tagged every delta has no such entry, so the control is hidden
+                 rather than shown doing nothing. -->
+            <div
+              class="ml-auto flex items-center gap-1"
+              role="group"
+              aria-label="Assumed line endings for entries recorded without one"
+              title="Assumed line endings for entries recorded without one"
             >
-            <Button
-              class="btn-xs {lineEndings === 'crlf' ? 'btn-primary' : ''}"
-              aria-pressed={lineEndings === 'crlf'}
-              title="Count a newline as two characters"
-              onclick={() => (lineEndings = 'crlf')}>CRLF</Button
-            >
-          </div>
+              <span class="text-xs text-base-content/60">Line endings</span>
+              <Button
+                class="btn-xs {lineEndings === 'lf' ? 'btn-primary' : ''}"
+                aria-pressed={lineEndings === 'lf'}
+                title="Count a newline as one character"
+                onclick={() => (lineEndings = 'lf')}>LF</Button
+              >
+              <Button
+                class="btn-xs {lineEndings === 'crlf' ? 'btn-primary' : ''}"
+                aria-pressed={lineEndings === 'crlf'}
+                title="Count a newline as two characters"
+                onclick={() => (lineEndings = 'crlf')}>CRLF</Button
+              >
+            </div>
+          {/if}
         </div>
         <pre
           data-testid="replay-code"
@@ -348,15 +356,17 @@
         {#if deltas.length === 0}
           <p class="text-xs text-base-content/60">This session has no text edits; the code is its starting document.</p>
         {:else if approximate}
-          <!-- The log is missing spans, so the pane is a guess here. Say which part
-               of it is proved: everything from the first run or submit on. -->
+          <!-- The log is missing spans or frames, so the pane is a guess here.
+               Say which part of it is proved: everything from the first run or
+               submit on. -->
           <p
             class="text-xs text-base-content/60"
             data-testid="replay-approximate"
           >
-            Reconstructed as closely as the log allows: this recording did not save the text some edits removed.
+            Reconstructed as closely as the log allows: some edits did not record the text they replaced or the frame
+            their offsets counted.
             {#if provedSteps > 0}
-              Exact at the {provedSteps} run{provedSteps === 1 ? '' : 's'} that logged the whole code.
+              Exact at the {provedSteps} checkpoint{provedSteps === 1 ? '' : 's'} that logged the whole code.
             {:else}
               No run logged the whole code, so none of it is exact.
             {/if}

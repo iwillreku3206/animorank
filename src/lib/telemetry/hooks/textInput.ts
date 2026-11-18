@@ -34,7 +34,9 @@ export interface TextModelChange {
  *
  * The emitted deltas are in LF coordinates, the frame the replay works in:
  * `offset` is the LF length of the text before the change, `old` and `new` are
- * LF. A replay can then apply them to the LF base without translating.
+ * LF. Each delta records that frame as `lineEndings: 'lf'` rather than leaving
+ * the replay to infer one for the whole recording, which a session spanning
+ * other recorders could not answer correctly.
  *
  * Changes arrive measured against the pre-change model but must be applied in
  * sequence, so they are sorted and each offset is shifted by the net length of
@@ -52,7 +54,8 @@ export function textDeltasOf(
     deltas.push({
       offset: toLf(text.slice(0, offset)).length,
       old: toLf(previous.slice(change.rangeOffset, change.rangeOffset + change.rangeLength)),
-      new: toLf(change.text)
+      new: toLf(change.text),
+      lineEndings: 'lf'
     });
     text = text.slice(0, offset) + change.text + text.slice(offset + change.rangeLength);
     shift += change.text.length - change.rangeLength;
@@ -61,11 +64,27 @@ export function textDeltasOf(
 }
 
 export class TextInputHook extends TelemetryHook {
+  /**
+   * The bound editor's text, or `undefined` while either queue still holds an
+   * event: the model updates before the deltas are emitted, so a document read
+   * then sits ahead of the history position it would be recorded against.
+   */
+  private snapshotCode: (() => string | undefined) | undefined;
+
+  public override snapshotText(): string | undefined {
+    return this.snapshotCode?.();
+  }
+
   public monacoHook(monaco: editor.IStandaloneCodeEditor): () => void {
     const eventQueue: [Entry<Partial<TextEvent>>, number][] = [];
     let textEventQueue: [Entry<Partial<TextEvent>>, number][] = [];
     let timeout: number | NodeJS.Timeout | undefined;
     let prevText: string = monaco.getModel()?.getValue() ?? '';
+
+    // The live model is the truth once nothing is queued: every delta already
+    // emitted has been applied to it, so it is exactly the history position.
+    this.snapshotCode = () =>
+      eventQueue.length === 0 && textEventQueue.length === 0 ? toLf(monaco.getModel()?.getValue() ?? '') : undefined;
 
     const reasonHook = monaco.onDidChangeCursorPosition((e) => {
       const ev = eventQueue.shift();
@@ -113,6 +132,7 @@ export class TextInputHook extends TelemetryHook {
     });
 
     return () => {
+      this.snapshotCode = undefined;
       reasonHook.dispose();
       changeHook.dispose();
     };

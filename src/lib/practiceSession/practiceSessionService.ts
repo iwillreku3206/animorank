@@ -61,6 +61,9 @@ export class PracticeSessionService {
         student_id: options.user.id!,
         problem_id: options.problemId,
         previous_state: { code: state } as PracticeSessionData,
+        // The replay's base, frozen here: the problem's template can be edited
+        // later, and an old session has to replay from what it actually started.
+        starter_code_snapshot: problem.starter_code,
         done: false
       }
     });

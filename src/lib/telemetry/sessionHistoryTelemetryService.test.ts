@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FLUSH_INTERVAL_SECONDS, SessionHistoryTelemetryService } from './sessionHistoryTelemetryService';
+import {
+  FLUSH_INTERVAL_SECONDS,
+  SNAPSHOT_INTERVAL_FRAMES,
+  SessionHistoryTelemetryService
+} from './sessionHistoryTelemetryService';
 import type { Entry } from './telemetryHook';
 
 const SESSION_ID = '123e4567-e89b-42d3-a456-426614174000';
@@ -7,8 +11,15 @@ const INTERVAL_MS = FLUSH_INTERVAL_SECONDS * 1000;
 
 /** Exposes the protected callback so tests can emit entries directly. */
 class TestSessionHistoryService extends SessionHistoryTelemetryService {
+  /** What the editor would prove when asked; `undefined` models a mid-burst read. */
+  public code: string | undefined = 'code';
+
   public emit(entry: Entry): void {
     this.telemetryCallback(entry);
+  }
+
+  protected override snapshotText(): string | undefined {
+    return this.code;
   }
 }
 
@@ -162,5 +173,48 @@ describe('SessionHistoryTelemetryService', () => {
     await vi.advanceTimersByTimeAsync(INTERVAL_MS * 5);
 
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('writes a full-code checkpoint after every interval of frames', async () => {
+    const service = build();
+
+    for (let i = 0; i < SNAPSHOT_INTERVAL_FRAMES - 1; i += 1) service.emit({ type: 'PING', data: { i } });
+    await service.flush();
+
+    const batch = postedEvents(fetchMock) as { type: string; data: unknown }[];
+    expect(batch).toHaveLength(SNAPSHOT_INTERVAL_FRAMES);
+    expect(batch.at(-1)).toMatchObject({ type: 'CODE_SNAPSHOT', data: { submittedCode: 'code' } });
+
+    // The counter restarted: the next group ends with its own checkpoint.
+    for (let i = 0; i < SNAPSHOT_INTERVAL_FRAMES - 1; i += 1) service.emit({ type: 'PING', data: { i } });
+    await service.flush();
+
+    const second = eventsOfCall(fetchMock, 1) as { type: string; data: unknown }[];
+    expect(second).toHaveLength(SNAPSHOT_INTERVAL_FRAMES);
+    expect(second.at(-1)).toMatchObject({ type: 'CODE_SNAPSHOT', data: { submittedCode: 'code' } });
+  });
+
+  it('defers the checkpoint to the first frame the editor can prove', async () => {
+    const service = build();
+    service.code = undefined;
+
+    // A burst spans the boundary: the document is ahead of the history, so it
+    // must not be recorded here.
+    for (let i = 0; i < SNAPSHOT_INTERVAL_FRAMES; i += 1) service.emit({ type: 'PING', data: { i } });
+    await service.flush();
+
+    const first = postedEvents(fetchMock) as { type: string }[];
+    expect(first).toHaveLength(SNAPSHOT_INTERVAL_FRAMES);
+    expect(first.every((event) => event.type === 'PING')).toBe(true);
+
+    // The next frame is quiescent, so the deferred checkpoint follows it.
+    service.code = 'late';
+    service.emit({ type: 'PING', data: { i: SNAPSHOT_INTERVAL_FRAMES } });
+    await service.flush();
+
+    const second = eventsOfCall(fetchMock, 1) as { type: string; data: unknown }[];
+    expect(second).toHaveLength(2);
+    expect(second[0]).toMatchObject({ type: 'PING', data: { i: SNAPSHOT_INTERVAL_FRAMES } });
+    expect(second[1]).toMatchObject({ type: 'CODE_SNAPSHOT', data: { submittedCode: 'late' } });
   });
 });

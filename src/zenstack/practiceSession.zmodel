@@ -11,6 +11,12 @@ model PracticeSession {
   student                  Student               @relation(fields: [student_id], references: [id], onDelete: Cascade)
   done                     Boolean               @default(false)
   previous_state           Json                  @default("{}")
+  // The template this session started from, frozen at creation. A replay used to
+  // assemble its base from the problem's current `starter_code`, so a teacher
+  // editing the template rebased every old session on a document the student
+  // never saw. Raw template, markers included, so slot assembly stays consistent
+  // with the session's saved sections.
+  starter_code_snapshot    String
 
   extension_data           Json                  @default("{}")
 
@@ -22,6 +28,11 @@ model PracticeSession {
 
 model SessionHistoryEntry {
   id                  String          @id @default(uuid()) @db.Uuid
+  // Assigned by the database in INSERT order, which is the order the client
+  // flushes a batch in. `timestamp` is client-clock and `id` is random, so neither
+  // can order two entries written in the same millisecond; the replay applies
+  // pre-change offsets, so that order has to be the write order.
+  sequence            BigInt          @default(autoincrement())
   timestamp           DateTime        @default(now()) @db.Timestamptz(6)
   type                String
   data                Json

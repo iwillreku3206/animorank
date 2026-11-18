@@ -88,7 +88,10 @@ export class SessionLogService {
     const logs = validSession
       ? await db.sessionHistoryEntry.findMany({
           where: { practice_session_id: validSession, ...(validType ? { type: validType } : {}) },
-          orderBy: [{ timestamp: 'desc' }, { id: 'desc' }],
+          // Newest first for the view, by write order: a client clock and a random
+          // id cannot order the entries of one recorder tick, and the replay
+          // reverses this list to apply edits, so a tie broken wrongly swaps two.
+          orderBy: { sequence: 'desc' },
           select: { id: true, timestamp: true, type: true, data: true }
         })
       : [];
@@ -98,12 +101,12 @@ export class SessionLogService {
           where: { id: validSession },
           select: {
             previous_state: true,
+            starter_code_snapshot: true,
             problem: {
               select: {
                 id: true,
                 name: true,
                 description: true,
-                starter_code: true,
                 uses_slots: true,
                 language: true,
                 problem_set: { select: { id: true, title: true, description: true } }
@@ -144,7 +147,9 @@ export class SessionLogService {
         : null,
       document: session
         ? buildSessionLogDocument({
-            starterCode: session.problem.starter_code,
+            // The template this session started from, not the problem's current
+            // one: a teacher editing the template must not rebase old replays.
+            starterCode: session.starter_code_snapshot,
             usesSlots: session.problem.uses_slots,
             sections
           })

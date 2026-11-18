@@ -61,6 +61,10 @@ export class SchemaType implements SchemaDef {
                     attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.literal("{}") }] }] as readonly AttributeApplication[],
                     default: "{}" as FieldDefault
                 },
+                starter_code_snapshot: {
+                    name: "starter_code_snapshot",
+                    type: "String"
+                },
                 extension_data: {
                     name: "extension_data",
                     type: "Json",
@@ -100,6 +104,12 @@ export class SchemaType implements SchemaDef {
                     id: true,
                     attributes: [{ name: "@id" }, { name: "@default", args: [{ name: "value", value: ExpressionUtils.call("uuid") }] }, { name: "@db.Uuid" }] as readonly AttributeApplication[],
                     default: ExpressionUtils.call("uuid") as FieldDefault
+                },
+                sequence: {
+                    name: "sequence",
+                    type: "BigInt",
+                    attributes: [{ name: "@default", args: [{ name: "value", value: ExpressionUtils.call("autoincrement") }] }] as readonly AttributeApplication[],
+                    default: ExpressionUtils.call("autoincrement") as FieldDefault
                 },
                 timestamp: {
                     name: "timestamp",

@@ -17,6 +17,14 @@ interface PendingEntry {
 export const FLUSH_INTERVAL_SECONDS = 1;
 
 /**
+ * How many history frames pass between full-code checkpoints. A run or submit
+ * is otherwise the only known-good document in a recording, so a long stretch
+ * of typing leaves hundreds of frames with nothing to anchor a reconstruction
+ * that drifted. One snapshot every 50 frames bounds that.
+ */
+export const SNAPSHOT_INTERVAL_FRAMES = 50;
+
+/**
  * Records telemetry entries into the practice session's history
  * (`/api/updateHistory`): entries are buffered as they arrive and written out
  * in one batch.
@@ -27,12 +35,23 @@ export const FLUSH_INTERVAL_SECONDS = 1;
  * {@link flush} from the app posts immediately, which is what keeps an entry
  * caused by a save, run or submit from waiting for the next tick.
  *
+ * A batch also carries a full-code checkpoint every
+ * {@link SNAPSHOT_INTERVAL_FRAMES} frames, which bounds the replay's
+ * reconstruction on its own, independently of runs and submits.
+ *
  * The request is best-effort — a failed batch is dropped with a warning
  * rather than retried, so an offline client cannot accumulate an unbounded
  * buffer.
  */
 export class SessionHistoryTelemetryService extends TelemetryService {
   private pending: PendingEntry[] = [];
+
+  /**
+   * Frames recorded since the last checkpoint. The checkpoint is written when
+   * this reaches the interval, and only then reset, so a snapshot the editor
+   * could not prove yet is retried at the next frame instead of being lost.
+   */
+  private framesSinceSnapshot = 0;
 
   /**
    * Set while a batch is in flight. A tick that lands mid-request stands down:
@@ -51,6 +70,22 @@ export class SessionHistoryTelemetryService extends TelemetryService {
 
   protected telemetryCallback(entry: Entry): void {
     this.pending.push({ entry, timestamp: new Date() });
+
+    // The checkpoint is the 50th frame of the group: 49 entries and the
+    // document they lead to.
+    this.framesSinceSnapshot += 1;
+    if (this.framesSinceSnapshot < SNAPSHOT_INTERVAL_FRAMES - 1) return;
+
+    // A document that is ahead of the history would be recorded after an entry
+    // it already includes, so a mid-burst boundary waits for a quiescent frame.
+    const code = this.snapshotText();
+    if (code === undefined) return;
+
+    this.pending.push({
+      entry: { type: 'CODE_SNAPSHOT', data: { submittedCode: code } },
+      timestamp: new Date()
+    });
+    this.framesSinceSnapshot = 0;
   }
 
   /** One poll: post whatever has accumulated since the last batch. */

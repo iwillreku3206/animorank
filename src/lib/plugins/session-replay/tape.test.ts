@@ -160,39 +160,40 @@ describe('timelineSlices', () => {
   });
 
   it('gives each entry the time it covers, and the whole timeline to the last one', () => {
-    const slices = timelineSlices(buildTape([at('a', 0), at('b', 0), at('c', 0)]), 0);
+    const slices = timelineSlices(buildTape([at('a', 0), at('b', 0), at('c', 0)]));
 
     expect(slices).toHaveLength(3);
-    expect(slices.map((slice) => slice.startPercent)).toEqual([0, 100 / 3, 200 / 3]);
+    const starts = slices.map((slice) => slice.startPercent);
+    expect(starts[0]).toBe(0);
+    expect(starts[1]).toBeCloseTo(100 / 3, 9);
+    expect(starts[2]).toBeCloseTo(200 / 3, 9);
     expect(slices.reduce((sum, slice) => sum + slice.widthPercent, 0)).toBeCloseTo(100, 6);
   });
 
   it('keeps a burst of same-instant entries wide enough to see', () => {
-    // One entry at 0:00, then four in the same second a minute later.
+    // One entry at 0:00, then four in the same second a minute later: the wait
+    // is worth more width than one entry, but it cannot swallow the burst.
     const tape = buildTape([at('a', 0), at('b', 60000), at('c', 60000), at('d', 60000), at('e', 60000)]);
-    const slices = timelineSlices(tape, 1.2);
+    const slices = timelineSlices(tape);
 
     expect(slices).toHaveLength(5);
-    for (const slice of slices) expect(slice.widthPercent).toBeGreaterThanOrEqual(1.2 - 1e-9);
+    expect(slices[0].widthPercent).toBeGreaterThan(40);
+    expect(slices[0].widthPercent).toBeLessThan(70);
+    for (const slice of slices.slice(1)) {
+      expect(slice.widthPercent).toBeGreaterThan(0);
+      expect(slice.widthPercent).toBeLessThan(slices[0].widthPercent);
+    }
     expect(slices.reduce((sum, slice) => sum + slice.widthPercent, 0)).toBeCloseTo(100, 6);
-    // The minute of waiting still reads as most of the timeline.
-    expect(slices[0].widthPercent).toBeGreaterThan(90);
   });
 
   it('lays the slices out end to end', () => {
-    const slices = timelineSlices(buildTape([at('a', 0), at('b', 500), at('c', 1000)]), 2);
+    const slices = timelineSlices(buildTape([at('a', 0), at('b', 500), at('c', 1000)]));
 
     expect(slices[0].startPercent).toBe(0);
     expect(slices[1].startPercent).toBeCloseTo(slices[0].widthPercent, 9);
     expect(slices[2].startPercent).toBeCloseTo(slices[0].widthPercent + slices[1].widthPercent, 9);
     const last = slices[slices.length - 1];
     expect(last.startPercent + last.widthPercent).toBeCloseTo(100, 9);
-  });
-
-  it('falls back to equal slices when the floor cannot fit', () => {
-    const slices = timelineSlices(buildTape([at('a', 0), at('b', 1)]), 60);
-
-    expect(slices.map((slice) => slice.widthPercent)).toEqual([50, 50]);
   });
 
   it('has nothing to lay out for an empty tape', () => {

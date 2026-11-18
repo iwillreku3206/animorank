@@ -20,6 +20,11 @@ export abstract class TelemetryHook {
     this.callback(entry);
   }
 
+  /** The editor code at the current history position, or undefined when this hook cannot prove it. */
+  public snapshotText(): string | undefined {
+    return undefined;
+  }
+
   public abstract monacoHook(_monaco: monaco.editor.IStandaloneCodeEditor): () => void;
   public abstract windowHook(_window: Window): () => void;
   public abstract executionHook(_executionObservable: Subscribable<ExecutionEvent>): () => void;

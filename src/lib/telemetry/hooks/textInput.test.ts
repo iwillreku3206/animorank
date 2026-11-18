@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
-import { textDeltasOf } from './textInput';
+import { describe, expect, it, vi } from 'vitest';
+import type { editor } from 'monaco-editor';
+import { TextInputHook, textDeltasOf, type TextModelChange } from './textInput';
+import type { Entry } from '../telemetryHook';
 import { replaySteps } from '$lib/plugins/session-replay/replay';
 
 /** The document a recording replays to, in the frame the recorder writes. */
@@ -14,7 +16,7 @@ describe('textDeltasOf', () => {
     const before = 'int main() {\r\n    return 0;\r\n}  ';
     const { deltas, text } = textDeltasOf(before, [{ rangeOffset: 12, rangeLength: 15, text: '' }]);
 
-    expect(deltas).toEqual([{ offset: 12, old: '\n    return 0;', new: '' }]);
+    expect(deltas).toEqual([{ offset: 12, old: '\n    return 0;', new: '', lineEndings: 'lf' }]);
     expect(text).toBe('int main() {\r\n}  ');
     expect(replayed(before, deltas)).toBe('int main() {\n}  ');
   });
@@ -36,8 +38,8 @@ describe('textDeltasOf', () => {
     ]);
 
     expect(deltas).toEqual([
-      { offset: 1, old: '', new: 'X' },
-      { offset: 4, old: '', new: 'Y' }
+      { offset: 1, old: '', new: 'X', lineEndings: 'lf' },
+      { offset: 4, old: '', new: 'Y', lineEndings: 'lf' }
     ]);
     expect(replayed('abc', deltas)).toBe('aXbcY');
   });
@@ -50,13 +52,57 @@ describe('textDeltasOf', () => {
     const before = 'int main() {\r\n    return 0;\r\n}\r\n';
     const { deltas } = textDeltasOf(before, [{ rangeOffset: 30, rangeLength: 2, text: '' }]);
 
-    expect(deltas).toEqual([{ offset: 28, old: '\n', new: '' }]);
+    expect(deltas).toEqual([{ offset: 28, old: '\n', new: '', lineEndings: 'lf' }]);
     expect(replayed(before, deltas)).toBe('int main() {\n    return 0;\n}');
   });
 
   it('reports a replacement as its own old and new', () => {
     const { deltas } = textDeltasOf('a\r\nb', [{ rangeOffset: 1, rangeLength: 2, text: '\r\nc' }]);
 
-    expect(deltas).toEqual([{ offset: 1, old: '\n', new: '\nc' }]);
+    expect(deltas).toEqual([{ offset: 1, old: '\n', new: '\nc', lineEndings: 'lf' }]);
+  });
+});
+
+describe('TextInputHook.snapshotText', () => {
+  it('reads the editor only once nothing is queued, and never after disposal', () => {
+    vi.useFakeTimers();
+    let value = 'int main() {}\r\n';
+    let contentChange: (event: { changes: TextModelChange[] }) => void = () => {};
+    let cursorChange: (event: { reason: number }) => void = () => {};
+    const fakeEditor = {
+      getModel: () => ({ getValue: () => value }),
+      onDidChangeModelContent: (callback: typeof contentChange) => {
+        contentChange = callback;
+        return { dispose: () => {} };
+      },
+      onDidChangeCursorPosition: (callback: typeof cursorChange) => {
+        cursorChange = callback;
+        return { dispose: () => {} };
+      }
+    } as unknown as editor.IStandaloneCodeEditor;
+
+    const entries: Entry[] = [];
+    const hook = new TextInputHook((entry) => {
+      entries.push(entry);
+    });
+    const dispose = hook.monacoHook(fakeEditor);
+
+    expect(hook.snapshotText()).toBe('int main() {}\n');
+
+    // The model moves before the deltas are emitted, so the document is ahead
+    // of the history for as long as the queues hold anything.
+    value = 'int main() { return 0; }\n';
+    contentChange({ changes: [{ rangeOffset: 12, rangeLength: 0, text: ' return 0; ' }] });
+    expect(hook.snapshotText()).toBeUndefined();
+
+    // The cursor event releases the queued entry, and the 5 ms flush empties it.
+    cursorChange({ reason: 0 });
+    vi.advanceTimersByTime(5);
+    expect(entries).toHaveLength(1);
+    expect(hook.snapshotText()).toBe('int main() { return 0; }\n');
+
+    dispose();
+    expect(hook.snapshotText()).toBeUndefined();
+    vi.useRealTimers();
   });
 });

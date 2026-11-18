@@ -72,6 +72,19 @@ export abstract class TelemetryService {
   public async flush(): Promise<void> {}
 
   /**
+   * The editor code at the current history position, from the first hook that
+   * can prove it. A hook returns `undefined` while its own events are still
+   * queued, because a document read then is ahead of the history.
+   */
+  protected snapshotText(): string | undefined {
+    for (const hook of this.hooks) {
+      const text = hook.snapshotText();
+      if (text !== undefined) return text;
+    }
+    return undefined;
+  }
+
+  /**
    * Release anything the service holds past the page's lifetime — a poll, a
    * connection. Called as the solve page unmounts; a no-op for strategies that
    * hold nothing, like {@link flush}.
