@@ -1,17 +1,6 @@
 import type { editor } from 'monaco-editor';
-import { TelemetryHook, type Entry } from '../telemetryHook';
+import { TelemetryHook } from '../telemetryHook';
 import type { TextEdit, TextEvent } from '../types/textEvent';
-import type { monaco } from '$lib/monaco';
-
-const reasonMap: Record<monaco.editor.CursorChangeReason, TextEvent['type']> = {
-  '0': 'userInput',
-  '1': 'reset',
-  '2': 'reset',
-  '3': 'userInput',
-  '4': 'paste',
-  '5': 'undo',
-  '6': 'redo'
-};
 
 /** `text` with its line endings normalized to `\n`. */
 const toLf = (text: string) => text.replaceAll('\r\n', '\n');
@@ -63,78 +52,121 @@ export function textDeltasOf(
   return { deltas, text };
 }
 
+/** `monaco.editor.CursorChangeReason` values this hook reads (kept numeric so Monaco stays a type-only import). */
+const CONTENT_FLUSH = 1;
+const RECOVER_FROM_MARKERS = 2;
+const PASTE = 4;
+
+/** One model content change, held until the task that made it has finished. */
+interface Batch {
+  /** The model version this change produced; a cursor event names the same one. */
+  versionId: number;
+  type: TextEvent['type'];
+  deltas: TextEdit[];
+  /** The model text before this change, to recognise an undo that reverts it exactly. */
+  before: string;
+}
+
 export class TextInputHook extends TelemetryHook {
-  /**
-   * The bound editor's text, or `undefined` while either queue still holds an
-   * event: the model updates before the deltas are emitted, so a document read
-   * then sits ahead of the history position it would be recorded against.
-   */
+  /** The bound editor's text, or `undefined` while a change is still held. */
   private snapshotCode: (() => string | undefined) | undefined;
 
   public override snapshotText(): string | undefined {
     return this.snapshotCode?.();
   }
 
+  /**
+   * Every model content change is recorded, whether or not a cursor event
+   * follows it: Monaco fires none for an edit that leaves the caret in place and
+   * one for a change that edits several places, so pairing changes with cursor
+   * events one to one left changes queued until a later caret move.
+   *
+   * A change is held only until the current task ends (a 0 ms timer), so two
+   * things can arrive first: the cursor event of the same model version, which
+   * says whether it was a paste, and the constrained-editor plugin's microtask
+   * undo of an edit in locked code, which cancels it.
+   */
   public monacoHook(monaco: editor.IStandaloneCodeEditor): () => void {
-    const eventQueue: [Entry<Partial<TextEvent>>, number][] = [];
-    let textEventQueue: [Entry<Partial<TextEvent>>, number][] = [];
-    let timeout: number | NodeJS.Timeout | undefined;
+    let pending: Batch[] = [];
+    let timer: ReturnType<typeof setTimeout> | undefined;
     let prevText: string = monaco.getModel()?.getValue() ?? '';
 
-    // The live model is the truth once nothing is queued: every delta already
-    // emitted has been applied to it, so it is exactly the history position.
-    this.snapshotCode = () =>
-      eventQueue.length === 0 && textEventQueue.length === 0 ? toLf(monaco.getModel()?.getValue() ?? '') : undefined;
-
-    const reasonHook = monaco.onDidChangeCursorPosition((e) => {
-      const ev = eventQueue.shift();
-      if (!ev) return;
-      const [event, timestamp] = ev;
-      event.data.type = reasonMap[e.reason];
-
-      if (textEventQueue.length === 0) {
-        textEventQueue.push(ev);
-        timeout = setTimeout(() => {
-          textEventQueue = textEventQueue.filter((x) => x !== ev);
-          this.addEntry(event);
-        }, 5);
-      } else if (textEventQueue.length === 1 && event.data.type === 'undo') {
-        clearTimeout(timeout);
-        timeout = undefined;
-        if (performance.now() - timestamp < 3) {
-          textEventQueue.shift();
-          // I don't want to repeat this code, so I'll just create the code to create the tooltip here
-          if (monaco) {
-            monaco
-              .getContribution('editor.contrib.messageController')
-              // @ts-expect-error EditorContributions cannot be type narrowed down
-              ?.showMessage('Cannot edit this area', monaco.getPosition());
-          }
-        } else {
-          const item = textEventQueue.shift()?.[0];
-          this.addEntry(item!);
-          this.addEntry(event);
+    const flush = () => {
+      if (timer !== undefined) clearTimeout(timer);
+      timer = undefined;
+      const batches = pending;
+      pending = [];
+      for (const batch of batches) {
+        for (const delta of batch.deltas) {
+          this.addEntry({ type: 'TEXT_MODIFIED', data: { ...delta, type: batch.type } });
         }
-      } else {
-        clearTimeout(timeout);
-        timeout = undefined;
-        const item = textEventQueue.shift()?.[0];
-        this.addEntry(item!);
-        this.addEntry(event);
       }
-    });
+    };
+
+    this.snapshotCode = () => (pending.length === 0 ? toLf(monaco.getModel()?.getValue() ?? '') : undefined);
+
     const changeHook = monaco.onDidChangeModelContent((e) => {
-      const { deltas, text } = textDeltasOf(prevText, e.changes);
-      prevText = text;
-      for (const delta of deltas) {
-        eventQueue.push([{ type: 'TEXT_MODIFIED', data: delta }, performance.now()]);
+      const before = prevText;
+      const { deltas, text } = textDeltasOf(before, e.changes);
+      prevText = e.isEolChange ? (monaco.getModel()?.getValue() ?? text) : text;
+
+      // The plugin rejects an edit in locked code by undoing it straight away
+      // (it sets `editInRestrictedArea` around that undo). Tell the user why the
+      // edit vanished, and when the undo restores exactly the text before the
+      // last held change, record neither.
+      const last = pending.at(-1);
+      const restricted =
+        (monaco.getModel() as unknown as { editInRestrictedArea?: boolean } | null)?.editInRestrictedArea === true;
+      if (e.isUndoing && restricted) {
+        monaco
+          .getContribution('editor.contrib.messageController')
+          // @ts-expect-error EditorContributions cannot be type narrowed down
+          ?.showMessage('Cannot edit this area', monaco.getPosition());
+        if (last && text === last.before) {
+          pending.pop();
+          return;
+        }
       }
+
+      if (deltas.length === 0) return;
+      pending.push({
+        versionId: e.versionId,
+        type: e.isFlush ? 'reset' : e.isUndoing ? 'undo' : e.isRedoing ? 'redo' : 'userInput',
+        deltas,
+        before
+      });
+      timer ??= setTimeout(flush, 0);
+    });
+
+    // Labels only: a cursor event never decides whether a change is recorded.
+    const reasonHook = monaco.onDidChangeCursorSelection((e) => {
+      const batch = pending.find((b) => b.versionId === e.modelVersionId);
+      if (!batch || batch.type !== 'userInput') return;
+      const reason: number = e.reason;
+      if (reason === PASTE) batch.type = 'paste';
+      else if (reason === CONTENT_FLUSH || reason === RECOVER_FROM_MARKERS) batch.type = 'reset';
+    });
+
+    // Reset Code swaps in a new model, which fires no content change. Record the
+    // swap as one whole-document replacement so the replay follows it.
+    const modelHook = monaco.onDidChangeModel(() => {
+      flush();
+      const next = monaco.getModel()?.getValue() ?? '';
+      if (toLf(next) !== toLf(prevText)) {
+        this.addEntry({
+          type: 'TEXT_MODIFIED',
+          data: { offset: 0, old: toLf(prevText), new: toLf(next), lineEndings: 'lf', type: 'reset' }
+        });
+      }
+      prevText = next;
     });
 
     return () => {
+      flush();
       this.snapshotCode = undefined;
-      reasonHook.dispose();
       changeHook.dispose();
+      reasonHook.dispose();
+      modelHook.dispose();
     };
   }
   public windowHook(): () => void {
